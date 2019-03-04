@@ -305,7 +305,7 @@ def find_similar_str(s, str_list):
 
 
 # Find from a list the closest, case-insensitive, str to the given one
-def find_match(x, lookup):
+def find_matched_str(x, lookup):
     """
     :param x: [str] If x is None, return None
     :param lookup: [list], [tuple] or any other iterable object
