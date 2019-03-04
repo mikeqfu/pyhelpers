@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='0.0.2',
+    version='0.0.3',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -20,10 +20,12 @@ setuptools.setup(
     install_requires=[
         'matplotlib',
         'nltk',
+        'openpyxl',
         'pandas',
         'progressbar2',
         'requests',
-        'tqdm'
+        'tqdm',
+        'XlsxWriter'
     ],
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
