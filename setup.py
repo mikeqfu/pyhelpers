@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='0.0.1',
+    version='0.0.2',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -21,7 +21,6 @@ setuptools.setup(
         'matplotlib',
         'nltk',
         'pandas',
-        'pkg_resources',
         'progressbar2',
         'requests',
         'tqdm'
