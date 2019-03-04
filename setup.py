@@ -5,17 +5,17 @@ with open("README.md", 'r') as readme:
 
 setuptools.setup(
 
-    name='pyutils',
+    name='pyhelpers',
     version='0.0.1',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
 
-    description="Download, parse and store OSM data extracts",
+    description="A small toolkit of helper functions to facilitate trivial processes",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    url='https://github.com/mikeqfu/pyutils',
+    url='https://github.com/mikeqfu/pyhelpers',
 
     install_requires=[
         'matplotlib',

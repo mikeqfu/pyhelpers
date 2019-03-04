@@ -1,4 +1,4 @@
-""" Utilities - Helper functions """
+""" Helper functions """
 
 import collections
 import copy
