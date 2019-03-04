@@ -22,7 +22,7 @@ import tqdm
 # Type to confirm whether to proceed or not
 def confirmed(prompt=None, resp=False, confirmation_required=True):
     """
-    Reference: http://pydriosm.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
+    Reference: http://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
 
     :param prompt: [str] or None
     :param resp: [bool]
@@ -225,7 +225,7 @@ def save_fig(path_to_fig_file, dpi):
 def download(url, path_to_file):
     """
 
-    Ref: https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
+    Reference: https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
 
     :param url:
     :param path_to_file:
@@ -280,7 +280,7 @@ def show_progress(block_count, block_size, total_size):
 # Update a nested dictionary or similar mapping.
 def update_nested_dict(source_dict, overrides):
     """
-    Source: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    Reference: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 
     :param source_dict: [dict]
     :param overrides: [dict]
@@ -402,7 +402,7 @@ def distance_on_unit_sphere(x_coord, y_coord):
 def get_gps_midpoint(x_long, x_lat, y_long, y_lat):
     """
     Reference:
-    http://pydirosm.activestate.com/recipes/577713-midpoint-of-two-gps-points/
+    http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/
     http://www.movable-type.co.uk/scripts/latlong.html
     """
     # Input values as degrees, convert them to radians
