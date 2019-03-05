@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.1',
+    version='1.0.2',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -22,6 +22,7 @@ setuptools.setup(
         'nltk',
         'openpyxl',
         'pandas',
+        'pdfkit',
         'progressbar2',
         'requests',
         'tqdm',
@@ -31,7 +32,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
 
     classifiers=[
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
