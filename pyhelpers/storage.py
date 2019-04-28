@@ -11,7 +11,7 @@ import pandas as pd
 import pdfkit
 
 
-# Save pickles
+# Save Pickle file
 def save_pickle(pickle_data, path_to_pickle):
     """
     :param pickle_data: any object that could be dumped by the 'pickle' package
@@ -21,28 +21,35 @@ def save_pickle(pickle_data, path_to_pickle):
     pickle_filename = os.path.basename(path_to_pickle)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_pickle) else "Saving", pickle_filename), end="")
     try:
-        os.makedirs(os.path.dirname(path_to_pickle), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(path_to_pickle)), exist_ok=True)
         pickle_out = open(path_to_pickle, 'wb')
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
-        print("Done.")
+        print("Successfully.")
     except Exception as e:
-        print("failed due to {}.".format(e))
+        print("Failed. {}.".format(e))
 
 
-# Load pickles
-def load_pickle(path_to_pickle):
+# Load Pickle file
+def load_pickle(path_to_pickle, verbose=False):
     """
     :param path_to_pickle: [str] local file path
+    :param verbose: [bool] Whether to print note
     :return: the object retrieved from the pickle
     """
-    pickle_in = open(path_to_pickle, 'rb')
-    data = pickle.load(pickle_in)
-    pickle_in.close()
-    return data
+    print("Loading \"{}\" ... ".format(os.path.basename(path_to_pickle)), end="") if verbose else None
+    try:
+        pickle_in = open(path_to_pickle, 'rb')
+        pickle_data = pickle.load(pickle_in)
+        pickle_in.close()
+        print("Successfully.") if verbose else None
+    except Exception as e:
+        print("Failed. {}.".format(e)) if verbose else None
+        pickle_data = None
+    return pickle_data
 
 
-# Save and load JSON files
+# Save JSON file
 def save_json(json_data, path_to_json):
     """
     :param json_data: any object that could be dumped by the 'json' package
@@ -52,28 +59,35 @@ def save_json(json_data, path_to_json):
     json_filename = os.path.basename(path_to_json)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_json) else "Saving", json_filename), end="")
     try:
-        os.makedirs(os.path.dirname(path_to_json), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(path_to_json)), exist_ok=True)
         json_out = open(path_to_json, 'w')
         json.dump(json_data, json_out)
         json_out.close()
-        print("Done.")
+        print("Successfully.")
     except Exception as e:
-        print("failed due to {}.".format(e))
+        print("Failed. {}.".format(e))
 
 
-# Load JSON files
-def load_json(path_to_json):
+# Load JSON file
+def load_json(path_to_json, verbose=False):
     """
     :param path_to_json: [str] local file path
+    :param verbose: [bool] Whether to print note
     :return: the json data retrieved
     """
-    json_in = open(path_to_json, 'r')
-    data = json.load(json_in)
-    json_in.close()
-    return data
+    print("Loading \"{}\" ... ".format(os.path.basename(path_to_json)), end="") if verbose else None
+    try:
+        json_in = open(path_to_json, 'r')
+        json_data = json.load(json_in)
+        json_in.close()
+        print("Successfully.") if verbose else None
+    except Exception as e:
+        print("Failed. {}.".format(e)) if verbose else None
+        json_data = None
+    return json_data
 
 
-# Save Excel spreadsheet/workbook
+# Save Excel workbook
 def save_excel(excel_data, path_to_excel, sep, index, sheet_name, engine='xlsxwriter'):
     """
     :param excel_data: any [DataFrame] that could be dumped saved as a Excel workbook, e.g. '.csv', '.xlsx'
@@ -109,7 +123,7 @@ def save_excel(excel_data, path_to_excel, sep, index, sheet_name, engine='xlsxwr
         print("Failed. {}.".format(e))
 
 
-# Save data locally (.pickle, .csv or .xlsx)
+# Save data locally (".pickle", ".csv", ".xlsx" or ".xls")
 def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='xlsxwriter', deep_copy=True):
     """
     :param data: any object that could be dumped
@@ -141,7 +155,7 @@ def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='
             print("Note that the file extension is not among the recognisable formats of this 'save()' function.")
 
 
-# Save a figure using plt.savefig()
+# Save a figure using matplotlib.pyplot.savefig and Inkscape
 def save_fig(path_to_fig_file, dpi):
     fig_filename = os.path.basename(path_to_fig_file)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_fig_file) else "Saving", fig_filename), end="")
