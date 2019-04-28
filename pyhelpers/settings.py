@@ -53,6 +53,6 @@ def pd_preferences(reset=False):
         pandas.reset_option('all')
 
 
-mpl_preferences(use_cambria=False, reset=False)
-np_preferences(reset=False)
-pd_preferences(reset=False)
+# mpl_preferences(use_cambria=False, reset=False)
+# np_preferences(reset=False)
+# pd_preferences(reset=False)
