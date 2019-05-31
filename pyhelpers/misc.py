@@ -62,3 +62,52 @@ def update_nested_dict(source_dict, overrides):
         else:
             source_dict[key] = overrides[key]
     return source_dict
+
+
+# Get a variable's name as a string
+def get_var_name(var):
+    var_name = [k for k, v in locals().items() if v == var][0]
+    return var_name
+
+
+# Split a list into (evenly sized) chunks
+def split_list(lst, chunk_size):
+    """Yield successive n-sized chunks from a list
+    Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
+
+    """
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
+
+# Get all values in a nested dictionary
+def get_all_values(key, target_dict):
+    """
+    Reference:
+    https://gist.github.com/douglasmiranda/5127251
+    https://stackoverflow.com/questions/9807634/find-all-occurrences-of-a-key-in-nested-python-dictionaries-and-lists
+
+    :param key:
+    :param target_dict: [dict]
+    :return:
+    """
+    for k, v in target_dict.items():
+        if k == key:
+            yield v
+        elif isinstance(v, dict):
+            for x in get_all_values(k, v):
+                yield x
+        elif isinstance(v, list):
+            for d in v:
+                for y in get_all_values(k, d):
+                    yield y
+        else:
+            pass
+
+
+#
+def remove_multi_keys(dictionary, *keys):
+    assert isinstance(dictionary, dict)
+    for k in keys:
+        if k in dictionary.keys():
+            dictionary.pop(k)
