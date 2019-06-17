@@ -6,27 +6,32 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.3',
+    version='1.0.6',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
 
-    description="A small toolkit of helper functions to facilitate trivial processes",
+    description="A small toolkit of helper functions to facilitate trivial data manipulations",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
     url='https://github.com/mikeqfu/pyhelpers',
 
     install_requires=[
+        'fuzzywuzzy',
         'matplotlib',
         'nltk',
+        'numpy',
         'openpyxl',
         'pandas',
         'pdfkit',
-        'progressbar2',
+        # 'progressbar2',
+        'python-rapidjson',
         'requests',
         'tqdm',
-        'XlsxWriter'
+        'xlrd',
+        'xlsxwriter',
+        # 'xlwt'
     ],
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),

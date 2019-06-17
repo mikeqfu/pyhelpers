@@ -1,55 +1,38 @@
 # pyhelpers
-(Version 1.0.3)
+(Version 1.0.6)
 
-This package contains a few helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files.
+This package contains a few helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files...
+
+Currently, the package includes the following modules: *dir*, *download*, *geom*, *misc*, *settings*, *store* and *text*. 
 
 
 
 #### Quick Start
 
 ```python
-import pyhelpers
+from pyhelpers.misc import confirmed
+from pyhelpers.store import cd, save_pickle, load_pickle
 ```
-
-
 
 ###### A confirmation of whether to continue is needed:
 
 ```python
-pyhelpers.confirmed(prompt="Continue?...")
+confirmed(prompt="Continue?...")
 ```
 
-
-
-###### To save/load a variable as a pickle file:
+###### To save/retrieve data to/from a pickle file:
 
 ```python
-ex_var = 1
+example_var = 1
+path_to_pickle = cd("example_var.pickle")  # cd() returns the current working directory
 
-pyhelpers.save_pickle(ex_var, "C:/Users/user_name/ex_var.pickle")
+# Save `example_var` as a pickle file
+save_pickle(ex_var, path_to_pickle)
+
+# Retrieve `example_var` from `path_to_pickle`
+example_var_retrieved = load_pickle(path_to_pickle)
+
+print(example_var_retrieved == example_var)  # should return True
 ```
 
-To load the pickle file:
-
-```python
-pyhelpers.load_pickle("C:/Users/user_name/ex_var.pickle")
-```
-
-
-
-
-
-#### References:
-
-[1] http://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
-
-[2] https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
-
-[3] https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-
-[4] http://www.johndcook.com/blog/python_longitude_latitude/
-
-[5] http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/
-
-[6] http://www.movable-type.co.uk/scripts/latlong.html
-
+... 
