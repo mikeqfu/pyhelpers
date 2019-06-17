@@ -1,35 +1,52 @@
 """ Geometry-related utilities """
 
 import functools
+
 import math
+import pyproj
+
+
+# Convert british national grid (OSBG36) to latitude and longitude (WGS84)
+def osgb36_to_wgs84(easting, northing):
+    osgb36 = pyproj.Proj(init='EPSG:27700')  # UK Ordnance Survey, 1936 datum
+    wgs84 = pyproj.Proj(init='EPSG:4326')  # LonLat with WGS84 datum used by GPS units and Google Earth
+    longitude, latitude = pyproj.transform(osgb36, wgs84, easting, northing)
+    return longitude, latitude
+
+
+# Convert latitude and longitude (WGS84) to british national grid (OSBG36)
+def wgs84_to_osgb36(longitude, latitude):
+    wgs84 = pyproj.Proj(init='EPSG:4326')  # LonLat with WGS84 datum used by GPS units and Google Earth
+    osgb36 = pyproj.Proj(init='EPSG:27700')  # UK Ordnance Survey, 1936 datum
+    easting, northing = pyproj.transform(wgs84, osgb36, longitude, latitude)
+    return easting, northing
 
 
 #
-def find_closest_point(point, pts):
+def find_closest_point(pt, pts):
     """
-    :param point: (long, lat)
-    :param pts: a sequence of reference points
-    :return:
-
-    math.hypot(x, y) return the Euclidean norm, sqrt(x*x + y*y).
-    This is the length of the vector from the origin to point (x, y).
-
+    :param pt: [tuple] (lon, lat)
+    :param pts: [iterable] a sequence of reference points
+    :return: [tuple]
     """
-
     # Define a function calculating distance between two points
     def distance(o, d):
+        """
+        math.hypot(x, y) return the Euclidean norm, sqrt(x*x + y*y).
+        This is the length of the vector from the origin to point (x, y).
+        """
         return math.hypot(o[0] - d[0], o[1] - d[1])
 
     # Find the min value using the distance function with coord parameter
-    return min(pts, key=functools.partial(distance, point))
+    return min(pts, key=functools.partial(distance, pt))
 
 
 #
-def distance_on_unit_sphere(x_coord, y_coord):
+def calc_distance_on_unit_sphere(x_pt, y_pt):
     """
-    :param x_coord: [list]
-    :param y_coord: [list]
-    :return:
+    :param x_pt: [shapely.geometry.point.Point]
+    :param y_pt: [shapely.geometry.point.Point]
+    :return: [float]
 
     Reference: http://www.johndcook.com/blog/python_longitude_latitude/
 
@@ -52,19 +69,16 @@ def distance_on_unit_sphere(x_coord, y_coord):
     This function is in the public domain. Do whatever you want with it, no strings attached.
 
     """
-    lat1, long1 = x_coord[0], x_coord[1]
-    lat2, long2 = y_coord[0], y_coord[1]
-
     # Convert latitude and longitude to spherical coordinates in radians.
     degrees_to_radians = math.pi / 180.0
 
     # phi = 90 - latitude
-    phi1 = (90.0 - lat1) * degrees_to_radians
-    phi2 = (90.0 - lat2) * degrees_to_radians
+    phi1 = (90.0 - x_pt.y) * degrees_to_radians
+    phi2 = (90.0 - y_pt.y) * degrees_to_radians
 
     # theta = longitude
-    theta1 = long1 * degrees_to_radians
-    theta2 = long2 * degrees_to_radians
+    theta1 = x_pt.x * degrees_to_radians
+    theta2 = y_pt.x * degrees_to_radians
 
     # Compute spherical distance from spherical coordinates.
 
@@ -81,21 +95,25 @@ def distance_on_unit_sphere(x_coord, y_coord):
     return arc
 
 
-# Midpoint of two GPS points
-def get_gps_midpoint(x_long, x_lat, y_long, y_lat):
+# Get the midpoint between two GPS points
+def get_midpoint_along_earth_surface(x_pt, y_pt):
     """
+    :param x_pt: [shapely.geometry.point.Point]
+    :param y_pt: [shapely.geometry.point.Point]
+    :return: [tuple]
+
     Reference:
     http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/
     http://www.movable-type.co.uk/scripts/latlong.html
     """
     # Input values as degrees, convert them to radians
-    long_1, lat_1 = math.radians(x_long), math.radians(x_lat)
-    long_2, lat_2 = math.radians(y_long), math.radians(y_lat)
+    lon_1, lat_1 = math.radians(x_pt.x), math.radians(x_pt.y)
+    lon_2, lat_2 = math.radians(y_pt.x), math.radians(y_pt.y)
 
-    b_x, b_y = math.cos(lat_2) * math.cos(long_2 - long_1), math.cos(lat_2) * math.sin(long_2 - long_1)
+    b_x, b_y = math.cos(lat_2) * math.cos(lon_2 - lon_1), math.cos(lat_2) * math.sin(lon_2 - lon_1)
     lat_3 = math.atan2(math.sin(lat_1) + math.sin(lat_2),
                        math.sqrt((math.cos(lat_1) + b_x) * (math.cos(lat_1) + b_x) + b_y ** 2))
-    long_3 = long_1 + math.atan2(b_y, math.cos(lat_1) + b_x)
+    long_3 = lon_1 + math.atan2(b_y, math.cos(lat_1) + b_x)
 
     midpoint = math.degrees(long_3), math.degrees(lat_3)
 
@@ -103,11 +121,14 @@ def get_gps_midpoint(x_long, x_lat, y_long, y_lat):
 
 
 # (between <shapely.geometry.point.Point>s)
-def get_midpoint(start_point, end_point):
+def get_geometric_midpoint(x_pt, y_pt):
     """
-    :param start_point: [shapely.geometry.point.Point]
-    :param end_point: [shapely.geometry.point.Point]
-    :return:
+    :param x_pt: [shapely.geometry.point.Point]
+    :param y_pt: [shapely.geometry.point.Point]
+    :return: [tuple]
     """
-    midpoint = (start_point.x + end_point.x) / 2, (start_point.y + end_point.y) / 2
+    # assert isinstance(x_pt, shapely.geometry.point.Point)
+    # assert isinstance(y_pt, shapely.geometry.point.Point)
+
+    midpoint = (x_pt.x + y_pt.x) / 2, (x_pt.y + y_pt.y) / 2
     return midpoint
