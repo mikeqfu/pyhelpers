@@ -1,7 +1,6 @@
 """ Save and Load files """
 
 import copy
-import json
 import os
 import pickle
 import subprocess
@@ -9,6 +8,7 @@ import subprocess
 import matplotlib.pyplot as plt
 import pandas as pd
 import pdfkit
+import rapidjson
 
 
 # Save Pickle file
@@ -61,7 +61,7 @@ def save_json(json_data, path_to_json):
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path_to_json)), exist_ok=True)
         json_out = open(path_to_json, 'w')
-        json.dump(json_data, json_out)
+        rapidjson.dump(json_data, json_out)
         json_out.close()
         print("Successfully.")
     except Exception as e:
@@ -78,7 +78,7 @@ def load_json(path_to_json, verbose=False):
     print("Loading \"{}\" ... ".format(os.path.basename(path_to_json)), end="") if verbose else None
     try:
         json_in = open(path_to_json, 'r')
-        json_data = json.load(json_in)
+        json_data = rapidjson.load(json_in)
         json_in.close()
         print("Successfully.") if verbose else None
     except Exception as e:
@@ -170,21 +170,45 @@ def save_fig(path_to_fig_file, dpi):
         print("Failed. {}.".format(e))
 
 
-# Print a web page as PDF
-def save_to_pdf(url_to_web_page, path_to_pdf):
+# Save a .svg file as a .emf file
+def save_svg_as_emf(path_to_svg, path_to_emf):
+    path_to_inkscape = "C:\\Program Files\\Inkscape\\inkscape.exe"
+    if os.path.isfile(path_to_inkscape):
+        print("Converting \".svg\" to \".emf\" ... ", end="")
+        try:
+            subprocess.call([path_to_inkscape, '-z', path_to_svg, '-M', path_to_emf])
+            print("Done. \nThe .emf file is saved to \"{}\".".format(path_to_emf))
+        except Exception as e:
+            print("Failed. {}".format(e))
+    else:
+        print("\"Inkscape\" (https://inkscape.org) is required to run this function. It is not found on this device.")
+
+
+# Save a web page as a PDF file
+def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0, encoding='UTF-8'):
     """
     :param url_to_web_page: [str] URL of a web page
     :param path_to_pdf: [str] local file path
-    :return: whether the web page is saved successfully
+    :param page_size: [str]
+    :param zoom: [float]
+    :param encoding: [str]
     """
-    config = pdfkit.configuration(wkhtmltopdf="C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe")
-    pdf_options = {'page-size': 'A4',
-                   # 'margin-top': '0',
-                   # 'margin-right': '0',
-                   # 'margin-left': '0',
-                   # 'margin-bottom': '0',
-                   'zoom': '1.0',
-                   'encoding': "UTF-8"}
-    status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config, options=pdf_options)
-    return "Web page '{}' saved as '{}'".format(url_to_web_page, os.path.basename(path_to_pdf)) \
-        if status else "Check URL status."
+    path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
+    if os.path.isfile(path_to_wkhtmltopdf):
+        try:
+            print("Saving the web page \"{}\" as PDF ... ".format(url_to_web_page), end="")
+            config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+            pdf_options = {'page-size': page_size,
+                           # 'margin-top': '0',
+                           # 'margin-right': '0',
+                           # 'margin-left': '0',
+                           # 'margin-bottom': '0',
+                           'zoom': str(float(zoom)),
+                           'encoding': encoding}
+            status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config, options=pdf_options)
+            print("Done. \nThe web page is saved to \"{}\"".format(path_to_pdf)
+                  if status else "Failed. Check if the URL is available.")
+        except Exception as e:
+            print("Failed. {}".format(e))
+    else:
+        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org) not found. It is required to run this function.")
