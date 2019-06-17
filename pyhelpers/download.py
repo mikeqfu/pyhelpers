@@ -4,7 +4,6 @@ import os
 import time
 import urllib.request
 
-import progressbar
 import requests
 import tqdm
 
@@ -58,24 +57,26 @@ def download(url, path_to_file, wait_to_retry=3600, show_progress=True):
             print("\nFailed. {}".format(e))
 
 
-# Make a custom bar to show downloading progress
-def make_custom_progressbar():
-    widgets = [progressbar.Bar(),
-               ' ',
-               progressbar.Percentage(),
-               ' [',
-               progressbar.Timer(),
-               '] ',
-               progressbar.FileTransferSpeed(),
-               ' (',
-               progressbar.ETA(),
-               ') ']
-    progress_bar = progressbar.ProgressBar(widgets=widgets)
-    return progress_bar
-
-
 # Show downloading progress
 def show_progress_bar(block_count, block_size, total_size):
+
+    import progressbar
+
+    # Make a custom bar to show downloading progress
+    def make_custom_progressbar():
+        widgets = [progressbar.Bar(),
+                   ' ',
+                   progressbar.Percentage(),
+                   ' [',
+                   progressbar.Timer(),
+                   '] ',
+                   progressbar.FileTransferSpeed(),
+                   ' (',
+                   progressbar.ETA(),
+                   ') ']
+        progress_bar = progressbar.ProgressBar(widgets=widgets)
+        return progress_bar
+
     p_bar = make_custom_progressbar()
     if p_bar.max_value is None:
         p_bar.max_value = total_size
