@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.6',
+    version='1.0.7',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -30,8 +30,8 @@ setuptools.setup(
         'requests',
         'tqdm',
         'xlrd',
-        'xlsxwriter',
-        # 'xlwt'
+        # 'xlwt',
+        'XlsxWriter'
     ],
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
