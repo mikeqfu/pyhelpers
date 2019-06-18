@@ -24,7 +24,6 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
 
     Example: confirm(prompt="Create Directory?", resp=True)
              Create Directory? Yes|No:
-
     """
     if confirmation_required:
         if prompt is None:
@@ -61,7 +60,6 @@ def update_nested_dict(source_dict, overrides):
     :param overrides: [dict]
     :return:
     """
-
     for key, val in overrides.items():
         if isinstance(val, collections.Mapping):
             source_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
@@ -94,9 +92,9 @@ def get_variable_names(*variable):
 
 # Split a list into (evenly sized) chunks
 def divide_list_into_chunks(lst, chunk_size):
-    """Yield successive n-sized chunks from a list
+    """
+    Yield successive n-sized chunks from a list
     Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
-
     """
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
@@ -105,8 +103,8 @@ def divide_list_into_chunks(lst, chunk_size):
 # Divide a list into sub-lists of equal length
 def divide_list_equally(lst, chunk_size):
     """
-    Ref: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     Yield successive n-sized chunks from l.
+    Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     """
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
@@ -133,8 +131,6 @@ def get_all_values_from_nested_dict(key, target_dict):
             for d in v:
                 for y in get_all_values_from_nested_dict(k, d):
                     yield y
-        else:
-            pass
 
 
 #
@@ -163,7 +159,6 @@ def csr_matrix_to_dict(csr_matrix, vectorizer):
         row_feat = [features[x] for x in csr_matrix.indices[sid:eid]]
         row_data = csr_matrix.data[sid:eid]
         dict_data.append(dict(zip(row_feat, row_data)))
-
     return pd.Series(dict_data).to_frame('word_count')
 
 
@@ -193,7 +188,6 @@ def cmap_discretisation(cmap_param, no_of_colours):
         x = np.resize(np.arange(100), (5, 100))
         d_jet = cmap_discretize(cm.jet, 5)
         plt.imshow(x, cmap=d_jet)
-
     """
     if isinstance(cmap_param, str):
         cmap_param = matplotlib.cm.get_cmap(cmap_param)
@@ -219,7 +213,6 @@ def colour_bar_index(no_of_colours, cmap_param, labels=None, **kwargs):
 
     This is a convenience function to stop making off-by-one errors
     Takes a standard colour ramp, and discretizes it, then draws a colour bar with correctly aligned labels
-
     """
     cmap_param = cmap_discretisation(cmap_param, no_of_colours)
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap_param)
