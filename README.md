@@ -1,5 +1,5 @@
 # pyhelpers
-(Version 1.0.8)
+(Version 1.0.12)
 
 This package contains a few helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files...
 
