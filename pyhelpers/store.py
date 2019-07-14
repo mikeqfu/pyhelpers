@@ -5,9 +5,6 @@ import os
 import pickle
 import subprocess
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import pdfkit
 import rapidjson
 
 
@@ -99,6 +96,8 @@ def save_excel(excel_data, path_to_excel, sep, index, sheet_name, engine='xlsxwr
                         'openpyxl' or 'xlsxWriter' modules for '.xlsx' files.
     :return: whether the data has been successfully saved or updated
     """
+    import pandas as pd
+
     excel_filename = os.path.basename(path_to_excel)
     _, save_as = os.path.splitext(excel_filename)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_excel) else "Saving", excel_filename), end="")
@@ -135,6 +134,8 @@ def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='
     :param deep_copy: [bool] whether make a deep copy of the data before saving it
     :return: whether the data has been successfully saved or updated
     """
+    import pandas as pd
+
     # Make a copy the original data
     dat = copy.deepcopy(data) if deep_copy else copy.copy(data)
 
@@ -157,6 +158,7 @@ def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='
 
 # Save a figure using matplotlib.pyplot.savefig and Inkscape
 def save_fig(path_to_fig_file, dpi):
+    import matplotlib.pyplot as plt
     fig_filename = os.path.basename(path_to_fig_file)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_fig_file) else "Saving", fig_filename), end="")
     try:
@@ -193,6 +195,8 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
     :param zoom: [float]
     :param encoding: [str]
     """
+    import pdfkit
+
     path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
     if os.path.isfile(path_to_wkhtmltopdf):
         try:

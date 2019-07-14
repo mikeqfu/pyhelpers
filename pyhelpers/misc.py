@@ -4,12 +4,7 @@ import collections
 import inspect
 import re
 
-import matplotlib
-import matplotlib.cm
-import matplotlib.colors
-import matplotlib.pyplot
 import numpy as np
-import pandas as pd
 
 
 # Type to confirm whether to proceed or not
@@ -152,6 +147,8 @@ def get_extreme_outlier_bounds(data_set, k=1.5):
 
 # Convert compressed sparse matrix to dictionary
 def csr_matrix_to_dict(csr_matrix, vectorizer):
+    import pandas as pd
+
     features = vectorizer.get_feature_names()
     dict_data = []
     for i in range(len(csr_matrix.indptr) - 1):
@@ -189,6 +186,9 @@ def cmap_discretisation(cmap_param, no_of_colours):
         d_jet = cmap_discretize(cm.jet, 5)
         plt.imshow(x, cmap=d_jet)
     """
+
+    import matplotlib.cm
+    import matplotlib.colors
     if isinstance(cmap_param, str):
         cmap_param = matplotlib.cm.get_cmap(cmap_param)
     colors_i = np.concatenate((np.linspace(0, 1., no_of_colours), (0., 0., 0., 0.)))
@@ -214,6 +214,9 @@ def colour_bar_index(no_of_colours, cmap_param, labels=None, **kwargs):
     This is a convenience function to stop making off-by-one errors
     Takes a standard colour ramp, and discretizes it, then draws a colour bar with correctly aligned labels
     """
+
+    import matplotlib.cm
+    import matplotlib.pyplot
     cmap_param = cmap_discretisation(cmap_param, no_of_colours)
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap_param)
     mappable.set_array(np.array([]))
