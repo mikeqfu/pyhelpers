@@ -35,14 +35,10 @@ def load_pickle(path_to_pickle, verbose=False):
     :return: the object retrieved from the pickle
     """
     print("Loading \"{}\" ... ".format(os.path.basename(path_to_pickle)), end="") if verbose else None
-    try:
-        pickle_in = open(path_to_pickle, 'rb')
-        pickle_data = pickle.load(pickle_in)
-        pickle_in.close()
-        print("Successfully.") if verbose else None
-    except Exception as e:
-        print("Failed. {}.".format(e)) if verbose else None
-        pickle_data = None
+    pickle_in = open(path_to_pickle, 'rb')
+    pickle_data = pickle.load(pickle_in)
+    pickle_in.close()
+    print("Successfully.") if verbose else None
     return pickle_data
 
 
@@ -73,14 +69,10 @@ def load_json(path_to_json, verbose=False):
     :return: the json data retrieved
     """
     print("Loading \"{}\" ... ".format(os.path.basename(path_to_json)), end="") if verbose else None
-    try:
-        json_in = open(path_to_json, 'r')
-        json_data = rapidjson.load(json_in)
-        json_in.close()
-        print("Successfully.") if verbose else None
-    except Exception as e:
-        print("Failed. {}.".format(e)) if verbose else None
-        json_data = None
+    json_in = open(path_to_json, 'r')
+    json_data = rapidjson.load(json_in)
+    json_in.close()
+    print("Successfully.") if verbose else None
     return json_data
 
 
