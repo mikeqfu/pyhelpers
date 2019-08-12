@@ -99,8 +99,7 @@ def save_excel(excel_data, path_to_excel, sep, index, sheet_name, engine='xlsxwr
             excel_data.to_csv(path_to_excel, index=index, sep=sep, na_rep='', float_format=None, columns=None,
                               header=True, index_label=None, mode='w', encoding=None, compression='infer',
                               quoting=None, quotechar='"', line_terminator=None, chunksize=None,
-                              tupleize_cols=None, date_format=None, doublequote=True, escapechar=None,
-                              decimal='.')
+                              date_format=None, doublequote=True, escapechar=None, decimal='.')
         else:  # Save the data to a .xlsx or .xls file, e.g. excel_filename.endswith(".xlsx")
             xlsx_writer = pd.ExcelWriter(path_to_excel, engine)
             excel_data.to_excel(xlsx_writer, sheet_name, index=index, na_rep='', float_format=None,
@@ -154,9 +153,10 @@ def save_fig(path_to_fig_file, dpi):
     fig_filename = os.path.basename(path_to_fig_file)
     print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_fig_file) else "Saving", fig_filename), end="")
     try:
-        plt.savefig(path_to_fig_file, dpi=dpi)
         _, save_as = os.path.splitext(path_to_fig_file)
-        if save_as == ".svg":
+        # assert save_as.strip(".") in plt.gcf().canvas.get_supported_filetypes().keys()
+        plt.savefig(path_to_fig_file, dpi=dpi)
+        if save_as == ".svg" and os.path.isfile("C:\\Program Files\\Inkscape\\inkscape.exe"):
             path_to_emf = path_to_fig_file.replace(save_as, ".emf")
             subprocess.call(["C:\\Program Files\\Inkscape\\inkscape.exe", '-z', path_to_fig_file, '-M', path_to_emf])
         print("Successfully.")
