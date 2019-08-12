@@ -1,8 +1,8 @@
 """ Geometry-related utilities """
 
 import functools
-
 import math
+
 import numpy as np
 
 
@@ -24,7 +24,7 @@ def wgs84_to_osgb36(longitude, latitude):
     return easting, northing
 
 
-# Convert british national grid (OSBG36) to latitude and longitude (WGS84)(Reference: http://www.hannahfry.co.uk)
+# Convert british national grid (OSBG36) to latitude and longitude (WGS84) (Reference: http://www.hannahfry.co.uk)
 def osgb36_to_wgs84_calc(easting, northing):
     """
     :param easting: X
@@ -230,7 +230,7 @@ def wgs84_to_osgb36_calc(latitude, longitude):
     return x, y
 
 
-#
+# Find the closest point of the given point to a list of points
 def find_closest_point(pt, pts):
     """
     :param pt: [tuple] (lon, lat)
@@ -249,7 +249,7 @@ def find_closest_point(pt, pts):
     return min(pts, key=functools.partial(distance, pt))
 
 
-#
+# Calculate distance between two points
 def calc_distance_on_unit_sphere(x_pt, y_pt):
     """
     :param x_pt: [shapely.geometry.point.Point]
@@ -258,8 +258,8 @@ def calc_distance_on_unit_sphere(x_pt, y_pt):
 
     Reference: http://www.johndcook.com/blog/python_longitude_latitude/
 
-    The following function returns the distance between two locations based on each point’s  longitude and latitude. The
-    distance returned is relative to Earth’s radius. To get the distance in miles, multiply by 3960. To get the
+    The following function returns the distance between two locations based on each point’s  longitude and latitude.
+    The distance returned is relative to Earth’s radius. To get the distance in miles, multiply by 3960. To get the
     distance in kilometers, multiply by 6373.
 
     Latitude is measured in degrees north of the equator; southern locations have negative latitude. Similarly,
@@ -303,7 +303,7 @@ def calc_distance_on_unit_sphere(x_pt, y_pt):
     return arc
 
 
-# Get the midpoint between two GPS points
+# Get the midpoint between two points
 def get_midpoint_along_earth_surface(x_pt, y_pt):
     """
     :param x_pt: [shapely.geometry.point.Point]
@@ -328,7 +328,7 @@ def get_midpoint_along_earth_surface(x_pt, y_pt):
     return midpoint
 
 
-# (between <shapely.geometry.point.Point>s)
+# Get the midpoint between <shapely.geometry.point.Point>s
 def get_geometric_midpoint(x_pt, y_pt):
     """
     :param x_pt: [shapely.geometry.point.Point]

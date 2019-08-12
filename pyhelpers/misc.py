@@ -128,7 +128,7 @@ def get_all_values_from_nested_dict(key, target_dict):
                     yield y
 
 
-#
+# Remove multiple keys from a dictionary
 def remove_multiple_keys(dictionary, *keys):
     assert isinstance(dictionary, dict)
     for k in keys:
