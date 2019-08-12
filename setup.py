@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.13',
+    version='1.0.14',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
