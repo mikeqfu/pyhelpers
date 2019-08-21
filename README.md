@@ -1,12 +1,20 @@
-# pyhelpers
-(Version 1.0.14)
+# PyHelpers
+**Author**: Qian Fu [![Twitter Follow](https://img.shields.io/twitter/follow/Qian_Fu?label=Follow&style=social)](https://twitter.com/Qian_Fu)
+
+[![PyPI](https://img.shields.io/pypi/v/pyhelpers?color=important)](https://pypi.org/project/pyhelpers/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)
+[![PyPI - License](https://img.shields.io/pypi/l/pyrcs)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
+![GitHub repo size](https://img.shields.io/github/repo-size/mikeqfu/pyhelpers?color=yellowgreen)
+
+
 
 This package contains a few helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files...
 
 Currently, the package includes the following modules: *dir*, *download*, *geom*, *misc*, *settings*, *store* and *text*. 
 
 
-#### Quick Start
+
+## Quick start
 
 ```python=
 from pyhelpers.misc import confirmed
