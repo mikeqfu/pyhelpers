@@ -8,28 +8,40 @@
 
 
 
-This package contains a few helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files...
+This is a set of helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files. Current modules include: *dir.py*, *download.py*, *geom.py*, *misc.py*, *settings.py*, *store.py* and *text.py*. 
 
-Currently, the package includes the following modules: *dir*, *download*, *geom*, *misc*, *settings*, *store* and *text*. 
+(Work still in progress.)
+
+
+
+## Contents
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+  - 
+
+
+
+## Installation
 
 
 
 ## Quick start
 
-```python=
+```python
 from pyhelpers.misc import confirmed
 from pyhelpers.store import cd, save_pickle, load_pickle
 ```
 
-###### A confirmation of whether to continue is needed:
+### A confirmation of whether to continue is needed:
 
-```python=
+```python
 confirmed(prompt="Continue?...")
 ```
 
-###### To save/retrieve data to/from a pickle file:
+### To save/retrieve data to/from a pickle file
 
-```python=
+```python
 example_var = 1
 path_to_pickle = cd("example_var.pickle")  # cd() returns the current working directory
 
@@ -42,4 +54,3 @@ example_var_retrieved = load_pickle(path_to_pickle)
 print(example_var_retrieved == example_var)  # should return True
 ```
 
-... 
