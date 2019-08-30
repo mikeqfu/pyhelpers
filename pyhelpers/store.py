@@ -5,7 +5,47 @@ import os
 import pickle
 import subprocess
 
+import feather
 import rapidjson
+
+
+# Save feather file
+def save_feather(feather_data, path_to_feather):
+    """
+    :param feather_data: [pd.DataFrame] to be dumped as a 'feather-formatted' file
+    :param path_to_feather: [str] local file path
+    :return: whether the data has been successfully saved
+    """
+    # assert isinstance(feather_data, pd.DataFrame)
+    feather_filename = os.path.basename(path_to_feather)
+    msg = "{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_feather) else "Saving", feather_filename)
+    print(msg, end="")
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(path_to_feather)), exist_ok=True)
+        feather_data.to_feather(path_to_feather)
+        print("Successfully.")
+    except ValueError:
+        print("Possible issue occurred to column names: 'feather' must have string column names.")
+        print("Trying to use \"feather-format\" ... ", end="")
+        feather.write_dataframe(feather_data, path_to_feather)
+        print("{} successfully.".format(msg.lower().replace(" ... ", "")))
+    except Exception as e:
+        print("{} failed. {}.".format(msg.lower().replace(" ... ", ""), e))
+
+
+# Load feather file
+def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False):
+    """
+    :param path_to_feather: [str] local file path to a feather-formatted file
+    :param columns: [sequence]
+    :param use_threads: [bool]
+    :param verbose: [bool] whether to print note
+    :return: [pd.DataFrame] retrieved from the feather file
+    """
+    print("Loading \"{}\" ... ".format(os.path.basename(path_to_feather)), end="") if verbose else None
+    feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
+    print("Successfully.") if verbose else None
+    return feather_data
 
 
 # Save Pickle file
