@@ -10,15 +10,15 @@ import numpy as np
 # Type to confirm whether to proceed or not
 def confirmed(prompt=None, resp=False, confirmation_required=True):
     """
-    Reference: http://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
-
     :param prompt: [str] or None
     :param resp: [bool]
     :param confirmation_required: [bool]
     :return:
 
     Example: confirm(prompt="Create Directory?", resp=True)
-             Create Directory? Yes|No:
+             Create Directory? [No]|Yes:
+
+    Reference: http://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/
     """
     if confirmation_required:
         if prompt is None:
@@ -49,11 +49,11 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
 # Update a nested dictionary or similar mapping
 def update_nested_dict(source_dict, overrides):
     """
-    Reference: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
-
     :param source_dict: [dict]
     :param overrides: [dict]
-    :return:
+    :return: [dict]
+
+    Reference: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
     """
     for key, val in overrides.items():
         if isinstance(val, collections.Mapping):
@@ -89,6 +89,7 @@ def get_variable_names(*variable):
 def divide_list_into_chunks(lst, chunk_size):
     """
     Yield successive n-sized chunks from a list
+
     Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     """
     for i in range(0, len(lst), chunk_size):
@@ -99,6 +100,7 @@ def divide_list_into_chunks(lst, chunk_size):
 def divide_list_equally(lst, chunk_size):
     """
     Yield successive n-sized chunks from l.
+
     Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
     """
     for i in range(0, len(lst), chunk_size):
@@ -108,13 +110,12 @@ def divide_list_equally(lst, chunk_size):
 # Get all values in a nested dictionary
 def get_all_values_from_nested_dict(key, target_dict):
     """
+    :param key:
+    :param target_dict: [dict]
+
     Reference:
     https://gist.github.com/douglasmiranda/5127251
     https://stackoverflow.com/questions/9807634/find-all-occurrences-of-a-key-in-nested-python-dictionaries-and-lists
-
-    :param key:
-    :param target_dict: [dict]
-    :return:
     """
     for k, v in target_dict.items():
         if k == key:
@@ -147,8 +148,6 @@ def get_extreme_outlier_bounds(data_set, k=1.5):
 
 # Convert compressed sparse matrix to dictionary
 def csr_matrix_to_dict(csr_matrix, vectorizer):
-    import pandas as pd
-
     features = vectorizer.get_feature_names()
     dict_data = []
     for i in range(len(csr_matrix.indptr) - 1):
@@ -156,7 +155,11 @@ def csr_matrix_to_dict(csr_matrix, vectorizer):
         row_feat = [features[x] for x in csr_matrix.indices[sid:eid]]
         row_data = csr_matrix.data[sid:eid]
         dict_data.append(dict(zip(row_feat, row_data)))
-    return pd.Series(dict_data).to_frame('word_count')
+
+    import pandas as pd
+    mat_dict = pd.Series(dict_data).to_frame('word_count')
+
+    return mat_dict
 
 
 # Calculate interquartile range
@@ -179,14 +182,13 @@ def cmap_discretisation(cmap_param, no_of_colours):
     :param no_of_colours: number of colours
     :return: a discrete colormap from the continuous colormap cmap.
 
-    Reference: http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB
-
     Example:
         x = np.resize(np.arange(100), (5, 100))
         d_jet = cmap_discretize(cm.jet, 5)
         plt.imshow(x, cmap=d_jet)
-    """
 
+    Reference: http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB
+    """
     import matplotlib.cm
     import matplotlib.colors
     if isinstance(cmap_param, str):
@@ -209,10 +211,10 @@ def colour_bar_index(no_of_colours, cmap_param, labels=None, **kwargs):
     :param kwargs:
     :return:
 
-    Reference: http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB
-
     This is a convenience function to stop making off-by-one errors
     Takes a standard colour ramp, and discretizes it, then draws a colour bar with correctly aligned labels
+
+    Reference: http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB
     """
 
     import matplotlib.cm
