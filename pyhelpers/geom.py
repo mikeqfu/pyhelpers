@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 
-# Convert british national grid (OSBG36) to latitude and longitude (WGS84)
+# Convert British national grid (OSGB36) to latitude and longitude (WGS84)
 def osgb36_to_wgs84(easting, northing):
     import pyproj
     osgb36 = pyproj.Proj(init='EPSG:27700')  # UK Ordnance Survey, 1936 datum
@@ -15,7 +15,7 @@ def osgb36_to_wgs84(easting, northing):
     return longitude, latitude
 
 
-# Convert latitude and longitude (WGS84) to british national grid (OSBG36)
+# Convert latitude and longitude (WGS84) to British national grid (OSGB36)
 def wgs84_to_osgb36(longitude, latitude):
     import pyproj
     wgs84 = pyproj.Proj(init='EPSG:4326')  # LonLat with WGS84 datum used by GPS units and Google Earth
@@ -24,7 +24,7 @@ def wgs84_to_osgb36(longitude, latitude):
     return easting, northing
 
 
-# Convert british national grid (OSBG36) to latitude and longitude (WGS84) (Reference: http://www.hannahfry.co.uk)
+# Convert british national grid (OSGB36) to latitude and longitude (WGS84)
 def osgb36_to_wgs84_calc(easting, northing):
     """
     :param easting: X
@@ -131,7 +131,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     return long, lat
 
 
-# Convert latitude and longitude (WGS84) to british national grid (OSBG36) (Reference: http://www.hannahfry.co.uk)
+# Convert latitude and longitude (WGS84) to british national grid (OSGB36)
 def wgs84_to_osgb36_calc(latitude, longitude):
     """
     :param latitude:
