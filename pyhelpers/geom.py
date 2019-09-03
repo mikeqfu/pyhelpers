@@ -36,7 +36,6 @@ def osgb36_to_wgs84_calc(easting, northing):
     Convert British National grid coordinates (OSGB36 Easting, Northing) to WGS84 latitude and longitude.
     The code below was copied/adapted from Hannah Fry's blog; the original code and post can be found at:
     http://www.hannahfry.co.uk/blog/2012/02/01/converting-british-national-grid-to-latitude-and-longitude-ii
-
     """
     # The Airy 180 semi-major and semi-minor axes used for OSGB36 (m)
     a, b = 6377563.396, 6356256.909
@@ -143,7 +142,6 @@ def wgs84_to_osgb36_calc(latitude, longitude):
     Convert WGS84 (latitude and longitude) to British National grid coordinates (OSGB36 Easting, Northing).
     The code below was copied/adapted from Hannah Fry's blog; the original code and post can be found at:
     http://www.hannahfry.co.uk/blog/2012/02/01/converting-latitude-and-longitude-to-british-national-grid
-
     """
     # First convert to radians. These are on the wrong ellipsoid currently: GRS80. (Denoted by _1)
     lon_1, lat_1 = longitude * np.pi / 180, latitude * np.pi / 180
@@ -256,8 +254,6 @@ def calc_distance_on_unit_sphere(x_pt, y_pt):
     :param y_pt: [shapely.geometry.point.Point]
     :return: [float]
 
-    Reference: http://www.johndcook.com/blog/python_longitude_latitude/
-
     The following function returns the distance between two locations based on each point’s  longitude and latitude.
     The distance returned is relative to Earth’s radius. To get the distance in miles, multiply by 3960. To get the
     distance in kilometers, multiply by 6373.
@@ -276,6 +272,7 @@ def calc_distance_on_unit_sphere(x_pt, y_pt):
 
     This function is in the public domain. Do whatever you want with it, no strings attached.
 
+    Reference: http://www.johndcook.com/blog/python_longitude_latitude/
     """
     # Convert latitude and longitude to spherical coordinates in radians.
     degrees_to_radians = math.pi / 180.0
@@ -310,7 +307,7 @@ def get_midpoint_along_earth_surface(x_pt, y_pt):
     :param y_pt: [shapely.geometry.point.Point]
     :return: [tuple]
 
-    Reference:
+    References:
     http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/
     http://www.movable-type.co.uk/scripts/latlong.html
     """
