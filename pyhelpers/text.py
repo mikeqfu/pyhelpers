@@ -4,24 +4,29 @@ import re
 
 
 # Find similar string from a list of strings
-def find_similar_str(x, lookup_list, processor='fuzzywuzzy', score_cutoff=10, substitution_cost=100):
+def find_similar_str(x, lookup_list, processor='fuzzywuzzy', substitution_cost=100):
     """
     :param x: [str]
     :param lookup_list: [iterable]
-    :param processor: [bool]
-    :param score_cutoff: [bool]
+    :param processor: [str]
     :param substitution_cost: [bool]
     :return: [str]
     """
+    assert processor in ('fuzzywuzzy', 'nltk'), '\"processor\" must be either \"fuzzywuzzy\" or \"nltk\".'
+
     if processor == 'fuzzywuzzy':
-        import fuzzywuzzy.process
-        the_one = fuzzywuzzy.process.extractOne(x, lookup_list, score_cutoff=score_cutoff)
+        import fuzzywuzzy.fuzz
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(x, a) for a in lookup_list]
+        the_one = lookup_list[l_distances.index(max(l_distances))] if l_distances else None
+
     elif processor == 'nltk':
         import nltk.metrics
-        l_distances = [nltk.metrics.edit_distance(x, a, substitution_cost=substitution_cost) for a in lookup_list]
-        the_one = lookup_list[l_distances.index(min(l_distances))]
+        l_distances = [nltk.edit_distance(x, a, substitution_cost=substitution_cost) for a in lookup_list]
+        the_one = lookup_list[l_distances.index(min(l_distances))] if l_distances else None
+
     else:
         the_one = None
+
     return the_one
 
 
