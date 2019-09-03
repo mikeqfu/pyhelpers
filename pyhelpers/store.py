@@ -49,20 +49,27 @@ def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False)
 
 
 # Save Pickle file
-def save_pickle(pickle_data, path_to_pickle):
+def save_pickle(pickle_data, path_to_pickle, verbose=True):
     """
     :param pickle_data: any object that could be dumped by the 'pickle' package
     :param path_to_pickle: [str] local file path
+    :param verbose: [bool]
     :return: whether the data has been successfully saved
     """
     pickle_filename = os.path.basename(path_to_pickle)
-    print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_pickle) else "Saving", pickle_filename), end="")
+    pickle_dir = os.path.basename(os.path.dirname(path_to_pickle))
+    pickle_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_pickle)))
+
+    if verbose:
+        print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_pickle) else "Saving",
+                                      " - ".join([pickle_dir_parent, pickle_dir, pickle_filename])), end="")
+
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path_to_pickle)), exist_ok=True)
         pickle_out = open(path_to_pickle, 'wb')
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
-        print("Successfully.")
+        print("Successfully.") if verbose else None
     except Exception as e:
         print("Failed. {}.".format(e))
 
@@ -83,20 +90,25 @@ def load_pickle(path_to_pickle, verbose=False):
 
 
 # Save JSON file
-def save_json(json_data, path_to_json):
+def save_json(json_data, path_to_json, verbose=True):
     """
     :param json_data: any object that could be dumped by the 'json' package
     :param path_to_json: [str] local file path
+    :param verbose: [bool]
     :return: whether the data has been successfully saved
     """
     json_filename = os.path.basename(path_to_json)
-    print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_json) else "Saving", json_filename), end="")
+    json_dir = os.path.basename(os.path.dirname(path_to_json))
+    json_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_json)))
+
+    print("{} \"{}\" ... ".format("Updating" if os.path.isfile(path_to_json) else "Saving",
+                                  " - ".join([json_dir_parent, json_dir, json_filename])), end="") if verbose else None
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path_to_json)), exist_ok=True)
         json_out = open(path_to_json, 'w')
         rapidjson.dump(json_data, json_out)
         json_out.close()
-        print("Successfully.")
+        print("Successfully.") if verbose else None
     except Exception as e:
         print("Failed. {}.".format(e))
 
