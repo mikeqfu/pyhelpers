@@ -1,24 +1,24 @@
 # pyhelpers
 **Author**: Qian Fu [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/Qian_Fu?label=Follow&style=social)](https://twitter.com/Qian_Fu)
 
-[![PyPI](https://img.shields.io/pypi/v/pyhelpers?label=PyPI&color=important)](https://pypi.org/project/pyhelpers/)
+[![PyPI](https://img.shields.io/pypi/v/pyhelpers?color=important&label=PyPI)](https://pypi.org/project/pyhelpers/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers?label=Python)](https://www.python.org/downloads/windows/)
-[![PyPI - License](https://img.shields.io/pypi/l/pyhelpers?color=green&label=License)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/mikeqfu/pyhelpers?color=green&label=License)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code%20size)](https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/pydriosm?color=yellow&label=Downloads)](https://pypistats.org/packages/pyhelpers)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads)](https://pypistats.org/packages/pyhelpers)
 
 A small toolkit of helper functions to facilitate data manipulation. 
 
 
 
----
+------
 
 **<span style="font-size:larger;">Contents</span>**
 
 - [Installation](#installation)
 - [Quick start](#quick-start)
 
----
+------
 
 
 
