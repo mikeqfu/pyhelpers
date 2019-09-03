@@ -1,56 +1,274 @@
-# PyHelpers
-**Author**: Qian Fu [![Twitter Follow](https://img.shields.io/twitter/follow/Qian_Fu?label=Follow&style=social)](https://twitter.com/Qian_Fu)
+# pyhelpers
+**Author**: Qian Fu [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/Qian_Fu?label=Follow&style=social)](https://twitter.com/Qian_Fu)
 
-[![PyPI](https://img.shields.io/pypi/v/pyhelpers?color=important)](https://pypi.org/project/pyhelpers/)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)
-[![PyPI - License](https://img.shields.io/pypi/l/pyrcs)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
-![GitHub repo size](https://img.shields.io/github/repo-size/mikeqfu/pyhelpers?color=yellowgreen)
+[![PyPI](https://img.shields.io/pypi/v/pyhelpers?label=PyPI&color=important)](https://pypi.org/project/pyhelpers/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers?label=Python)](https://www.python.org/downloads/windows/)
+[![PyPI - License](https://img.shields.io/pypi/l/pyhelpers?color=green&label=License)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
+[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code%20size)](https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/pydriosm?color=yellow&label=Downloads)](https://pypistats.org/packages/pyhelpers)
 
-
-
-This is a set of helper functions to facilitate trivial processes, such as prompting confirmation (yes/no), saving and loading pickle/json files. Current modules include: *dir.py*, *download.py*, *geom.py*, *misc.py*, *settings.py*, *store.py* and *text.py*. 
-
-(Work still in progress.)
+A small toolkit of helper functions to facilitate data manipulation. 
 
 
 
-## Contents
+---
+
+**<span style="font-size:larger;">Contents</span>**
 
 - [Installation](#installation)
 - [Quick start](#quick-start)
-  - 
+
+---
 
 
 
-## Installation
+## Installation <a name="installation"></a>
+
+```
+pip install --upgrade pyhelpers
+```
+
+**Note:**
+
+- Only a few frequently-used dependencies are specified as essential requirements in the `setup.py` for packaging **pyhelpers**. This is to avoid installing redundant packages. If you need to use some functions to which dependencies are not available with the installation of this package (and if you happen not to have those dependencies installed yet), error warnings will be prompted when you import them and so you will know what they are. You can always install those dependencies yourself. 
 
 
 
-## Quick start
+## Quick start <a name="quick-start"></a>
+
+The current version includes the following modules: 
+
+- [`dir.py`](#dir_py)
+- [`download.py`](#download)
+- [`geom.py`](#geom)
+- [`store.py`](#store)
+- [`settings.py`](#settings)
+- [`text.py`](#text)
+- [`misc.py`]()
+
+There are a number of functions included in each of the above-listed modules. For a quick start of **pyhelpers**, one example is provided for each module to demonstrate what the package may do. 
+
+
+
+### dir.py <a name="dir_py"></a>
+
+```python
+from pyhelpers.dir import cd
+```
+
+`cd()` returns the current working directory
+
+```python
+path_to_pickle = cd("tests", "dat.pickle")
+print(path_to_pickle)
+```
+
+If you would like to save `dat` to a customised folder, say "data". `cd()` can also change directory
+
+```python
+path_to_test_pickle = cd("tests", "data", "dat.pickle")  # cd("tests\\data\\dat.pickle")
+print(path_to_test_pickle)
+```
+
+You should see the difference between `path_to_pickle` and `path_to_test_pickle`.
+
+
+
+### download.py <a name="download"></a>
+
+```python
+from pyhelpers.download import download
+```
+
+**Note** that this module requires [**requests**](https://2.python-requests.org/en/master/) and [**tqdm**](https://pypi.org/project/tqdm/).
+
+Suppose you would like to download a Python logo from online where URL is as follows:
+
+```python
+url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+```
+
+Firstly, specify where the .png file will be saved and what the filename will be. For example, to name the downloaded file as "python-logo.png" and save it to a folder named "picture":
+
+```python
+path_to_python_logo = cd("tests", "picture", "python-logo.png")
+```
+
+Then use `download()`
+
+```python
+download(url, path_to_python_logo)
+```
+
+If you happen to have [**Pillow**](https://pypi.org/project/Pillow/) installed, you may also view the downloaded picture by:
+
+```python
+import Image
+python_logo = Image.open(path_to_python_logo)
+python_logo.show()
+```
+
+
+
+### geom.py <a name="geom"></a>
+
+**Note** that this module requires [**pyproj**](https://pypi.org/project/pyproj/).
+
+If you need to convert coordinates from British national grid (OSGB36) to latitude and longitude (WGS84), you import  `osgb36_to_wgs84` from `geom.py`
+
+```python
+from pyhelpers.geom import osgb36_to_wgs84
+```
+
+To convert a single coordinate, `xy`:
+
+```python
+xy = np.array((530034, 180381))  # London
+
+easting, northing = xy
+lonlat = osgb36_to_wgs84(easting, northing)  # osgb36_to_wgs84(xy[0], xy[1])
+print(lonlat)
+```
+
+To convert an array of OSGB36 coordinates, `xy_array`:
+
+```python
+import numpy as np
+xy_array = np.array([(530034, 180381),   # London
+                     (406689, 286822),   # Birmingham
+                     (383819, 398052),   # Manchester
+                     (582044, 152953)])  # Leeds
+
+eastings, northings = xy_array.T
+lonlat_array = np.array(osgb36_to_wgs84(eastings, northings))
+print(lonlat_array.T)
+```
+
+Similarly, if you would like to convert coordinates from latitude and longitude (WGS84) to OSGB36, import `wgs84_to_osgb36` instead.
+
+
+
+### store.py <a name="store"></a>
+
+Let's now create a pandas.DataFrame (using the above `xy_array`) as follows:
+
+```python
+import pandas as pd
+dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
+```
+
+If you would like to save `dat` as a "pickle" file and retrieve it later, you may import `save_pickle` and `load_pickle`:
+
+```python
+from pyhelpers.store import save_pickle, load_pickle
+```
+
+To save `dat` to `path_to_test_pickle` (see [`dir.py`](#dir_py)):
+
+```python
+save_pickle(dat, path_to_test_pickle)
+```
+
+To retrieve/load `dat` from `path_to_test_pickle`:
+
+```python
+dat_retrieved = load_pickle(path_to_test_pickle)
+```
+
+`dat_retrieved` and `dat`  should be identical:
+
+```python
+print(dat_retrieved.equals(dat))  # should return True
+```
+
+In addition to **.pickle**, `store.py` also works with other formats, such as **.feather**, **.csv** and **.xlsx**/**.xls**.
+
+
+
+### settings.py <a name="settings"></a>
+
+This module can be used to change some common settings with 'pandas', 'numpy', 'matplotlib' and 'gdal'. For example:
+
+```python
+from pyhelpers.settings import pd_preferences
+pd_preferences(reset=False)
+```
+
+
+
+### text.py <a name="text"></a>
+
+Suppose you have a `str` type variable, named `string` :
+
+```python
+string = 'ang'
+```
+
+If you would like to find the most similar text to one of the following `lookup_list`:
+
+```python
+lookup_list = ['Anglia',
+               'East Coast',
+               'East Midlands',
+               'North and East',
+               'London North Western',
+               'Scotland',
+               'South East',
+               'Wales',
+               'Wessex',
+               'Western']
+```
+
+Let's try `find_similar_str` included in `text.py`:
+
+```python
+from pyhelpers.text import find_similar_str
+```
+
+`find_similar_str` relies on two dependencies: [**fuzzywuzzy**](https://github.com/seatgeek/fuzzywuzzy) (recommended) and [**nltk**](https://www.nltk.org/). You may choose either one as appropriate. 
+
+Use 'fuzzywuzzy' - `token_set_ratio`
+
+```python
+result_1 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
+print(result_1)
+```
+
+Use 'nltk' - `edit_distance`
+
+```python
+result_2 = find_similar_str(string, lookup_list, processor='nltk', substitution_cost=100)
+print(result_2)
+```
+
+You may also give `find_matched_str` a try:
+
+```python
+from pyhelpers.text import find_matched_str()
+result_3 = find_matched_str(string, lookup_list)
+print(result_3)
+```
+
+
+
+### misc.py
+
+If you would like to request a confirmation before proceeding with some processes, you may use `confirmed` included in `misc.py`:
 
 ```python
 from pyhelpers.misc import confirmed
-from pyhelpers.store import cd, save_pickle, load_pickle
 ```
 
-### A confirmation of whether to continue is needed:
+You may specify, by setting `prompt`, what you would like to be asked as to the confirmation:
 
 ```python
-confirmed(prompt="Continue?...")
+confirmed(prompt="Continue?...", confirmation_required=True)
 ```
 
-### To save/retrieve data to/from a pickle file
-
-```python
-example_var = 1
-path_to_pickle = cd("example_var.pickle")  # cd() returns the current working directory
-
-# Save `example_var` as a pickle file
-save_pickle(ex_var, path_to_pickle)
-
-# Retrieve `example_var` from `path_to_pickle`
-example_var_retrieved = load_pickle(path_to_pickle)
-
-print(example_var_retrieved == example_var)  # should return True
+```bash
+Continue?... [No]|Yes:
+>? # Input something here
 ```
+
+If you input `Yes` (or `Y`, `yes`, or something like `ye`), it should return `True`; otherwise, `False` given the input being `No` (or something like `n`). When `confirmation_required` is `False`, this function would be null, as it would always return `True`. 
 
