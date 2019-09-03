@@ -6,12 +6,12 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.14',
+    version='1.0.16',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
 
-    description="A small toolkit of some helper functions to facilitate writing Python code",
+    description="A small toolkit of helper functions to facilitate data manipulation",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -19,7 +19,8 @@ setuptools.setup(
 
     install_requires=[
         # 'gdal',
-        # 'fuzzywuzzy',
+        'feather-format',
+        'fuzzywuzzy',
         # 'matplotlib',
         # 'nltk',
         'numpy',
@@ -38,15 +39,13 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
 
     classifiers=[
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Operating System :: Microsoft :: Windows',
         'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Operating System :: Microsoft :: Windows :: Windows 8',
-        'Operating System :: Microsoft :: Windows :: Windows 8.1',
-        'Operating System :: Microsoft :: Windows :: Windows 10',
+        'Operating System :: Microsoft :: Windows :: Windows 10'
     ],
 )
