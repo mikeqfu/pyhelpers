@@ -44,7 +44,7 @@ The current version includes the following modules:
 - [`store.py`](#store)
 - [`settings.py`](#settings)
 - [`text.py`](#text)
-- [`misc.py`]()
+- [`misc.py`](#misc)
 
 There are a number of functions included in each of the above-listed modules. For a quick start of **pyhelpers**, one example is provided for each module to demonstrate what the package may do. 
 
@@ -251,7 +251,7 @@ print(result_3)
 
 
 
-### misc.py
+### misc.py <a name="misc"></a>
 
 If you would like to request a confirmation before proceeding with some processes, you may use `confirmed` included in `misc.py`:
 
