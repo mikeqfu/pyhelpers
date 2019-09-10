@@ -9,9 +9,14 @@ def download(url, path_to_file, wait_to_retry=3600):
     """
     :param url: [str]
     :param path_to_file: [str]
-    :param wait_to_retry: [int; float]
+    :param wait_to_retry: [int; float] (default: 3600)
 
     Reference: https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
+
+    Testing e.g.
+        url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        path_to_file = os.path.join(os.getcwd(), "python-logo.png")
+        wait_to_retry = 3600
     """
     import requests
     r = requests.get(url, stream=True)  # Streaming, so we can iterate over the response
