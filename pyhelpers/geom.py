@@ -1,7 +1,6 @@
 """ Geometry-related utilities """
 
 import functools
-import math
 
 import numpy as np
 
@@ -275,15 +274,15 @@ def get_geometric_midpoint_along_earth_surface(pt_x, pt_y, as_geom=False):
     http://www.movable-type.co.uk/scripts/latlong.html
     """
     # Input values as degrees, convert them to radians
-    lon_1, lat_1 = math.radians(pt_x.x), math.radians(pt_x.y)
-    lon_2, lat_2 = math.radians(pt_y.x), math.radians(pt_y.y)
+    lon_1, lat_1 = np.radians(pt_x.x), np.radians(pt_x.y)
+    lon_2, lat_2 = np.radians(pt_y.x), np.radians(pt_y.y)
 
-    b_x, b_y = math.cos(lat_2) * math.cos(lon_2 - lon_1), math.cos(lat_2) * math.sin(lon_2 - lon_1)
-    lat_3 = math.atan2(
-        math.sin(lat_1) + math.sin(lat_2), math.sqrt((math.cos(lat_1) + b_x) * (math.cos(lat_1) + b_x) + b_y ** 2))
-    long_3 = lon_1 + math.atan2(b_y, math.cos(lat_1) + b_x)
+    b_x, b_y = np.cos(lat_2) * np.cos(lon_2 - lon_1), np.cos(lat_2) * np.sin(lon_2 - lon_1)
+    lat_3 = np.arctan2(
+        np.sin(lat_1) + np.sin(lat_2), np.sqrt((np.cos(lat_1) + b_x) * (np.cos(lat_1) + b_x) + b_y ** 2))
+    long_3 = lon_1 + np.arctan2(b_y, np.cos(lat_1) + b_x)
 
-    midpoint = math.degrees(long_3), math.degrees(lat_3)
+    midpoint = np.degrees(long_3), np.degrees(lat_3)
 
     if as_geom:
         import shapely.geometry
@@ -318,7 +317,7 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     http://www.johndcook.com/lat_long_distance.html
     """
     # Convert latitude and longitude to spherical coordinates in radians.
-    degrees_to_radians = math.pi / 180.0
+    degrees_to_radians = np.pi / 180.0
 
     # phi = 90 - latitude
     phi1 = (90.0 - pt_x.y) * degrees_to_radians
@@ -335,8 +334,8 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
     # distance = rho * arc length
 
-    cosine = (math.sin(phi1) * math.sin(phi2) * math.cos(theta1 - theta2) + math.cos(phi1) * math.cos(phi2))
-    arc = math.acos(cosine) * 3960  # in miles
+    cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
+    arc = np.arccos(cosine) * 3960  # in miles
 
     # Remember to multiply arc by the radius of the earth in your favorite set of units to get length.
     return arc
@@ -352,10 +351,122 @@ def find_closest_point(pt, pts):
     # Define a function calculating distance between two points
     def distance(o, d):
         """
-        math.hypot(x, y) return the Euclidean norm, sqrt(x*x + y*y).
+        np.hypot(x, y) return the Euclidean norm, sqrt(x*x + y*y).
         This is the length of the vector from the origin to point (x, y).
         """
-        return math.hypot(o[0] - d[0], o[1] - d[1])
+        return np.hypot(o[0] - d[0], o[1] - d[1])
 
     # Find the min value using the distance function with coord parameter
     return min(pts, key=functools.partial(distance, pt))
+
+
+# Visualise the square given its centre point, four vertices and rotation angle (in degree)
+def show_square(cx, cy, vertices, rotation_theta):
+    """
+    :param cx: [numbers.Number]
+    :param cy: [numbers.Number]
+    :param vertices: [numpy.ndarray] array([ll, ul, ur, lr])
+    :param rotation_theta: [numbers.Number]
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib.ticker
+    _, ax = plt.subplots(1, 1)
+    ax.plot(cx, cy, 'o', markersize=10)
+    ax.annotate("({0:.2f}, {0:.2f})".format(cx, cy), xy=(cx, cy))
+    square_vertices = np.append(vertices, [tuple(vertices[0])], axis=0)
+    ax.plot(square_vertices[:, 0], square_vertices[:, 1], 'o-', label="$\\theta$ = {}°".format(rotation_theta))
+    for x, y in zip(vertices[:, 0], vertices[:, 1]):
+        ax.annotate("({0:.2f}, {0:.2f})".format(x, y), xy=(x, y))
+    ax.legend(loc="best")
+    ax.axis("equal")
+    ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
+    ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
+    plt.tight_layout()
+
+
+# Locate the four vertices of a square given its centre and side length
+def locate_square_vertices(cx, cy, side_length, rotation_theta=0, show=False):
+    """
+    :param cx: [numbers.Number]
+    :param cy: [numbers.Number]
+    :param side_length: [numbers.Number]
+    :param rotation_theta: [numbers.Number] rotate (anti-clockwise?) the square by 'theta' (in degree) (default: 0)
+    :param show: [bool] (default: False)
+    :return: [numpy.ndarray] array([ll, ul, ur, lr])
+
+    Testing e.g.
+        cx, cy = -5.9375, 56.8125
+        side_length = 0.125
+        rotation_theta = 30  # rotate the square by 30° (anti-clockwise)
+        show = True
+
+        locate_square_vertices(cx, cy, side_length, rotation_theta, show)
+
+    Reference: https://stackoverflow.com/questions/22361324/
+    """
+    sides = np.ones(2) * side_length
+
+    # Create a 'rotation matrix'
+    def create_rotation_mat(theta):
+        """
+        :param theta: [numbers.Number] (in radian)
+        :return: [numpy.ndarray]
+        """
+        sin_theta, cos_theta = np.sin(theta), np.cos(theta)
+        rotation_mat = np.array([[sin_theta, cos_theta], [-cos_theta, sin_theta]])
+        return rotation_mat
+
+    rotation_matrix = create_rotation_mat(np.deg2rad(rotation_theta))
+
+    vertices = [np.array([cx, cy]) +
+                functools.reduce(np.dot, [rotation_matrix, create_rotation_mat(-0.5 * np.pi * x), sides / 2])
+                for x in range(4)]
+    vertices = np.array(vertices)
+
+    if show:
+        show_square(cx, cy, vertices, rotation_theta)
+
+    return vertices
+
+
+# Locate the four vertices of a square (arithmetically) given its centre and side length
+def locate_square_vertices_calc(cx, cy, side_length, rotation_theta=0, show=False):
+    """
+    :param cx: [numbers.Number]
+    :param cy: [numbers.Number]
+    :param side_length: [numbers.Number]
+    :param rotation_theta: [numbers.Number]
+    :param show: [bool]
+    :return: [numpy.ndarray] array([ll, ul, ur, lr])
+
+    Testing e.g.
+        cx = -5.9375
+        cy = 56.8125
+        side_length = 0.125
+        rotation_theta = 30  # rotate the square by 30° (anti-clockwise)
+        show = True
+
+        locate_square_vertices_calc(cx, cy, side_length, rotation_theta, show)
+
+    Reference: https://math.stackexchange.com/questions/1490115
+    """
+    theta_rad = np.deg2rad(rotation_theta)
+
+    ll = (cx + 1/2 * side_length * (np.sin(theta_rad) - np.cos(theta_rad)),
+          cy - 1/2 * side_length * (np.sin(theta_rad) + np.cos(theta_rad)))
+
+    ul = (cx - 1/2 * side_length * (np.sin(theta_rad) + np.cos(theta_rad)),
+          cy - 1/2 * side_length * (np.sin(theta_rad) - np.cos(theta_rad)))
+
+    ur = (cx - 0.5 * side_length * (np.sin(theta_rad) - np.cos(theta_rad)),
+          cy + 0.5 * side_length * (np.sin(theta_rad) + np.cos(theta_rad)))
+
+    lr = (cx + 0.5 * side_length * (np.sin(theta_rad) + np.cos(theta_rad)),
+          cy + 0.5 * side_length * (np.sin(theta_rad) - np.cos(theta_rad)))
+
+    vertices = np.array([ll, ul, ur, lr])
+
+    if show:
+        show_square(cx, cy, vertices, rotation_theta)
+
+    return vertices
