@@ -33,9 +33,9 @@ def find_similar_str(x, lookup_list, processor='fuzzywuzzy', substitution_cost=1
 # Find from a list the closest, case-insensitive, str to the given one
 def find_matched_str(x, lookup_list):
     """
-    :param x: [str] (if x is None, return None)
+    :param x: [str; None] (if None, return None)
     :param lookup_list: [iterable]
-    :return: [str; list]
+    :return: [str; list; None]
     """
     # assert isinstance(x, str), "'x' must be a string."
     # assert isinstance(lookup, list) or isinstance(lookup, tuple), "'lookup' must be a list/tuple"
