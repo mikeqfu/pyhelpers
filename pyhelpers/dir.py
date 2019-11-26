@@ -5,7 +5,7 @@ import shutil
 
 import pkg_resources
 
-from pyhelpers.misc import confirmed
+from pyhelpers.ops import confirmed
 
 
 # Change directory
@@ -15,11 +15,10 @@ def cd(*sub_dir, mkdir=False):
     :param mkdir: [bool] (default: False)
     :return: [str]
 
-    Testing e.g.
-        mkdir = False
-
-        cd()
-        cd("test")
+    Examples:
+        cd()  # Current working directory
+        mkdir = True
+        cd("test_cd", mkdir=mkdir)  # Current working directory \\test_cd
     """
     path = os.getcwd()  # Current working directory
     for x in sub_dir:
@@ -37,13 +36,12 @@ def cdd(*sub_dir, data_dir="Data", mkdir=False):
     :param mkdir: [bool] (default: False)
     :return: [str]
 
-    Testing e.g.
+    Examples:
         data_dir = "Data"
         mkdir = False
-
-        cdd()
-        cdd("test")
-        cdd("test", data_dir="dat")
+        cdd()  # \\Data
+        cdd("test_cdd")  # \\Data\\test_cdd
+        cdd("test_cdd", data_dir="test_cdd", mkdir=True)  # \\test_cdd\\test_cdd
     """
     path = cd(data_dir)
     for x in sub_dir:
@@ -61,9 +59,10 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False):
     :param mkdir: [bool] (default: False)
     :return: [str]
 
-    Testing e.g.
+    Example:
         dat_dir = "dat"
         mkdir = False
+        cd_dat("test_cd_dat", dat_dir=dat_dir, mkdir=mkdir)
     """
     path = pkg_resources.resource_filename(__name__, dat_dir)
     for x in sub_dir:
@@ -73,6 +72,29 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False):
     return path
 
 
+# Check if a string is a path or just a string
+def is_dirname(x):
+    """
+    :param x: [str]
+    :return: [bool]
+
+    Examples:
+        x = "test_is_dirname"
+        is_dirname(x)  # False
+
+        x = "\\test_is_dirname"
+        is_dirname(x)  # True
+
+        x = cd("test_is_dirname")
+        is_dirname(x)  # True
+
+    """
+    if os.path.dirname(x):
+        return True
+    else:
+        return False
+
+
 # Regulate the input data directory
 def regulate_input_data_dir(data_dir, msg="Invalid input!"):
     """
@@ -80,9 +102,10 @@ def regulate_input_data_dir(data_dir, msg="Invalid input!"):
     :param msg: [str] (default: "Invalid input!")
     :return: [str] regulated data directory
 
-    Testing e.g.
-        data_dir = "test"
+    Example:
+        data_dir = "test_regulate_input_data_dir"
         msg = "Invalid input!"
+        regulate_input_data_dir(data_dir, msg)
     """
     if data_dir is None:
         data_dir = cdd()
@@ -103,9 +126,11 @@ def rm_dir(path, confirmation_required=True, verbose=False):
     :param confirmation_required: [bool] (default: False)
     :param verbose: [bool]
 
-    Testing e.g.
+    Example:
+        path = cd("test_rm_dir", mkdir=True)
         confirmation_required = True
         verbose = False
+        rm_dir(path, confirmation_required, verbose)
     """
     print("Removing \"{}\"".format(path), end=" ... ") if verbose else None
     try:
@@ -114,7 +139,8 @@ def rm_dir(path, confirmation_required=True, verbose=False):
                          confirmation_required=confirmation_required):
                 shutil.rmtree(path)
         else:
-            os.rmdir(path)
+            if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
+                os.rmdir(path)
         if verbose:
             print("Successfully.") if not os.path.exists(path) else print("Failed.")
     except Exception as e:
