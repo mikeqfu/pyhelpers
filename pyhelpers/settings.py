@@ -29,27 +29,34 @@ def pd_preferences(reset=False):
 
 
 # Set preferences for plotting
-def mpl_preferences(use_cambria=False, reset=False):
+def mpl_preferences(reset=False, font_name=None):
     """
     Get a list of supported file formats for matplotlib savefig() function
       plt.gcf().canvas.get_supported_filetypes()  # Aside: "gcf" is short for "get current fig" manager
       plt.gcf().canvas.get_supported_filetypes_grouped()
     """
+    import os
     import matplotlib.pyplot as plt
+    import matplotlib.font_manager
     if not reset:
-        if use_cambria:  # Use the font, 'Cambria'
-            # Add 'Cambria' and 'Cambria Math' to the front of the 'font.serif' list
-            plt.rcParams['font.serif'] = ['Cambria'] + plt.rcParams['font.serif']
-            plt.rcParams['font.serif'] = ['Cambria Math'] + plt.rcParams['font.serif']
-            # Set 'font.family' to 'serif', so that matplotlib will use that list
-            plt.rcParams['font.family'] = 'serif'
         plt.rcParams['font.size'] = 13
         plt.rcParams['font.weight'] = 'normal'
         plt.rcParams['legend.labelspacing'] = 0.7
-        plt.style.use('ggplot')
+        # plt.style.use('ggplot')
+        if font_name:  # Use the font, 'Cambria'
+            if os.path.isfile(matplotlib.font_manager.findfont(font_name)):
+                # Set 'font.family' to 'serif', then matplotlib will use that list
+                plt.rcParams['font.family'], serif_fonts = 'serif', plt.rcParams['font.serif']
+                if font_name not in serif_fonts:
+                    plt.rcParams['font.serif'] = [font_name] + plt.rcParams['font.serif']
+                else:
+                    serif_fonts.insert(0, serif_fonts.pop(serif_fonts.index(font_name)))
+                    plt.rcParams['font.serif'] = serif_fonts
+            else:
+                pass
     else:
         plt.rcParams = plt.rcParamsDefault
-        plt.style.use('classic')
+        plt.style.use('default')
 
 
 # Set GDAL configurations
