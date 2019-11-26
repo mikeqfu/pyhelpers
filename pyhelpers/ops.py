@@ -66,7 +66,7 @@ def get_variable_name(variable) -> str:
 # Get the given variable's name
 def get_variable_names(*variable) -> list:
     """
-    Example:
+    Examples:
         x = 1
         print(get_variable_names(x))  # ['x']
         y = 2
@@ -96,79 +96,106 @@ def divide_list_into_chunks(lst, chunk_size) -> types.GeneratorType:
         chunk_size = 3
         list(divide_list_into_chunks(lst, chunk_size))  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
 
-    Reference: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
+    Reference: https://stackoverflow.com/questions/312443/
     """
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
 
 
 # Update a nested dictionary or similar mapping
-def update_nested_dict(source_dict, overrides) -> dict:
+def update_nested_dict(source_dict, updates) -> dict:
     """
     :param source_dict: [dict]
-    :param overrides: [dict]
+    :param updates: [dict]
     :return: [dict]
 
-    Reference: https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+    Examples:
+        source_dict = {'key_1': 1}
+        updates = {'key_2': 2}
+        update_nested_dict(source_dict, updates)  # {'key_1': 1, 'key_2': 2}
+
+        source_dict = {'key': 'val_old'}
+        updates = {'key': 'val_new'}
+        update_nested_dict(source_dict, updates)  # {'key': 'val_new'}
+
+        source_dict = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
+        updates = {'key': {'k1': 'v1_new'}}
+        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1_new', 'k2': 'v2'}}
+
+        source_dict = {'key': {'k1': {}, 'k2': 'v2'}}
+        updates = {'key': {'k1': 'v1'}}
+        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}
+
+        source_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
+        updates = {'key': {'k1': {}}}
+        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}  # It does not update with {}
+
+    Reference: https://stackoverflow.com/questions/3232943/
     """
-    for key, val in overrides.items():
+    for key, val in updates.items():
         if isinstance(val, collections.Mapping):
             source_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
         elif isinstance(val, list):
             source_dict[key] = (source_dict.get(key, []) + val)
         else:
-            source_dict[key] = overrides[key]
+            source_dict[key] = updates[key]
     return source_dict
 
 
 # Get all values in a nested dictionary
 def get_all_values_from_nested_dict(key, target_dict) -> types.GeneratorType:
     """
-    :param key:
+    :param key: any object that can be the 'key' of a [dict]
     :param target_dict: [types.GeneratorType]
+
+    Examples:
+        key = 'k1'
+        target_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
+        list(get_all_values_from_nested_dict(key, target_dict))  # [['v1']]
+
+        key = 'key'
+        target_dict = {'key': 'val'}
+        list(get_all_values_from_nested_dict(key, target_dict))  # [['val']]
+
+        key = 'k1'
+        target_dict = {'key': {'k1': ['v1', 'v1_1']}}
+        list(get_all_values_from_nested_dict(key, target_dict))  # [['v1', 'v1_1']]
+
+        key = 'k2'
+        target_dict = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
+        list(get_all_values_from_nested_dict(key, target_dict))  # [['v2', 'v2_1']]
 
     Reference:
     https://gist.github.com/douglasmiranda/5127251
-    https://stackoverflow.com/questions/9807634/find-all-occurrences-of-a-key-in-nested-python-dictionaries-and-lists
+    https://stackoverflow.com/questions/9807634/
     """
     for k, v in target_dict.items():
-        if k == key:
-            yield v
+        if key == k:
+            yield [v] if isinstance(v, str) else v
         elif isinstance(v, dict):
-            for x in get_all_values_from_nested_dict(k, v):
+            for x in get_all_values_from_nested_dict(key, v):
                 yield x
-        elif isinstance(v, list):
+        elif isinstance(v, collections.Iterable):
             for d in v:
-                for y in get_all_values_from_nested_dict(k, d):
-                    yield y
+                if isinstance(d, dict):
+                    for y in get_all_values_from_nested_dict(key, d):
+                        yield y
 
 
 # Remove multiple keys from a dictionary
-def remove_multiple_keys_from_dict(dictionary, *keys):
+def remove_multiple_keys_from_dict(target_dict, *keys):
     """
-    :param dictionary: [dict]
+    :param target_dict: [dict]
     :param keys:
+    
+    Example:
+        target_dict = {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4', 'k5': 'v5'}
+        remove_multiple_keys_from_dict(target_dict, 'k1', 'k3', 'k4')  # {'k2': 'v2', 'k5': 'v5'}
     """
     # assert isinstance(dictionary, dict)
     for k in keys:
-        if k in dictionary.keys():
-            dictionary.pop(k)
-
-
-# Convert compressed sparse matrix to a dictionary
-def csr_matrix_to_dict(csr_matrix, vectorizer):
-    features = vectorizer.get_feature_names()
-    dict_data = []
-    for i in range(len(csr_matrix.indptr) - 1):
-        sid, eid = csr_matrix.indptr[i: i + 2]
-        row_feat = [features[x] for x in csr_matrix.indices[sid:eid]]
-        row_data = csr_matrix.data[sid:eid]
-        dict_data.append(dict(zip(row_feat, row_data)))
-
-    import pandas as pd
-    mat_dict = pd.Series(dict_data).to_frame('word_count')
-
-    return mat_dict
+        if k in target_dict.keys():
+            target_dict.pop(k)
 
 
 # Get upper and lower bounds for removing extreme outliers
@@ -188,9 +215,10 @@ def get_extreme_outlier_bounds(data_set, k=1.5) -> tuple:
 # Calculate interquartile range
 def interquartile_range(x) -> numbers.Number:
     """
-    An alternative way to scipy.stats.iqr(x)
     :param x: [array-like]
     :return: [numbers.Number]
+
+    An alternative way to scipy.stats.iqr(x)
     """
     iqr = np.subtract(*np.percentile(x, [75, 25]))
     return iqr
@@ -205,7 +233,7 @@ def find_closest_date(date, date_list, as_datetime=None, fmt="%Y-%m-%d %H:%M:%S.
     :param fmt: [str] (default: "%Y-%m-%d %H:%M:%S.%f")
     :return: [str; datetime.datetime]
 
-    Example:
+    Examples:
         date = pd.to_datetime('2019-01-01')
         date_list = [date + pd.Timedelta(days=d) for d in range(1, 11)]
         find_closest_date(date, date_list)
@@ -266,7 +294,7 @@ def colour_bar_index(no_of_colours, cmap_param, labels=None, **kwargs):
     :param labels: [list; None (default)]
     :param kwargs:
 
-    This is a convenience function to stop making off-by-one errors
+    To stop making off-by-one errors
     Takes a standard colour ramp, and discretizes it, then draws a colour bar with correctly aligned labels
 
     Reference: http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB
