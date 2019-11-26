@@ -5,10 +5,9 @@ import os
 import pickle
 import subprocess
 
-import feather
 import rapidjson
 
-from pyhelpers.misc import confirmed
+from pyhelpers.ops import confirmed
 
 
 # Save feather file
@@ -38,6 +37,7 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     except ValueError as ve:
         print("Failed with \"DataFrame.to_feather()\". {}. \n"
               "Trying to use \"feather-format\" instead".format(ve), end=" ... \n") if verbose else None
+        import feather
         feather.write_dataframe(feather_data, path_to_feather)
         if verbose:
             print("{} ... Successfully. "
@@ -57,6 +57,7 @@ def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False)
     :return: [pd.DataFrame] retrieved from the specified path
     """
     print("Loading \"{}\"".format(os.path.basename(path_to_feather)), end=" ... ") if verbose else None
+    import feather
     feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
     print("Successfully.") if verbose else None
     return feather_data
