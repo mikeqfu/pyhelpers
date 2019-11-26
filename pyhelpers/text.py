@@ -45,3 +45,19 @@ def find_matched_str(x, lookup_list):
         for y in lookup_list:
             if re.match(x, y, re.IGNORECASE):
                 return y
+
+
+# Convert compressed sparse matrix to a dictionary
+def csr_matrix_to_dict(csr_matrix, vectorizer):
+    features = vectorizer.get_feature_names()
+    dict_data = []
+    for i in range(len(csr_matrix.indptr) - 1):
+        sid, eid = csr_matrix.indptr[i: i + 2]
+        row_feat = [features[x] for x in csr_matrix.indices[sid:eid]]
+        row_data = csr_matrix.data[sid:eid]
+        dict_data.append(dict(zip(row_feat, row_data)))
+
+    import pandas as pd
+    mat_dict = pd.Series(dict_data).to_frame('word_count')
+
+    return mat_dict
