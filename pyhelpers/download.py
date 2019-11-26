@@ -11,12 +11,13 @@ def download(url, path_to_file, wait_to_retry=3600):
     :param path_to_file: [str]
     :param wait_to_retry: [int; float] (default: 3600)
 
-    Reference: https://stackoverflow.com/questions/37573483/progress-bar-while-download-file-over-http-with-requests
-
-    Testing e.g.
+    Example:
         url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         path_to_file = os.path.join(os.getcwd(), "python-logo.png")
         wait_to_retry = 3600
+        download(url, path_to_file, wait_to_retry)
+
+    Reference: https://stackoverflow.com/questions/37573483/
     """
     import requests
     r = requests.get(url, stream=True)  # Streaming, so we can iterate over the response
@@ -29,8 +30,11 @@ def download(url, path_to_file, wait_to_retry=3600):
     wrote = 0
 
     directory = os.path.dirname(path_to_file)
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if directory == "":
+        path_to_file = os.path.join(os.getcwd(), path_to_file)
+    else:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     import tqdm
     with open(path_to_file, 'wb') as f:
