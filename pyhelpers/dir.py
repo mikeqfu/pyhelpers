@@ -1,7 +1,6 @@
 """ Change directory """
 
 import os
-import shutil
 
 import pkg_resources
 
@@ -137,6 +136,7 @@ def rm_dir(path, confirmation_required=True, verbose=False):
         if os.listdir(path):
             if confirmed("\"{}\" is not empty. Confirmed to continue removing the directory?".format(path),
                          confirmation_required=confirmation_required):
+                import shutil
                 shutil.rmtree(path)
         else:
             if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
