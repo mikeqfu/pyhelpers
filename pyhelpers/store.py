@@ -3,9 +3,6 @@
 import copy
 import os
 import pickle
-import subprocess
-
-import rapidjson
 
 from pyhelpers.ops import confirmed
 
@@ -78,6 +75,7 @@ def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False):
     try:
         os.makedirs(os.path.dirname(os.path.abspath(path_to_json)), exist_ok=True)
         json_out = open(path_to_json, mode=mode, encoding=encoding)
+        import rapidjson
         rapidjson.dump(json_data, json_out)
         json_out.close()
         print("Successfully.") if verbose else None
@@ -97,6 +95,7 @@ def load_json(path_to_json, mode='r', encoding=None, verbose=False):
     """
     print("Loading \"{}\"".format(os.path.basename(path_to_json)), end=" ... ") if verbose else None
     json_in = open(path_to_json, mode=mode, encoding=encoding)
+    import rapidjson
     json_data = rapidjson.load(json_in)
     json_in.close()
     print("Successfully.") if verbose else None
@@ -173,8 +172,8 @@ def save_feather(feather_data, path_to_feather, verbose=False):
         print("Successfully.") if verbose else None
 
     except ValueError as ve:
-        print("Failed with \"DataFrame.to_feather()\". {}. \n"
-              "Trying to use \"feather-format\" instead".format(ve), end=" ... \n") if verbose else None
+        print(ve)
+        print("Trying again with \"feather-format\"", end=" ... \n") if verbose else None
         import feather
         feather.write_dataframe(feather_data, path_to_feather)
         if verbose:
@@ -195,10 +194,20 @@ def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False)
     :return: [pd.DataFrame] retrieved from the specified path
     """
     print("Loading \"{}\"".format(os.path.basename(path_to_feather)), end=" ... ") if verbose else None
-    import feather
-    feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
-    print("Successfully.") if verbose else None
-    return feather_data
+    try:
+        try:
+            import pandas as pd
+            feather_data = pd.read_feather(path_to_feather, columns, use_threads=use_threads)
+            print("Successfully.") if verbose else None
+        except Exception as e:
+            print(e)
+            print("Try loading again \"feather-format\" ... ", end="")
+            import feather
+            feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
+            print("Successfully.") if verbose else None
+        return feather_data
+    except Exception as e:
+        print("Failed. {}".format(e)) if verbose else None
 
 
 # Save data locally (".pickle", ".csv", ".xlsx" or ".xls")
@@ -265,6 +274,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False):
         plt.savefig(path_to_fig_file, dpi=dpi)
         if save_as == ".svg" and os.path.isfile("C:\\Program Files\\Inkscape\\inkscape.exe"):
             path_to_emf = path_to_fig_file.replace(save_as, ".emf")
+            import subprocess
             subprocess.call(["C:\\Program Files\\Inkscape\\inkscape.exe", '-z', path_to_fig_file, '-M', path_to_emf])
         print("Successfully.") if verbose else None
 
@@ -286,6 +296,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False):
         print("Converting \".svg\" to \".emf\"", end=" ... ") if verbose else None
 
         try:
+            import subprocess
             subprocess.call([path_to_inkscape, '-z', path_to_svg, '-M', path_to_emf])
             print("Done. \nThe .emf file is saved to \"{}\".".format(path_to_emf)) if verbose else None
         except Exception as e:
