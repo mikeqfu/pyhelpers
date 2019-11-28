@@ -6,12 +6,12 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.17',
+    version='1.0.19',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
 
-    description="A small toolkit of helper functions to facilitate data manipulation.",
+    description="A toolkit of helper functions to facilitate data manipulation.",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -19,7 +19,7 @@ setuptools.setup(
 
     install_requires=[
         # 'gdal',
-        'feather-format',
+        # 'feather-format',
         'fuzzywuzzy',
         # 'matplotlib',
         # 'nltk',
