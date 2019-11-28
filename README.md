@@ -16,7 +16,7 @@ A small toolkit of helper functions to facilitate data manipulation.
 **<span style="font-size:larger;">Contents</span>**
 
 - [Installation](#installation)
-- [Quick start](#quick-start)
+- [Quick start - some examples](#quick-start)
 
 ------
 
@@ -34,23 +34,43 @@ pip install --upgrade pyhelpers
 
 
 
-## Quick start <a name="quick-start"></a>
+## Quick start - some examples <a name="quick-start"></a>
 
 The current version includes the following modules: 
 
-- [`dir.py`](#dir_py)
-- [`download.py`](#download)
-- [`geom.py`](#geom)
-- [`store.py`](#store)
-- [`settings.py`](#settings)
-- [`text.py`](#text)
-- [`misc.py`](#misc)
+- [`settings`](#settings)
+- [`dir`](#dir_py)
+- [`download`](#download)
+- [`store`](#store)
+- [`geom`](#geom)
+- [`text`](#text)
+- [`ops`](#ops)
 
 There are a number of functions included in each of the above-listed modules. For a quick start of **pyhelpers**, one example is provided for each module to demonstrate what the package may do. 
 
 
 
-### dir.py <a name="dir_py"></a>
+### settings <a name="settings"></a>
+
+This module can be used to change some common settings with 'pandas', 'numpy', 'matplotlib' and 'gdal'. For example:
+
+```python
+from pyhelpers.settings import pd_preferences  
+```
+
+`pd_preferences` changes a few default 'pandas' settings (when `reset=False`), such as the display representation and maximum number of columns when viewing a pandas.DataFrame. 
+
+```python
+pd_preferences(reset=False)
+```
+
+If `reset=True`, all changed parameters should be reset to their default values.
+
+**Note** that the preset parameters are for the authors' own preference; however you can always change them in the source code to whatever suits your use. 
+
+
+
+### dir <a name="dir_py"></a>
 
 ```python
 from pyhelpers.dir import cd
@@ -74,13 +94,13 @@ You should see the difference between `path_to_pickle` and `path_to_test_pickle`
 
 
 
-### download.py <a name="download"></a>
+### download <a name="download"></a>
 
 ```python
 from pyhelpers.download import download
 ```
 
-**Note** that this module requires [**requests**](https://2.python-requests.org/en/master/) and [**tqdm**](https://pypi.org/project/tqdm/).
+**Note** that this module requires [**requests**](https://2.python-requests.org/en/master/) and [**tqdm**](https://pypi.org/project/tqdm/). 
 
 Suppose you would like to download a Python logo from online where URL is as follows:
 
@@ -100,7 +120,7 @@ Then use `download()`
 download(url, path_to_python_logo)
 ```
 
-If you happen to have [**Pillow**](https://pypi.org/project/Pillow/) installed, you may also view the downloaded picture by:
+If you happen to have [**Pillow**](https://pypi.org/project/Pillow/) installed, you may also view the downloaded picture:
 
 ```python
 import Image
@@ -110,7 +130,44 @@ python_logo.show()
 
 
 
-### geom.py <a name="geom"></a>
+### store <a name="store"></a>
+
+Let's now create a pandas.DataFrame (using the above `xy_array`) as follows:
+
+```python
+import pandas as pd
+dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
+```
+
+If you would like to save `dat` as a "pickle" file and retrieve it later, you may import `save_pickle` and `load_pickle`:
+
+```python
+from pyhelpers.store import save_pickle, load_pickle
+```
+
+To save `dat` to `path_to_test_pickle` (see [`dir`](#dir_py)):
+
+```python
+save_pickle(dat, path_to_test_pickle, verbose=True)  # default: verbose=False
+```
+
+To retrieve/load `dat` from `path_to_test_pickle`:
+
+```python
+dat_retrieved = load_pickle(path_to_test_pickle, verbose=True)
+```
+
+`dat_retrieved` and `dat`  should be identical:
+
+```python
+print(dat_retrieved.equals(dat))  # should return True
+```
+
+In addition to **.pickle**, `store.py` also works with other formats, such as **.feather**, **.csv** and **.xlsx**/**.xls**.
+
+
+
+### geom <a name="geom"></a>
 
 **Note** that this module requires [**pyproj**](https://pypi.org/project/pyproj/).
 
@@ -148,55 +205,7 @@ Similarly, if you would like to convert coordinates from latitude and longitude 
 
 
 
-### store.py <a name="store"></a>
-
-Let's now create a pandas.DataFrame (using the above `xy_array`) as follows:
-
-```python
-import pandas as pd
-dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
-```
-
-If you would like to save `dat` as a "pickle" file and retrieve it later, you may import `save_pickle` and `load_pickle`:
-
-```python
-from pyhelpers.store import save_pickle, load_pickle
-```
-
-To save `dat` to `path_to_test_pickle` (see [`dir.py`](#dir_py)):
-
-```python
-save_pickle(dat, path_to_test_pickle)
-```
-
-To retrieve/load `dat` from `path_to_test_pickle`:
-
-```python
-dat_retrieved = load_pickle(path_to_test_pickle)
-```
-
-`dat_retrieved` and `dat`  should be identical:
-
-```python
-print(dat_retrieved.equals(dat))  # should return True
-```
-
-In addition to **.pickle**, `store.py` also works with other formats, such as **.feather**, **.csv** and **.xlsx**/**.xls**.
-
-
-
-### settings.py <a name="settings"></a>
-
-This module can be used to change some common settings with 'pandas', 'numpy', 'matplotlib' and 'gdal'. For example:
-
-```python
-from pyhelpers.settings import pd_preferences
-pd_preferences(reset=False)
-```
-
-
-
-### text.py <a name="text"></a>
+### text <a name="text"></a>
 
 Suppose you have a `str` type variable, named `string` :
 
@@ -244,19 +253,19 @@ print(result_2)
 You may also give `find_matched_str` a try:
 
 ```python
-from pyhelpers.text import find_matched_str()
+from pyhelpers.text import find_matched_str
 result_3 = find_matched_str(string, lookup_list)
 print(result_3)
 ```
 
 
 
-### misc.py <a name="misc"></a>
+### ops <a name="ops"></a>
 
-If you would like to request a confirmation before proceeding with some processes, you may use `confirmed` included in `misc.py`:
+If you would like to request a confirmation before proceeding with some processes, you may use `confirmed` included in `ops.py`:
 
 ```python
-from pyhelpers.misc import confirmed
+from pyhelpers.ops import confirmed
 ```
 
 You may specify, by setting `prompt`, what you would like to be asked as to the confirmation:
@@ -265,7 +274,7 @@ You may specify, by setting `prompt`, what you would like to be asked as to the 
 confirmed(prompt="Continue?...", confirmation_required=True)
 ```
 
-```bash
+```
 Continue?... [No]|Yes:
 >? # Input something here
 ```
