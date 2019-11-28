@@ -10,59 +10,6 @@ import rapidjson
 from pyhelpers.ops import confirmed
 
 
-# Save feather file
-def save_feather(feather_data, path_to_feather, verbose=False):
-    """
-    :param feather_data: [pd.DataFrame] to be saved as a 'feather-formatted' file
-    :param path_to_feather: [str] local file path
-    :param verbose: [bool] (default: False) whether to print note
-    :return: printing message showing whether or not the data has been successfully saved or updated
-    """
-    # assert isinstance(feather_data, pd.DataFrame)
-    feather_filename = os.path.basename(path_to_feather)
-    feather_dir = os.path.basename(os.path.dirname(path_to_feather))
-    feather_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_feather)))
-
-    msg = "{} \"{}\"".format("Updating" if os.path.isfile(path_to_feather) else "Saving",
-                             " - ".join([x for x in (feather_dir_parent, feather_dir, feather_filename) if x]))
-
-    if verbose:
-        print(msg, end=" ... ")
-
-    try:
-        os.makedirs(os.path.dirname(os.path.abspath(path_to_feather)), exist_ok=True)
-        feather_data.to_feather(path_to_feather)
-        print("Successfully.") if verbose else None
-
-    except ValueError as ve:
-        print("Failed with \"DataFrame.to_feather()\". {}. \n"
-              "Trying to use \"feather-format\" instead".format(ve), end=" ... \n") if verbose else None
-        import feather
-        feather.write_dataframe(feather_data, path_to_feather)
-        if verbose:
-            print("{} ... Successfully. "
-                  "(Use \"load_feather()\" to retrieve the saved feather file and check the consistency.)".format(msg))
-
-    except Exception as e:
-        print("{} ... Failed. {}.".format(msg, e)) if verbose else None
-
-
-# Load feather file
-def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False):
-    """
-    :param path_to_feather: [str] local file path to a feather-formatted file
-    :param columns: [array-like; None (default)] column labels
-    :param use_threads: [bool] (default: True)
-    :param verbose: [bool] (default: False) whether to print note
-    :return: [pd.DataFrame] retrieved from the specified path
-    """
-    print("Loading \"{}\"".format(os.path.basename(path_to_feather)), end=" ... ") if verbose else None
-    import feather
-    feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
-    print("Successfully.") if verbose else None
-    return feather_data
-
-
 # Save pickle file
 def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=False):
     """
@@ -199,6 +146,59 @@ def save_excel(excel_data, path_to_excel, sep, index, sheet_name, engine='xlsxwr
 
     except Exception as e:
         print("Failed. {}.".format(e)) if verbose else None
+
+
+# Save feather file
+def save_feather(feather_data, path_to_feather, verbose=False):
+    """
+    :param feather_data: [pd.DataFrame] to be saved as a 'feather-formatted' file
+    :param path_to_feather: [str] local file path
+    :param verbose: [bool] (default: False) whether to print note
+    :return: printing message showing whether or not the data has been successfully saved or updated
+    """
+    # assert isinstance(feather_data, pd.DataFrame)
+    feather_filename = os.path.basename(path_to_feather)
+    feather_dir = os.path.basename(os.path.dirname(path_to_feather))
+    feather_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_feather)))
+
+    msg = "{} \"{}\"".format("Updating" if os.path.isfile(path_to_feather) else "Saving",
+                             " - ".join([x for x in (feather_dir_parent, feather_dir, feather_filename) if x]))
+
+    if verbose:
+        print(msg, end=" ... ")
+
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(path_to_feather)), exist_ok=True)
+        feather_data.to_feather(path_to_feather)
+        print("Successfully.") if verbose else None
+
+    except ValueError as ve:
+        print("Failed with \"DataFrame.to_feather()\". {}. \n"
+              "Trying to use \"feather-format\" instead".format(ve), end=" ... \n") if verbose else None
+        import feather
+        feather.write_dataframe(feather_data, path_to_feather)
+        if verbose:
+            print("{} ... Successfully. "
+                  "(Use \"load_feather()\" to retrieve the saved feather file and check the consistency.)".format(msg))
+
+    except Exception as e:
+        print("{} ... Failed. {}.".format(msg, e)) if verbose else None
+
+
+# Load feather file
+def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False):
+    """
+    :param path_to_feather: [str] local file path to a feather-formatted file
+    :param columns: [array-like; None (default)] column labels
+    :param use_threads: [bool] (default: True)
+    :param verbose: [bool] (default: False) whether to print note
+    :return: [pd.DataFrame] retrieved from the specified path
+    """
+    print("Loading \"{}\"".format(os.path.basename(path_to_feather)), end=" ... ") if verbose else None
+    import feather
+    feather_data = feather.read_dataframe(path_to_feather, columns, use_threads)
+    print("Successfully.") if verbose else None
+    return feather_data
 
 
 # Save data locally (".pickle", ".csv", ".xlsx" or ".xls")
