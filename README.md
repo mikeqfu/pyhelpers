@@ -11,6 +11,17 @@ A toolkit of helper functions to facilitate data manipulation.
 
 
 
+------
+
+**<span style="font-size:larger;">Contents</span>**
+
+- [Installation](#installation)
+- [Quick start - some examples](#quick-start)
+
+------
+
+
+
 ## Installation <a name="installation"></a>
 
 ```
