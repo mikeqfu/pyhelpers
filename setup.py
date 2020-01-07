@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.19',
+    version='1.0.20',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -40,12 +40,8 @@ setuptools.setup(
 
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-        'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3',
         'Operating System :: Microsoft :: Windows',
-        'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Operating System :: Microsoft :: Windows :: Windows 10'
+        'Operating System :: POSIX :: Linux'
     ],
 )
