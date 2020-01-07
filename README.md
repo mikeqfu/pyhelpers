@@ -7,18 +7,7 @@
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code%20size)](https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads)](https://pypistats.org/packages/pyhelpers)
 
-A small toolkit of helper functions to facilitate data manipulation. 
-
-
-
-------
-
-**<span style="font-size:larger;">Contents</span>**
-
-- [Installation](#installation)
-- [Quick start - some examples](#quick-start)
-
-------
+A toolkit of helper functions to facilitate data manipulation. 
 
 
 
@@ -30,7 +19,8 @@ pip install --upgrade pyhelpers
 
 **Note:**
 
-- Only a few frequently-used dependencies are specified as essential requirements in the `setup.py` for packaging **pyhelpers**. This is to avoid installing redundant packages. If you need to use some functions to which dependencies are not available with the installation of this package (and if you happen not to have those dependencies installed yet), error warnings will be prompted when you import them and so you will know what they are. You can always install those dependencies yourself. 
+- Only a few frequently-used dependencies are required for installation. 
+- When importing the module/functions whose dependencies are not available with the installation of this package (or if you happen not to have those dependencies installed yet), an "*ModuleNotFoundError*" will be prompted and you may install them separately. 
 
 
 
@@ -46,7 +36,7 @@ The current version includes the following modules:
 - [`text`](#text)
 - [`ops`](#ops)
 
-There are a number of functions included in each of the above-listed modules. For a quick start of **pyhelpers**, one example is provided for each module to demonstrate what the package may do. 
+There are a number of functions included in each of the above-listed modules. For a quick start, one example is provided for each module to demonstrate how '**pyhelpers**' may assist you in your work. 
 
 
 
@@ -55,7 +45,7 @@ There are a number of functions included in each of the above-listed modules. Fo
 This module can be used to change some common settings with 'pandas', 'numpy', 'matplotlib' and 'gdal'. For example:
 
 ```python
-from pyhelpers.settings import pd_preferences  
+from pyhelpers.settings import pd_preferences
 ```
 
 `pd_preferences` changes a few default 'pandas' settings (when `reset=False`), such as the display representation and maximum number of columns when viewing a pandas.DataFrame. 
@@ -73,24 +63,42 @@ If `reset=True`, all changed parameters should be reset to their default values.
 ### dir <a name="dir_py"></a>
 
 ```python
-from pyhelpers.dir import cd
+from pyhelpers.dir import cd, regulate_input_data_dir
 ```
 
 `cd()` returns the current working directory
 
 ```python
-path_to_pickle = cd("tests", "dat.pickle")
-print(path_to_pickle)
+print(cd())
 ```
 
 If you would like to save `dat` to a customised folder, say "data". `cd()` can also change directory
 
 ```python
+path_to_folder = cd("tests", mkdir=False)
+print(path_to_folder)
+```
+
+If `path_to_folder` does not exist, setting `mkdir=True` (default: False) will create just it. 
+
+More examples:
+
+```python
+path_to_pickle = cd("tests", "dat.pickle")
+print(path_to_pickle)
+
 path_to_test_pickle = cd("tests", "data", "dat.pickle")  # cd("tests\\data\\dat.pickle")
 print(path_to_test_pickle)
 ```
 
 You should see the difference between `path_to_pickle` and `path_to_test_pickle`.
+
+Check also:
+
+```python
+print(regulate_input_data_dir("tests"))
+print(regulate_input_data_dir(path_to_test_pickle))
+```
 
 
 
@@ -123,9 +131,19 @@ download(url, path_to_python_logo)
 If you happen to have [**Pillow**](https://pypi.org/project/Pillow/) installed, you may also view the downloaded picture:
 
 ```python
-import Image
+from PIL import Image
+
 python_logo = Image.open(path_to_python_logo)
 python_logo.show()
+```
+
+To remove the download directory:
+
+```python
+from pyhelpers.dir import rm_dir
+
+rm_dir(cd("tests", "picture"), confirmation_required=True)  # Remove "picture" folder
+# rm_dir(cd("tests"), confirmation_required=True)
 ```
 
 
@@ -135,7 +153,14 @@ python_logo.show()
 Let's now create a pandas.DataFrame (using the above `xy_array`) as follows:
 
 ```python
+import numpy as np
 import pandas as pd
+
+xy_array = np.array([(530034, 180381),   # London
+                     (406689, 286822),   # Birmingham
+                     (383819, 398052),   # Manchester
+                     (582044, 152953)])  # Leeds
+
 dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
 ```
 
@@ -169,8 +194,6 @@ In addition to **.pickle**, `store.py` also works with other formats, such as **
 
 ### geom <a name="geom"></a>
 
-**Note** that this module requires [**pyproj**](https://pypi.org/project/pyproj/).
-
 If you need to convert coordinates from British national grid (OSGB36) to latitude and longitude (WGS84), you import  `osgb36_to_wgs84` from `geom.py`
 
 ```python
@@ -184,18 +207,12 @@ xy = np.array((530034, 180381))  # London
 
 easting, northing = xy
 lonlat = osgb36_to_wgs84(easting, northing)  # osgb36_to_wgs84(xy[0], xy[1])
-print(lonlat)
+print(lonlat)  # (-0.12772400574286874, 51.50740692743041)
 ```
 
 To convert an array of OSGB36 coordinates, `xy_array`:
 
 ```python
-import numpy as np
-xy_array = np.array([(530034, 180381),   # London
-                     (406689, 286822),   # Birmingham
-                     (383819, 398052),   # Manchester
-                     (582044, 152953)])  # Leeds
-
 eastings, northings = xy_array.T
 lonlat_array = np.array(osgb36_to_wgs84(eastings, northings))
 print(lonlat_array.T)
@@ -234,26 +251,25 @@ Let's try `find_similar_str` included in `text.py`:
 from pyhelpers.text import find_similar_str
 ```
 
-`find_similar_str` relies on two dependencies: [**fuzzywuzzy**](https://github.com/seatgeek/fuzzywuzzy) (recommended) and [**nltk**](https://www.nltk.org/). You may choose either one as appropriate. 
-
-Use 'fuzzywuzzy' - `token_set_ratio`
+Setting `processor='fuzzywuzzy'` requires '[**fuzzywuzzy**](https://github.com/seatgeek/fuzzywuzzy)' (recommended) - `token_set_ratio`
 
 ```python
 result_1 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
 print(result_1)
 ```
 
-Use 'nltk' - `edit_distance`
+Setting `processor='nltk'` requires '[**nltk**](https://www.nltk.org/)' - `edit_distance`
 
 ```python
 result_2 = find_similar_str(string, lookup_list, processor='nltk', substitution_cost=100)
 print(result_2)
 ```
 
-You may also give `find_matched_str` a try:
+You may also give `find_matched_str()` a try:
 
 ```python
 from pyhelpers.text import find_matched_str
+
 result_3 = find_matched_str(string, lookup_list)
 print(result_3)
 ```
@@ -276,7 +292,7 @@ confirmed(prompt="Continue?...", confirmation_required=True)
 
 ```
 Continue?... [No]|Yes:
->? # Input something here
+>? # Input something here, e.g. Yes, Y, or y
 ```
 
 If you input `Yes` (or `Y`, `yes`, or something like `ye`), it should return `True`; otherwise, `False` given the input being `No` (or something like `n`). When `confirmation_required` is `False`, this function would be null, as it would always return `True`. 
