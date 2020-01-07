@@ -444,6 +444,7 @@ def find_closest_points_between(pts, ref_pts, as_geom=False):
         ref_pts_ = ref_pts
     else:
         ref_pts_ = np.concatenate([np.array(geom.coords) for geom in ref_pts])
+    # noinspection PyUnresolvedReferences
     ref_ckd_tree = scipy.spatial.cKDTree(ref_pts_)
     distances, indices = ref_ckd_tree.query(pts, k=1)  # returns (distance, index)
     if as_geom:
