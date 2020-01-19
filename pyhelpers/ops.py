@@ -315,3 +315,14 @@ def colour_bar_index(no_of_colours, cmap_param, labels=None, **kwargs):
         colour_bar.set_ticklabels(labels)
 
     return colour_bar
+
+
+# Detect if a str type column contains 'nan' when reading csv files
+def detect_nan_for_str_column(pd_dataframe, column_names=None):
+    if column_names:
+        col_names = column_names
+    else:
+        col_names = pd_dataframe.columns
+    for x in col_names:
+        if 'nan' in [str(v) for v in pd_dataframe[x].unique() if isinstance(v, str) or np.isnan(v)]:
+            yield pd_dataframe.columns.get_loc(x)
