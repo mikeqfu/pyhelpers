@@ -25,7 +25,7 @@ A toolkit of helper functions to facilitate data manipulation.
 ## Installation <a name="installation"></a>
 
 ```
-pip install --upgrade pyhelpers
+pip install pyhelpers
 ```
 
 **Note:**
@@ -46,6 +46,7 @@ The current version includes the following modules:
 - [`geom`](#geom)
 - [`text`](#text)
 - [`ops`](#ops)
+- [`sql`](#sql)
 
 There are a number of functions included in each of the above-listed modules. For a quick start, one example is provided for each module to demonstrate how '**pyhelpers**' may assist you in your work. 
 
@@ -170,7 +171,8 @@ import pandas as pd
 xy_array = np.array([(530034, 180381),   # London
                      (406689, 286822),   # Birmingham
                      (383819, 398052),   # Manchester
-                     (582044, 152953)])  # Leeds
+                     (582044, 152953)],  # Leeds
+                    dtype=np.int64)
 
 dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
 ```
@@ -307,4 +309,68 @@ Continue?... [No]|Yes:
 ```
 
 If you input `Yes` (or `Y`, `yes`, or something like `ye`), it should return `True`; otherwise, `False` given the input being `No` (or something like `n`). When `confirmation_required` is `False`, this function would be null, as it would always return `True`. 
+
+
+
+### sql <a name="sql"></a>
+
+This module provides a convenient way to establish a connection with a SQL server. The current release supports only [PostgreSQL](https://www.postgresql.org/). A quick example is given below. 
+
+```python
+from pyhelpers.sql import PostgreSQL
+```
+
+Now you can connect the PostgreSQL server by specifying **host** (default: `'localhost'`), **port** (default: `5432`), **username** (default: `'postgres'`), **password** and **name of the database** (default: `'postgres'`)
+
+```python
+# Connect to 'postgres' (using all default parameters)
+test_db = PostgreSQL(host='localhost', port=5432, username='postgres', password=None, 
+                     database_name='postgres', verbose=True)
+
+# Or simply, 
+# test_db = PostgreSQL()
+```
+
+If `password=None`, you will be asked to input your password. 
+
+After you have successfully established the connection, you could try to dump `dat` ([see above](#store)) into the database "postgres":
+
+```python
+test_db.dump_data(dat, table_name='test_table', schema_name='public', 
+                  if_exists='replace', chunk_size=None,
+                  force_replace=False, col_type=None, verbose=True)
+```
+
+To retrieve the dumped data:
+
+```python
+dat_retrieved = test_db.read_table('test_table')
+# print(dat.equals(dat_retrieved))
+```
+
+To drop the table 'test_table' (If `confirmation_required=True`(default: False), you will be asked to confirm whether you are sure to drop the table):
+
+```python
+test_db.drop_table('test_table', confirmation_required=True, verbose=True)
+# Confirmed to drop the table "test_table" from the database "postgres"? [No]|Yes: 
+# >? Yes
+# The table "test_table" has been dropped successfully.
+```
+
+If you would like to create your own database, for example, which is named 'test_database':
+
+```python
+test_db.create_db("test_database", verbose=True)
+
+# After successfully creating the database, you could check
+print(test_db.database_name)
+```
+
+To drop this database, similarly, you will also be asked to confirm whether you are sure to drop the database if `confirmation_required=True` (default):
+
+```python
+test_db.drop(confirmation_required=True, verbose=True)
+# Confirmed to drop the database "test_database" for postgres@localhost? [No]|Yes: 
+# >? Yes
+```
 
