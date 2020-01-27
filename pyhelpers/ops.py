@@ -2,6 +2,8 @@
 
 import collections
 import inspect
+import itertools
+import math
 import numbers
 import re
 import types
@@ -85,7 +87,7 @@ def get_variable_names(*variable) -> list:
 
 
 # Split a list into (evenly sized) chunks
-def divide_list_into_chunks(lst, chunk_size) -> types.GeneratorType:
+def split_list_by_size(lst, chunk_size) -> types.GeneratorType:
     """
     :param lst: [list]
     :param chunk_size: [int]
@@ -94,12 +96,50 @@ def divide_list_into_chunks(lst, chunk_size) -> types.GeneratorType:
     Example:
         lst = list(range(0, 10))
         chunk_size = 3
-        list(divide_list_into_chunks(lst, chunk_size))  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+        print(list(split_list_by_size(lst, chunk_size)))  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
 
     Reference: https://stackoverflow.com/questions/312443/
     """
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
+
+
+# Split a list into (evenly sized) chunks
+def split_list(lst, num_of_chunks) -> types.GeneratorType:
+    """
+    :param lst: [list]
+    :param num_of_chunks: [int]
+
+    Example:
+        lst = list(range(0, 10))
+        num_of_chunks = 3
+        print(list(split_list(lst, num_of_chunks)))  # [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+
+    Reference: https://stackoverflow.com/questions/312443/
+    """
+    chunk_size = math.ceil(len(lst) / num_of_chunks)
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
+
+# Split a list into (evenly sized) chunks
+def split_iterable(iterable, chunk_size):
+    """
+    :param iterable: [generator]
+    :param chunk_size: [int]
+    :return: [generator]
+
+    Example:
+        iterable = list(range(0, 10))
+        chunk_size = 3
+        for x in split_iterable(iterable, chunk_size):  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+            print(list(x))
+
+    Reference: https://stackoverflow.com/questions/24527006/
+    """
+    iterator = iter(iterable)
+    for x in iterator:
+        yield itertools.chain([x], itertools.islice(iterator, chunk_size - 1))
 
 
 # Update a nested dictionary or similar mapping
