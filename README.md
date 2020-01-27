@@ -301,11 +301,8 @@ You may specify, by setting `prompt`, what you would like to be asked as to the 
 
 ```python
 confirmed(prompt="Continue?...", confirmation_required=True)
-```
-
-```
-Continue?... [No]|Yes:
->? # Input something here, e.g. Yes, Y, or y
+# Continue?... [No]|Yes:
+# >? # Input something here, e.g. Yes, Y, or y
 ```
 
 If you input `Yes` (or `Y`, `yes`, or something like `ye`), it should return `True`; otherwise, `False` given the input being `No` (or something like `n`). When `confirmation_required` is `False`, this function would be null, as it would always return `True`. 
