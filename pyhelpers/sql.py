@@ -15,21 +15,27 @@ from pyhelpers.ops import confirmed
 
 # PostgreSQL
 class PostgreSQL:
-    def __init__(self, host='localhost', port=5432, username='postgres', password=None, database_name='postgres',
-                 verbose=True):
+    def __init__(self, host=None, port=None, username=None, password=None, database_name=None, verbose=True):
         """
-        :param host: [str] (default: 'localhost'; or '127.0.0.1')
-        :param port: [int] (default: 5432)
+        :param host: [str; None (default)] ('localhost' or '127.0.0.1' - default by installation)
+        :param port: [int; None (default)] (5432 - default by installation)
         :param username: [str] (default: 'postgres')
         :param password: [str; None (default)]
         :param database_name: [str] (default: 'postgres')
+        :param verbose: [bool] (default: True)
         """
+        host_ = 'localhost' if host is None else input("PostgreSQL Host: ")
+        port_ = 5432 if port is port is None else input("PostgreSQL Port: ")
+        username_ = 'postgres' if username is None else input("Username: ")
+        database_name_ = database_name if database_name and isinstance(database_name, str) else None
+        password_ = password if password else getpass.getpass("Password ({}@{}:{}): ".format(username_, host_, port_))
+
         self.database_info = {'drivername': 'postgresql+psycopg2',
-                              'host': host if host else input("PostgreSQL Host: "),  # default: 'localhost'
-                              'port': port if port else input("PostgreSQL Port: "),  # 5432 (default by installation).
-                              'username': username if username else input("Username: "),
-                              'password': password if password else getpass.getpass("Password: "),
-                              'database': database_name}
+                              'host': host_,
+                              'port': port_,
+                              'username': username_,
+                              'password': password_,
+                              'database': 'postgres' if database_name_ is None else input("Database name: ")}
 
         # The typical form of a database URL is: url = backend+driver://username:password@host:port/database
         self.url = sqlalchemy.engine.url.URL(**self.database_info)
@@ -41,7 +47,8 @@ class PostgreSQL:
         self.database_name = self.database_info['database']
 
         if verbose:
-            print("Connecting to PostgreSQL database: {}@{} ... ".format(self.database_name, self.host), end="")
+            print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(self.database_name, self.host, self.port),
+                  end="")
         try:
             if not sqlalchemy_utils.database_exists(self.url):
                 sqlalchemy_utils.create_database(self.url)
@@ -56,9 +63,9 @@ class PostgreSQL:
     # Establish a connection to the specified database_name
     def connect_db(self, database_name=None):
         """
-        :param database_name: [str; None (default)] name of a database
+        :param database_name: [str; None (default)] name of a database; if None, the database name is input manually
         """
-        self.database_name = 'postgres' if database_name is None else database_name
+        self.database_name = input("Database name: ") if database_name is None else database_name
         self.database_info['database'] = self.database_name
         self.url = sqlalchemy.engine.url.URL(**self.database_info)
         if not sqlalchemy_utils.database_exists(self.url):
@@ -68,6 +75,10 @@ class PostgreSQL:
 
     # Check if a database exists
     def db_exists(self, database_name):
+        """
+        :param database_name: [str] name of a database
+        :return: [bool]
+        """
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT datname FROM pg_catalog.pg_database "
                                      "WHERE datname='{}');".format(database_name))
@@ -75,31 +86,39 @@ class PostgreSQL:
 
     # An alternative to sqlalchemy_utils.create_database()
     def create_db(self, database_name, verbose=False):
+        """
+        :param database_name: [str] name of a database
+        :param verbose: [bool] (default: False)
+        """
         if not self.db_exists(database_name):
             print("Creating a database \"{}\" ... ".format(database_name), end="") if verbose else ""
             self.disconnect()
             self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
-            self.connect_db(database_name)
             print("Done.") if verbose else ""
         else:
             print("The database already exists.") if verbose else ""
+        self.connect_db(database_name)
 
     # Get size of a database
     def get_db_size(self, database_name=None):
+        """
+        :param database_name: [str; None (default)] name of a database; if None, the current connected database is used
+        :return: [str] size of the database
+        """
         db_name = '\'{}\''.format(database_name) if database_name else 'current_database()'
         db_size = self.engine.execute('SELECT pg_size_pretty(pg_database_size({})) AS size;'.format(db_name))
-        print(db_size.fetchone()[0])
+        return db_size.fetchone()[0]
 
     # Kill the connection to the specified database_name
     def disconnect(self, database_name=None, verbose=False):
         """
-        :param database_name: [str; None (default)] name of database to disconnect from
+        :param database_name: [str; None (default)] name of database to disconnect from; if None, current database
         :param verbose: [bool] (default: False)
         """
         db_name = self.database_name if database_name is None else database_name
         print("Disconnecting the database \"{}\" ... ".format(db_name), end="") if verbose else ""
         try:
-            self.connect_db()
+            self.connect_db(database_name='postgres')
             self.engine.execute('REVOKE CONNECT ON DATABASE "{}" FROM PUBLIC, postgres;'.format(db_name))
             self.engine.execute(
                 'SELECT pg_terminate_backend(pid) '
@@ -117,7 +136,7 @@ class PostgreSQL:
     # Drop the specified database
     def drop(self, database_name=None, confirmation_required=True, verbose=False):
         """
-        :param database_name: [str; None (default)] database to be disconnected; None to disconnect the current one
+        :param database_name: [str; None (default)] database to be disconnected; if None, to disconnect the current one
         :param confirmation_required: [bool] (default: True)
         :param verbose: [bool] (default: False)
         """
@@ -145,12 +164,12 @@ class PostgreSQL:
         except Exception as e:
             print("Failed. CAUSE: \"{}\"".format(e))
 
-    # Drop a schema in the database being currently connected
-    def drop_schema(self, *schema_names, confirmation_required=True, verbose=False):
+    # Formulate printing message for schemas
+    def multi_names_msg(self, *schema_names, desc='schema'):
         """
-        :param schema_names: [str] name of one schema, or names of multiple schemas
-        :param confirmation_required: [bool] (default: True)
-        :param verbose: [bool] (default: False)
+        :param schema_names: [str; iterable]
+        :param desc: [str] (default: 'schema')
+        :return: [tuple] ([tuple, str])
         """
         if schema_names:
             schemas = tuple(schema_name for schema_name in schema_names)
@@ -158,12 +177,22 @@ class PostgreSQL:
             schemas = tuple(
                 x for x in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names()
                 if x != 'public' and x != 'information_schema')
-        print_plural = ("schema " if len(schemas) == 1 else "schemas ")
+        print_plural = (("{} " if len(schemas) == 1 else "{}s ").format(desc))
         print_schema = ("\"{}\", " * (len(schemas) - 1) + "\"{}\"").format(*schemas)
-        if confirmed("Confirmed to drop the {}{} from the database \"{}\"".format(
-                print_plural, print_schema, self.database_name), confirmation_required=confirmation_required):
+        return schemas, print_plural + print_schema
+
+    # Drop a schema in the database being currently connected
+    def drop_schema(self, *schema_names, confirmation_required=True, verbose=False):
+        """
+        :param schema_names: [str] name of one schema, or names of multiple schemas
+        :param confirmation_required: [bool] (default: True)
+        :param verbose: [bool] (default: False)
+        """
+        schemas, schemas_msg = self.multi_names_msg(*schema_names)
+        if confirmed("Confirmed to drop the {} from the database \"{}\"".format(schemas_msg, self.database_name),
+                     confirmation_required=confirmation_required):
             try:
-                print("Dropping the {}{} ... ".format(print_plural, print_schema), end="") if verbose else ""
+                print("Dropping the {} ... ".format(schemas_msg), end="") if verbose else ""
                 self.engine.execute('DROP SCHEMA IF EXISTS ' + ('%s, '*(len(schemas)-1) + '%s') % schemas + ' CASCADE;')
                 print("Done.") if verbose else ""
             except Exception as e:
@@ -186,7 +215,7 @@ class PostgreSQL:
     def dump_data(self, data, table_name, schema_name='public', if_exists='replace', chunk_size=None,
                   force_replace=False, col_type=None, verbose=False):
         """
-        :param data: [pandas.DataFrame]
+        :param data: [pd.DataFrame]
         :param schema_name: [str]
         :param table_name: [str] name of the targeted table
         :param if_exists: [str] 'fail', 'replace' (default), 'append'
@@ -233,8 +262,8 @@ class PostgreSQL:
         """
         sql_query = 'SELECT * FROM {}."{}";'.format(schema_name, table_name)
         table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size)
-        if sorted_by:
-            table_data.sort_values('id', inplace=True)
+        if sorted_by and isinstance(sorted_by, str):
+            table_data.sort_values(sorted_by, inplace=True)
             table_data.index = range(len(table_data))
         return table_data
 
@@ -242,7 +271,7 @@ class PostgreSQL:
     def drop_table(self, table_name, schema_name='public', confirmation_required=True, verbose=False):
         """
         :param table_name: [str] name of a table
-        :param schema_name: [str] name of a schema
+        :param schema_name: [str] name of a schema (default: 'public')
         :param confirmation_required: [bool] (default: True)
         :param verbose: [bool] (default: False)
         """
