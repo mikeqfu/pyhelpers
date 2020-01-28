@@ -15,19 +15,22 @@ from pyhelpers.ops import confirmed
 
 # PostgreSQL
 class PostgreSQL:
-    def __init__(self, host=None, port=None, username=None, password=None, database_name=None, verbose=True):
+    def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
+                 cfm_reqd_cndb=False, verbose=True):
         """
         :param host: [str; None (default)] ('localhost' or '127.0.0.1' - default by installation)
         :param port: [int; None (default)] (5432 - default by installation)
         :param username: [str] (default: 'postgres')
         :param password: [str; None (default)]
         :param database_name: [str] (default: 'postgres')
+        :param cfm_reqd_cndb: [bool] (default: False) confirmation required to create a new database (if absent)
         :param verbose: [bool] (default: True)
         """
-        host_ = 'localhost' if host is None else input("PostgreSQL Host: ")
-        port_ = 5432 if port is port is None else input("PostgreSQL Port: ")
-        username_ = 'postgres' if username is None else input("Username: ")
-        database_name_ = database_name if database_name and isinstance(database_name, str) else None
+        host_ = str(host) if host else ('localhost' if host is None else input("PostgreSQL Host: "))
+        port_ = int(port) if port else (5432 if port is None else input("PostgreSQL Port: "))
+        username_ = str(username) if username else ('postgres' if username is None else input("Username: "))
+        database_name_ = str(database_name) if database_name \
+            else ('postgres' if database_name is None else input("Database: "))
         password_ = password if password else getpass.getpass("Password ({}@{}:{}): ".format(username_, host_, port_))
 
         self.database_info = {'drivername': 'postgresql+psycopg2',
@@ -35,7 +38,7 @@ class PostgreSQL:
                               'port': port_,
                               'username': username_,
                               'password': password_,
-                              'database': 'postgres' if database_name_ is None else input("Database name: ")}
+                              'database': database_name_}
 
         # The typical form of a database URL is: url = backend+driver://username:password@host:port/database
         self.url = sqlalchemy.engine.url.URL(**self.database_info)
@@ -46,13 +49,18 @@ class PostgreSQL:
         self.user, self.host, self.port = self.url.username, self.url.host, self.url.port
         self.database_name = self.database_info['database']
 
-        if verbose:
-            print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(self.database_name, self.host, self.port),
-                  end="")
-        try:
-            if not sqlalchemy_utils.database_exists(self.url):
+        if not sqlalchemy_utils.database_exists(self.url):
+            if confirmed("The database \"{}\" does not exist. Proceed by creating it?".format(self.database_name),
+                         confirmation_required=cfm_reqd_cndb):
+                if verbose:
+                    print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(
+                        self.database_name, self.host, self.port), end="")
                 sqlalchemy_utils.create_database(self.url)
-
+        else:
+            if verbose:
+                print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(
+                    self.database_name, self.host, self.port), end="")
+        try:
             # Create a SQLAlchemy connectable
             self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
             self.connection = self.engine.connect()
