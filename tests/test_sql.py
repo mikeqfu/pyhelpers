@@ -32,4 +32,3 @@ test_db.db_exists("test_database")
 test_db.create_db("test_database", verbose=True)
 
 test_db.drop(confirmation_required=True, verbose=True)
-
