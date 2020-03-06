@@ -16,12 +16,13 @@ def osgb36_to_wgs84(easting, northing):
 
     Example:
         easting, northing = 530034, 180381
-        osgb36_to_wgs84(easting, northing)  # (-0.12772400574286874, 51.50740692743041)
+        osgb36_to_wgs84(easting, northing) == (-0.12772400574286874, 51.50740692743041)
     """
-    import pyproj
-    osgb36 = pyproj.Proj(init='EPSG:27700')  # UK Ordnance Survey, 1936 datum
-    wgs84 = pyproj.Proj(init='EPSG:4326')  # LonLat with WGS84 datum used by GPS units and Google Earth
-    longitude, latitude = pyproj.transform(osgb36, wgs84, easting, northing)
+    from pyproj import Transformer
+    osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
+    wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
+    transformer = Transformer.from_crs(osgb36, wgs84)
+    latitude, longitude = transformer.transform(easting, northing)
     return longitude, latitude
 
 
@@ -36,12 +37,13 @@ def wgs84_to_osgb36(longitude, latitude):
 
     Example:
         longitude, latitude = -0.12772404, 51.507407
-        wgs84_to_osgb36(longitude, latitude)  # (530033.99829712, 180381.00751935126)
+        wgs84_to_osgb36(longitude, latitude) == (530033.99829712, 180381.00751935126)
     """
-    import pyproj
-    wgs84 = pyproj.Proj(init='EPSG:4326')  # LonLat with WGS84 datum used by GPS units and Google Earth
-    osgb36 = pyproj.Proj(init='EPSG:27700')  # UK Ordnance Survey, 1936 datum
-    easting, northing = pyproj.transform(wgs84, osgb36, longitude, latitude)
+    from pyproj import Transformer
+    wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
+    osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
+    transformer = Transformer.from_crs(wgs84, osgb36)
+    easting, northing = transformer.transform(latitude, longitude)
     return easting, northing
 
 
@@ -57,7 +59,7 @@ def osgb36_to_wgs84_calc(easting, northing):
 
     Example:
         easting, northing = 530034, 180381
-        osgb36_to_wgs84_calc(easting, northing)  # (-0.1277240422737611, 51.50740676560936)  # cp. osgb36_to_wgs84()
+        osgb36_to_wgs84_calc(easting, northing) == (-0.1277240422737611, 51.50740676560936)  # cp. osgb36_to_wgs84()
     """
     # The Airy 180 semi-major and semi-minor axes used for OSGB36 (m)
     a, b = 6377563.396, 6356256.909
@@ -164,7 +166,7 @@ def wgs84_to_osgb36_calc(longitude, latitude):
 
     Example:
         longitude, latitude = -0.12772404, 51.507407
-        wgs84_to_osgb36_calc(longitude, latitude)  # (530034.0010406997, 180381.0084845958)  # cp. wgs84_to_osgb36
+        wgs84_to_osgb36_calc(longitude, latitude) == (530034.0010406997, 180381.0084845958)  # cp. wgs84_to_osgb36
     """
     # First convert to radians. These are on the wrong ellipsoid currently: GRS80. (Denoted by _1)
     lon_1, lat_1 = longitude * np.pi / 180, latitude * np.pi / 180
