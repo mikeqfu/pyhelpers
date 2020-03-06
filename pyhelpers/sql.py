@@ -283,8 +283,8 @@ class PostgreSQL:
         :param confirmation_required: [bool] (default: True)
         :param verbose: [bool] (default: False)
         """
-        if confirmed("Confirmed to drop the table \"{}\" from the database \"{}\"?".format(
-                table_name, self.database_name), confirmation_required=confirmation_required):
+        if confirmed("Confirmed to drop the table {}.\"{}\" from the database \"{}\"?".format(
+                schema_name, table_name, self.database_name), confirmation_required=confirmation_required):
             try:
                 self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(schema_name, table_name))
                 print("The table \"{}\" has been dropped successfully.".format(table_name)) if verbose else ""
