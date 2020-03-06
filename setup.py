@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.24',
+    version='1.0.25',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -29,7 +29,7 @@ setuptools.setup(
         'psycopg2',
         'python-rapidjson',
         # 'pyodbc',
-        # 'pyproj',
+        'pyproj',
         'requests',
         # 'shapely',
         'sqlalchemy',
