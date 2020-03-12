@@ -3,6 +3,7 @@
 import copy
 import os
 import pickle
+import subprocess
 
 from pyhelpers.ops import confirmed
 
@@ -17,9 +18,13 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=F
     :param verbose: [bool] (default: False) whether to print note
     :return: printing message showing whether or not the data has been successfully saved or updated
     """
-    pickle_filename = os.path.basename(path_to_pickle)
-    pickle_dir = os.path.basename(os.path.dirname(path_to_pickle))
-    pickle_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_pickle)))
+    path_to_pickle = os.path.abspath(path_to_pickle)
+    pickle_dirname, pickle_filename = os.path.split(path_to_pickle)
+    pickle_dir = os.path.basename(pickle_dirname)
+    pickle_dir_parent = os.path.basename(os.path.dirname(pickle_dirname))
+
+    # The specified path exists?
+    os.makedirs(pickle_dirname, exist_ok=True)
 
     if verbose:
         print("{} \"{}\"".format("Updating" if os.path.isfile(path_to_pickle) else "Saving",
@@ -27,7 +32,6 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=F
               end=" ... ")
 
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(path_to_pickle)), exist_ok=True)
         pickle_out = open(path_to_pickle, mode=mode, encoding=encoding)
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
@@ -64,16 +68,20 @@ def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False):
     :param verbose: [bool] (default: False) whether to print note
     :return: printing message showing whether or not the data has been successfully saved or updated
     """
-    json_filename = os.path.basename(path_to_json)
-    json_dir = os.path.basename(os.path.dirname(path_to_json))
-    json_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_json)))
+    path_to_json = os.path.abspath(path_to_json)
+    json_dirname, json_filename = os.path.split(path_to_json)
+    json_dir = os.path.basename(json_dirname)
+    json_dir_parent = os.path.basename(os.path.dirname(json_dirname))
+
+    # The specified path exists?
+    os.makedirs(json_dirname, exist_ok=True)
 
     print("{} \"{}\"".format("Updating" if os.path.isfile(path_to_json) else "Saving",
                              " - ".join([x for x in (json_dir_parent, json_dir, json_filename) if x])),
           end=" ... ") if verbose else ""
 
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(path_to_json)), exist_ok=True)
+
         json_out = open(path_to_json, mode=mode, encoding=encoding)
         import rapidjson
         rapidjson.dump(json_data, json_out)
@@ -116,11 +124,13 @@ def save_excel(excel_data, path_to_excel, sep=',', index=False, sheet_name='Shee
     :param verbose: [bool] (default: False) whether to print note
     :return: printing message showing whether or not the data has been successfully saved or updated
     """
-    import pandas as pd
+    path_to_excel = os.path.abspath(path_to_excel)
+    excel_dirname, excel_filename = os.path.split(path_to_excel)
+    excel_dir = os.path.basename(excel_dirname)
+    excel_dir_parent = os.path.basename(os.path.dirname(excel_dirname))
 
-    excel_filename = os.path.basename(path_to_excel)
-    excel_dir = os.path.basename(os.path.dirname(path_to_excel))
-    excel_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_excel)))
+    # The specified path exists?
+    os.makedirs(excel_dirname, exist_ok=True)
 
     if verbose:
         print("{} \"{}\"".format("Updating" if os.path.isfile(path_to_excel) else "Saving",
@@ -128,12 +138,12 @@ def save_excel(excel_data, path_to_excel, sep=',', index=False, sheet_name='Shee
               end=" ... ")
 
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(path_to_excel)), exist_ok=True)
         if excel_filename.endswith(".csv"):  # Save the data to a .csv file
             excel_data.to_csv(path_to_excel, index=index, sep=sep)
         else:  # Save the data to a .xlsx or .xls file, e.g. excel_filename.endswith(".xlsx")
+            import pandas as pd
             xlsx_writer = pd.ExcelWriter(path_to_excel, engine, **kwargs)
-            excel_data.to_excel(xlsx_writer, sheet_name, **kwargs)
+            excel_data.to_excel(xlsx_writer, sheet_name, index=index, **kwargs)
             xlsx_writer.save()
             xlsx_writer.close()
         print("Successfully.") if verbose else ""
@@ -150,19 +160,20 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     :param verbose: [bool] (default: False) whether to print note
     :return: printing message showing whether or not the data has been successfully saved or updated
     """
-    # assert isinstance(feather_data, pd.DataFrame)
-    feather_filename = os.path.basename(path_to_feather)
-    feather_dir = os.path.basename(os.path.dirname(path_to_feather))
-    feather_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_feather)))
+    path_to_feather = os.path.abspath(path_to_feather)
+    feather_dirname, feather_filename = os.path.split(path_to_feather)
+    feather_dir = os.path.basename(feather_dirname)
+    feather_dir_parent = os.path.basename(os.path.dirname(feather_dirname))
+
+    # The specified path exists?
+    os.makedirs(feather_dirname, exist_ok=True)
 
     msg = "{} \"{}\"".format("Updating" if os.path.isfile(path_to_feather) else "Saving",
                              " - ".join([x for x in (feather_dir_parent, feather_dir, feather_filename) if x]))
 
-    if verbose:
-        print(msg, end=" ... ")
+    print(msg, end=" ... ") if verbose else ""
 
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(path_to_feather)), exist_ok=True)
         feather_data.to_feather(path_to_feather)
         print("Successfully.") if verbose else ""
     except Exception as e:
@@ -206,9 +217,6 @@ def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='
     # Make a copy the original data
     dat = copy.deepcopy(data) if deep_copy else copy.copy(data)
 
-    # The specified path exists?
-    os.makedirs(os.path.dirname(os.path.abspath(path_to_file)), exist_ok=True)
-
     import pandas as pd
     if isinstance(dat, pd.DataFrame) and dat.index.nlevels > 1:
         dat.reset_index(inplace=True)
@@ -237,9 +245,13 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False):
     :param verbose: [bool] (default: False) whether to print note
     :return: printing message showing whether or not the figure has been successfully saved or updated
     """
-    fig_filename = os.path.basename(path_to_fig_file)
-    fig_dir = os.path.basename(os.path.dirname(path_to_fig_file))
-    fig_dir_parent = os.path.basename(os.path.dirname(os.path.dirname(path_to_fig_file)))
+    path_to_fig_file = os.path.abspath(path_to_fig_file)
+    fig_dirname, fig_filename = os.path.split(path_to_fig_file)
+    fig_dir = os.path.basename(fig_dirname)
+    fig_dir_parent = os.path.basename(os.path.dirname(fig_dirname))
+
+    # The specified path exists?
+    os.makedirs(fig_dirname, exist_ok=True)
 
     if verbose:
         print("{} \"{}\"".format("Updating" if os.path.isfile(path_to_fig_file) else "Saving",
@@ -252,7 +264,6 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False):
         plt.savefig(path_to_fig_file, dpi=dpi)
         if save_as == ".svg" and os.path.isfile("C:\\Program Files\\Inkscape\\inkscape.exe"):
             path_to_emf = path_to_fig_file.replace(save_as, ".emf")
-            import subprocess
             subprocess.call(["C:\\Program Files\\Inkscape\\inkscape.exe", '-z', path_to_fig_file, '-M', path_to_emf])
         print("Successfully.") if verbose else ""
 
@@ -274,7 +285,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False):
         print("Converting \".svg\" to \".emf\"", end=" ... ") if verbose else ""
 
         try:
-            import subprocess
+            os.makedirs(os.path.dirname(path_to_emf), exist_ok=True)
             subprocess.call([path_to_inkscape, '-z', path_to_svg, '-M', path_to_emf])
             print("Done. \nThe .emf file is saved to \"{}\".".format(path_to_emf)) if verbose else ""
         except Exception as e:
@@ -309,6 +320,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
                            # 'margin-bottom': '0',
                            'zoom': str(float(zoom)),
                            'encoding': encoding}
+            os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
             status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config, options=pdf_options)
             print("Done. \nThe web page is saved to \"{}\"".format(path_to_pdf)
                   if status else "Failed. Check if the URL is available.") if verbose else ""
