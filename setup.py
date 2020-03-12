@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.0.25',
+    version='1.0.26',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -19,22 +19,22 @@ setuptools.setup(
 
     install_requires=[
         # 'gdal',
-        'fuzzywuzzy',
+        # 'fuzzywuzzy',
         # 'matplotlib',
         # 'nltk',
         'numpy',
         'openpyxl',
         # 'pandas',
         # 'pdfkit',
-        'psycopg2',
+        # 'psycopg2',
         'python-rapidjson',
         # 'pyodbc',
-        'pyproj',
-        'requests',
+        # 'pyproj',
+        # 'requests',
         # 'shapely',
-        'sqlalchemy',
-        'sqlalchemy-utils',
-        'tqdm',
+        # 'sqlalchemy',
+        # 'sqlalchemy-utils',
+        # 'tqdm',
         'xlrd',
         'xlwt',
         'XlsxWriter'
