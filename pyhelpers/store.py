@@ -9,7 +9,7 @@ from pyhelpers.ops import confirmed
 
 
 # Save pickle file
-def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=False):
+def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=False, **kwargs):
     """
     :param pickle_data: data that could be dumped by the 'pickle' package
     :param path_to_pickle: [str] local file path
@@ -32,7 +32,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=F
               end=" ... ")
 
     try:
-        pickle_out = open(path_to_pickle, mode=mode, encoding=encoding)
+        pickle_out = open(path_to_pickle, mode=mode, encoding=encoding, **kwargs)
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
         print("Successfully.") if verbose else ""
@@ -42,7 +42,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', encoding=None, verbose=F
 
 
 # Load pickle file
-def load_pickle(path_to_pickle, mode='rb', encoding=None, verbose=False):
+def load_pickle(path_to_pickle, mode='rb', encoding=None, verbose=False, **kwargs):
     """
     :param path_to_pickle: [str] local file path
     :param mode: [str] (default: 'rb')
@@ -51,7 +51,7 @@ def load_pickle(path_to_pickle, mode='rb', encoding=None, verbose=False):
     :return: data retrieved from the specified path
     """
     print("Loading \"{}\"".format(os.path.basename(path_to_pickle)), end=" ... ") if verbose else ""
-    pickle_in = open(path_to_pickle, mode=mode, encoding=encoding)
+    pickle_in = open(path_to_pickle, mode=mode, encoding=encoding, **kwargs)
     pickle_data = pickle.load(pickle_in)
     pickle_in.close()
     print("Successfully.") if verbose else ""
@@ -59,7 +59,7 @@ def load_pickle(path_to_pickle, mode='rb', encoding=None, verbose=False):
 
 
 # Save json file
-def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False):
+def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False, **kwargs):
     """
     :param json_data: data that could be dumped by the 'json' package
     :param path_to_json: [str] local file path
@@ -82,7 +82,7 @@ def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False):
 
     try:
 
-        json_out = open(path_to_json, mode=mode, encoding=encoding)
+        json_out = open(path_to_json, mode=mode, encoding=encoding, **kwargs)
         import rapidjson
         rapidjson.dump(json_data, json_out)
         json_out.close()
@@ -93,7 +93,7 @@ def save_json(json_data, path_to_json, mode='w', encoding=None, verbose=False):
 
 
 # Load json file
-def load_json(path_to_json, mode='r', encoding=None, verbose=False):
+def load_json(path_to_json, mode='r', encoding=None, verbose=False, **kwargs):
     """
     :param path_to_json: [str] local file path
     :param mode: [str] (default: 'r')
@@ -102,7 +102,7 @@ def load_json(path_to_json, mode='r', encoding=None, verbose=False):
     :return: data retrieved from the specified path
     """
     print("Loading \"{}\"".format(os.path.basename(path_to_json)), end=" ... ") if verbose else ""
-    json_in = open(path_to_json, mode=mode, encoding=encoding)
+    json_in = open(path_to_json, mode=mode, encoding=encoding, **kwargs)
     import rapidjson
     json_data = rapidjson.load(json_in)
     json_in.close()
@@ -201,7 +201,7 @@ def load_feather(path_to_feather, columns=None, use_threads=True, verbose=False)
 
 # Save data locally (".pickle", ".csv", ".xlsx" or ".xls")
 def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='xlsxwriter', encoding=None,
-         deep_copy=True, verbose=False):
+         deep_copy=True, verbose=False, **kwargs):
     """
     :param data: data that could be dumped as .feather, .json, .pickle and .csv/.xlsx/.xls
     :param path_to_file: [str] local file path
@@ -223,22 +223,22 @@ def save(data, path_to_file, sep=',', index=False, sheet_name='Sheet1', engine='
 
     # Save the data according to the file extension
     if path_to_file.endswith((".csv", ".xlsx", ".xls")):
-        save_excel(dat, path_to_file, sep, index, sheet_name, engine, verbose=verbose)
+        save_excel(dat, path_to_file, sep, index, sheet_name, engine, verbose=verbose, **kwargs)
     elif path_to_file.endswith(".feather"):
         save_feather(dat, path_to_file, verbose=verbose)
     elif path_to_file.endswith(".json"):
-        save_json(dat, path_to_file, encoding=encoding, verbose=verbose)
+        save_json(dat, path_to_file, encoding=encoding, verbose=verbose, **kwargs)
     else:
         if path_to_file.endswith(".pickle"):
-            save_pickle(dat, path_to_file, encoding=encoding, verbose=verbose)
+            save_pickle(dat, path_to_file, encoding=encoding, verbose=verbose, **kwargs)
         else:
             print("Note that the current file extension is not recognisable by this \"save()\" function.")
             if confirmed("To save \"{}\" as a .pickle file? ".format(os.path.basename(path_to_file))):
-                save_pickle(dat, path_to_file, encoding=encoding, verbose=verbose)
+                save_pickle(dat, path_to_file, encoding=encoding, verbose=verbose, **kwargs)
 
 
 # Save a figure using matplotlib.pyplot.savefig and Inkscape
-def save_fig(path_to_fig_file, dpi=None, verbose=False):
+def save_fig(path_to_fig_file, dpi=None, verbose=False, **kwargs):
     """
     :param path_to_fig_file: [str]
     :param dpi: [int; None (default)]
@@ -261,7 +261,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False):
         _, save_as = os.path.splitext(path_to_fig_file)
         # assert save_as.strip(".") in plt.gcf().canvas.get_supported_filetypes().keys()
         import matplotlib.pyplot as plt
-        plt.savefig(path_to_fig_file, dpi=dpi)
+        plt.savefig(path_to_fig_file, dpi=dpi, **kwargs)
         if save_as == ".svg" and os.path.isfile("C:\\Program Files\\Inkscape\\inkscape.exe"):
             path_to_emf = path_to_fig_file.replace(save_as, ".emf")
             subprocess.call(["C:\\Program Files\\Inkscape\\inkscape.exe", '-z', path_to_fig_file, '-M', path_to_emf])
