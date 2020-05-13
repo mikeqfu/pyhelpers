@@ -98,9 +98,9 @@ def is_dirname(x):
 
 
 # Regulate the input data directory
-def regulate_input_data_dir(data_dir, msg="Invalid input!"):
+def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     """
-    :param data_dir: [str] data directory as input
+    :param data_dir: [str; None (default)] data directory as input
     :param msg: [str] an error message if the input `data_dir` is not an absolute path (default: "Invalid input!")
     :return: [str] a full path to a regulated data directory
 
