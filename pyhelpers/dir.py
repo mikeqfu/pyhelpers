@@ -10,10 +10,10 @@ from pyhelpers.ops import confirmed
 # Change directory
 def cd(*sub_dir, mkdir=False, **kwargs):
     """
-    :param sub_dir: [str]
-    :param mkdir: [bool] (default: False)
-    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
-    :return: [str]
+    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
+    :param mkdir: [bool] (default: False) whether to create a directory
+    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
+    :return: [str] a full path to a directory (or a file)
 
     Examples:
         cd()  # Current working directory
@@ -31,11 +31,11 @@ def cd(*sub_dir, mkdir=False, **kwargs):
 # Change directory to "Data"
 def cdd(*sub_dir, data_dir="Data", mkdir=False, **kwargs):
     """
-    :param sub_dir: [str]
-    :param data_dir: [str] (default: "Data")
-    :param mkdir: [bool] (default: False)
-    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
-    :return: [str]
+    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
+    :param data_dir: [str] (default: "Data") name of a directory to store data
+    :param mkdir: [bool] (default: False) whether to create a directory
+    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
+    :return: [str] a full path to a directory (or a file) under `data_dir`
 
     Examples:
         data_dir = "Data"
@@ -52,14 +52,14 @@ def cdd(*sub_dir, data_dir="Data", mkdir=False, **kwargs):
     return path
 
 
-# Change directory to "dat" and sub-directories
+# Change directory to "dat" and sub-directories for a Python package per se
 def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
-    :param sub_dir: [str]
-    :param dat_dir: [str] (default: "dat")
-    :param mkdir: [bool] (default: False)
-    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
-    :return: [str]
+    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
+    :param dat_dir: [str] (default: "dat") name of a directory to store data
+    :param mkdir: [bool] (default: False) whether to create a directory
+    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
+    :return: [str] a full path to a directory (or a file) under `data_dir`
 
     Example:
         dat_dir = "dat"
@@ -78,7 +78,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 def is_dirname(x):
     """
     :param x: [str] a string-type variable to be checked
-    :return: [bool]
+    :return: [bool] whether or not `x` is a path-like variable
 
     Examples:
         x = "test_is_dirname"
@@ -124,9 +124,9 @@ def regulate_input_data_dir(data_dir, msg="Invalid input!"):
 # Remove a directory
 def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
     """
-    :param path: [str]
+    :param path: [str] a full path to a directory
     :param confirmation_required: [bool] (default: False)
-    :param verbose: [bool]
+    :param verbose: [bool] whether or not show illustrative messages
     :param kwargs: optional arguments used by `shutil.rmtree()`
 
     Example:
