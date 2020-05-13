@@ -8,10 +8,11 @@ from pyhelpers.ops import confirmed
 
 
 # Change directory
-def cd(*sub_dir, mkdir=False):
+def cd(*sub_dir, mkdir=False, **kwargs):
     """
     :param sub_dir: [str]
     :param mkdir: [bool] (default: False)
+    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
     :return: [str]
 
     Examples:
@@ -23,16 +24,17 @@ def cd(*sub_dir, mkdir=False):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True, **kwargs)
     return path
 
 
 # Change directory to "Data"
-def cdd(*sub_dir, data_dir="Data", mkdir=False):
+def cdd(*sub_dir, data_dir="Data", mkdir=False, **kwargs):
     """
     :param sub_dir: [str]
     :param data_dir: [str] (default: "Data")
     :param mkdir: [bool] (default: False)
+    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
     :return: [str]
 
     Examples:
@@ -46,16 +48,17 @@ def cdd(*sub_dir, data_dir="Data", mkdir=False):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True, **kwargs)
     return path
 
 
 # Change directory to "dat" and sub-directories
-def cd_dat(*sub_dir, dat_dir="dat", mkdir=False):
+def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
     :param sub_dir: [str]
     :param dat_dir: [str] (default: "dat")
     :param mkdir: [bool] (default: False)
+    :param kwargs: [int] (optional arguments for `os.makedirs()`) `mode=0o777`
     :return: [str]
 
     Example:
@@ -67,14 +70,14 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True, **kwargs)
     return path
 
 
 # Check if a string is a path or just a string
 def is_dirname(x):
     """
-    :param x: [str]
+    :param x: [str] a string-type variable to be checked
     :return: [bool]
 
     Examples:
@@ -119,11 +122,12 @@ def regulate_input_data_dir(data_dir, msg="Invalid input!"):
 
 
 # Remove a directory
-def rm_dir(path, confirmation_required=True, verbose=False):
+def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
     """
     :param path: [str]
     :param confirmation_required: [bool] (default: False)
     :param verbose: [bool]
+    :param kwargs: optional arguments used by `shutil.rmtree()`
 
     Example:
         path = cd("test_rm_dir", mkdir=True)
@@ -137,7 +141,7 @@ def rm_dir(path, confirmation_required=True, verbose=False):
             if confirmed("\"{}\" is not empty. Confirmed to continue removing the directory?".format(path),
                          confirmation_required=confirmation_required):
                 import shutil
-                shutil.rmtree(path)
+                shutil.rmtree(path, **kwargs)
         else:
             if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
                 os.rmdir(path)
