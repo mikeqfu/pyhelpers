@@ -3,13 +3,16 @@
 import os
 import time
 
+import tqdm
+
 
 # Download and show progress
-def download(url, path_to_file, wait_to_retry=3600):
+def download(url, path_to_file, wait_to_retry=3600, **kwargs):
     """
-    :param url: [str]
-    :param path_to_file: [str]
-    :param wait_to_retry: [int; float] (default: 3600)
+    :param url: [str] URL
+    :param path_to_file: [str] a full path to which the downloaded object is saved as
+    :param wait_to_retry: [int; float] a wait time to retry downloading (default: 3600 sec)
+    :param kwargs: optional arguments used by `open()`
 
     Example:
         url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
@@ -36,8 +39,7 @@ def download(url, path_to_file, wait_to_retry=3600):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    import tqdm
-    with open(path_to_file, 'wb') as f:
+    with open(path_to_file, mode='wb', **kwargs) as f:
         for data in tqdm.tqdm(r.iter_content(block_size), total=total_size // block_size, unit='MB'):
             wrote = wrote + len(data)
             f.write(data)
