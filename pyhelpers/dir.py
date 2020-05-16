@@ -13,7 +13,7 @@ def cd(*sub_dir, mkdir=False, **kwargs):
     :param sub_dir: [str] name of directory or names of directories (and/or a filename)
     :param mkdir: [bool] whether to create a directory (default: False)
     :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return: [str] a full path to a directory (or a file)
+    :return path: [str] a full path to a directory (or a file)
 
     Examples:
         cd()  # Current working directory
@@ -35,7 +35,7 @@ def cdd(*sub_dir, data_dir="Data", mkdir=False, **kwargs):
     :param data_dir: [str] name of a directory to store data (default: "Data")
     :param mkdir: [bool] whether to create a directory (default: False)
     :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return: [str] a full path to a directory (or a file) under `data_dir`
+    :return path: [str] a full path to a directory (or a file) under `data_dir`
 
     Examples:
         data_dir = "Data"
@@ -59,7 +59,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     :param dat_dir: [str] name of a directory to store data (default: "dat")
     :param mkdir: [bool] whether to create a directory (default: False)
     :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return: [str] a full path to a directory (or a file) under `data_dir`
+    :return path: [str] a full path to a directory (or a file) under `data_dir`
 
     Example:
         dat_dir = "dat"
@@ -102,7 +102,7 @@ def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     """
     :param data_dir: [str; None (default)] data directory as input
     :param msg: [str] an error message if the input `data_dir` is not an absolute path (default: "Invalid input!")
-    :return: [str] a full path to a regulated data directory
+    :return data_dir_: [str] a full path to a regulated data directory
 
     Example:
         data_dir = "test_regulate_input_data_dir"
@@ -112,13 +112,13 @@ def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     if data_dir:
         assert isinstance(data_dir, str), msg
         if not os.path.isabs(data_dir):  # Use default file directory
-            data_dir = cd(data_dir.strip('.\\.'))
+            data_dir_ = cd(data_dir.strip('.\\.'))
         else:
-            data_dir = os.path.realpath(data_dir.lstrip('.\\.'))
+            data_dir_ = os.path.realpath(data_dir.lstrip('.\\.'))
             assert os.path.isabs(data_dir), msg
     else:
-        data_dir = cdd()
-    return data_dir
+        data_dir_ = cdd()
+    return data_dir_
 
 
 # Remove a directory
