@@ -1,9 +1,16 @@
 """ Settings """
 
+import os
+
+import numpy as np
+import pandas as pd
+
 
 # Set preferences for displaying results
 def np_preferences(reset=False):
-    import numpy as np
+    """
+    :param reset: [bool] (default: False)
+    """
     if not reset:
         np.core.arrayprint._line_width = 120
     else:
@@ -12,7 +19,9 @@ def np_preferences(reset=False):
 
 # Set preferences for displaying results
 def pd_preferences(reset=False):
-    import pandas as pd
+    """
+    :param reset: [bool] (default: False)
+    """
     if not reset:
         # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
         pd.set_option('display.precision', 2)
@@ -31,13 +40,16 @@ def pd_preferences(reset=False):
 # Set preferences for plotting
 def mpl_preferences(reset=False, font_name=None):
     """
+    :param reset: [bool] (default: False)
+    :param font_name: [str; None (default)]
+
     Get a list of supported file formats for matplotlib savefig() function
-      plt.gcf().canvas.get_supported_filetypes()  # Aside: "gcf" is short for "get current fig" manager
-      plt.gcf().canvas.get_supported_filetypes_grouped()
+        plt.gcf().canvas.get_supported_filetypes()  # Aside: "gcf" is short for "get current fig" manager
+        plt.gcf().canvas.get_supported_filetypes_grouped()
     """
-    import os
     import matplotlib.pyplot as plt
     import matplotlib.font_manager
+
     if not reset:
         plt.rcParams['font.size'] = 13
         plt.rcParams['font.weight'] = 'normal'
@@ -60,8 +72,13 @@ def mpl_preferences(reset=False, font_name=None):
 
 
 # Set GDAL configurations
-def gdal_configurations(reset=False, max_tmpfile_size=5000):
+def gdal_configurations(reset=False, max_tmpfile_size=1000):
+    """
+    :param reset: [bool] (default: False)
+    :param max_tmpfile_size: [int] (default: 5000)
+    """
     import gdal
+
     if not reset:
         # Whether to enable interleaved reading. Defaults to NO.
         gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
