@@ -29,7 +29,7 @@ def cd(*sub_dir, mkdir=False, **kwargs):
 
 
 # Change directory to "Data"
-def cdd(*sub_dir, data_dir="Data", mkdir=False, **kwargs):
+def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
     :param sub_dir: [str] name of directory or names of directories (and/or a filename)
     :param data_dir: [str] name of a directory to store data (default: "Data")
