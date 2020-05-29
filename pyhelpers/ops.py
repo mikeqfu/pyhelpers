@@ -292,12 +292,13 @@ def find_closest_date(date, date_list, as_datetime=None, fmt="%Y-%m-%d %H:%M:%S.
     Examples:
         date = pd.to_datetime('2019-01-01')
         date_list = [date + pd.Timedelta(days=d) for d in range(1, 11)]
-        find_closest_date(date, date_list)
-        find_closest_date(date, date_list, as_datetime=False)
+
+        find_closest_date(date, date_list, as_datetime=False)  # '2019-01-02 00:00:00.000000'
 
         date = '2019-01-01'
         date_list = ['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06']
-        find_closest_date(date, date_list, as_datetime=True)
+
+        find_closest_date(date, date_list, as_datetime=True)  # Timestamp('2019-01-02 00:00:00')
     """
     closest_date = min(date_list, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
     if as_datetime:
@@ -425,13 +426,18 @@ def create_rotation_matrix(theta):
     return rotation_mat
 
 
-#
+# Convert a dictionary to a data frame
 def dict_to_dataframe(input_dict, k='key', v='value'):
     """
     :param input_dict: [dict]
     :param k: [str] column name for keys
     :param v: [str] column name for values
     :return: [pd.DataFrame]
+
+    Example:
+        input_dict = {'a': 1, 'b': 2}
+
+        df = dict_to_dataframe(input_dict, k='key', v='value')
     """
     dict_keys = list(input_dict.keys())
     dict_values = list(input_dict.values())
