@@ -9,7 +9,6 @@ import zipfile
 import numpy as np
 import pandas as pd
 import rapidjson
-import scipy.sparse
 
 from pyhelpers.ops import confirmed
 
@@ -646,5 +645,8 @@ def load_csr_matrix(path_to_csr, **kwargs):
     csr_loader = np.load(path_to_csr, **kwargs)
     data, indices, indptr = csr_loader['data'], csr_loader['indices'], csr_loader['indptr']
     shape = csr_loader['shape']
+
+    import scipy.sparse
     csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)
+
     return csr_mat
