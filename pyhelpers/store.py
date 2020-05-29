@@ -4,9 +4,12 @@ import os
 import pathlib
 import pickle
 import subprocess
+import zipfile
 
+import numpy as np
 import pandas as pd
 import rapidjson
+import scipy.sparse
 
 from pyhelpers.ops import confirmed
 
@@ -502,11 +505,12 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
                          **kwargs):
     """
     :param url_to_web_page: [str] URL of a web page
-    :param path_to_pdf: [str] local file path
+    :param path_to_pdf: [str] path where a .pdf is saved
     :param page_size: [str] (default: 'A4')
     :param zoom: [float] (default: 1.0)
     :param encoding: [str] (default: 'UTF-8')
     :param verbose: [bool] whether or not show illustrative messages (default: False)
+    :param kwargs: optional arguments used by `pdfkit.from_url()`
 
     Example:
         from pyhelpers.dir import cd
@@ -549,5 +553,97 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
             print("Failed. {}".format(e)) if verbose else ""
 
     else:
-        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org) is required to run this function. "
+        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function. "
               "It is not found on this device.") if verbose else ""
+
+
+# Extract data from a zip file
+def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
+    """
+    :param path_to_zip_file: [str] path where a zipped file is saved
+    :param out_dir: [str]
+    :param mode: [str] (default: 'r')
+    :param verbose: [bool] (default: False)
+    :param kwargs: optional arguments used by `extractall()`
+    :return:
+
+    Example:
+        from pyhelpers.dir import cd
+
+        path_to_zip_file = cd("tests\\data", "zipped.zip")
+        out_dir = cd("tests\\data")
+        mode = 'r'
+        verbose = True
+
+        unzip(path_to_zip_file, out_path, mode, verbose)
+    """
+    if verbose:
+        print("Unzipping \"..\\{}\"".format(os.path.relpath(path_to_zip_file)), end=" ... ")
+
+    try:
+        with zipfile.ZipFile(path_to_zip_file, mode) as zf:
+            zf.extractall(out_dir, **kwargs)
+        print('File extracted successfully.') if verbose else ""
+        zf.close()
+    except Exception as e:
+        print("Failed to extract files. {}".format(e))
+
+
+# Use 7-zip to extract data from a compressed file
+def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
+    """
+    :param path_to_zip_file: [str] path where a zipped file is saved
+    :param out_dir: [str] directory where an extracted file is saved
+    :param mode: [str] (default: 'aoa')
+    :param verbose: [bool] (default: False)
+    :param kwargs: optional arguments used by `subprocess.call()`
+
+    Example:
+        from pyhelpers.dir import cd
+
+        out_dir = cd("tests\\data")
+        mode = 'aoa'
+        verbose = True
+
+        path_to_zip_file = cd("tests\\data", "zipped.zip")
+        seven_zip(path_to_zip_file, out_dir, mode, verbose)
+
+        path_to_zip_file = cd("tests\\data", "zipped.7z")
+        seven_zip(path_to_zip_file, out_dir, mode, verbose)
+    """
+    seven_zip_exe = "C:\\Program Files\\7-Zip\\7z.exe"
+    if os.path.isfile(seven_zip_exe):
+        try:
+            subprocess.call('"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe, path_to_zip_file, out_dir, mode), **kwargs)
+            print("\nFile extracted successfully.")
+        except Exception as e:
+            print("\nFailed to unzip \"{}\". {}.".format(path_to_zip_file, e))
+    else:
+        print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function. "
+              "It is not found on this device.") if verbose else ""
+
+
+# Load in a compressed sparse row (CSR) or compressed row storage (CRS)
+def load_csr_matrix(path_to_csr, **kwargs):
+    """
+    :param path_to_csr: [str] path where a CSR (e.g. .npz) file is saved
+    :param kwargs: optional arguments used by `np.load()`
+    :return: [scipy.sparse.csr.csr_matrix]
+
+    Example:
+        from pyhelpers.dir import cd
+
+        path_to_csr = cd("tests\\data", "csr_mat.npz")
+        # indptr = np.array([0, 2, 3, 6])
+        # indices = np.array([0, 2, 2, 0, 1, 2])
+        # data = np.array([1, 2, 3, 4, 5, 6])
+        # csr_m = scipy.sparse.csr_matrix((data, indices, indptr), shape=(3, 3))
+        # np.savez(path_to_csr, indptr=csr_m.indptr, indices=csr_m.indices, data=csr_m.data, shape=csr_m.shape)
+
+        csr_mat = load_csr_matrix(path_to_csr)
+    """
+    csr_loader = np.load(path_to_csr, **kwargs)
+    data, indices, indptr = csr_loader['data'], csr_loader['indices'], csr_loader['indptr']
+    shape = csr_loader['shape']
+    csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)
+    return csr_mat
