@@ -10,6 +10,7 @@ import re
 import types
 
 import numpy as np
+import pandas as pd
 
 
 # Type to confirm whether to proceed or not
@@ -298,7 +299,6 @@ def find_closest_date(date, date_list, as_datetime=None, fmt="%Y-%m-%d %H:%M:%S.
         date_list = ['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06']
         find_closest_date(date, date_list, as_datetime=True)
     """
-    import pandas as pd
     closest_date = min(date_list, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
     if as_datetime:
         if isinstance(closest_date, str):
@@ -423,3 +423,17 @@ def create_rotation_matrix(theta):
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
     rotation_mat = np.array([[sin_theta, cos_theta], [-cos_theta, sin_theta]])
     return rotation_mat
+
+
+#
+def dict_to_dataframe(input_dict, k='key', v='value'):
+    """
+    :param input_dict: [dict]
+    :param k: [str] column name for keys
+    :param v: [str] column name for values
+    :return: [pd.DataFrame]
+    """
+    dict_keys = list(input_dict.keys())
+    dict_values = list(input_dict.values())
+    df = pd.DataFrame({k: dict_keys, v: dict_values})
+    return df
