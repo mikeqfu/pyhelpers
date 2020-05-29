@@ -638,7 +638,8 @@ def load_csr_matrix(path_to_csr, **kwargs):
         # indices = np.array([0, 2, 2, 0, 1, 2])
         # data = np.array([1, 2, 3, 4, 5, 6])
         # csr_m = scipy.sparse.csr_matrix((data, indices, indptr), shape=(3, 3))
-        # np.savez(path_to_csr, indptr=csr_m.indptr, indices=csr_m.indices, data=csr_m.data, shape=csr_m.shape)
+        # np.savez_compressed(path_to_csr,
+        #                     indptr=csr_m.indptr, indices=csr_m.indices, data=csr_m.data, shape=csr_m.shape)
 
         csr_mat = load_csr_matrix(path_to_csr)
     """
