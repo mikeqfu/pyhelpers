@@ -24,7 +24,7 @@ def cd(*sub_dir, mkdir=False, **kwargs):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True, **kwargs)
+        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
     return path
 
 
@@ -48,7 +48,7 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True, **kwargs)
+        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
     return path
 
 
@@ -70,7 +70,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(path, exist_ok=True, **kwargs)
+        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
     return path
 
 
@@ -139,7 +139,7 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
     print("Removing \"{}\"".format(path), end=" ... ") if verbose else None
     try:
         if os.listdir(path):
-            if confirmed("\"{}\" is not empty. Confirmed to continue removing the directory?".format(path),
+            if confirmed("\"{}\" is not empty. Confirmed to remove the directory?".format(path),
                          confirmation_required=confirmation_required):
                 import shutil
                 shutil.rmtree(path, **kwargs)
