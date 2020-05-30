@@ -20,3 +20,4 @@ SQLAlchemy-Utils
 tqdm
 xlrd
 XlsxWriter
+xlwt
