@@ -1,6 +1,5 @@
 """ PostgreSQL """
 
-import collections.abc
 import csv
 import gc
 import getpass
@@ -359,7 +358,7 @@ class PostgreSQL:
         try:
             print("Dumping the data as a table \"{}\" into {}.\"{}\"@{} ... ".format(
                 table_name, schema_name, self.database_name, self.host), end="") if verbose else ""
-            if isinstance(data, pandas.io.parsers.TextFileReader) or isinstance(data, collections.abc.Iterable):
+            if isinstance(data, pandas.io.parsers.TextFileReader):
                 for chunk in data:
                     chunk.to_sql(table_name, self.engine, schema_name, if_exists, index=False, dtype=col_type,
                                  method=method, **kwargs)
