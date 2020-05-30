@@ -107,4 +107,4 @@ venv.bak/
 .mypy_cache/
 
 tests/data/
-tests/picture/
+tests/images/
