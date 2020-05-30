@@ -6,7 +6,7 @@ with open("README.md", 'r') as readme:
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.1.0',
+    version='1.1.2',
 
     author='Qian Fu',
     author_email='qian.fu@outlook.com',
@@ -23,24 +23,27 @@ setuptools.setup(
         # 'matplotlib',
         # 'nltk',
         'numpy',
-        'openpyxl',
+        # 'openpyxl',
         'pandas',
         # 'pdfkit',
-        'psycopg2',
+        # 'psycopg2',
         'python-rapidjson',
-        # 'pyodbc',
         # 'pyproj',
+        # 'pyxlsb',
         # 'requests',
         # 'shapely',
         'sqlalchemy',
         'sqlalchemy-utils',
         'tqdm',
-        'xlrd',
-        'xlwt',
-        'XlsxWriter'
+        # 'xlrd',
+        # 'xlwt',
+        # 'XlsxWriter'
     ],
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
+
+    package_data={"pyhelpers": ["../README.md", "../requirements.txt", "../LICENSE"]},
+    include_package_data=True,
 
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
