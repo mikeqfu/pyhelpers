@@ -1,4 +1,4 @@
-""" Change directory """
+""" Helper functions for manipulating directories """
 
 import os
 
@@ -7,19 +7,27 @@ import pkg_resources
 from pyhelpers.ops import confirmed
 
 
-# Change directory
 def cd(*sub_dir, mkdir=False, **kwargs):
     """
-    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
-    :param mkdir: [bool] whether to create a directory (default: False)
-    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return path: [str] a full path to a directory (or a file)
+    Change directory.
 
-    Examples:
+    :param sub_dir: name of directory or names of directories (and/or a filename)
+    :type sub_dir: str
+    :param mkdir: whether to create a directory, defaults to ``False``
+    :type mkdir: bool
+    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
+        e.g. ``mode=0o777``
+    :return: a full path to a directory (or a file)
+    :rtype: str
+
+    Examples::
+
         cd()  # Current working directory
+
         mkdir = True
-        cd("test_cd", mkdir=mkdir)  # Current working directory \\test_cd
+        cd("test_cd", mkdir=mkdir)  # [working directory]/test_cd/
     """
+
     path = os.getcwd()  # Current working directory
     for x in sub_dir:
         path = os.path.join(path, x)
@@ -28,22 +36,33 @@ def cd(*sub_dir, mkdir=False, **kwargs):
     return path
 
 
-# Change directory to "Data"
 def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
-    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
-    :param data_dir: [str] name of a directory to store data (default: "Data")
-    :param mkdir: [bool] whether to create a directory (default: False)
-    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return path: [str] a full path to a directory (or a file) under `data_dir`
+    Change directory to "[working directory]/[data_dir]/" and sub-directories.
 
-    Examples:
+    :param sub_dir: name of directory or names of directories (and/or a filename)
+    :type sub_dir: str
+    :param data_dir: name of a directory to store data, defaults to ``"data"``
+    :type data_dir: str
+    :param mkdir: whether to create a directory, defaults to ``False``
+    :type mkdir: bool
+    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
+        e.g. ``mode=0o777``
+    :return path: a full path to a directory (or a file) under ``data_dir``
+    :rtype: str
+
+    Examples::
+
         data_dir = "Data"
         mkdir = False
-        cdd()  # \\Data
-        cdd("test_cdd")  # \\Data\\test_cdd
-        cdd("test_cdd", data_dir="test_cdd", mkdir=True)  # \\test_cdd\\test_cdd
+
+        cdd()  # [working directory]/data
+
+        cdd("test_cdd")  # [working directory]/Data/test_cdd
+
+        cdd("test_cdd", data_dir="test_cdd", mkdir=True)  # [working directory]/test_cdd/test_cdd
     """
+
     path = cd(data_dir)
     for x in sub_dir:
         path = os.path.join(path, x)
@@ -52,20 +71,29 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     return path
 
 
-# Change directory to "dat" and sub-directories for a Python package per se
 def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
-    :param sub_dir: [str] name of directory or names of directories (and/or a filename)
-    :param dat_dir: [str] name of a directory to store data (default: "dat")
-    :param mkdir: [bool] whether to create a directory (default: False)
-    :param kwargs: [int] optional arguments for `os.makedirs()`: `mode=0o777`
-    :return path: [str] a full path to a directory (or a file) under `data_dir`
+    Change directory to "dat" and sub-directories within a package.
 
-    Example:
+    :param sub_dir: name of directory or names of directories (and/or a filename)
+    :type sub_dir: str
+    :param dat_dir: name of a directory to store data, defaults to ``"dat"``
+    :type dat_dir: str
+    :param mkdir: whether to create a directory, defaults to ``False``
+    :type mkdir: bool
+    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
+        e.g. ``mode=0o777``
+    :return: a full path to a directory (or a file) under ``data_dir``
+    :rtype: str
+
+    Example::
+
         dat_dir = "dat"
         mkdir = False
+
         cd_dat("test_cd_dat", dat_dir=dat_dir, mkdir=mkdir)
     """
+
     path = pkg_resources.resource_filename(__name__, dat_dir)
     for x in sub_dir:
         path = os.path.join(path, x)
@@ -74,41 +102,52 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-# Check if a string is a path or just a string
 def is_dirname(x):
     """
-    :param x: [str] a string-type variable to be checked
-    :return: [bool] whether or not `x` is a path-like variable
+    Check if a string is a path or just a string.
 
-    Examples:
+    :param x: a string-type variable to be checked
+    :type x: str
+    :return: whether or not ``x`` is a path-like variable
+    :rtype: bool
+
+    Examples::
+
         x = "test_is_dirname"
         is_dirname(x)  # False
 
-        x = "\\test_is_dirname"
+        x = "\\\\test_is_dirname"
         is_dirname(x)  # True
 
         x = cd("test_is_dirname")
         is_dirname(x)  # True
-
     """
+
     if os.path.dirname(x):
         return True
     else:
         return False
 
 
-# Regulate the input data directory
 def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     """
-    :param data_dir: [str; None (default)] data directory as input
-    :param msg: [str] an error message if the input `data_dir` is not an absolute path (default: "Invalid input!")
-    :return data_dir_: [str] a full path to a regulated data directory
+    Regulate the input data directory.
 
-    Example:
+    :param data_dir: data directory as input, defaults to ``None``
+    :type data_dir: str, None
+    :param msg: an error message if ``data_dir`` is not an absolute path, defaults to ``"Invalid input!"``
+    :type msg: str
+    :return: a full path to a regulated data directory
+    :rtype: str
+
+    Example::
+
         data_dir = "test_regulate_input_data_dir"
         msg = "Invalid input!"
+
         regulate_input_data_dir(data_dir, msg)
     """
+
     if data_dir:
         assert isinstance(data_dir, str), msg
         if not os.path.isabs(data_dir):  # Use default file directory
@@ -121,21 +160,27 @@ def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     return data_dir_
 
 
-# Remove a directory
 def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
     """
-    :param path: [str] a full path to a directory
-    :param confirmation_required: [bool] whether or not to impose a prompting message for confirmation to proceed
-                                        (default: True)
-    :param verbose: [bool] whether or not show illustrative messages (default: False)
-    :param kwargs: optional arguments used by `shutil.rmtree()`
+    Remove a directory.
 
-    Example:
+    :param path: a full path to a directory
+    :type path: str
+    :param confirmation_required: whether to prompt a message for confirmation to proceed, defaults to ``True``
+    :type confirmation_required: bool
+    :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
+    :type verbose: bool
+    :param kwargs: optional arguments of `shutil.rmtree <https://docs.python.org/3/library/shutil.html#shutil.rmtree>`_
+
+    Example::
+
         path = cd("test_rm_dir", mkdir=True)
         confirmation_required = True
         verbose = False
+
         rm_dir(path, confirmation_required, verbose)
     """
+
     print("Removing \"{}\"".format(path), end=" ... ") if verbose else None
     try:
         if os.listdir(path):
