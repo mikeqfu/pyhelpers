@@ -1,4 +1,4 @@
-""" Geometry-related utilities """
+""" Helper functions for manipulating geometric/geographical data """
 
 import collections.abc
 import functools
@@ -8,17 +8,24 @@ import numpy as np
 from pyhelpers.ops import create_rotation_matrix
 
 
-# Convert latitude and longitude (WGS84) to British national grid (OSGB36)
 def wgs84_to_osgb36(longitude, latitude, **kwargs):
     """
-    :param longitude: [numbers.Number] the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
-    :param latitude: [numbers.Number] the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
-    :return (easting, northing): [tuple as ([float], [float])] (Easting, Northing) for geographic Cartesian coordinate
+    Convert latitude and longitude (WGS84) to British national grid (OSGB36).
 
-    Example:
+    :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
+    :type longitude: float, int
+    :param latitude: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
+    :type latitude: float, int
+    :return: geographic Cartesian coordinate (Easting, Northing) or (X, Y)
+    :rtype: tuple [of length 2]
+
+    Example::
+
         longitude, latitude = -0.12772404, 51.507407
-        res = wgs84_to_osgb36(longitude, latitude)  # res == (530033.99829712, 180381.00751935126)
+
+        res = wgs84_to_osgb36(longitude, latitude)  # (530033.99829712, 180381.00751935126)
     """
+
     from pyproj import Transformer
 
     wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
@@ -30,17 +37,24 @@ def wgs84_to_osgb36(longitude, latitude, **kwargs):
     return easting, northing
 
 
-# Convert British national grid (OSGB36) to latitude and longitude (WGS84)
 def osgb36_to_wgs84(easting, northing, **kwargs):
     """
-    :param easting: [numbers.Number] Easting (X); eastward-measured distance (or the x-coordinate)
-    :param northing: [numbers.Number] Northing (Y); northward-measured distance (or the y-coordinate)
-    :return (longitude, latitude): [tuple as ([float], [float])] (Longitude, Latitude) for geographic coordinate
+    Convert British national grid (OSGB36) to latitude and longitude (WGS84).
 
-    Example:
+    :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
+    :type easting: int, float
+    :param northing: Northing (Y), northward-measured distance (or the y-coordinate)
+    :type northing: int, float
+    :return: geographic coordinate (Longitude, Latitude)
+    :rtype: tuple [of length 2]
+
+    Example::
+
         easting, northing = 530034, 180381
-        res = osgb36_to_wgs84(easting, northing)  # res == (-0.12772400574286874, 51.50740692743041)
+
+        res = osgb36_to_wgs84(easting, northing)  # (-0.12772400574286874, 51.50740692743041)
     """
+
     from pyproj import Transformer
 
     osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
@@ -52,22 +66,29 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
     return longitude, latitude
 
 
-# Convert latitude and longitude (WGS84) to British National Grid (OSGB36) by calculation
 def wgs84_to_osgb36_calc(longitude, latitude):
     """
-    :param longitude: [numbers.Number] the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
-    :param latitude: [numbers.Number] the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
-    :return (x, y): [tuple as ([float], [float])] (Easting, Northing) for geographic Cartesian coordinate
+    Convert latitude and longitude (WGS84) to British National Grid (OSGB36) by calculation.
 
-    This function is slightly modified from the original code available at:
-    http://www.hannahfry.co.uk/blog/2012/02/01/converting-latitude-and-longitude-to-british-national-grid
+    This function is slightly modified from the original code available from
+    [`WTOC-1 <http://blogs.casa.ucl.ac.uk/2014/12/26/>`_].
 
-    Example:
+    :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
+    :type longitude: float, int
+    :param latitude: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
+    :type latitude: float, int
+    :return: geographic Cartesian coordinate (Easting, Northing) or (X, Y)
+    :rtype: tuple [of length 2]
+
+    Example::
+
         longitude, latitude = -0.12772404, 51.507407
-        res = wgs84_to_osgb36_calc(longitude, latitude)
-        # res == (530034.0010406997, 180381.0084845958)
-        # cp. wgs84_to_osgb36
+
+        res = wgs84_to_osgb36_calc(longitude, latitude)  # (530034.0010406997, 180381.0084845958)
+
+        # cp. wgs84_to_osgb36(longitude, latitude)
     """
+
     # First convert to radians. These are on the wrong ellipsoid currently: GRS80. (Denoted by _1)
     lon_1, lat_1 = longitude * np.pi / 180, latitude * np.pi / 180
 
@@ -154,22 +175,29 @@ def wgs84_to_osgb36_calc(longitude, latitude):
     return x, y
 
 
-# Convert british national grid (OSGB36) to latitude and longitude (WGS84) by calculation
 def osgb36_to_wgs84_calc(easting, northing):
     """
-    :param easting: [numbers.Number] Easting (X); eastward-measured distance (or the x-coordinate)
-    :param northing: [numbers.Number] Northing (Y); northward-measured distance (or the y-coordinate)
-    :return (long, lat): [tuple as ([float], [float])] (Longitude, Latitude)
+    Convert british national grid (OSGB36) to latitude and longitude (WGS84) by calculation.
 
-    This function is slightly modified from the original code available at:
-    http://www.hannahfry.co.uk/blog/2012/02/01/converting-british-national-grid-to-latitude-and-longitude-ii
+    This function is slightly modified from the original code available from
+    [`OTWC-1 <http://blogs.casa.ucl.ac.uk/2014/12/26/>`_].
 
-    Example:
+    :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
+    :type easting: int, float
+    :param northing: Northing (Y), northward-measured distance (or the y-coordinate)
+    :type northing: int, float
+    :return: geographic coordinate (Longitude, Latitude)
+    :rtype: tuple [of length 2]
+
+    Example::
+
         easting, northing = 530034, 180381
-        res = osgb36_to_wgs84_calc(easting, northing)
-        # res == (-0.1277240422737611, 51.50740676560936)
-        # cp. osgb36_to_wgs84()
+
+        res = osgb36_to_wgs84_calc(easting, northing)  # (-0.1277240422737611, 51.50740676560936)
+
+        # cp. osgb36_to_wgs84(easting, northing)
     """
+
     # The Airy 180 semi-major and semi-minor axes used for OSGB36 (m)
     a, b = 6377563.396, 6356256.909
     # Scale factor on the central meridian
@@ -263,25 +291,53 @@ def osgb36_to_wgs84_calc(easting, northing):
     return long, lat
 
 
-# Get the midpoint between two points (Vectorisation)
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
-    :param x1: [numbers.Number; np.ndarray] longitude(s) or easting(s) of a point (an array of points)
-    :param y1: [numbers.Number; np.ndarray] latitude(s) or northing(s) of a point (an array of points)
-    :param x2: [numbers.Number; np.ndarray] longitude(s) or easting(s) of another point (another array of points)
-    :param y2: [numbers.Number; np.ndarray] latitude(s) or northing(s) of another point (another array of points)
-    :param as_geom: [bool] whether or not to return as shapely.geometry.Point (default: False)
-    :return midpoint: [np.ndarray; (list of) Point] the midpoint(s)
+    Get the midpoint between two points (applicable for vectorized computation).
 
-    Example:
+    :param x1: longitude(s) or easting(s) of a point (an array of points)
+    :type x1: float, int, numpy.ndarray
+    :param y1: latitude(s) or northing(s) of a point (an array of points)
+    :type y1: float, int, numpy.ndarray
+    :param x2: longitude(s) or easting(s) of another point (another array of points)
+    :type x2: float, int, numpy.ndarray
+    :param y2: latitude(s) or northing(s) of another point (another array of points)
+    :type y2: float, int, numpy.ndarray
+    :param as_geom: whether to return
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_, defaults to ``False``
+    :type as_geom: bool
+    :return: the midpoint between ``(x1, y1)`` and ``(x2, y2)`` (or midpoints between two sequences of points)
+    :rtype: numpy.ndarray, shapely.geometry.Point, list [of shapely.geometry.Point]
+
+    Examples::
+
+        from shapely.geometry import Point
+
         x1, y1 = 1.5429, 52.6347
         x2, y2 = 1.4909, 52.6271
         midpoint = np.array([1.5169, 52.6309])
 
-        res = get_midpoint(pt_x1, pt_y1, pt_x2, pt_y2, as_geom=False)  # (res == midpoint).all()
+        as_geom = False
+        res_0 = get_midpoint(x1, y1, x2, y2, as_geom)
+        (res_0 == midpoint).all()  # True
 
-        res = get_midpoint(pt_x1, pt_y1, pt_x2, pt_y2, as_geom=True)  # res == Point(midpoint)
+        as_geom = True
+        res_1 = get_midpoint(x1, y1, x2, y2, as_geom=True)
+        res_1 == Point(midpoint)  # True
+
+        x1, y1 = np.array([1.5429, 1.4909]), np.array([52.6347, 52.6271])
+        x2, y2 = np.array([2.5429, 2.4909]), np.array([53.6347, 53.6271])
+        midpoint = np.array([[2.0429, 53.1347], [1.9909, 53.1271]])
+
+        as_geom = False
+        res_0 = get_midpoint(x1, y1, x2, y2, as_geom)
+        (res_0 == midpoint).all()  # True
+
+        as_geom = True
+        res_1 = get_midpoint(x1, y1, x2, y2, as_geom=True)
+        res_1 == [Point(x) for x in midpoint]  # True
     """
+
     mid_pts = (x1 + x2) / 2, (y1 + y2) / 2
 
     if as_geom:
@@ -299,36 +355,46 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
     return midpoint
 
 
-# Transform iterable to shapely.geometry.Point type, or the other way round
 def transform_geom_point_type(*pts, as_geom=True):
     """
-    :param pts: [tuple/list, shapely.geometry.Point]
-    :param as_geom: [bool] whether or not to return point(s) as shapely.geometry.Point
-    :return: [generator] a sequence of geom-type points (incl. None if errors occur)
+    Transform iterable to `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_ type,
+    or the other way round.
 
-    Example:
-        (1)
+    :param pts: points
+    :type pts: iterable [e.g. list of lists/tuples or shapely.geometry.Points]
+    :param as_geom: whether to return point(s) as
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_, defaults to ``True``
+    :type as_geom: bool
+    :return: a sequence of points (incl. None, if errors occur)
+    :rtype: types.GeneratorType
+
+    Examples::
+
+        from shapely.geometry import Point
+
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
 
-        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=True)
-        # [(x.x, x.y) for x in geom_points] == [pt_x, pt_y]
+        as_geom = True
+        geom_points_0 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        [(x.x, x.y) for x in geom_points_0] == [pt_x, pt_y]  # True
 
-        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        # [(x, y) for x, y in geom_points] == [pt_x, pt_y]
-
-        (2)
-        from shapely.geometry import Point
+        as_geom = False
+        geom_points_1 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        [(x, y) for x, y in geom_points_1] == [pt_x, pt_y]  # True
 
         pt_x = Point(1.5429, 52.6347)
         pt_y = Point(1.4909, 52.6271)
 
-        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=True)
-        # [x for x in geom_points] == [pt_x, pt_y]
+        as_geom = True
+        geom_points_2 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        [x for x in geom_points_2] == [pt_x, pt_y]  # True
 
-        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        # [Point(x) for x in geom_points] == [pt_x, pt_y]
+        as_geom = False
+        geom_points_3 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        [Point(x) for x in geom_points_3] == [pt_x, pt_y]  # True
     """
+
     from shapely.geometry import Point
 
     if as_geom:
@@ -353,23 +419,35 @@ def transform_geom_point_type(*pts, as_geom=True):
             yield pt_
 
 
-# Get the midpoint between two points
 def get_geometric_midpoint(pt_x, pt_y, as_geom=True):
     """
-    :param pt_x: [shapely.geometry.Point; array-like of length 2] a point
-    :param pt_y: [shapely.geometry.Point; array-like of length 2] another point
-    :param as_geom: [bool] whether or not to return as shapely.geometry.Point (default: True)
-    :return midpoint: [array-like; shapely.geometry.Point; None] the midpoint
+    Get the midpoint between two points.
 
-    Example:
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point, array-like [of length 2]
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point, array-like [of length 2]
+    :param as_geom: whether to return
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_, defaults to ``True``
+    :type as_geom: bool
+    :return: the midpoint between ``pt_x`` and ``pt_y``
+    :rtype: array-like, shapely.geometry.Point, None
+
+    Examples::
+
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
         midpoint = 1.5169, 52.6309
 
-        res = get_geometric_midpoint(pt_x, pt_y, as_geom=False)  # res == midpoint
+        as_geom = False
+        res_0 = get_geometric_midpoint(pt_x, pt_y, as_geom)
+        res_0 == midpoint  # True
 
-        res = get_geometric_midpoint(pt_x, pt_y, as_geom=True)  # res == Point(midpoint)
+        as_geom = True
+        res_1 = get_geometric_midpoint(pt_x, pt_y, as_geom)
+        res_1 == Point(midpoint)  # True
     """
+
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
 
     midpoint = (pt_x_.x + pt_y_.x) / 2, (pt_x_.y + pt_y_.y) / 2
@@ -381,25 +459,38 @@ def get_geometric_midpoint(pt_x, pt_y, as_geom=True):
     return midpoint
 
 
-# Get the midpoint between two points
 def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     """
-    :param pt_x: [shapely.geometry.Point; array-like of length 2] a point
-    :param pt_y: [shapely.geometry.Point; array-like of length 2] another point
-    :param as_geom: [bool] whether or not to return as shapely.geometry.Point (default: False)
-    :return midpoint: [tuple; shapely.geometry.Point; None] the midpoint
+    Get the midpoint between two points by pure calculation.
+    See also these references: [`GGMC-1 <http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/>`_] and
+    [`GGMC-2 <http://www.movable-type.co.uk/scripts/latlong.html>`_].
 
-    References:
-    http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/
-    http://www.movable-type.co.uk/scripts/latlong.html
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point, array-like [of length 2]
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point, array-like [of length 2]
+    :param as_geom: whether to return
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_. defaults to ``False``
+    :type as_geom: bool
+    :return: the midpoint between ``pt_x`` and ``pt_y``
+    :rtype: tuple, shapely.geometry.Point, None
 
-    Example:
+    Examples::
+
+        from shapely.geometry import Point
+
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
         midpoint = (1.5168977420748175, 52.630902845583094)
 
-        res = get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False)  # res == midpoint
+        res_0 = get_geometric_midpoint_calc(pt_x, pt_y)
+        res_0 == midpoint  # True
+
+        as_geom = True
+        res_1 = get_geometric_midpoint_calc(pt_x, pt_y, as_geom)
+        res_1 == Point(midpoint)  # True
     """
+
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
 
     # Input values as degrees, convert them to radians
@@ -407,8 +498,7 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     lon_2, lat_2 = np.radians(pt_y_.x), np.radians(pt_y_.y)
 
     b_x, b_y = np.cos(lat_2) * np.cos(lon_2 - lon_1), np.cos(lat_2) * np.sin(lon_2 - lon_1)
-    lat_3 = np.arctan2(
-        np.sin(lat_1) + np.sin(lat_2), np.sqrt((np.cos(lat_1) + b_x) * (np.cos(lat_1) + b_x) + b_y ** 2))
+    lat_3 = np.arctan2(np.sin(lat_1) + np.sin(lat_2), np.sqrt((np.cos(lat_1) + b_x) * (np.cos(lat_1) + b_x) + b_y ** 2))
     long_3 = lon_1 + np.arctan2(b_y, np.cos(lat_1) + b_x)
 
     midpoint = np.degrees(long_3), np.degrees(lat_3)
@@ -420,23 +510,29 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     return midpoint
 
 
-# Calculate distance between two points
 def calc_distance_on_unit_sphere(pt_x, pt_y):
     """
-    :param pt_x: [shapely.geometry.Point; array-like of length 2] a point
-    :param pt_y: [shapely.geometry.Point; array-like of length 2] another point
-    :return arc_length: [float] distance relative to the earth's radius (in miles)
+    Calculate distance between two points.
 
-    This function was modified from the original code at from http://www.johndcook.com/blog/python_longitude_latitude/.
+    This function is modified from the original code available from
+    [`CDOUS-1 <http://www.johndcook.com/blog/python_longitude_latitude/>`_].
     It assumes the earth is perfectly spherical and returns the distance based on each point's longitude and latitude.
 
-    Example:
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point, array-like [of length 2]
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point, array-like [of length 2]
+    :return: distance (in miles) between ``pt_x`` and ``pt_y`` (relative to the earth's radius)
+    :rtype: float
+
+    Examples::
+
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
-        arc_length = 2.243709962588554
 
-        res = calc_distance_on_unit_sphere(pt_x, pt_y)  #  res == arc_length
+        arc_length = calc_distance_on_unit_sphere(pt_x, pt_y)  # 2.243709962588554
     """
+
     # Convert latitude and longitude to spherical coordinates in radians.
     degrees_to_radians = np.pi / 180.0
 
@@ -472,56 +568,69 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     return arc_length
 
 
-# Calculate hypotenuse for two points (the right angled triangle, given its side and perpendicular)
 def calc_hypotenuse_distance(pt_x, pt_y):
     """
-    :param pt_x: [shapely.geometry.Point; array-like of length 2] a point
-    :param pt_y: [shapely.geometry.Point; array-like of length 2] another point
-    :return hypot_dist: [float] hypotenuse
+    Calculate hypotenuse given two points (the right angled triangle, given its side and perpendicular).
+    This is the length of the vector from the ``orig_pt`` to ``dest_pt``.
 
-    np.hypot(x, y) return the Euclidean norm, sqrt(x*x + y*y).
-    This is the length of the vector from the `orig_pt` to `dest_pt`.
+    ``numpy.hypot(x, y)`` return the Euclidean norm, ``sqrt(x*x + y*y)``.
+    See also [`CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_]
 
-    Example:
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point, array-like [of length 2]
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point, array-like [of length 2]
+    :return: hypotenuse
+    :rtype: float
+
+    Examples::
+
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
-        hypot_dist = 0.05255244999046248
 
-        res = calc_hypotenuse_distance(pt_x, pt_y)  # res == hypot_dist
+        hypot_dist = calc_hypotenuse_distance(pt_x, pt_y)  # 0.05255244999046248
     """
+
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=False)
     x_diff, y_diff = pt_x_[0] - pt_y_[0], pt_x_[1] - pt_y_[1]
     hypot_dist = np.hypot(x_diff, y_diff)
     return hypot_dist
 
 
-# Find the closest point of the given point to a list of points
 def find_closest_point_from(pt, ref_pts, as_geom=False):
     """
-    :param pt: [tuple/list of length 2] (longitude, latitude)
-    :param ref_pts: [iterable] a sequence of reference (tuple/list of length 2) points
-    :param as_geom: [bool] whether or not to return as shapely.geometry.Point (default: False)
-    :return closest_point: [tuple/list of length 2; shapely.geometry.Point] the point closest to `pt`
+    Find the closest point of the given point to a list of points.
 
-    Example:
+    :param pt: (longitude, latitude)
+    :type pt: tuple, list
+    :param ref_pts: a sequence of reference (tuple/list of length 2) points
+    :type ref_pts: tuple, list, iterable
+    :param as_geom: whether to return
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_, defaults to ``False``
+    :type as_geom: bool
+    :return: the point closest to ``pt``
+    :rtype: tuple, list, shapely.geometry.Point
+
+    Examples::
 
         from shapely.geometry import Point
 
-        closest_point = (1.5429, 52.6347)
-
-        # example 1
         pt = (2.5429, 53.6347)
-        ref_pts = ((1.5429, 52.6347), (1.4909, 52.6271), (1.4248, 52.63075))
+        ref_pts = ((1.5429, 52.6347),
+                   (1.4909, 52.6271),
+                   (1.4248, 52.63075))
 
-        res = find_closest_point(pt, ref_pts)  # res == closest_point
+        closest_point = find_closest_point_from(pt, ref_pts)  # (1.5429, 52.6347)
 
-        # example 2
         pt = Point((2.5429, 53.6347))
-        ref_pts = [Point(x) for x in ref_pts]
+        ref_pts = (Point((1.5429, 52.6347)), Point((1.4909, 52.6271)), Point((1.4248, 52.63075)))
 
-        find_closest_point(pt, ref_pts)  # (1.5429, 52.6347)
-        res = find_closest_point(pt, ref_pts, as_geom=True)  # (res.x, res.y) == closest_point
+        closest_point = find_closest_point_from(pt, ref_pts)  # (1.5429, 52.6347)
+
+        res = find_closest_point_from(pt, ref_pts, as_geom=True)
+        (res.x, res.y) == closest_point  # True
     """
+
     from shapely.geometry import Point
 
     pt_ = (pt.x, pt.y) if isinstance(pt, Point) else pt
@@ -536,37 +645,50 @@ def find_closest_point_from(pt, ref_pts, as_geom=False):
     return closest_point
 
 
-# Find the closest points from a given list of reference points (Vectorisation)
 def find_closest_points_between(pts, ref_pts, k=1, as_geom=False, **kwargs):
     """
-    :param pts: [np.ndarray] an array of size (n, 2)
-    :param ref_pts: [np.ndarray] an array of size (n, 2)
-    :param k: [integer; list of integer] (a list of) up to the `k`-th nearest neighbour(s); if 1, the closest one
-    :param as_geom: [bool] whether or not to return as shapely.geometry.Point (default: False)
-    :param kwargs: optional arguments used by `cKDTree()`
-    :return closest_points: [np.ndarray; list of shapely.geometry.Point]
+    Find the closest points from a given list of reference points (applicable for vectorized computation).
+    See also [`FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
 
-    Reference: https://gis.stackexchange.com/questions/222315
+    :param pts: an array of points
+    :type pts: numpy.ndarray [of size (n, 2)]
+    :param ref_pts: an array of reference points
+    :type ref_pts: numpy.ndarray [of size (n, 2)]
+    :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
+    :type k: integer, list of integer
+    :param as_geom: whether to return
+        `shapely.geometry.Point <https://shapely.readthedocs.io/en/latest/manual.html#points>`_, defaults to ``False``
+    :type as_geom: bool
+    :param kwargs: optional arguments of
+        `scipy.spatial.cKDTree <https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html>`_
+    :return: the closest point(s)
+    :rtype: numpy.ndarray, list
 
-    Example:
+    Examples::
+
+        import numpy as np
+
         pts = np.array([[1.5429, 52.6347],
                         [1.4909, 52.6271],
                         [1.4248, 52.63075]])
+
         ref_pts = np.array([[2.5429, 53.6347],
                             [2.4909, 53.6271],
                             [2.4248, 53.63075]])
         k = 1
-
         closest_points = np.array([[2.4248, 53.63075],
                                    [2.4248, 53.63075],
                                    [2.4248, 53.63075]])
 
-        res = find_closest_points_between(pts, ref_pts, k, as_geom=False)
-        # (res == closest_points).all()
+        as_geom = False
+        res = find_closest_points_between(pts, ref_pts, k, as_geom)
+        (res == closest_points).all()  # True
 
-        res = find_closest_points_between(pts, ref_pts, k, as_geom=True)
-        # (np.array([(x.x, x.y) for x in res]) == closest_points).all()
+        as_geom = True
+        res = find_closest_points_between(pts, ref_pts, k, as_geom)
+        [np.array(x) for x in res_1] == closest_points  # True
     """
+
     if isinstance(ref_pts, np.ndarray):
         ref_pts_ = ref_pts
     else:
@@ -586,18 +708,24 @@ def find_closest_points_between(pts, ref_pts, k=1, as_geom=False, **kwargs):
     return closest_points
 
 
-# Get the four vertices of a square given its centre and side length
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    :param ctr_x: [numbers.Number] x coordinate of a square centre
-    :param ctr_y: [numbers.Number] y coordinate of the square centre
-    :param side_length: [numbers.Number] side length of a square
-    :param rotation_theta: [numbers.Number] rotate (anticlockwise) the square by `rotation_theta` (degrees) (default: 0)
-    :return vertices_: [np.ndarray] vertices of the square as an array([ll, ul, ur, lr])
+    Get the four vertices of a square given its centre and side length.
+    See also [`GSV-1 <https://stackoverflow.com/questions/22361324/>`_].
 
-    Reference: https://stackoverflow.com/questions/22361324/
+    :param ctr_x: x coordinate of a square centre
+    :type ctr_x: int, float
+    :param ctr_y: y coordinate of a square centre
+    :type ctr_y: int, float
+    :param side_length: side length of a square
+    :type side_length: int, float
+    :param rotation_theta: rotate (anticlockwise) the square by ``rotation_theta`` (in degree), defaults to ``0``
+    :type rotation_theta: int, float
+    :return: vertices of the square as an array([ll, ul, ur, lr])
+    :rtype: numpy.ndarray
 
-    Example:
+    Examples::
+
         ctr_x, ctr_y = -5.9375, 56.8125
         side_length = 0.125
         rotation_theta = 0
@@ -607,7 +735,8 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
                               [-5.875, 56.875],
                               [-5.875, 56.75 ]])
 
-        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0)  # (res == vertices_).all()
+        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0)
+        # (res == vertices_).all()
 
         vertices_ = np.array([[-5.96037659, 56.72712341],
                               [-6.02287659, 56.83537659],
@@ -615,8 +744,10 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
                               [-5.85212341, 56.78962341]])
 
         rotation_theta = 30  # rotate the square by 30° (anticlockwise)
-        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)  # (np.round(res, 8) == vertices_).all()
+        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
+        # (np.round(res, 8) == vertices_).all()
     """
+
     sides = np.ones(2) * side_length
 
     rotation_matrix = create_rotation_matrix(np.deg2rad(rotation_theta))
@@ -629,26 +760,31 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices_
 
 
-# Get the four vertices of a square given its centre and side length (by elementary calculation)
 def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    :param ctr_x: [numbers.Number] x coordinate of a square centre
-    :param ctr_y: [numbers.Number] y coordinate of the square centre
-    :param side_length: [numbers.Number] side length of a square
-    :param rotation_theta: [numbers.Number] rotate (anticlockwise) the square by `rotation_theta` (degrees) (default: 0)
-    :return vertices: [numpy.ndarray] vertices of the square as an array([ll, ul, ur, lr])
+    Get the four vertices of a square given its centre and side length (by elementary calculation).
+    See also [`GSVC-1 <https://math.stackexchange.com/questions/1490115>`_].
 
-    Reference: https://math.stackexchange.com/questions/1490115
+    :param ctr_x: x coordinate of a square centre
+    :type ctr_x: int, float
+    :param ctr_y: y coordinate of a square centre
+    :type ctr_y: int, float
+    :param side_length: side length of a square
+    :type side_length: int, float
+    :param rotation_theta: rotate (anticlockwise) the square by ``rotation_theta`` (in degree), defaults to ``0``
+    :type rotation_theta: int, float
+    :return: vertices of the square as an array([ll, ul, ur, lr])
+    :rtype: numpy.ndarray
 
-    Example:
+    Examples::
+
+        import numpy as np
+
         ctr_x, ctr_y = -5.9375, 56.8125
         side_length = 0.125
 
         rotation_theta = 0
-        vertices = np.array([[-6.   , 56.75 ],
-                             [-6.   , 56.875],
-                             [-5.875, 56.875],
-                             [-5.875, 56.75 ]])
+        vertices = np.array([[-6., 56.75], [-6., 56.875], [-5.875, 56.875], [-5.875, 56.75]])
 
         res = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
         # (res == vertices).all()
@@ -662,6 +798,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
         res = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
         # (np.round(res, 8) == vertices).all()
     """
+
     theta_rad = np.deg2rad(rotation_theta)
 
     ll = (ctr_x + 1 / 2 * side_length * (np.sin(theta_rad) - np.cos(theta_rad)),
@@ -678,21 +815,32 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-# Visualise the square given its centre point, four vertices and rotation angle (in degree)
 def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, fig_size=(6.4, 4.8), annotation=True,
                   ret_vertices=False, **kwargs):
     """
-    :param ctr_x: [numbers.Number] x coordinate of a square centre
-    :param ctr_y: [numbers.Number] y coordinate of the square centre
-    :param side_length: [numbers.Number] side length of a square
-    :param rotation_theta: [numbers.Number] rotate (anticlockwise) the square by `rotation_theta` (degrees) (default: 0)
-    :param fig_size: [tuple/list (of length 2)] figure size (default: (6.4, 4.8))
-    :param annotation: [bool] whether or not to annotate vertices of the square (default: True)
-    :param ret_vertices: [bool] whether or not to return the vertices of the square (default: False)
-    :param kwargs: optional arguments for `plt.subplots()`
-    :return vertices: [np.ndarray] vertices of the square as an array([ll, ul, ur, lr])
+    Visualise the square given its centre point, four vertices and rotation angle (in degree).
 
-    Example:
+    :param ctr_x: x coordinate of a square centre
+    :type ctr_x: int, float
+    :param ctr_y: y coordinate of a square centre
+    :type ctr_y: int, float
+    :param side_length: side length of a square
+    :type side_length: int, float
+    :param rotation_theta: rotate (anticlockwise) the square by ``rotation_theta`` (in degree), defaults to ``0``
+    :type rotation_theta: int, float
+    :param fig_size: figure size, defaults to ``(6.4, 4.8)``
+    :type fig_size: tuple, list
+    :param annotation: whether to annotate vertices of the square, defaults to ``True``
+    :type annotation: bool
+    :param ret_vertices: whether to return the vertices of the square, defaults to ``False``
+    :type ret_vertices: bool
+    :param kwargs: optional arguments of
+        `matplotlib.pyplot.subplots <https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.subplots.html>`_
+    :return: vertices of the square as an array([ll, ul, ur, lr])
+    :rtype: numpy.ndarray
+
+    Examples::
+
         ctr_x, ctr_y = 1, 1
         side_length = 2
         rotation_theta = 0
@@ -704,6 +852,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, fig_size=(6.
         rotation_theta = 15
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, fig_size=(8, 8), annotation=False)
     """
+
     import matplotlib.pyplot as plt
     import matplotlib.ticker
 
