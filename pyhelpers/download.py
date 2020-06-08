@@ -1,4 +1,4 @@
-""" Download files """
+""" Helper functions for downloading """
 
 import os
 import time
@@ -6,22 +6,29 @@ import time
 import tqdm
 
 
-# Download and show progress
 def download(url, path_to_file, wait_to_retry=3600, **kwargs):
     """
-    :param url: [str] URL
-    :param path_to_file: [str] a full path to which the downloaded object is saved as
-    :param wait_to_retry: [int; float] a wait time to retry downloading (default: 3600 sec)
-    :param kwargs: optional arguments used by `open()`
+    Download an object available at the given ``url``. See also [`D-1 <https://stackoverflow.com/questions/37573483/>`_]
 
-    Example:
+    :param url: URL
+    :type url: str
+    :param path_to_file: a full path to which the downloaded object is saved as
+    :type url: str
+    :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
+    :type url: int, float
+    :param kwargs: optional arguments of `io.open <https://docs.python.org/3/library/functions.html#open>`_
+
+    Example::
+
+        from pyhelpers.dir import cd
+
         url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        path_to_file = os.path.join(os.getcwd(), "python-logo.png")
+        path_to_file = cd("python-logo.png")
         wait_to_retry = 3600
-        download(url, path_to_file, wait_to_retry)
 
-    Reference: https://stackoverflow.com/questions/37573483/
+        download(url, path_to_file, wait_to_retry)
     """
+
     import requests
     r = requests.get(url, stream=True)  # Streaming, so we can iterate over the response
 
