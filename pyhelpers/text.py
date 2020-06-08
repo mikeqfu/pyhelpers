@@ -1,94 +1,151 @@
-""" Text-related """
+""" Helper functions for manipulating textual data """
 
-import collections
 import collections.abc
+import os
+import pathlib
 import re
 import string
+import subprocess
 
 import numpy as np
 import pandas as pd
 
 from pyhelpers.ops import dict_to_dataframe
+from pyhelpers.store import get_specific_filepath_info
 
 
-# Find similar string from a list of strings
 def find_similar_str(x, lookup_list, processor='fuzzywuzzy', **kwargs):
     """
-    :param x: [str] a string-type variable
-    :param lookup_list: [iterable] (a list of) candidate strings for lookup
-    :param processor: [str] (default: 'fuzzywuzzy')
-    :param kwargs: optional arguments used by
-                    `fuzzywuzzy.fuzz.token_set_ratio()` if `processor == 'fuzzywuzzy'`;
-                    `nltk.edit_distance()` if `processor == 'nltk'`, e.g. `substitution_cost=100`
-    :return: [str] a string-type variable that should be similar to (or the same as) `x`
+    Find similar string from a list of strings.
+
+    :param x: a string-type variable
+    :type x: str
+    :param lookup_list: a sequence of strings for lookup
+    :type lookup_list: iterable
+    :param processor: the package to use for this function, incl. `'fuzzywuzzy'` (default) and `'nltk'`
+
+        - if `processor == 'fuzzywuzzy'`, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if `processor == 'nltk'`, the function relies on `nltk.metrics.distance.edit_distance`_
+
+    :type processor: str
+    :param kwargs: optional arguments of `fuzzywuzzy.fuzz.token_set_ratio`_ or `nltk.metrics.distance.edit_distance`_
+    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :rtype: str
+
+    .. _`fuzzywuzzy.fuzz.token_set_ratio`: https://github.com/seatgeek/fuzzywuzzy
+    .. _`nltk.metrics.distance.edit_distance`:
+        https://www.nltk.org/api/nltk.metrics.html#nltk.metrics.distance.edit_distance
+
+    Examples::
+
+        x = 'apple'
+        lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+
+        processor = 'fuzzywuzzy'
+        find_similar_str(x, lookup_list, processor)  # 'app'
+
+        processor = 'nltk'
+        find_similar_str(x, lookup_list, processor, substitution_cost=1)  # 'apple'
+        find_similar_str(x, lookup_list, processor, substitution_cost=100)  # 'app'
     """
-    assert processor in ('fuzzywuzzy', 'nltk'), '\"processor\" must be either \"fuzzywuzzy\" or \"nltk\".'
+
+    assert processor in ('fuzzywuzzy', 'nltk'), "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
 
     if processor == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(x, a, **kwargs) for a in lookup_list]
-        the_one = lookup_list[l_distances.index(max(l_distances))] if l_distances else None
-
+        return lookup_list[l_distances.index(max(l_distances))] if l_distances else None
     elif processor == 'nltk':
-        import nltk.metrics
-        l_distances = [nltk.edit_distance(x, a, **kwargs) for a in lookup_list]
-        the_one = lookup_list[l_distances.index(min(l_distances))] if l_distances else None
-
-    else:
-        the_one = None
-
-    return the_one
+        import nltk.metrics.distance
+        l_distances = [nltk.metrics.distance.edit_distance(x, a, **kwargs) for a in lookup_list]
+        return lookup_list[l_distances.index(min(l_distances))] if l_distances else None
 
 
-# Find from a list the closest, case-insensitive, str to the given one
 def find_matched_str(x, lookup_list):
     """
-    :param x: [str; None] a string-type variable; if None, the function will return None
-    :param lookup_list: [iterable] (a list of) candidate strings for lookup
-    :return: [str; list; None] a string-type variable that is case-insensitively the same as `x`
+    Find from a list the closest, case-insensitive, str to the given one.
+
+    :param x: a string-type variable, if None, the function will return None
+    :type x: str, None
+    :param lookup_list: a sequence of strings for lookup
+    :type lookup_list: iterable
+    :return: a string-type variable that is case-insensitively the same as ``x``
+    :rtype: generator
+
+    Examples::
+
+        x = 'apple'
+        lookup_list_0 = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+
+        res_0 = find_matched_str(x, lookup_list_0)  # list(res_0) == []
+
+        lookup_list_1 = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
+
+        res_1 = find_matched_str(x, lookup_list_1)  # list(res_1) == ['apple']
     """
-    assert isinstance(x, str), "\"x\" must be a string."
-    assert isinstance(lookup_list, collections.abc.Iterable), "\"lookup_list\" must be iterable"
+
+    assert isinstance(x, str), "`x` must be a string."
+    assert isinstance(lookup_list, collections.abc.Iterable), "`lookup_list` must be iterable."
     if x == '' or x is None:
         return None
     else:
         for y in lookup_list:
             if re.match(x, y, re.IGNORECASE):
-                return y
+                yield y
 
 
-# Remove punctuation
-def remove_punctuation(raw_txt):
+def remove_punctuation(raw_txt, rm_whitespace=False):
     """
-    :param raw_txt: [str]
-    :return:
+    Remove punctuation from string-type data.
 
-    Example:
-        raw_txt = 'Hello world!'
+    :param raw_txt: string-type data
+    :type raw_txt: str
+    :param rm_whitespace: whether to remove whitespace from the input string as well, defaults to ``False``
+    :type rm_whitespace: bool
+    :return: text with punctuation removed
+    :rtype: str
 
-        remove_punctuation(raw_txt)  # 'Hello world'
+    Examples::
+
+        raw_txt = 'Hello\tworld! :-)'
+        txt = remove_punctuation(raw_txt)  # 'Hello\tworld '
+
+        rm_whitespace = True
+        txt = remove_punctuation(raw_txt, rm_whitespace)  # 'Hello world'
     """
+
     try:
-        # txt = text.lower().translate(str.maketrans('', '', string.punctuation))
         txt = raw_txt.translate(str.maketrans('', '', string.punctuation))
     except Exception as e:
         print(e)
-        # txt = ''.join(x for x in text.lower() if x not in string.punctuation)
         txt = ''.join(x for x in raw_txt if x not in string.punctuation)
+    if rm_whitespace:
+        txt = ' '.join(txt.split())
     return txt
 
 
-# Count number of each different word
 def count_words(raw_txt):
     """
-    :param raw_txt: [str] any text
-    :return: [dict] total number of each different word in `raw_docs`
+    Count the total for each different word.
 
-    Example:
+    :param raw_txt: any text
+    :type raw_txt: str
+    :return: number of each word in ``raw_docs``
+    :rtype: dict
+
+    Examples::
+
+        from pyhelpers.text import remove_punctuation
+
         raw_txt = 'This is an apple. That is a pear. Hello world!'
 
         count_words(raw_txt)
+        {'This': 1, 'is': 2, 'an': 1, 'apple': 1, '.': 2, 'That': 1, 'a': 1, 'pear': 1, 'Hello': 1, 'world': 1, '!': 1}
+
+        count_words(remove_punctuation(raw_txt))
+        {'This': 1, 'is': 2, 'an': 1, 'apple': 1, 'That': 1, 'a': 1, 'pear': 1, 'Hello': 1, 'world': 1}
     """
+
     import nltk
     doc_text = str(raw_txt)
     tokens = nltk.word_tokenize(doc_text)
@@ -96,23 +153,38 @@ def count_words(raw_txt):
     return word_count_dict
 
 
-# Calculate inverse document frequency
-def calculate_idf(raw_documents):
+def calculate_idf(raw_documents, rm_punc=False):
     """
-    :param raw_documents: [pd.Series]
-    :return: [tuple] of length 2 - (tf of a number of documents, idf)
+    Calculate inverse document frequency.
 
-    Example:
+    :param raw_documents: a series of documents
+    :type raw_documents: pandas.Series
+    :param rm_punc: whether to remove punctuation from ``raw_documents``, defaults to ``False``
+    :type rm_punc: bool
+    :return: term frequency (TF) of ``raw_documents``, and inverse document frequency
+    :rtype: tuple [of length 2]
+
+    Examples::
+
         raw_documents = pd.Series(['This is an apple.', 'That is a pear.', 'It is human being.', 'Hello world!'])
 
-        docs_tf, corpus_idf = calculate_idf(raw_documents)
-    """
-    assert isinstance(raw_documents, (pd.Series, pd.DataFrame))
+        rm_punc = False
+        docs_tf, corpus_idf = calculate_idf(raw_documents, rm_punc)
 
-    docs_tf = raw_documents.map(count_words)
+        rm_punc = True
+        docs_tf, corpus_idf = calculate_idf(raw_documents, rm_punc)
+    """
+
+    assert isinstance(raw_documents, pd.Series)
+
+    raw_docs = raw_documents.copy()
+    if rm_punc:
+        raw_docs = raw_docs.map(remove_punctuation)
+
+    docs_tf = raw_docs.map(count_words)
     tokens_in_docs = docs_tf.map(lambda x: list(x.keys()))
 
-    n = len(raw_documents)
+    n = len(raw_docs)
     tokens = [w for tokens in tokens_in_docs for w in tokens]
     tokens_counter = dict_to_dataframe(dict(collections.Counter(tokens)), 'token', 'count')
     tokens_counter['idf'] = np.log(n / (1 + tokens_counter['count'].values))
@@ -122,35 +194,50 @@ def calculate_idf(raw_documents):
     return docs_tf, corpus_idf
 
 
-# Count term frequency–inverse document frequency
-def calculate_tf_idf(raw_documents):
+def calculate_tf_idf(raw_documents, rm_punc=False):
     """
-    :param raw_documents: [pd.Series]
-    :return: [dict] tf-idf of the `raw_documents`
+    Count term frequency–inverse document frequency.
 
-    Example:
+    :param raw_documents: a series of documents
+    :type raw_documents: pandas.Series
+    :param rm_punc: whether to remove punctuation from ``raw_documents``, defaults to ``False``
+    :type rm_punc: bool
+    :return: tf-idf of the ``raw_documents``
+    :rtype: dict
+
+    Examples::
+
         raw_documents = pd.Series(['This is an apple.', 'That is a pear.', 'It is human being.', 'Hello world!'])
 
-        calculate_tf_idf(raw_documents)
+        rm_punc = False
+        docs_tf_idf = calculate_tf_idf(raw_documents, rm_punc)
+
+        rm_punc = True
+        docs_tf_idf = calculate_tf_idf(raw_documents, rm_punc)
     """
-    docs_tf, corpus_idf = calculate_idf(raw_documents)
+
+    docs_tf, corpus_idf = calculate_idf(raw_documents=raw_documents, rm_punc=rm_punc)
     docs_tf_idf = docs_tf.apply(lambda x: {k: v * corpus_idf[k] for k, v in x.items() if k in corpus_idf})
     return docs_tf_idf
 
 
-# Compute Euclidean distance of two sentences
 def euclidean_distance_between_texts(txt1, txt2):
     """
-    :param txt1: [str] any text
-    :param txt2: [str] any text
-    :return: [numbers.Number]
+    Compute Euclidean distance of two sentences.
 
-    Example:
-        s1 = 'This is an apple.'
-        s2 = 'That is a pear.'
+    :param txt1: any text
+    :type txt1: str
+    :param txt2: any text
+    :type txt2: str
+    :return: Euclidean distance between ``txt1`` and ``txt2``
+    :rtype: float
 
-        ed = euclidean_distance_between_texts(s1, s2)  # 2.6457513110645907
+    Example::
+
+        txt1, txt2 = 'This is an apple.', 'That is a pear.'
+        ed = euclidean_distance_between_texts(txt1, txt2)  # 2.6457513110645907
     """
+
     if isinstance(txt1, str) and isinstance(txt2, str):
         doc_words = set(txt1.split() + txt2.split())
     else:
@@ -168,24 +255,30 @@ def euclidean_distance_between_texts(txt1, txt2):
     return ed
 
 
-# Compute cosine similarity of two sentences
 def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     """
-    :param txt1: [str] any text
-    :param txt2: [str] any text
-    :param cosine_distance: [bool] whether to get cosine distance, which is 1 - cosine similarity (default: False)
-    :return: [numbers.Number] cosine similarity (or distance)
+    Calculate cosine similarity of two sentences.
 
-    Example:
-        s1 = 'This is an apple.'
-        s2 = 'That is a pear.'
+    :param txt1: any text
+    :type txt1: str
+    :param txt2: any text
+    :type txt2: str
+    :param cosine_distance: whether to get cosine distance, which is (1 - cosine similarity), defaults to ``False``
+    :type cosine_distance: bool
+    :return: cosine similarity (or distance)
+    :rtype: float
+
+    Examples::
+
+        txt1, txt2 = 'This is an apple.', 'That is a pear.'
 
         cosine_distance = False
-        cos_similarity = cosine_similarity_between_texts(s1, s2)  # 0.6963106238227914
+        cos_similarity = cosine_similarity_between_texts(txt1, txt2)  # 0.6963106238227914
 
         cosine_distance = True
-        cos_similarity = cosine_similarity_between_texts(s1, s2, cosine_distance)  # 0.3036893761772086
+        cos_similarity = cosine_similarity_between_texts(txt1, txt2, cosine_distance)  # 0.3036893761772086
     """
+
     if isinstance(txt1, str) and isinstance(txt2, str):
         doc_words = set(txt1.split() + txt2.split())
     else:
@@ -206,3 +299,114 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
         cos_similarity = 1 - cos_similarity
 
     return cos_similarity
+
+
+def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0, encoding='UTF-8', verbose=False,
+                         **kwargs):
+    """
+    Save a web page as a PDF file, using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
+
+    :param url_to_web_page: URL of a web page
+    :type url_to_web_page: str
+    :param path_to_pdf: path where a .pdf is saved
+    :type path_to_pdf: str
+    :param page_size: page size, defaults to ``'A4'``
+    :type page_size: str
+    :param zoom: a parameter to zoom in/out, defaults to ``1.0``
+    :type zoom: float
+    :param encoding: encoding format defaults to ``'UTF-8'``
+    :type encoding: str
+    :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
+    :type verbose: bool
+    :param kwargs: optional arguments of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
+
+    Example:
+
+        from pyhelpers.dir import cd
+
+        page_size = 'A4'
+        zoom = 1.0
+        encoding = 'UTF-8'
+        verbose = True
+
+        url_to_web_page = 'https://github.com/mikeqfu/pyhelpers'
+        path_to_pdf = cd("tests\\data", "pyhelpers.pdf")
+
+        save_web_page_as_pdf(url_to_web_page, path_to_pdf, verbose=verbose)
+    """
+
+    path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
+
+    import pdfkit
+    if os.path.isfile(path_to_wkhtmltopdf):
+        config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+    else:
+        config = pdfkit.configuration(wkhtmltopdf="wkhtmltopdf.exe")
+
+    get_specific_filepath_info(path_to_pdf, verbose=verbose, vb_end=" ... \n", ret_info=False)
+
+    try:
+        # print("Saving the web page \"{}\" as PDF".format(url_to_web_page)) if verbose else ""
+        pdf_options = {'page-size': page_size,
+                       # 'margin-top': '0',
+                       # 'margin-right': '0',
+                       # 'margin-left': '0',
+                       # 'margin-bottom': '0',
+                       'zoom': str(float(zoom)),
+                       'encoding': encoding}
+        os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
+        if os.path.isfile(path_to_pdf):
+            os.remove(path_to_pdf)
+        status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config, options=pdf_options, **kwargs)
+        if verbose and not status:
+            print("Failed. Check if the URL is available.")
+
+    except Exception as e:
+        print("Failed. {}".format(e)) if verbose else ""
+        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function. "
+              "It is not found on this device.") if verbose else ""
+
+
+def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
+    """
+    Convert a markdown file (.md) to a reStructuredText (.rst) file,
+    using `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
+
+    :param path_to_md: path where a markdown file is saved
+    :type path_to_md: str
+    :param path_to_rst: path where a reStructuredText file is saved
+    :type path_to_rst: str
+    :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
+    :type verbose: bool
+    :param kwargs: optional arguments of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
+
+    Example::
+
+        from pyhelpers.dir import cd
+
+        path_to_md = cd("tests\\data", "markdown.md")
+        path_to_rst = cd("tests\\data", "markdown.rst")
+        verbose = True
+
+        convert_md_to_rst(path_to_md, path_to_rst, verbose)
+    """
+
+    abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
+    # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
+
+    if verbose:
+        print("Converting \"{}\" to .rst ... ".format(abs_md_path.name))
+        get_specific_filepath_info(abs_rst_path, verbose=verbose, vb_end=" ... ")
+    try:
+        pandoc_exe = "C:\\Program Files\\Pandoc\\pandoc.exe"
+        if os.path.isfile(pandoc_exe):
+            subprocess.call('"{}" "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
+        else:
+            subprocess.call('pandoc "{}" -f markdown -t rst -s -o "{}"'.format(abs_md_path, abs_rst_path))
+        print("Successfully.") if verbose else ""
+    except FileNotFoundError:
+        import pypandoc
+        pypandoc.convert_file(str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
+        print("Successfully.") if verbose else ""
+    except Exception as e:
+        print("Failed. {}".format(e))
