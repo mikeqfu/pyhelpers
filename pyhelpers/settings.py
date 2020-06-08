@@ -6,22 +6,28 @@ import numpy as np
 import pandas as pd
 
 
-# Set preferences for displaying results
 def np_preferences(reset=False):
     """
-    :param reset: [bool] (default: False)
+    Set preferences for displaying results.
+
+    :param reset: reset to default settings, defaults to ``False``
+    :type reset: bool
     """
+
     if not reset:
         np.core.arrayprint._line_width = 120
     else:
         np.core.arrayprint._line_width = 80  # 75
 
 
-# Set preferences for displaying results
 def pd_preferences(reset=False):
     """
-    :param reset: [bool] (default: False)
+    Set preferences for displaying results.
+
+    :param reset: reset to default settings, defaults to ``False``
+    :type reset: bool
     """
+
     if not reset:
         # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
         pd.set_option('display.precision', 2)
@@ -37,16 +43,25 @@ def pd_preferences(reset=False):
         pd.reset_option('all')
 
 
-# Set preferences for plotting
 def mpl_preferences(reset=False, font_name=None):
     """
-    :param reset: [bool] (default: False)
-    :param font_name: [str; None (default)]
+    Set preferences for plotting.
 
-    Get a list of supported file formats for matplotlib savefig() function
-        plt.gcf().canvas.get_supported_filetypes()  # Aside: "gcf" is short for "get current fig" manager
+    :param reset: reset to default settings, defaults to ``False``
+    :type reset: bool
+    :param font_name: name of a font to be used, defaults to ``None``
+    :type font_name: str, None
+
+    Note::
+
+        # Get a list of supported file formats for `matplotlib.pyplot.savefig()` function
+
+        import matplotlib.pyplot as plt
+
+        plt.gcf().canvas.get_supported_filetypes()  # `gcf` is short for 'get current fig' manager
         plt.gcf().canvas.get_supported_filetypes_grouped()
     """
+
     import matplotlib.pyplot as plt
     import matplotlib.font_manager
 
@@ -71,12 +86,16 @@ def mpl_preferences(reset=False, font_name=None):
         plt.style.use('default')
 
 
-# Set GDAL configurations
 def gdal_configurations(reset=False, max_tmpfile_size=1000):
     """
-    :param reset: [bool] (default: False)
-    :param max_tmpfile_size: [int] (default: 5000)
+    Set GDAL configurations.
+
+    :param reset: reset to default settings, defaults to ``False``
+    :type reset: bool
+    :param max_tmpfile_size: maximum size of the temporary file, defaults to ``5000``
+    :type max_tmpfile_size: int
     """
+
     import gdal
 
     if not reset:
