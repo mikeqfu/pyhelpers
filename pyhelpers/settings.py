@@ -52,14 +52,16 @@ def mpl_preferences(reset=False, font_name=None):
     :param font_name: name of a font to be used, defaults to ``None``
     :type font_name: str, None
 
-    Note::
+    .. note::
 
-        # Get a list of supported file formats for `matplotlib.pyplot.savefig()` function
+        Get a list of supported file formats for `matplotlib.pyplot.savefig` function
 
-        import matplotlib.pyplot as plt
+        .. code-block:: python
 
-        plt.gcf().canvas.get_supported_filetypes()  # `gcf` is short for 'get current fig' manager
-        plt.gcf().canvas.get_supported_filetypes_grouped()
+            import matplotlib.pyplot as plt
+
+            plt.gcf().canvas.get_supported_filetypes()  # `gcf` is short for 'get current fig' manager
+            plt.gcf().canvas.get_supported_filetypes_grouped()
     """
 
     import matplotlib.pyplot as plt
@@ -86,7 +88,7 @@ def mpl_preferences(reset=False, font_name=None):
         plt.style.use('default')
 
 
-def gdal_configurations(reset=False, max_tmpfile_size=1000):
+def gdal_configurations(reset=False, max_tmpfile_size=5000):
     """
     Set GDAL configurations.
 
