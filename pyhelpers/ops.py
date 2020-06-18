@@ -18,6 +18,7 @@ import tqdm
 def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
     """
     Download an object available at the given ``url``.
+
     See also [`DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
 
     :param url: URL
@@ -26,18 +27,17 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
     :type path_to_file: str
     :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
     :type wait_to_retry: int, float
-    :param kwargs: optional arguments of `io.open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters of `open <https://docs.python.org/3/library/functions.html#open>`_
 
-    :Example:
-
-    .. code-block:: python
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.ops import download_file_from_url
 
         wait_to_retry = 3600
 
         url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        path_to_file = cd("tests\\images", "python-logo.png")
+        path_to_file = cd("tests/images", "python-logo.png")
 
         download_file_from_url(url, path_to_file, wait_to_retry)
     """
@@ -78,6 +78,7 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
 def confirmed(prompt=None, resp=False, confirmation_required=True):
     """
     Type to confirm whether to proceed or not.
+
     See also [`C-1 <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     :param prompt: a message that prompts an response (Yes/No), defaults to ``None``
@@ -89,11 +90,14 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
     :return: a response
     :rtype: bool
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import confirmed
 
         prompt = "Create Directory?"
         confirmed(prompt, resp=True)
-        # Create Directory? [No]|Yes: yes
+        # Create Directory? [No]|Yes:
+        # >? yes
         # True
     """
 
@@ -128,10 +132,18 @@ def get_variable_name(variable):
     :return: name of the given parameter
     :rtype: str
 
-    Example::
+    **Examples**::
+
+        from pyhelpers.ops import get_variable_name
 
         x = 1
-        var_name = get_variable_name(x)  # 'x'
+        get_variable_name(x)  # 'x'
+
+        y = 2
+        get_variable_name(y)  # 'y'
+
+        y = x
+        get_variable_name(y)  # 'x'
     """
 
     local_variables = inspect.currentframe().f_back.f_locals.items()
@@ -152,12 +164,21 @@ def get_variable_names(*variable):
     :return: (a sequence of) variable name(s)
     :rtype: generator
 
-    Examples::
+    **Examples**::
+
+        from pyhelpers.ops import get_variable_names
 
         x = 1
-        var_name = get_variable_names(x)  # list(var_name) == ['x']
+        var_name = get_variable_names(x)
+        print(list(var_name))  # ['x']
+
         y = 2
-        var_names = get_variable_names(x, y)  # list(var_names) == ['x', 'y']
+        var_names = get_variable_names(x, y)
+        print(list(var_names))  # ['x', 'y']
+
+        y = 1
+        var_names = get_variable_names(x, y)
+        print(list(var_names))  # ['x', 'x']
     """
 
     local_variables = inspect.currentframe().f_back.f_locals.items()
@@ -172,7 +193,9 @@ def get_variable_names(*variable):
 
 def split_list_by_size(lst, sub_len):
     """
-    Split a list into (evenly sized) sub-lists. See also [`SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
+    Split a list into (evenly sized) sub-lists.
+
+    See also [`SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
 
     :param lst: a list of any
     :type lst: list
@@ -181,11 +204,15 @@ def split_list_by_size(lst, sub_len):
     :return: a sequence of ``sub_len``-sized sub-lists from ``lst``
     :rtype: generator
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import split_list_by_size
 
         lst = list(range(0, 10))
         sub_len = 3
-        lists = split_list_by_size(lst, sub_len)  # list(lists) == [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+
+        lists = split_list_by_size(lst, sub_len)
+        print(list(lists))  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
     """
 
     for i in range(0, len(lst), sub_len):
@@ -195,6 +222,7 @@ def split_list_by_size(lst, sub_len):
 def split_list(lst, num_of_sub) -> types.GeneratorType:
     """
     Split a list into a number of equally-sized sub-lists.
+
     See also [`SL-1 <https://stackoverflow.com/questions/312443/>`_].
 
     :param lst: a list of any
@@ -204,11 +232,15 @@ def split_list(lst, num_of_sub) -> types.GeneratorType:
     :return: a total of ``num_of_sub`` sub-lists from ``lst``
     :rtype: generator
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import split_list
 
         lst = list(range(0, 10))
         num_of_sub = 3
-        lists = list(split_list(lst, num_of_sub))  # list(lists) == [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+
+        lists = list(split_list(lst, num_of_sub))
+        print(list(lists))  # [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
     """
 
     chunk_size = math.ceil(len(lst) / num_of_sub)
@@ -216,10 +248,11 @@ def split_list(lst, num_of_sub) -> types.GeneratorType:
         yield lst[i:i + chunk_size]
 
 
-#
 def split_iterable(iterable, chunk_size):
     """
-    Split a list into (evenly sized) chunks. See also [`SI-1 <https://stackoverflow.com/questions/24527006/>`_].
+    Split a list into (evenly sized) chunks.
+
+    See also [`SI-1 <https://stackoverflow.com/questions/24527006/>`_].
 
     :param iterable: iterable object
     :type iterable: iterable object
@@ -228,18 +261,28 @@ def split_iterable(iterable, chunk_size):
     :return: a sequence of equally-sized chunks from ``iterable``
     :rtype: generator
 
-    Example::
+    **Examples**::
 
         import pandas as pd
+        from pyhelpers.ops import split_iterable
 
         iterable = list(range(0, 10))
         chunk_size = 3
         res = split_iterable(iterable, chunk_size)
-        for x in res: print(list(x))
+        for x in res:
+            print(list(x))
+        # [0, 1, 2]
+        # [3, 4, 5]
+        # [6, 7, 8]
+        # [9]
 
         iterable = pd.Series(range(0, 10))
         for x in split_iterable(iterable, chunk_size):
-            print(list(x)) # [0, 1, 2], [3, 4, 5], [6, 7, 8], [9]
+            print(list(x))
+        # [0, 1, 2]
+        # [3, 4, 5]
+        # [6, 7, 8]
+        # [9]
     """
 
     iterator = iter(iterable)
@@ -249,7 +292,9 @@ def split_iterable(iterable, chunk_size):
 
 def update_nested_dict(source_dict, updates):
     """
-    Update a nested dictionary or similar mapping. See also [`UND-1 <https://stackoverflow.com/questions/3232943/>`_].
+    Update a nested dictionary or similar mapping.
+
+    See also [`UND-1 <https://stackoverflow.com/questions/3232943/>`_].
 
     :param source_dict: a dictionary that needs to be updated
     :type source_dict: dict
@@ -258,7 +303,9 @@ def update_nested_dict(source_dict, updates):
     :return: an updated dictionary
     :rtype: dict
 
-    Examples::
+    **Examples**::
+
+        from pyhelpers.ops import update_nested_dict
 
         source_dict = {'key_1': 1}
         updates = {'key_2': 2}
@@ -278,7 +325,7 @@ def update_nested_dict(source_dict, updates):
 
         source_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
         updates = {'key': {'k1': {}}}
-        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}. Not updating with {}
+        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
     for key, val in updates.items():
@@ -293,7 +340,10 @@ def update_nested_dict(source_dict, updates):
 
 def get_all_values_from_nested_dict(key, target_dict) -> types.GeneratorType:
     """
-    Get all values in a nested dictionary. See also [`GAVFND-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
+    Get all values in a nested dictionary.
+
+    See also
+    [`GAVFND-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
     [`GAVFND-2 <https://stackoverflow.com/questions/9807634/>`_].
 
     :param key: any that can be the key of a dictionary
@@ -303,23 +353,29 @@ def get_all_values_from_nested_dict(key, target_dict) -> types.GeneratorType:
     :return: all values of the ``key`` within the given ``target_dict``
     :rtype: generator
 
-    Examples::
+    **Examples**::
+
+        from pyhelpers.ops import get_all_values_from_nested_dict
 
         key = 'key'
         target_dict = {'key': 'val'}
-        val = get_all_values_from_nested_dict(key, target_dict)  # list(val) == [['val']]
+        val = get_all_values_from_nested_dict(key, target_dict)
+        print(list(val))  # [['val']]
 
         key = 'k1'
         target_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
-        val = get_all_values_from_nested_dict(key, target_dict)  # list(val) == [['v1']]
+        val = get_all_values_from_nested_dict(key, target_dict)
+        print(list(val))  #  [['v1']]
 
         key = 'k1'
         target_dict = {'key': {'k1': ['v1', 'v1_1']}}
-        val = get_all_values_from_nested_dict(key, target_dict)  # list(val) == [['v1', 'v1_1']]
+        val = get_all_values_from_nested_dict(key, target_dict)
+        print(list(val))  #  [['v1', 'v1_1']]
 
         key = 'k2'
         target_dict = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
-        val = get_all_values_from_nested_dict(key, target_dict)  # list(val) == [['v2', 'v2_1']]
+        val = get_all_values_from_nested_dict(key, target_dict)
+        print(list(val))  #  [['v2', 'v2_1']]
     """
 
     for k, v in target_dict.items():
@@ -344,10 +400,13 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
     :param keys: (a sequence of) any that can be the key of a dictionary
     :type keys: any
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import remove_multiple_keys_from_dict
 
         target_dict = {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4', 'k5': 'v5'}
-        remove_multiple_keys_from_dict(target_dict, 'k1', 'k3', 'k4')  # {'k2': 'v2', 'k5': 'v5'}
+        remove_multiple_keys_from_dict(target_dict, 'k1', 'k3', 'k4')
+        print(target_dict)  # {'k2': 'v2', 'k5': 'v5'}
     """
 
     # assert isinstance(dictionary, dict)
@@ -367,9 +426,10 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
     :return: (lower bound, upper bound)
     :rtype: tuple
 
-    Example::
+    **Example**::
 
         import pandas as pd
+        from pyhelpers.ops import get_extreme_outlier_bounds
 
         num_dat = pd.DataFrame(range(100), columns=['col'])
         k = 1.5
@@ -385,19 +445,21 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
 def interquartile_range(num_dat):
     """
-    An alternative way to
-    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_,
-    which is used to calculate interquartile range.
+    An alternative way to `scipy.stats.iqr`_, which is used to calculate interquartile range.
+
+    .. _`scipy.stats.iqr`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html
 
     :param num_dat: an array of numbers
     :type num_dat: array-like
     :return: interquartile range of ``num_dat``
     :rtype: float
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import interquartile_range
 
         num_dat = pd.DataFrame(range(100), columns=['col'])
-        iqr = interquartile_range(num_dat)  # 49.5
+        interquartile_range(num_dat)  # 49.5
     """
 
     iqr = np.subtract(*np.percentile(num_dat, [75, 25]))
@@ -419,7 +481,9 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     :return: the date that is closest to the given ``date``
     :rtype: str, datetime.datetime
 
-    Examples::
+    **Examples**::
+
+        from pyhelpers.ops import find_closest_date
 
         date = pd.to_datetime('2019-01-01')
         date_list = []
@@ -444,27 +508,38 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 def cmap_discretisation(cmap, n_colours):
     """
     Create a discrete colour ramp.
+
     See also [`CD-1 <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance,
-        e.g. `matplotlib.cm.jet <https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html>`_
+    :param cmap: a colormap instance, e.g. `matplotlib.cm.Accent`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :return: a discrete colormap from (the continuous) ``cmap``
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
-    Example::
+    .. _`matplotlib.cm.Accent`: https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html
+
+    **Example**::
 
         import matplotlib.cm
         import matplotlib.pyplot as plt
+        import numpy as np
+        from pyhelpers.ops import cmap_discretisation
 
         cmap = matplotlib.cm.Accent
         n_colours = 5
         cm_accent = cmap_discretisation(cmap, n_colours)
 
         x = np.resize(range(100), (5, 100))
-        plt.imshow(x, cmap=cm_accent)
+
+        fig, ax = plt.subplots(figsize=(10, 2))
+        ax.imshow(x, cmap=cm_accent, interpolation='nearest')
+        plt.axis('off')
+        plt.tight_layout()
+
+    .. image:: _images/cmap-discretisation.png
+        :scale: 35%
     """
 
     if isinstance(cmap, str):
@@ -488,33 +563,57 @@ def cmap_discretisation(cmap, n_colours):
 def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     """
     Create a colour bar.
-    See also [`CD-1 <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     To stop making off-by-one errors.
     Takes a standard colour ramp, and discretizes it, then draws a colour bar with correctly aligned labels.
 
-    :param cmap: a colormap instance,
-        e.g. `matplotlib.cm.jet <https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html>`_
+    See also [`CBI-1 <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+
+    :param cmap: a colormap instance, e.g. `matplotlib.cm.Accent`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :param labels: a list of labels for the colour bar, defaults to ``None``
     :type labels: list, None
-    :param kwargs: optional arguments of
-        `matplotlib.pyplot.colorbar <https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html>`_
+    :param kwargs: optional parameters of `matplotlib.pyplot.colorbar`_
     :return: a colour bar object
     :rtype: matplotlib.colorbar.Colorbar
 
-    Example::
+    .. _`matplotlib.cm.Accent`: https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html
+    .. _`matplotlib.pyplot.colorbar`: https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
+
+    **Examples**::
+
+        import matplotlib.cm
+        import matplotlib.pyplot as plt
+        from pyhelpers.ops import colour_bar_index
 
         cmap = matplotlib.cm.Accent
         n_colours = 5
+
+        plt.figure(1, figsize=(2, 6))
+        cbar = colour_bar_index(cmap, n_colours)
+        cbar.ax.tick_params(labelsize=18)
+        plt.axis('off')
+        plt.tight_layout()
+
+    .. image:: _images/colour-bar-index-1.png
+        :scale: 50%
+
+    |
+
+    .. code-block:: Python
+
         labels = list('abcde')
 
-        colour_bar_index(cmap, n_colours)
+        plt.figure(2, figsize=(2, 6))
+        colour_bar = colour_bar_index(cmap, n_colours, labels)
+        colour_bar.ax.tick_params(labelsize=18)
+        plt.axis('off')
+        plt.tight_layout()
 
-        colour_bar_index(cmap, n_colours, labels)
-
+    .. image:: _images/colour-bar-index-2.png
+        :scale: 50%
     """
 
     cmap = cmap_discretisation(cmap, n_colours)
@@ -546,12 +645,17 @@ def detect_nan_for_str_column(data_frame, column_names=None):
     :return: position index of the column that contains ``NaN``
     :rtype: generator
 
-    Example::
+    **Example**::
+
+        import numpy as np
+        import pandas as pd
+        from pyhelpers.ops import detect_nan_for_str_column
 
         data_frame = pd.DataFrame(np.resize(range(10), (10, 2)), columns=['a', 'b'])
         data_frame.iloc[3, 1] = np.nan
+
         nan_col_pos = detect_nan_for_str_column(data_frame, column_names=None)
-        # list(nan_col_pos) == [1]
+        print(list(nan_col_pos))  # [1]
     """
 
     if column_names is None:
@@ -571,10 +675,15 @@ def create_rotation_matrix(theta):
     :return: a rotation matrix of shape (2, 2)
     :rtype: numpy.ndarray
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import create_rotation_matrix
 
         theta = 30
-        rotation_mat = create_rotation_matrix(theta)  # array([[-0.98803162,  0.15425145], [-0.15425145, -0.98803162]])
+        rotation_mat = create_rotation_matrix(theta)
+        print(rotation_mat)
+        # [[-0.98803162  0.15425145]
+        #  [-0.15425145 -0.98803162]]
     """
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
     rotation_mat = np.array([[sin_theta, cos_theta], [-cos_theta, sin_theta]])
@@ -594,10 +703,16 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
     :return: a data frame converted from the ``input_dict``
     :rtype: pandas.DataFrame
 
-    Example::
+    **Example**::
+
+        from pyhelpers.ops import dict_to_dataframe
 
         input_dict = {'a': 1, 'b': 2}
         data_frame = dict_to_dataframe(input_dict)
+        print(data_frame)
+        #   key  value
+        # 0   a      1
+        # 1   b      2
     """
     dict_keys = list(input_dict.keys())
     dict_vals = list(input_dict.values())
