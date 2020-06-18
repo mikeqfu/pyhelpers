@@ -15,24 +15,31 @@ def cd(*sub_dir, mkdir=False, **kwargs):
     :type sub_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
-        e.g. ``mode=0o777``
+    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return: a full path to a directory (or a file)
     :rtype: str
 
-    Examples::
+    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
+
+    **Examples**::
+
+        from pyhelpers.dir import cd
 
         cd()  # Current working directory
 
         mkdir = True
-        cd("test_cd", mkdir=mkdir)  # [working directory]/test_cd/
+        cd("tests/test_cd", mkdir=mkdir)  # [working directory]/tests/test_cd/
     """
 
     path = os.getcwd()  # Current working directory
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
+        path_to_file, ext = os.path.splitext(path)
+        if ext == '':
+            os.makedirs(path_to_file, exist_ok=True, **kwargs)
+        else:
+            os.makedirs(os.path.dirname(path_to_file), exist_ok=True, **kwargs)
     return path
 
 
@@ -46,28 +53,26 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
-        e.g. ``mode=0o777``
+    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return path: a full path to a directory (or a file) under ``data_dir``
     :rtype: str
 
-    Examples::
+    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
 
-        data_dir = "Data"
-        mkdir = False
+    **Examples**::
+
+        from pyhelpers.dir import cdd
 
         cdd()  # [working directory]/data
 
-        cdd("test_cdd")  # [working directory]/Data/test_cdd
+        cdd("test_cdd")  # [working directory]/data/test_cdd
 
-        cdd("test_cdd", data_dir="test_cdd", mkdir=True)  # [working directory]/test_cdd/test_cdd
+        mkdir = True
+        cdd("test_cdd", data_dir="tests", mkdir=mkdir)  # [working directory]/tests/test_cdd
     """
 
-    path = cd(data_dir)
-    for x in sub_dir:
-        path = os.path.join(path, x)
-    if mkdir:
-        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
+    path = cd(data_dir, *sub_dir, mkdir=mkdir, **kwargs)
+
     return path
 
 
@@ -81,12 +86,15 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     :type dat_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional arguments of `os.makedirs <https://docs.python.org/3/library/os.html#os.makedirs>`_,
-        e.g. ``mode=0o777``
+    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return: a full path to a directory (or a file) under ``data_dir``
     :rtype: str
 
-    Example::
+    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
+
+    **Example**::
+
+        from pyhelpers.dir import cd_dat
 
         dat_dir = "dat"
         mkdir = False
@@ -98,7 +106,11 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     for x in sub_dir:
         path = os.path.join(path, x)
     if mkdir:
-        os.makedirs(os.path.dirname(path), exist_ok=True, **kwargs)
+        path_to_file, ext = os.path.splitext(path)
+        if ext == '':
+            os.makedirs(path_to_file, exist_ok=True, **kwargs)
+        else:
+            os.makedirs(os.path.dirname(path_to_file), exist_ok=True, **kwargs)
     return path
 
 
@@ -111,12 +123,15 @@ def is_dirname(x):
     :return: whether or not ``x`` is a path-like variable
     :rtype: bool
 
-    Examples::
+    **Examples**::
+
+        from pyhelpers.dir import cd
+        from pyhelpers.dir import is_dirname
 
         x = "test_is_dirname"
         is_dirname(x)  # False
 
-        x = "\\\\test_is_dirname"
+        x = "/test_is_dirname"
         is_dirname(x)  # True
 
         x = cd("test_is_dirname")
@@ -140,12 +155,14 @@ def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
     :return: a full path to a regulated data directory
     :rtype: str
 
-    Example::
+    **Example**::
+
+        from pyhelpers.dir import regulate_input_data_dir
 
         data_dir = "test_regulate_input_data_dir"
         msg = "Invalid input!"
 
-        regulate_input_data_dir(data_dir, msg)
+        regulate_input_data_dir(data_dir, msg)  # [working directory]/test_regulate_input_data_dir/
     """
 
     if data_dir:
@@ -170,18 +187,22 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of `shutil.rmtree <https://docs.python.org/3/library/shutil.html#shutil.rmtree>`_
+    :param kwargs: optional parameters of `shutil.rmtree <https://docs.python.org/3/library/shutil.html#shutil.rmtree>`_
 
-    Example::
+    **Example**::
 
-        path = cd("test_rm_dir", mkdir=True)
+        import os
+        from pyhelpers.dir import cdd, rm_dir
+
+        path_to_dir = cdd("test_cdd", data_dir="tests", mkdir=True)
         confirmation_required = True
-        verbose = False
+        verbose = True
 
-        rm_dir(path, confirmation_required, verbose)
+        print(os.path.exists(path_to_dir))  # True
+
+        rm_dir(path_to_dir, confirmation_required, verbose)
     """
 
-    print("Removing \"{}\"".format(path), end=" ... ") if verbose else None
     try:
         if os.listdir(path):
             if confirmed("\"{}\" is not empty. Confirmed to remove the directory?".format(path),
@@ -192,6 +213,6 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
             if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
                 os.rmdir(path)
         if verbose:
-            print("Successfully.") if not os.path.exists(path) else print("Failed.")
+            print("Done.") if not os.path.exists(path) else print("Cancelled.")
     except Exception as e:
         print("Failed. {}.".format(e))
