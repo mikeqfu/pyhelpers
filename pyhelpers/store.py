@@ -28,9 +28,10 @@ def get_specific_filepath_info(path_to_file, verbose=False, vb_end=" ... ", ret_
     :return: a relative path and a filename
     :rtype: tuple
 
-    Examples::
+    **Examples**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import get_specific_filepath_info
 
         verbose = True
         vb_end = " ... "
@@ -76,22 +77,26 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     """
     Save data as a pickle file.
 
-    :param pickle_data: data that could be dumped by `pickle <https://docs.python.org/3/library/pickle.html>`_
+    :param pickle_data: data that could be dumped by `pickle`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
-    :param mode: mode to `io.open <https://docs.python.org/3/library/functions.html#open>`_ file, defaults to ``'wb'``
+    :param mode: mode to `open`_ file, defaults to ``'wb'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of the function `io.open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters `open`_
 
-    Example::
+    .. _`pickle`: https://docs.python.org/3/library/pickle.html
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_pickle
 
         pickle_data = 1
-        path_to_pickle = cd("tests\\data", "dat.pickle")
+        path_to_pickle = cd("tests/data", "dat.pickle")
         mode = 'wb'
         verbose = True
 
@@ -115,19 +120,22 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
 
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
-    :param mode: mode to `io.open <https://docs.python.org/3/library/functions.html#open>`_ file, defaults to ``'rb'``
+    :param mode: mode to `open`_ file, defaults to ``'rb'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of the function `io.open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters `open`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
+
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
 
     Example::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import load_pickle
 
-        path_to_pickle = cd("tests\\data", "dat.pickle")
+        path_to_pickle = cd("tests/data", "dat.pickle")
         mode = 'rb'
         verbose = True
 
@@ -149,22 +157,26 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
     """
     Save data as a json file
 
-    :param json_data: data that could be dumped by `python-rapidjson <https://pypi.org/project/python-rapidjson/>`_
+    :param json_data: data that could be dumped by `python-rapidjson`_
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
-    :param mode: mode to `io.open <https://docs.python.org/3/library/functions.html#open>`_ file, defaults to ``'w'``
+    :param mode: mode to `open`_ file, defaults to ``'w'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of the function `io.open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters `open`_
 
-    Example::
+    .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_json
 
         json_data = {'a': 1, 'b': 2, 'c': 3}
-        path_to_json = cd("tests\\data", "dat.json")
+        path_to_json = cd("tests/data", "dat.json")
         mode = 'w'
         verbose = True
 
@@ -188,19 +200,22 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
 
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
-    :param mode: mode to `io.open <https://docs.python.org/3/library/functions.html#open>`_ file, defaults to ``'r'``
+    :param mode: mode to `open`_ file, defaults to ``'r'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of the function `io.open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters `open`_
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: json
 
-    Example::
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import load_json
 
-        path_to_json = cd("tests\\data", "dat.json")
+        path_to_json = cd("tests/data", "dat.json")
         mode = 'r'
         verbose = True
 
@@ -229,12 +244,13 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
 
-    Example::
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_feather
 
         feather_data = pd.DataFrame({'Col1': 1, 'Col2': 2}, index=[0])
-        path_to_feather = cd("tests\\data", "dat.feather")
+        path_to_feather = cd("tests/data", "dat.feather")
         verbose = True
 
         save_feather(feather_data, path_to_feather, verbose)
@@ -257,8 +273,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :type path_to_feather: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of the function
-        `pandas.read_feather <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_feather.html>`_
+    :param kwargs: optional parameters of `pandas.read_feather`_
 
         * columns: (sequence, None) a sequence of column names, if ``None``, all columns
         * use_threads: (bool) whether to parallelize reading using multiple threads, defaults to ``True``
@@ -266,11 +281,14 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :return: data retrieved from the specified path ``path_to_feather``
     :rtype: pandas.DataFrame
 
-    Example::
+    .. _`pandas.read_feather`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_feather.html
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import load_feather
 
-        path_to_feather = cd("tests\\data", "dat.feather")
+        path_to_feather = cd("tests/data", "dat.feather")
         verbose = True
 
         feather_data = load_feather(path_to_feather, verbose)
@@ -291,9 +309,9 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
 
     Engines can include: `xlsxwriter`_ for .xlsx; `openpyxl`_ for .xlsx/.xlsm; `xlwt`_ for .xls
 
-    .. _xlsxwriter: https://xlsxwriter.readthedocs.io/
-    .. _openpyxl: https://openpyxl.readthedocs.io/en/stable/
-    .. _xlwt: https://pypi.org/project/xlwt/
+    .. _`xlsxwriter`: https://xlsxwriter.readthedocs.io/
+    .. _`openpyxl`: https://openpyxl.readthedocs.io/en/stable/
+    .. _`xlwt`: https://pypi.org/project/xlwt/
 
     :param spreadsheet_data: data that could be saved as a spreadsheet, e.g. .xlsx, .csv
     :type spreadsheet_data: pandas.DataFrame
@@ -305,28 +323,32 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
     :type delimiter: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of
-        `pandas.DataFrame.to_excel
-        <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html>`_ or
-        `pandas.DataFrame.to_csv
-        <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html>`_
+    :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
-    Examples::
+    .. _`pandas.DataFrame.to_excel`:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html
+    .. _`pandas.DataFrame.to_csv`:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html
 
+    **Examples**::
+
+        import pandas as pd
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_spreadsheet
 
         spreadsheet_data = pd.DataFrame({'Col1': 1, 'Col2': 2}, index=['data'])
         index = False
         delimiter = ','
         verbose = True
 
-        path_to_spreadsheet = cd("tests\\data", "dat.csv")  # path_to_spreadsheet = cd("tests\\data", "dat.txt")
+        path_to_spreadsheet = cd("tests/data", "dat.csv")
+        # path_to_spreadsheet = cd("tests/data", "dat.txt")
         save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, delimiter, verbose)
 
-        path_to_spreadsheet = cd("tests\\data", "dat.xls")
+        path_to_spreadsheet = cd("tests/data", "dat.xls")
         save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, delimiter, verbose)
 
-        path_to_spreadsheet = cd("tests\\data", "dat.xlsx")
+        path_to_spreadsheet = cd("tests/data", "dat.xlsx")
         save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, delimiter, verbose)
     """
 
@@ -365,23 +387,28 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of
-        `pandas.ExcelWriter <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html>`_
+    :param kwargs: optional parameters of `pandas.ExcelWriter`_
 
-    Examples::
+    .. _`pandas.ExcelWriter`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
+
+    **Examples**::
 
         import numpy as np
+        import pandas as pd
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_multiple_spreadsheets
 
         xy_array = np.array([(530034, 180381),   # London
                              (406689, 286822),   # Birmingham
                              (383819, 398052),   # Manchester
                              (582044, 152953)])  # Leeds
-        dat1 = pd.DataFrame(xy_array, ['London', 'Birmingham', 'Manchester', 'Leeds'], ['Easting', 'Northing'])
+        dat1 = pd.DataFrame(xy_array,
+                            index=['London', 'Birmingham', 'Manchester', 'Leeds'],
+                            columns=['Easting', 'Northing'])
         dat2 = dat1.T
         spreadsheets_data = [dat1, dat2]
         sheet_names = ['TestSheet1', 'TestSheet2']
-        path_to_spreadsheet = cd("tests\\data", "dat.xlsx")
+        path_to_spreadsheet = cd("tests/data", "dat.xlsx")
         index = True
         verbose = True
 
@@ -442,16 +469,18 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     :type as_dict: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of `pandas.ExcelFile.parse
-        <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html>`_
+    :param kwargs: optional parameters of `pandas.ExcelFile.parse`_
     :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
     :rtype: list, dict
 
-    Examples::
+    .. _`pandas.ExcelFile.parse`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
+
+    **Examples**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import load_multiple_spreadsheets
 
-        path_to_spreadsheet = cd("tests\\data", "dat.xlsx")
+        path_to_spreadsheet = cd("tests/data", "dat.xlsx")
         verbose = True
 
         as_dict = True
@@ -496,7 +525,35 @@ def save(data, path_to_file, warning=False, **kwargs):
     :type path_to_file: str
     :param warning: whether to show a warning messages, defaults to ``False``
     :type warning: bool
-    :param kwargs: optional arguments of those ``pyhelpers.store.save_*`` functions
+    :param kwargs: optional parameters of those ``pyhelpers.store.save_*`` functions
+
+    **Examples**::
+
+        import pandas as pd
+        from pyhelpers.dir import cd
+        from pyhelpers.store import save
+
+        data = pd.DataFrame([(530034, 180381), (406689, 286822), (383819, 398052), (582044, 152953)],
+                            index=['London', 'Birmingham', 'Manchester', 'Leeds'],
+                            columns=['Easting', 'Northing'])
+
+        verbose = True
+
+        path_to_file = cd("tests/data", "dat.txt")
+        save(data, path_to_file, verbose=verbose)
+
+        path_to_file = cd("tests/data", "dat.csv")
+        save(data, path_to_file, verbose=verbose)
+
+        path_to_file = cd("tests/data", "dat.xlsx")
+        save(data, path_to_file, verbose=verbose)
+
+        path_to_file = cd("tests/data", "dat.pickle")
+        save(data, path_to_file, verbose=verbose)
+
+        path_to_file = cd("tests/data", "dat.feather")
+        # save(data, path_to_file, verbose=verbose) will produce an error due to the index of `data`
+        save(data.reset_index(), path_to_file, verbose=verbose)
     """
 
     # Make a copy the original data
@@ -505,10 +562,10 @@ def save(data, path_to_file, warning=False, **kwargs):
         dat.reset_index(inplace=True)
 
     # Save the data according to the file extension
-    if path_to_file.endswith((".csv", ".xlsx", ".xls")):
+    if path_to_file.endswith((".csv", ".xlsx", ".xls", ".txt")):
         save_spreadsheet(dat, path_to_file, **kwargs)
     elif path_to_file.endswith(".feather"):
-        save_feather(dat, path_to_file)
+        save_feather(dat, path_to_file, **kwargs)
     elif path_to_file.endswith(".json"):
         save_json(dat, path_to_file, **kwargs)
     elif path_to_file.endswith(".pickle"):
@@ -520,11 +577,11 @@ def save(data, path_to_file, warning=False, **kwargs):
             save_pickle(dat, path_to_file, **kwargs)
 
 
-def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=True, **kwargs):
+def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
-    Save a figure using
-    `matplotlib.pyplot.savefig <https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html>`_ and
-    `Inkscape <https://inkscape.org>`_.
+    Save a figure using `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
+
+    .. _`Inkscape`: https://inkscape.org
 
     :param path_to_fig_file: path where a figure file is saved
     :type path_to_fig_file: str
@@ -532,15 +589,17 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=True, **
     :type dpi: int, None
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``True``
+    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
     :type conv_svg_to_emf: bool
-    :param kwargs: optional arguments of `matplotlib.pyplot.savefig
-        <https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html>`_
+    :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
 
-    Examples::
+    .. _`matplotlib.pyplot.savefig`: https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html
 
-        from pyhelpers.dir import cd
+    **Examples**::
+
         import matplotlib.pyplot as plt
+        from pyhelpers.dir import cd
+        from pyhelpers.store import save_fig
 
         x, y = (1, 1), (2, 2)
         plt.figure()
@@ -548,11 +607,12 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=True, **
         dpi = 300
         verbose = True
 
-        path_to_fig_file = cd("tests\\images", "fig.png")
+        path_to_fig_file = cd("tests/images", "fig.png")
         save_fig(path_to_fig_file, dpi, verbose)
 
-        path_to_fig_file = cd("tests\\images", "fig.svg")
-        save_fig(path_to_fig_file, dpi, verbose)
+        path_to_fig_file = cd("tests/images", "fig.svg")
+        conv_svg_to_emf = True
+        save_fig(path_to_fig_file, dpi, verbose, conv_svg_to_emf)
     """
     
     get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
@@ -586,15 +646,22 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, **kwargs):
     :type path_to_emf: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of
-        `subprocess.call <https://docs.python.org/3/library/subprocess.html#subprocess.call>`_
+    :param kwargs: optional parameters of `subprocess.call`_
 
-    Example::
+    .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import save_svg_as_emf
 
-        path_to_svg = cd("tests\\images", "fig.svg")
-        path_to_emf = cd("tests\\images", "fig.emf")
+        x, y = (1, 1), (2, 2)
+        plt.figure()
+        plt.plot([x[0], y[0]], [x[1], y[1]])
+        verbose = True
+
+        path_to_svg = cd("tests/images", "fig.svg")
+        path_to_emf = cd("tests/images", "fig.emf")
         verbose = True
 
         save_svg_as_emf(path_to_svg, path_to_emf, verbose)
@@ -632,15 +699,17 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of `zipfile.ZipFile.extractall
-        <https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall>`_
+    :param kwargs: optional parameters of `zipfile.ZipFile.extractall`_
 
-    Example::
+    .. _`zipfile.ZipFile.extractall`: https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall
+
+    **Example**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import unzip
 
-        path_to_zip_file = cd("tests\\data", "zipped.zip")
-        out_dir = cd("tests\\data")
+        path_to_zip_file = cd("tests/data", "zipped.zip")
+        out_dir = cd("tests/data")
         mode = 'r'
         verbose = True
 
@@ -670,21 +739,23 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of
-        `subprocess.call <https://docs.python.org/3/library/subprocess.html#subprocess.call>`_
+    :param kwargs: optional parameters of `subprocess.call`_
 
-    Examples::
+    .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
+
+    **Examples**::
 
         from pyhelpers.dir import cd
+        from pyhelpers.store import seven_zip
 
-        out_dir = cd("tests\\data")
+        out_dir = cd("tests/data")
         mode = 'aoa'
         verbose = True
 
-        path_to_zip_file = cd("tests\\data", "zipped.zip")
+        path_to_zip_file = cd("tests/data", "zipped.zip")
         seven_zip(path_to_zip_file, out_dir, mode, verbose)
 
-        path_to_zip_file = cd("tests\\data", "zipped.7z")
+        path_to_zip_file = cd("tests/data", "zipped.7z")
         seven_zip(path_to_zip_file, out_dir, mode, verbose)
     """
 
@@ -709,24 +780,36 @@ def load_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :type path_to_csr: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional arguments of `numpy.load <https://numpy.org/doc/stable/reference/generated/numpy.load>`_
+    :param kwargs: optional parameters of `numpy.load <https://numpy.org/doc/stable/reference/generated/numpy.load>`_
     :return: a compressed sparse row
     :rtype: scipy.sparse.csr.csr_matrix
 
-    Example::
+    **Example**::
 
-        from pyhelpers.dir import cd
+        import numpy as np
         import scipy.sparse
+        from pyhelpers.dir import cd
+        from pyhelpers.store import load_csr_matrix
 
-        path_to_csr = cd("tests\\data", "csr_mat.npz")
-        indptr, indices, data = np.array([0, 2, 3, 6]), np.array([0, 2, 2, 0, 1, 2]), np.array([1, 2, 3, 4, 5, 6])
+        indptr = np.array([0, 2, 3, 6])
+        indices = np.array([0, 2, 2, 0, 1, 2])
+        data = np.array([1, 2, 3, 4, 5, 6])
         csr_m = scipy.sparse.csr_matrix((data, indices, indptr), shape=(3, 3))
-        np.savez_compressed(path_to_csr, indptr=csr_m.indptr, indices=csr_m.indices, data=csr_m.data, shape=csr_m.shape)
+
+        path_to_csr = cd("tests/data", "csr_mat.npz")
+        np.savez_compressed(path_to_csr,
+                            indptr=csr_m.indptr,
+                            indices=csr_m.indices,
+                            data=csr_m.data,
+                            shape=csr_m.shape)
         verbose = True
 
         csr_mat = load_csr_matrix(path_to_csr, verbose)
-        (csr_mat != csr_m).count_nonzero() == 0  # .nnz gets the count of explicitly-stored values (non-zeros)
-        (csr_mat != csr_m).nnz == 0
+
+        # .nnz gets the count of explicitly-stored values (non-zeros)
+        (csr_mat != csr_m).count_nonzero() == 0  # True
+
+        (csr_mat != csr_m).nnz == 0  # True
     """
 
     print("Loading \"..\\{}\"".format(os.path.relpath(path_to_csr)), end=" ... ") if verbose else ""
