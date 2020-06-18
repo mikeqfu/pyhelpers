@@ -1,3 +1,4 @@
+fake-useragent
 fuzzywuzzy
 GDAL
 matplotlib
