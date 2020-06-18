@@ -1,4 +1,4 @@
-""" Helper classes for manipulating databases """
+""" Helper classes for manipulating databases (The current release includes only PostgreSQL) """
 
 import csv
 import gc
@@ -41,6 +41,7 @@ class PostgreSQL:
         """
         Constructor method.
         """
+
         host_ = input("PostgreSQL Host: ") if host is None else str(host)
         port_ = input("PostgreSQL Port: ") if port is None else int(port)
         username_ = input("Username: ") if username is None else str(username)
@@ -92,6 +93,7 @@ class PostgreSQL:
         :return: ``True`` if the database exists, ``False``, otherwise
         :rtype: bool
         """
+
         database_name_ = str(database_name) if database_name is not None else self.database_name
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT datname FROM pg_catalog.pg_database "
@@ -102,10 +104,10 @@ class PostgreSQL:
         """
         Establish a connection to a database.
 
-        :param database_name: name of a database;
-            if ``database_name is None`` (default), the database name is input manually
+        :param database_name: name of a database; if ``None`` (default), the database name is input manually
         :type database_name: str, None
         """
+
         self.database_name = str(database_name) if database_name is not None else input("Database name: ")
         self.database_info['database'] = self.database_name
         self.url = sqlalchemy.engine.url.URL(**self.database_info)
@@ -116,15 +118,17 @@ class PostgreSQL:
 
     def create_database(self, database_name, verbose=False):
         """
-        An alternative to
-        `sqlalchemy_utils.create_database
-        <https://sqlalchemy-utils.readthedocs.io/en/latest/database_helpers.html#create-database>`_.
+        An alternative to `sqlalchemy_utils.create_database`_.
+
+        .. _`sqlalchemy_utils.create_database`:
+            https://sqlalchemy-utils.readthedocs.io/en/latest/database_helpers.html#create-database
 
         :param database_name: name of a database
         :type database_name: str
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         if not self.database_exists(database_name):
             print("Creating a database \"{}\" ... ".format(database_name), end="") if verbose else ""
             self.disconnect_database()
@@ -145,6 +149,7 @@ class PostgreSQL:
         :return: size of the database
         :rtype: int
         """
+
         db_name = '\'{}\''.format(database_name) if database_name else 'current_database()'
         db_size = self.engine.execute('SELECT pg_size_pretty(pg_database_size({})) AS size;'.format(db_name))
         return db_size.fetchone()[0]
@@ -160,6 +165,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         db_name = self.database_name if database_name is None else database_name
         print("Disconnecting the database \"{}\" ... ".format(db_name), end="") if verbose else ""
         try:
@@ -177,6 +183,7 @@ class PostgreSQL:
         """
         Kill connections to all other databases.
         """
+
         self.connect_database(database_name='postgres')
         self.engine.execute('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid();')
 
@@ -193,6 +200,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         db_name = self.database_name if database_name is None else database_name
         if confirmed("Confirmed to drop the database \"{}\" for {}@{}?".format(db_name, self.user, self.host),
                      confirmation_required=confirmation_required):
@@ -213,6 +221,7 @@ class PostgreSQL:
         :return: ``True`` if the schema exists, ``False`` otherwise
         :rtype: bool
         """
+
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT schema_name FROM information_schema.schemata "
                                      "WHERE schema_name='{}');".format(schema_name))
@@ -227,6 +236,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         try:
             print("Creating a schema \"{}\" ... ".format(schema_name), end="") if verbose else ""
             self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name))
@@ -245,6 +255,7 @@ class PostgreSQL:
         :return: printing message
         :rtype: tuple
         """
+
         if schema_names:
             schemas = tuple(schema_name for schema_name in schema_names)
         else:
@@ -266,6 +277,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         schemas, schemas_msg = self.printing_messages_for_multi_names(*schema_names)
         if confirmed("Confirmed to drop the {} from the database \"{}\"".format(schemas_msg, self.database_name),
                      confirmation_required=confirmation_required):
@@ -288,6 +300,7 @@ class PostgreSQL:
         :return: ``True`` if the table exists, ``False`` otherwise
         :rtype: bool
         """
+
         res = self.engine.execute("SELECT EXISTS("
                                   "SELECT * FROM information_schema.tables "
                                   "WHERE table_schema='{}' "
@@ -307,15 +320,18 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
 
-        :Example:
+        **Example**::
 
-        >>> postgres_db = PostgreSQL(database_name='postgres')
-        >>> table_name = 'test_tbl'
-        >>> schema_name = 'public'
-        >>> verbose = True
-        >>> column_specs = 'col_name_1 INT, col_name_2 TEXT'
-        >>> postgres_db.create_table(table_name, column_specs)
+            from pyhelpers.sql import PostgreSQL
+
+            postgres_db = PostgreSQL(database_name='postgres')
+            table_name = 'test_tbl'
+            verbose = True
+
+            column_specs = 'col_name_1 INT, col_name_2 TEXT'
+            postgres_db.create_table(table_name, column_specs, verbose=verbose)
         """
+
         table_name_ = '{schema}.\"{table}\"'.format(schema=schema_name, table=table_name)
 
         if not self.schema_exists(schema_name):
@@ -341,6 +357,7 @@ class PostgreSQL:
         :return: information about each column of the given table
         :rtype: pandas.DataFrame, dict
         """
+
         column_info = self.engine.execute(
             "SELECT * FROM information_schema.columns "
             "WHERE table_schema='{}' AND table_name='{}';".format(schema_name, table_name))
@@ -363,6 +380,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         """
+
         if confirmed("Confirmed to drop the table {}.\"{}\" from the database \"{}\"?".format(
                 schema_name, table_name, self.database_name), confirmation_required=confirmation_required):
             try:
@@ -375,14 +393,18 @@ class PostgreSQL:
     def psql_insert_copy(pd_table, conn, keys, data_iter):
         """
         A callable using PostgreSQL COPY clause for executing inserting data.
-        This function is copied and slightly modified from the `source code
-        <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_.
 
         :param pd_table: pandas.io.sql.SQLTable
         :param conn: sqlalchemy.engine.Connection or sqlalchemy.engine.Engine
         :param keys: (list of str) column names
         :param data_iter: iterable that iterates the values to be inserted
+
+        .. note::
+
+            This function is copied and slightly modified from the source code available at
+            [`PIC-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_].
         """
+
         cur = conn.connection.cursor()
         s_buf = io.StringIO()
         writer = csv.writer(s_buf)
@@ -399,7 +421,9 @@ class PostgreSQL:
                   chunk_size=None, col_type=None, method='multi', verbose=False, **kwargs):
         """
         Import data (as a pandas.DataFrame) into the database being currently connected.
-        See also [`DD-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_] and
+
+        See also
+        [`DD-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_] and
         [`DD-2 <https://www.postgresql.org/docs/current/sql-copy.html/>`_].
 
         :param data: data frame to be dumped into a database
@@ -408,8 +432,7 @@ class PostgreSQL:
         :type table_name: str
         :param schema_name: name of a schema, defaults to ``'public'``
         :type schema_name: str
-        :param if_exists: action to be taken if the table already exists, incl. ``'replace'`` (default), ``'fail'`` or
-            ``'append'``
+        :param if_exists: if the table already exists, to ``'replace'`` (default), ``'append'`` or ``'fail'``
         :type if_exists: str
         :param force_replace: whether to force to replace existing table, defaults to ``False``
         :type force_replace: bool
@@ -426,10 +449,12 @@ class PostgreSQL:
         :type method: None, str, callable
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
-        :param kwargs: optional arguments of
-            `pandas.DataFrame.to_sql
-            <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html>`_
+        :param kwargs: optional parameters of `pandas.DataFrame.to_sql`_
+
+        .. _`pandas.DataFrame.to_sql`:
+            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
         """
+
         if schema_name not in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names():
             self.create_schema(schema_name, verbose=verbose)
         # if not data.empty:
@@ -466,6 +491,8 @@ class PostgreSQL:
         """
         Read table data.
 
+        See also [`RT-1 <https://stackoverflow.com/questions/24408557/pandas-read-sql-with-parameters>`_].
+
         :param table_name: name of a table
         :type table_name: str
         :param schema_name: name of a schema, defaults to ``'public'``
@@ -476,18 +503,20 @@ class PostgreSQL:
         :type chunk_size: int, None
         :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted, defaults to ``None``
         :type sorted_by: str, None
-        :param kwargs: optional arguments of
-            `pandas.read_sql <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html>`_;
+        :param kwargs: optional parameters of `pandas.read_sql`_
 
         :return: data frame from the specified table
         :rtype: pandas.DataFrame
 
-        Example::
+        .. _`pandas.read_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
+
+        **Example**::
 
             # A brief example of using the `params` of `pandas.read_sql`
 
             import datetime
             import pandas as pd
+            from pyhelpers.sql import PostgreSQL
 
             postgres = PostgreSQL()
 
@@ -495,9 +524,8 @@ class PostgreSQL:
             params = {'ds_start': datetime.datetime.today(), 'ds_end': datetime.datetime.today()}
 
             data_frame = pd.read_sql(sql_query, postgres.engine, params=params)
-
-        See also [`RT-1 <https://stackoverflow.com/questions/24408557/pandas-read-sql-with-parameters>`_].
         """
+
         if condition:
             assert isinstance(condition, str), "'condition' must be 'str' type."
             sql_query = 'SELECT * FROM {}."{}" {};'.format(schema_name, table_name, condition)
@@ -509,12 +537,13 @@ class PostgreSQL:
             table_data.index = range(len(table_data))
         return table_data
 
-    def read_sql_query(self, sql_query, method='spooled_tempfile', mode='w+b', max_size_spooled=1, delimiter=',',
-                       dtype=None, buffering=-1, encoding=None, newline=None, suffix=None, prefix=None,
-                       directory=None, errors=None, initial_value='', io_newline='\n', **kwargs):
+    def read_sql_query(self, sql_query, method='spooled_tempfile', tempfile_mode='w+b', max_size_spooled=1,
+                       delimiter=',', dtype=None, tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
         """
         Read data by SQL query (recommended for large table).
-        See also [`RSQ-1 <https://towardsdatascience.com/optimizing-pandas-read-sql-for-postgres-f31cd7f707ab>`_],
+
+        See also
+        [`RSQ-1 <https://towardsdatascience.com/optimizing-pandas-read-sql-for-postgres-f31cd7f707ab>`_],
         [`RSQ-2 <https://docs.python.org/3/library/tempfile.html>`_] and
         [`RSQ-3 <https://docs.python.org/3/library/io.html>`_].
 
@@ -527,61 +556,46 @@ class PostgreSQL:
             * `'stringio'`: use `io.StringIO`_
 
         :type method: str
-        :param mode: mode of the specified `method`, defaults to ``'w+b'``
-        :type mode: str
-        :param max_size_spooled: `max_size` of `tempfile.SpooledTemporaryFile`_, defaults to ``1`` (in gigabyte)
+        :param tempfile_mode: mode of the specified `method`, defaults to ``'w+b'``
+        :type tempfile_mode: str
+        :param max_size_spooled: ``max_size`` of `tempfile.SpooledTemporaryFile`_, defaults to ``1`` (in gigabyte)
         :type max_size_spooled: int, float
         :param delimiter: delimiter used in data, defaults to ``','``
         :type delimiter: str
         :param dtype: data type for specified data columns, `dtype` used by `pandas.read_csv`_, defaults to ``None``
         :type dtype: dict, None
-        :param buffering: buffer size, `buffering` of `io.open`_, used by `tempfile.TemporaryFile`_ or
-            `tempfile.SpooledTemporaryFile`_,  defaults to ``-1``
-        :type buffering: int, None
-        :param encoding: `encoding` of `io.open`_, used by `tempfile.TemporaryFile`_ or
-            `tempfile.SpooledTemporaryFile`_, defaults to ``None``
-        :type encoding: str, None
-        :param newline: `newline` of `io.open`_, used by `tempfile.TemporaryFile`_ or
-            `tempfile.SpooledTemporaryFile`_, defaults to ``None``
-        :type newline: None
-        :param suffix: `suffix` of `tempfile.mkstemp`_, defaults to ``None``
-        :type suffix: str, None
-        :param prefix: `prefix` of `tempfile.mkstemp`_, defaults to ``None``
-        :type prefix: str, None
-        :param directory: `dir` of `tempfile.mkstemp`_, defaults to ``None``
-        :type directory: str, None
-        :param errors: `errors` of `io.open`_, used by `tempfile.TemporaryFile`_ or
-            `tempfile.SpooledTemporaryFile`_, defaults to ``None``
-        :type errors: str, None
-        :param initial_value: `initial_value` of `io.StringIO`_, defaults to ``''``
-        :type initial_value: str
-        :param io_newline: `newline` of `io.StringIO`_, defaults to ``'\\n'``
-        :type io_newline: str
-        :param kwargs: optional arguments of `pandas.read_csv`_
+        :param tempfile_kwargs: optional parameters of `tempfile.TemporaryFile`_ or `tempfile.SpooledTemporaryFile`_
+        :param stringio_kwargs: optional parameters of `io.StringIO`_, e.g. ``initial_value`` (default:``''``)
+        :param kwargs: optional parameters of `pandas.read_csv`_
         :return: data frame as queried by the statement ``sql_query``
         :rtype: pandas.DataFrame
 
         .. _`pandas.read_csv`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html
-        .. _`io.open`: https://docs.python.org/3/library/functions.html#open
+        .. _`open`: https://docs.python.org/3/library/functions.html#open
         .. _`tempfile.TemporaryFile`: https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryFile
         .. _`tempfile.SpooledTemporaryFile`:
             https://docs.python.org/3/library/tempfile.html#tempfile.SpooledTemporaryFile
         .. _`io.StringIO`: https://docs.python.org/3/library/io.html#io.StringIO
         .. _`tempfile.mkstemp`: https://docs.python.org/3/library/tempfile.html#tempfile.mkstemp
-
         """
-        methods = ('stringio', 'tempfile', 'spooled_tempfile')
-        assert method in methods, "\"method\" must be one of {\"%s\", \"%s\", \"%s\"}" % methods
 
-        if method == 'stringio':  # Use io.StringIO
-            csv_temp = io.StringIO(initial_value=initial_value, newline=io_newline)
-        elif method == 'tempfile':  # Use tempfile.TemporaryFile
-            csv_temp = tempfile.TemporaryFile(mode, buffering=buffering, encoding=encoding, newline=newline,
-                                              suffix=suffix, prefix=prefix, dir=directory, errors=errors)
-        else:  # Use tempfile.SpooledTemporaryFile - data would be spooled in memory until its size > max_spooled_size
-            csv_temp = tempfile.SpooledTemporaryFile(max_size_spooled * 10 ** 9, mode, buffering=buffering,
-                                                     encoding=encoding, newline=newline, suffix=suffix, prefix=prefix,
-                                                     dir=directory, errors=errors)
+        methods = ('stringio', 'tempfile', 'spooled_tempfile')
+        assert method in methods, "The argument `method` must be one of {'%s', '%s', '%s'}" % methods
+
+        if tempfile_kwargs is None:
+            tempfile_kwargs = {'buffering': -1, 'encoding': None, 'newline': None, 'suffix': None, 'prefix': None,
+                               'dir': None, 'errors': None}
+
+        if method == 'spooled_tempfile':
+            # Use tempfile.SpooledTemporaryFile - data would be spooled in memory until its size > max_spooled_size
+            csv_temp = tempfile.SpooledTemporaryFile(max_size_spooled * 10 ** 9, tempfile_mode, **tempfile_kwargs)
+        elif method == 'tempfile':
+            # Use tempfile.TemporaryFile
+            csv_temp = tempfile.TemporaryFile(tempfile_mode, **tempfile_kwargs)
+        else:  # method == 'stringio', i.e. use io.StringIO
+            if stringio_kwargs is None:
+                stringio_kwargs = {'initial_value': '', 'newline': '\n'}
+            csv_temp = io.StringIO(**stringio_kwargs)
 
         # Specify the SQL query for "COPY"
         copy_sql = "COPY ({query}) TO STDOUT WITH DELIMITER '{delimiter}' CSV HEADER;".format(
