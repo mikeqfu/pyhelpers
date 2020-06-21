@@ -1,4 +1,4 @@
-""" Helper functions for manipulating directories """
+""" A module for manipulation of directories. """
 
 import os
 
@@ -45,7 +45,7 @@ def cd(*sub_dir, mkdir=False, **kwargs):
 
 def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
-    Change directory to "[working directory]/[data_dir]/" and sub-directories.
+    Change directory to `data_dir/` and sub-directories.
 
     :param sub_dir: name of directory or names of directories (and/or a filename)
     :type sub_dir: str
@@ -78,7 +78,7 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
 
 def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
-    Change directory to "dat" and sub-directories within a package.
+    Change directory to `dat_dir/` and sub-directories within a package.
 
     :param sub_dir: name of directory or names of directories (and/or a filename)
     :type sub_dir: str
