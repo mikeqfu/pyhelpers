@@ -1,4 +1,4 @@
-""" Helper functions for manipulating geometric/geographical data """
+""" A module for manipulation of geometric/geographical data. """
 
 import collections.abc
 import functools
@@ -377,7 +377,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
 
 def transform_geom_point_type(*pts, as_geom=True):
     """
-    Transform iterable to `shapely.geometry.Point`_ type, or the other way round.
+    Transform iterable to `shapely.geometry.Point` type, or the other way round.
 
     :param pts: points
     :type pts: iterable [e.g. list of lists/tuples or shapely.geometry.Points]
@@ -904,7 +904,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         rotation_theta = 0
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
-    .. image:: _images/sketch-square-1.png
+    .. image:: images/sketch-square-1.png
         :scale: 50%
 
     |
@@ -914,7 +914,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         rotation_theta = 75
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
-    .. image:: _images/sketch-square-2.png
+    .. image:: images/sketch-square-2.png
         :scale: 50%
     """
 
