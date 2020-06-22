@@ -1,4 +1,4 @@
-""" Helper functions for saving and loading/retrieving data """
+""" A module for saving and retrieving data. """
 
 import os
 import pathlib
@@ -305,9 +305,11 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
 
 def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimiter=',', verbose=False, **kwargs):
     """
-    Save spreadsheet as a CSV or an MS Excel file (with the file extension being .txt, .csv, .xlsx or .xls).
+    Save spreadsheet as a CSV or an MS Excel file.
 
-    Engines can include: `xlsxwriter`_ for .xlsx; `openpyxl`_ for .xlsx/.xlsm; `xlwt`_ for .xls
+    The file extension can include `".txt"`, `".csv"`, `".xlsx"` or `".xls"`.
+
+    Engines can include: `xlsxwriter`_ for `".xlsx"`; `openpyxl`_ for `".xlsx"` / `".xlsm"`; `xlwt`_ for `".xls"`
 
     .. _`xlsxwriter`: https://xlsxwriter.readthedocs.io/
     .. _`openpyxl`: https://openpyxl.readthedocs.io/en/stable/
@@ -319,7 +321,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
     :type path_to_spreadsheet: str
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
-    :param delimiter: separator for saving .xlsx/.xls as a ".csv" file, defaults to ``','``
+    :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file, defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
@@ -371,7 +373,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
 def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w', index=False,
                                confirmation_required=True, verbose=False, **kwargs):
     """
-    Save multiple spreadsheets to an MS Excel workbook (.csv, .xlsx or .xls).
+    Save multiple spreadsheets to an MS Excel workbook.
 
     :param spreadsheets_data: a sequence of pandas.DataFrame
     :type spreadsheets_data: iterable
@@ -461,7 +463,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
 def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
     """
-    Load multiple spreadsheets from an Excel workbook (.xlsx or .xls).
+    Load multiple spreadsheets from an MS Excel workbook.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
@@ -579,9 +581,9 @@ def save(data, path_to_file, warning=False, **kwargs):
 
 def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
-    Save a figure using `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
+    Save a figure object.
 
-    .. _`Inkscape`: https://inkscape.org
+    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape <https://inkscape.org>`_).
 
     :param path_to_fig_file: path where a figure file is saved
     :type path_to_fig_file: str
