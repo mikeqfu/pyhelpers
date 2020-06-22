@@ -1,4 +1,4 @@
-""" Helper functions for manipulating textual data """
+""" A module for manipulation of textual data. """
 
 import collections.abc
 import os
@@ -433,10 +433,9 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
     """
-    Convert a markdown file (.md) to a reStructuredText (.rst) file, using `Pandoc`_ or `pypandoc`_.
+    Convert a markdown file (.md) to a reStructuredText (.rst) file.
 
-    .. _`Pandoc`: https://pandoc.org/
-    .. _`pypandoc`: https://github.com/bebraw/pypandoc
+    This function relies on `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
 
     :param path_to_md: path where a markdown file is saved
     :type path_to_md: str
