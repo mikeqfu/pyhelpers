@@ -1,17 +1,19 @@
 import setuptools
 
+from pyhelpers import __version__, __author__
+
 with open("README.md", 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(
 
     name='pyhelpers',
-    version='1.1.2',
+    version=__version__,
 
-    author='Qian Fu',
+    author=__author__,
     author_email='qian.fu@outlook.com',
 
-    description="A toolkit of helper functions to facilitate data manipulation.",
+    description="A toolkit for facilitating data manipulation using Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -23,26 +25,26 @@ setuptools.setup(
         # 'matplotlib',
         # 'nltk',
         'numpy',
-        # 'openpyxl',
+        'openpyxl',
         'pandas',
         # 'pdfkit',
         # 'psycopg2',
         'python-rapidjson',
         # 'pyproj',
-        # 'pyxlsb',
-        # 'requests',
+        'pyxlsb',
+        'requests',
         # 'shapely',
         'sqlalchemy',
         'sqlalchemy-utils',
         'tqdm',
-        # 'xlrd',
-        # 'xlwt',
-        # 'XlsxWriter'
+        'xlrd',
+        'xlwt',
+        'XlsxWriter'
     ],
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
 
-    package_data={"pyhelpers": ["../README.md", "../requirements.txt", "../LICENSE"]},
+    package_data={"": ["README.md", "requirements.txt", "LICENSE"]},
     include_package_data=True,
 
     classifiers=[
