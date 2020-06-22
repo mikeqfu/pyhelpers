@@ -1,4 +1,4 @@
-""" Miscellaneous helper functions """
+""" A module for miscellaneous use. """
 
 import collections.abc
 import datetime
@@ -445,9 +445,10 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
 def interquartile_range(num_dat):
     """
-    An alternative way to `scipy.stats.iqr`_, which is used to calculate interquartile range.
+    Calculate interquartile range.
 
-    .. _`scipy.stats.iqr`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html
+    This function may be an alternative to
+    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
 
     :param num_dat: an array of numbers
     :type num_dat: array-like
@@ -538,7 +539,7 @@ def cmap_discretisation(cmap, n_colours):
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: _images/cmap-discretisation.png
+    .. image:: images/cmap-discretisation.png
         :scale: 35%
     """
 
@@ -597,7 +598,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: _images/colour-bar-index-1.png
+    .. image:: images/colour-bar-index-1.png
         :scale: 50%
 
     |
@@ -612,7 +613,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: _images/colour-bar-index-2.png
+    .. image:: images/colour-bar-index-2.png
         :scale: 50%
     """
 
