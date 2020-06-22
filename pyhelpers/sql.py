@@ -1,4 +1,4 @@
-""" Helper classes for manipulating databases (The current release includes only PostgreSQL) """
+""" A module for manipulation of databases. """
 
 import csv
 import gc
