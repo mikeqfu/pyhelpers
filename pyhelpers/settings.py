@@ -1,4 +1,4 @@
-""" Settings """
+""" A module for altering settings. """
 
 import os
 
