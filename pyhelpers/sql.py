@@ -34,6 +34,13 @@ class PostgreSQL:
     :type confirm_new_db: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool
+
+    **Example**::
+
+        from pyhelpers.sql import PostgreSQL
+
+        # Connect the default database 'postgres'
+        testdb = PostgreSQL(host='localhost', port=5432, username='postgres', database_name='postgres')
     """
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
@@ -299,6 +306,17 @@ class PostgreSQL:
         :type schema_name: str
         :return: ``True`` if the table exists, ``False`` otherwise
         :rtype: bool
+
+        **Examples**::
+
+            from pyhelpers.sql import PostgreSQL
+
+            testdb = PostgreSQL(database_name='postgres')
+
+            table_name = 'England'
+            schema_name = 'points'
+
+            testdb.table_exists(table_name, schema_name)  # False (if 'points.England' does not exist)
         """
 
         res = self.engine.execute("SELECT EXISTS("
@@ -453,6 +471,24 @@ class PostgreSQL:
 
         .. _`pandas.DataFrame.to_sql`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+
+        **Example**::
+
+            import pandas as pd
+            from pyhelpers.sql import PostgreSQL
+
+            testdb = PostgreSQL(database_name='postgres')
+
+            # Create a pandas.DataFrame
+            xy_array = [(530034, 180381), (406689, 286822), (383819, 398052), (582044, 152953)]
+            dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
+
+            table_name = 'England'
+            schema_name = 'points'
+            if_exists = 'replace'
+
+            testdb.dump_data(dat, table_name, schema_name, if_exists, chunk_size=None,
+                             force_replace=False, col_type=None, verbose=True)
         """
 
         if schema_name not in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names():
@@ -510,20 +546,27 @@ class PostgreSQL:
 
         .. _`pandas.read_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
 
-        **Example**::
+        **Examples**::
 
-            # A brief example of using the `params` of `pandas.read_sql`
+            from pyhelpers.sql import PostgreSQL
+
+            testdb = PostgreSQL(database_name='postgres')
+
+            table_name = 'England'
+            schema_name = 'points'
+            dat_retrieval = testdb.read_table(table_name, schema_name)
+
+            # Aside: a brief example of using the `params` of `pandas.read_sql`
 
             import datetime
             import pandas as pd
-            from pyhelpers.sql import PostgreSQL
 
-            postgres = PostgreSQL()
-
-            sql_query = 'SELECT * FROM "table_name" WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
+            sql_query = 'SELECT * FROM "table_name" '\
+                        'WHERE "timestamp_column_name" '\
+                        'BETWEEN %(ts_start)s AND %(ts_end)s'
             params = {'ds_start': datetime.datetime.today(), 'ds_end': datetime.datetime.today()}
 
-            data_frame = pd.read_sql(sql_query, postgres.engine, params=params)
+            data_frame = pd.read_sql(sql_query, testdb.engine, params=params)
         """
 
         if condition:
