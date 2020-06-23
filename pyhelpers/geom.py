@@ -904,8 +904,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         rotation_theta = 0
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
-    .. image:: images/sketch-square-1.png
-        :scale: 50%
+    .. image:: _images/sketch-square-1.*
+       :width: 500px
+       :height: 500px
+       :scale: 70%
 
     |
 
@@ -914,8 +916,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         rotation_theta = 75
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
-    .. image:: images/sketch-square-2.png
-        :scale: 50%
+    .. image:: _images/sketch-square-2.*
+       :width: 500px
+       :height: 500px
+       :scale: 70%
     """
 
     import matplotlib.pyplot as plt
