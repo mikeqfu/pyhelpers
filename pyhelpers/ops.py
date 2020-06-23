@@ -539,8 +539,10 @@ def cmap_discretisation(cmap, n_colours):
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: images/cmap-discretisation.png
-        :scale: 35%
+    .. image:: _images/cmap-discretisation.*
+       :width: 1000px
+       :height: 200px
+       :scale: 35%
     """
 
     if isinstance(cmap, str):
@@ -592,14 +594,16 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         cmap = matplotlib.cm.Accent
         n_colours = 5
 
-        plt.figure(1, figsize=(2, 6))
+        plt.figure(figsize=(2, 6))
         cbar = colour_bar_index(cmap, n_colours)
         cbar.ax.tick_params(labelsize=18)
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: images/colour-bar-index-1.png
-        :scale: 50%
+    .. image:: _images/colour-bar-index-1.*
+       :width: 200px
+       :height: 600px
+       :scale: 55%
 
     |
 
@@ -607,14 +611,16 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
         labels = list('abcde')
 
-        plt.figure(2, figsize=(2, 6))
+        plt.figure(figsize=(2, 6))
         colour_bar = colour_bar_index(cmap, n_colours, labels)
         colour_bar.ax.tick_params(labelsize=18)
         plt.axis('off')
         plt.tight_layout()
 
-    .. image:: images/colour-bar-index-2.png
-        :scale: 50%
+    .. image:: _images/colour-bar-index-2.*
+       :width: 200px
+       :height: 600px
+       :scale: 55%
     """
 
     cmap = cmap_discretisation(cmap, n_colours)
