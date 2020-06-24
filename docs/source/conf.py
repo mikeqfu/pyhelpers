@@ -98,13 +98,13 @@ htmlhelp_basename = project.lower() + 'doc'
 # -- Options for LaTeX output ----------------------------------------------------------------------------------------
 
 latex_elements = {
-    'papersize': 'a4paper',  # The paper size ('letterpaper' or 'a4paper').
-    'pointsize': '11pt',  # The font size ('10pt', '11pt' or '12pt').
+    'papersize': 'letterpaper',  # The paper size ('letterpaper' or 'a4paper').
+    'pointsize': '10pt',  # The font size ('10pt', '11pt' or '12pt').
     # Additional stuff for the LaTeX preamble.
     'preamble': '''
         \\setlength{\\headheight}{14pt}
         \\usepackage[utf8]{inputenc}
-        \\usepackage{amsmath}
+        \\usepackage{textcomp}
         \\usepackage{amsfonts}
         \\usepackage{textgreek}
         \\usepackage{graphicx}
