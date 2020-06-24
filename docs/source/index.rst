@@ -18,7 +18,7 @@ PyHelpers
    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
       :target: https://pypistats.org/packages/pyhelpers
 
-**PyHelpers** is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit facilitating Python users' data manipulation.
+**PyHelpers** is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
 
 .. toctree::
    :maxdepth: 2
