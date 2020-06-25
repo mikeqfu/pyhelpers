@@ -2,7 +2,7 @@ import setuptools
 
 from pyhelpers import __version__, __author__
 
-with open("README.md", 'r') as readme:
+with open("README.rst", 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(
