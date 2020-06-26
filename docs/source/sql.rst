@@ -3,7 +3,7 @@
 sql
 ---
 
-.. py:module:: pyhelpers.sql
+.. module:: pyhelpers.sql
 
 A module for manipulation of databases.
 
