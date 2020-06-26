@@ -1,6 +1,6 @@
 fake-useragent
 fuzzywuzzy
-GDAL==3.0.4
+GDAL
 matplotlib
 nltk
 numpy
