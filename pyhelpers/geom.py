@@ -905,8 +905,8 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
     .. image:: _images/sketch-square-1.*
-       :width: 500px
-       :height: 500px
+       :width: 500pt
+       :height: 500pt
        :scale: 70%
 
     |
@@ -917,8 +917,8 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
 
     .. image:: _images/sketch-square-2.*
-       :width: 500px
-       :height: 500px
+       :width: 500pt
+       :height: 500pt
        :scale: 70%
     """
 

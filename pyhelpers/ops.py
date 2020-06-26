@@ -540,8 +540,8 @@ def cmap_discretisation(cmap, n_colours):
         plt.tight_layout()
 
     .. image:: _images/cmap-discretisation.*
-       :width: 1000px
-       :height: 200px
+       :width: 1000pt
+       :height: 200pt
        :scale: 35%
     """
 
@@ -601,8 +601,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.tight_layout()
 
     .. image:: _images/colour-bar-index-1.*
-       :width: 200px
-       :height: 600px
+       :width: 200pt
+       :height: 600pt
        :scale: 55%
 
     |
@@ -618,8 +618,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.tight_layout()
 
     .. image:: _images/colour-bar-index-2.*
-       :width: 200px
-       :height: 600px
+       :width: 200pt
+       :height: 600pt
        :scale: 55%
     """
 
