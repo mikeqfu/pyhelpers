@@ -1,19 +1,19 @@
 import setuptools
 
-from pyhelpers import __version__, __author__, __email__
+from pyhelpers import __pkgname__, __version__, __author__, __email__, __description__
 
 with open("README.rst", 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(
 
-    name='pyhelpers',
+    name=__pkgname__,
     version=__version__,
 
     author=__author__,
     author_email=__email__,
 
-    description="A toolkit for facilitating data manipulation using Python.",
+    description=__description__,
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -44,7 +44,7 @@ setuptools.setup(
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
 
-    package_data={"": ["README.md", "requirements.txt", "LICENSE"]},
+    package_data={"": ["requirements.txt", "LICENSE"]},
     include_package_data=True,
 
     classifiers=[
