@@ -3,7 +3,7 @@ Installation
 
 If you are using a `virtualenv <https://packaging.python.org/key_projects/#virtualenv>`_, ensure that the virtualenv is activated.
 
-To install the latest release of `pyhelpers <https://github.com/mikeqfu/pyhelpers>`_ at `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://packaging.python.org/key_projects/#pip>`_:
+To install the latest release of `pyhelpers <https://github.com/mikeqfu/pyhelpers>`_ at `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://packaging.python.org/key_projects/#pip>`_ on Windows Command Prompt (CMD) or Linux/Unix terminal.
 
 .. code-block:: bash
 
