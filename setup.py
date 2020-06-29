@@ -1,6 +1,6 @@
 import setuptools
 
-from pyhelpers import __version__, __author__
+from pyhelpers import __version__, __author__, __email__
 
 with open("README.rst", 'r') as readme:
     long_description = readme.read()
@@ -11,7 +11,7 @@ setuptools.setup(
     version=__version__,
 
     author=__author__,
-    author_email='qian.fu@outlook.com',
+    author_email=__email__,
 
     description="A toolkit for facilitating data manipulation using Python.",
     long_description=long_description,
