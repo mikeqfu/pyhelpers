@@ -9,7 +9,6 @@ import sys
 # If the directory is relative to the documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../..'))
 
-
 # -- Project information ---------------------------------------------------------------------------------------------
 
 project = u'PyHelpers'
@@ -23,7 +22,6 @@ from pyhelpers import __version__
 version = 'v' + __version__
 release = version
 
-
 # -- General configuration -------------------------------------------------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be extensions coming with
@@ -36,7 +34,6 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx_rtd_theme',
 ]
-
 
 # Automatically documented members are sorted by source order ('bysource')
 autodoc_member_order = 'bysource'
@@ -65,8 +62,13 @@ pygments_style = 'sphinx'  # or 'default'
 
 # -- Options for HTML output -----------------------------------------------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+# The theme to use for HTML and HTML Help pages.
+if on_rtd:
+    html_theme = 'sphinx_rtd_theme'
+else:
+    html_theme = 'sphinxdoc'  # 'default', 'nature'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
