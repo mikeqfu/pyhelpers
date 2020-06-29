@@ -540,9 +540,8 @@ def cmap_discretisation(cmap, n_colours):
         plt.tight_layout()
 
     .. image:: _images/cmap-discretisation.*
-       :width: 1000pt
-       :height: 200pt
-       :scale: 35%
+       :width: 350pt
+       :height: 70pt
     """
 
     if isinstance(cmap, str):
@@ -601,11 +600,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.tight_layout()
 
     .. image:: _images/colour-bar-index-1.*
-       :width: 200pt
-       :height: 600pt
-       :scale: 55%
-
-    |
+       :width: 120pt
+       :height: 350pt
 
     .. code-block:: Python
 
@@ -618,9 +614,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         plt.tight_layout()
 
     .. image:: _images/colour-bar-index-2.*
-       :width: 200pt
-       :height: 600pt
-       :scale: 55%
+       :width: 120pt
+       :height: 350pt
     """
 
     cmap = cmap_discretisation(cmap, n_colours)
