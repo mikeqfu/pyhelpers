@@ -1,5 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
+import datetime
 import os
 import sys
 
@@ -9,17 +10,19 @@ import sys
 # If the directory is relative to the documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../..'))
 
+from pyhelpers import __pkgname__, __version__, __author__, __description__
+
+rst_epilog = '.. |pkg_name| replace:: %s' % __pkgname__.title().replace('h', 'H')
+
 # -- Project information ---------------------------------------------------------------------------------------------
 
-project = u'PyHelpers'
-copyright = u'2019-2020, Qian Fu'
-author = u'Qian Fu'
-description = u'A Python toolkit for facilitating data manipulation.'
+project = u'{}'.format(__pkgname__)
+copyright = u'2019-{}, {}'.format(datetime.datetime.now().year, __author__)
+author = u''.format(__author__)
+description = u''.format(__description__)
 
 # The full version, including alpha/beta/rc tags
-from pyhelpers import __version__
-
-version = 'v' + __version__
+version = u'v{}'.format(__version__)
 release = version
 
 # -- General configuration -------------------------------------------------------------------------------------------
@@ -66,9 +69,9 @@ on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 # The theme to use for HTML and HTML Help pages.
 if on_rtd:
-    html_theme = 'sphinx_rtd_theme'
+    html_theme = 'sphinxdoc'
 else:
-    html_theme = 'sphinxdoc'  # 'default', 'nature'
+    html_theme = 'sphinx_rtd_theme'  # 'default', 'nature'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -95,12 +98,12 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = project.lower() + 'doc'
+htmlhelp_basename = project + 'doc'
 
 # -- Options for LaTeX output ----------------------------------------------------------------------------------------
 
 latex_elements = {
-    'papersize': 'letterpaper',  # The paper size ('letterpaper' or 'a4paper').
+    'papersize': 'a4paper',  # The paper size ('letterpaper' or 'a4paper').
     'pointsize': '10pt',  # The font size ('10pt', '11pt' or '12pt').
     # Additional stuff for the LaTeX preamble.
     'preamble': '''
@@ -118,14 +121,14 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto, manual, or own class]).
 latex_documents = [
-    ('index', '{}.tex'.format(project.lower()), project + ' Documentation', author, 'manual'),
+    ('index', '{}.tex'.format(project), project + ' Documentation', author, 'manual'),
 ]
 
 # -- Options for manual page output ----------------------------------------------------------------------------------
 
 # One entry per manual page. List of tuples (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', project.lower(), project + ' Documentation', [author], 1)
+    ('index', project, project + ' Documentation', [author], 1)
 ]
 
 # -- Options for Texinfo output --------------------------------------------------------------------------------------
@@ -134,7 +137,7 @@ man_pages = [
 # (source start file, target name, title, author, dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, project, project + ' Documentation',
-     author, project.lower(), description, 'miscellaneous'),
+     author, project, description, 'miscellaneous'),
 ]
 
 latex_engine = 'pdflatex'
