@@ -1,8 +1,6 @@
 PyHelpers
 =========
 
-**Author**: Qian Fu
-
 .. only:: html
 
    |PyPI| |Python| |License| |Code size| |Downloads|
@@ -18,7 +16,10 @@ PyHelpers
    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
       :target: https://pypistats.org/packages/pyhelpers
 
-**PyHelpers** is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
+| **Author**: Qian Fu
+| **Email**: qian.fu@outlook.com
+
+|pkg_name| is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
 
 .. toctree::
    :maxdepth: 2
