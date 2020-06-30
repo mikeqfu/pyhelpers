@@ -1,19 +1,19 @@
 import setuptools
 
-from pyhelpers import __pkgname__, __version__, __author__, __email__, __description__
+import pyhelpers
 
 with open("README.rst", 'r') as readme:
     long_description = readme.read()
 
 setuptools.setup(
 
-    name=__pkgname__,
-    version=__version__,
+    name=pyhelpers.__package_name__,
+    version=pyhelpers.__version__,
 
-    author=__author__,
-    author_email=__email__,
+    author=pyhelpers.__author__,
+    author_email=pyhelpers.__email__,
 
-    description=__description__,
+    description=pyhelpers.__description__,
     long_description=long_description,
     long_description_content_type="text/markdown",
 
