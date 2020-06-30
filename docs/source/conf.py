@@ -101,17 +101,15 @@ latex_elements = {
     'papersize': 'a4paper',  # The paper size ('letterpaper' or 'a4paper').
     'pointsize': '10pt',  # The font size ('10pt', '11pt' or '12pt').
     'pxunit': '0.25bp',
-    'extrapackages': r'''
+    'preamble': r'''
+        \setlength{\headheight}{14pt}
+        \DeclareUnicodeCharacter{229E}{\ensuremath{\boxplus}}
         \usepackage[utf8]{inputenc}
         \usepackage{textcomp}
         \usepackage{amsfonts}
         \usepackage{textgreek}
         \usepackage{graphicx}
         \usepackage{svg}
-        ''',
-    'preamble': r'''
-        \setlength{\headheight}{14pt}
-        \DeclareUnicodeCharacter{229E}{\ensuremath{\boxplus}}
         ''',
     'printindex': r'''
         \IfFileExists{\jobname.ind}
