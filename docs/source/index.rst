@@ -3,7 +3,7 @@ PyHelpers
 
 .. only:: html
 
-   |PyPI| |Python| |License| |Code size| |Downloads|
+   |PyPI| |Python| |License| |Code| |Docs| |Downloads|
 
    .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=important&label=PyPI
       :target: https://pypi.org/project/pyhelpers/
@@ -11,18 +11,20 @@ PyHelpers
       :target: https://www.python.org/downloads/windows/
    .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers?color=green&label=License
       :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-   .. |Code size| image:: https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code%20size
+   .. |Code| image:: https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code
       :target: https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers
+   .. |Docs| image:: https://img.shields.io/readthedocs/pyhelpers?label=Docs
+      :target: https://pyhelpers.readthedocs.io
    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
       :target: https://pypistats.org/packages/pyhelpers
 
 | **Author**: Qian Fu
 | **Email**: qian.fu@outlook.com
 
-|pkg_name| is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
+PyHelpers is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
 
-Contents
---------
+Documentation contents:
+-----------------------
 
 .. toctree::
    :maxdepth: 2
