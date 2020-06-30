@@ -1,4 +1,4 @@
-from . import dir, geom, ops, settings, sql, store, text
+from pyhelpers import dir, geom, ops, settings, sql, store, text
 
 __pkgname__ = 'pyhelpers'
 __author__ = 'Qian Fu'
