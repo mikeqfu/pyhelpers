@@ -21,10 +21,12 @@ PyHelpers
 
 |pkg_name| is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
 
+Contents
+--------
+
 .. toctree::
    :maxdepth: 2
    :includehidden:
-   :caption: Contents
 
    installation
    quick-start
