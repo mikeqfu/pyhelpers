@@ -2,7 +2,7 @@ import setuptools
 
 import pyhelpers
 
-with open("README.rst", 'r') as readme:
+with open("README.rst", 'r', encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(
@@ -15,7 +15,7 @@ setuptools.setup(
 
     description=pyhelpers.__description__,
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
 
     url='https://github.com/mikeqfu/pyhelpers',
 
