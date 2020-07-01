@@ -19,7 +19,7 @@ PyHelpers
 | **Author**: Qian Fu
 | **Email**: qian.fu@outlook.com
 
-PyHelpers is designed as a miscellaneous collection of simple but very useful `Python <https://www.python.org/>`_ functions/classes. It provides a toolkit for facilitating Python users' data manipulation.
+PyHelpers is designed as a miscellaneous collection of simple but useful `Python <https://www.python.org/>`_ functions and classes, providing a handy toolkit for facilitating Python users' data manipulation tasks.
 
 Documentation contents
 ======================
