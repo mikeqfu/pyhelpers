@@ -1,4 +1,4 @@
 License
 =======
 
-PyHelpers is licensed under the `GNU General Public License v2.0 <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_
+PyHelpers is licensed under `GNU General Public License, version 2 (GPLv2) <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_.
