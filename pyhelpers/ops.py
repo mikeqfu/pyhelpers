@@ -219,7 +219,7 @@ def split_list_by_size(lst, sub_len):
         yield lst[i:i + sub_len]
 
 
-def split_list(lst, num_of_sub) -> types.GeneratorType:
+def split_list(lst, num_of_sub):
     """
     Split a list into a number of equally-sized sub-lists.
 
@@ -230,7 +230,7 @@ def split_list(lst, num_of_sub) -> types.GeneratorType:
     :param num_of_sub: number of sub-lists
     :type num_of_sub: int
     :return: a total of ``num_of_sub`` sub-lists from ``lst``
-    :rtype: generator
+    :rtype: types.GeneratorType
 
     **Example**::
 
@@ -338,7 +338,7 @@ def update_nested_dict(source_dict, updates):
     return source_dict
 
 
-def get_all_values_from_nested_dict(key, target_dict) -> types.GeneratorType:
+def get_all_values_from_nested_dict(key, target_dict):
     """
     Get all values in a nested dictionary.
 
@@ -351,7 +351,7 @@ def get_all_values_from_nested_dict(key, target_dict) -> types.GeneratorType:
     :param target_dict: a (nested) dictionary
     :type target_dict: dict
     :return: all values of the ``key`` within the given ``target_dict``
-    :rtype: generator
+    :rtype: types.GeneratorType
 
     **Examples**::
 
