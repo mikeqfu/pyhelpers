@@ -20,7 +20,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, vb_end=" ... ", ret_
     :param path_to_file: path where a file is saved
     :type path_to_file: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param vb_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
     :type vb_end: str
     :param ret_info: whether to return the file path information, defaults to ``False``
@@ -61,7 +61,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, vb_end=" ... ", ret_
             # The specified path exists?
             abs_path_to_file.parent.mkdir(exist_ok=True)  # os.makedirs(abs_path_to_file.parent, exist_ok=True)
     except ValueError:
-        if verbose:
+        if verbose == 2:
             print("Warning: \"{}\" is outside the current working directory".format(str(abs_path_to_file.parent)))
         rel_path = abs_path_to_file.parent
         msg_fmt = "{} \"{}\" {} \"{}\""
@@ -85,7 +85,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     :param mode: mode to `open`_ file, defaults to ``'wb'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters `open`_
 
     .. _`pickle`: https://docs.python.org/3/library/pickle.html
@@ -124,7 +124,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     :param mode: mode to `open`_ file, defaults to ``'rb'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters `open`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
@@ -165,7 +165,7 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
     :param mode: mode to `open`_ file, defaults to ``'w'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters `open`_
 
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
@@ -204,7 +204,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
     :param mode: mode to `open`_ file, defaults to ``'r'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters `open`_
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: json
@@ -243,7 +243,7 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
 
     **Example**::
 
@@ -273,7 +273,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `pandas.read_feather`_
 
         * columns: (sequence, None) a sequence of column names, if ``None``, all columns
@@ -325,7 +325,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
     :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file, defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
     .. _`pandas.DataFrame.to_excel`:
@@ -389,7 +389,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :param confirmation_required: whether to prompt a message for confirmation to proceed, defaults to ``True``
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `pandas.ExcelWriter`_
 
     .. _`pandas.ExcelWriter`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
@@ -471,7 +471,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `pandas.ExcelFile.parse`_
     :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
     :rtype: list, dict
@@ -591,7 +591,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams["savefig.dpi"]``
     :type dpi: int, None
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
     :type conv_svg_to_emf: bool
     :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
@@ -648,7 +648,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, **kwargs):
     :param path_to_emf: path where a .emf file is saved
     :type path_to_emf: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `subprocess.call`_
 
     .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
@@ -701,7 +701,7 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     :param mode: defaults to ``'r'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `zipfile.ZipFile.extractall`_
 
     .. _`zipfile.ZipFile.extractall`: https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall
@@ -741,7 +741,7 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
     :param mode: defaults to ``'aoa'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `subprocess.call`_
 
     .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
@@ -782,7 +782,7 @@ def load_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :param path_to_csr: path where a CSR (e.g. .npz) file is saved
     :type path_to_csr: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool, int
     :param kwargs: optional parameters of `numpy.load <https://numpy.org/doc/stable/reference/generated/numpy.load>`_
     :return: a compressed sparse row
     :rtype: scipy.sparse.csr.csr_matrix
