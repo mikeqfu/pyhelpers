@@ -207,7 +207,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
     :type verbose: bool, int
     :param kwargs: optional parameters `open`_
     :return: data retrieved from the specified path ``path_to_json``
-    :rtype: json
+    :rtype: dict
 
     .. _`open`: https://docs.python.org/3/library/functions.html#open
 
