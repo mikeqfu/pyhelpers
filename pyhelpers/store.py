@@ -59,7 +59,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, vb_end=" ... ", ret_
         else:
             msg_fmt = "{} \"{}\" {} \"..\\{}\""
             # The specified path exists?
-            abs_path_to_file.parent.mkdir(exist_ok=True)  # os.makedirs(abs_path_to_file.parent, exist_ok=True)
+            os.makedirs(abs_path_to_file.parent, exist_ok=True)
     except ValueError:
         if verbose == 2:
             print("Warning: \"{}\" is outside the current working directory".format(str(abs_path_to_file.parent)))
