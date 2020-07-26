@@ -10,9 +10,27 @@ import re
 import time
 import types
 
+import fake_useragent
 import numpy as np
 import pandas as pd
 import tqdm
+
+
+def fake_requests_headers(random=False):
+    """
+    Make a fake HTTP headers for `requests.get`_.
+
+    .. _`requests.get`: https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects
+
+    :param random: whether to go for a random agent, defaults to ``False``
+    :type random: bool
+    :return: fake HTTP headers
+    :rtype: dict
+    """
+
+    fake_user_agent = fake_useragent.UserAgent()
+    fake_header = {'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
+    return fake_header
 
 
 def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
@@ -43,7 +61,6 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
     """
 
     import requests
-    import fake_useragent
 
     headers = {'User-Agent': fake_useragent.UserAgent().random}
     resp = requests.get(url, stream=True, headers=headers)  # Streaming, so we can iterate over the response
