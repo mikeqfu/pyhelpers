@@ -83,8 +83,11 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
         for data in tqdm.tqdm(resp.iter_content(block_size, decode_unicode=True),
                               total=total_size // block_size, unit='MB'):
             wrote = wrote + len(data)
-            f.write(data)
-    f.close()
+            try:
+                f.write(data)
+            except TypeError:
+                f.write(data.encode())
+        f.close()
 
     resp.close()
 
