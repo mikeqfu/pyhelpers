@@ -28,7 +28,7 @@ def fake_requests_headers(random=False):
     :rtype: dict
     """
 
-    fake_user_agent = fake_useragent.UserAgent()
+    fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
     fake_header = {'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
     return fake_header
 
