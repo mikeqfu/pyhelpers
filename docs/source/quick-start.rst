@@ -379,7 +379,7 @@ To retrieve the dumped data, use the method :ref:`.read_table()<sql-postgresql-r
    >>> print(dat.equals(dat_retrieved))
    True
 
-Besides, there is an alternative way, which is more flexible with PostgreSQL statement (and could be faster especially when the tabular data is fairly large):
+Besides, there is an alternative way, :ref:`.read_sql_query()<sql-postgresql-read-sql-query>`, which is more flexible with PostgreSQL statement (and could be faster especially when the tabular data is fairly large):
 
 .. code-block:: python
 
