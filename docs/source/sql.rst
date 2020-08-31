@@ -62,4 +62,6 @@ PostgreSQL
 
    .. automethod:: read_table
 
+   .. _sql-postgresql-read-sql-query:
+
    .. automethod:: read_sql_query
