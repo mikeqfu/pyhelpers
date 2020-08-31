@@ -25,21 +25,28 @@ def cd(*sub_dir, mkdir=False, **kwargs):
 
         from pyhelpers.dir import cd
 
-        cd()  # Current working directory
+        path = cd()
+        print(path)
+        # <cwd>  # Current working directory
 
         mkdir = True
-        cd("tests/test_cd", mkdir=mkdir)  # [working directory]/tests/test_cd/
+        path = cd("tests/test_cd", mkdir=mkdir)
+        print(path)
+        # <cwd>\\tests\\test_cd
     """
 
     path = os.getcwd()  # Current working directory
     for x in sub_dir:
         path = os.path.join(path, x)
+
     if mkdir:
         path_to_file, ext = os.path.splitext(path)
+
         if ext == '':
             os.makedirs(path_to_file, exist_ok=True, **kwargs)
         else:
             os.makedirs(os.path.dirname(path_to_file), exist_ok=True, **kwargs)
+
     return path
 
 
@@ -63,12 +70,18 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
 
         from pyhelpers.dir import cdd
 
-        cdd()  # [working directory]/data
+        path = cdd()
+        print(path)
+        # <cwd>\\data
 
-        cdd("test_cdd")  # [working directory]/data/test_cdd
+        path = cdd("test_cdd")
+        print(path)
+        # <cwd>\\data\\test_cdd
 
         mkdir = True
-        cdd("test_cdd", data_dir="tests", mkdir=mkdir)  # [working directory]/tests/test_cdd
+        path = cdd("test_cdd", data_dir="tests", mkdir=mkdir)
+        print(path)
+        # <cwd>\\tests\\test_cdd
     """
 
     path = cd(data_dir, *sub_dir, mkdir=mkdir, **kwargs)
@@ -99,18 +112,23 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
         dat_dir = "dat"
         mkdir = False
 
-        cd_dat("test_cd_dat", dat_dir=dat_dir, mkdir=mkdir)
+        path = cd_dat("test_cd_dat", dat_dir=dat_dir, mkdir=mkdir)
+        print(path)
+        # dat\\test_cd_dat
     """
 
     path = pkg_resources.resource_filename(__name__, dat_dir)
     for x in sub_dir:
         path = os.path.join(path, x)
+
     if mkdir:
         path_to_file, ext = os.path.splitext(path)
+
         if ext == '':
             os.makedirs(path_to_file, exist_ok=True, **kwargs)
         else:
             os.makedirs(os.path.dirname(path_to_file), exist_ok=True, **kwargs)
+
     return path
 
 
@@ -125,17 +143,19 @@ def is_dirname(x):
 
     **Examples**::
 
-        from pyhelpers.dir import cd
-        from pyhelpers.dir import is_dirname
+        from pyhelpers.dir import cd, is_dirname
 
         x = "test_is_dirname"
-        is_dirname(x)  # False
+        is_dirname(x)
+        # False
 
         x = "/test_is_dirname"
-        is_dirname(x)  # True
+        is_dirname(x)
+        # True
 
         x = cd("test_is_dirname")
-        is_dirname(x)  # True
+        is_dirname(x)
+        # True
     """
 
     if os.path.dirname(x):
@@ -144,36 +164,42 @@ def is_dirname(x):
         return False
 
 
-def regulate_input_data_dir(data_dir=None, msg="Invalid input!"):
+def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
     """
-    Regulate the input data directory.
+    Validate the input data directory.
 
     :param data_dir: data directory as input, defaults to ``None``
     :type data_dir: str, None
     :param msg: an error message if ``data_dir`` is not an absolute path, defaults to ``"Invalid input!"``
     :type msg: str
-    :return: a full path to a regulated data directory
+    :return: full path to a valid data directory
     :rtype: str
 
     **Example**::
 
-        from pyhelpers.dir import regulate_input_data_dir
+        from pyhelpers.dir import validate_input_data_dir
 
         data_dir = "test_regulate_input_data_dir"
         msg = "Invalid input!"
 
-        regulate_input_data_dir(data_dir, msg)  # [working directory]/test_regulate_input_data_dir/
+        data_dir_ = validate_input_data_dir(data_dir, msg)
+        print(data_dir_)
+        # <cwd>\\test_regulate_input_data_dir
     """
 
     if data_dir:
         assert isinstance(data_dir, str), msg
+
         if not os.path.isabs(data_dir):  # Use default file directory
             data_dir_ = cd(data_dir.strip('.\\.'))
+
         else:
             data_dir_ = os.path.realpath(data_dir.lstrip('.\\.'))
             assert os.path.isabs(data_dir), msg
+
     else:
         data_dir_ = cdd()
+
     return data_dir_
 
 
@@ -198,9 +224,10 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
         confirmation_required = True
         verbose = True
 
-        print(os.path.exists(path_to_dir))  # True
+        print(os.path.exists(path_to_dir))
+        # True
 
-        rm_dir(path_to_dir, confirmation_required, verbose)
+        rm_dir(path_to_dir, confirmation_required=confirmation_required, verbose=verbose)
     """
 
     try:
@@ -209,10 +236,13 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
                          confirmation_required=confirmation_required):
                 import shutil
                 shutil.rmtree(path, **kwargs)
+
         else:
             if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
                 os.rmdir(path)
+
         if verbose:
             print("Done.") if not os.path.exists(path) else print("Cancelled.")
+
     except Exception as e:
         print("Failed. {}.".format(e))
