@@ -33,7 +33,7 @@ def fake_requests_headers(random=False):
     return fake_header
 
 
-def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
+def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False, **kwargs):
     """
     Download an object available at the given ``url``.
 
@@ -45,6 +45,8 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
     :type path_to_file: str
     :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
     :type wait_to_retry: int, float
+    :param random_header: whether to go for a random agent, defaults to ``False``
+    :type random_header: bool
     :param kwargs: optional parameters of `open <https://docs.python.org/3/library/functions.html#open>`_
 
     **Example**::
@@ -62,7 +64,7 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, **kwargs):
 
     import requests
 
-    headers = {'User-Agent': fake_useragent.UserAgent().random}
+    headers = fake_requests_headers(random_header)
     resp = requests.get(url, stream=True, headers=headers)  # Streaming, so we can iterate over the response
 
     if resp.status_code == 429:
