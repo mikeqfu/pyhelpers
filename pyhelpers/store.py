@@ -86,7 +86,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool, int
-    :param kwargs: optional parameters `open`_
+    :param kwargs: optional parameters of `open`_
 
     .. _`pickle`: https://docs.python.org/3/library/pickle.html
     .. _`open`: https://docs.python.org/3/library/functions.html#open
@@ -125,7 +125,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool, int
-    :param kwargs: optional parameters `open`_
+    :param kwargs: optional parameters of `open`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
 
@@ -166,7 +166,7 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool, int
-    :param kwargs: optional parameters `open`_
+    :param kwargs: optional parameters of `open`_
 
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
     .. _`open`: https://docs.python.org/3/library/functions.html#open
@@ -205,7 +205,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
     :type verbose: bool, int
-    :param kwargs: optional parameters `open`_
+    :param kwargs: optional parameters of `open`_
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: dict
 
