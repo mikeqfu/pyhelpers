@@ -28,11 +28,11 @@ class PostgreSQL:
     :type username: str, None
     :param password: database password, defaults to ``None``
     :type password: str, int, None
-    :param database_name: ``'postgres'`` (default by installation), defaults to ``None``
+    :param database_name: database name, e.g. ``'postgres'`` (default by installation), defaults to ``None``
     :type database_name: str
     :param confirm_new_db: whether to impose a confirmation to create a new database, defaults to ``False``
     :type confirm_new_db: bool
-    :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
+    :param verbose: whether to print relevant information in console as the function runs, defaults to ``True``
     :type verbose: bool
 
     **Example**::
@@ -72,28 +72,31 @@ class PostgreSQL:
         self.user, self.host, self.port = self.url.username, self.url.host, self.url.port
         self.database_name = self.database_info['database']
 
+        self.address = "{}:***@{}:{}/{}".format(self.user, self.host, self.port, self.database_name)
+
         if not sqlalchemy_utils.database_exists(self.url):
             if confirmed("The database \"{}\" does not exist. Proceed by creating it?".format(self.database_name),
                          confirmation_required=confirm_new_db):
                 if verbose:
-                    print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(
-                        self.database_name, self.host, self.port), end="")
+                    print("Connecting to PostgreSQL database: {} ... ".format(self.address), end="")
                 sqlalchemy_utils.create_database(self.url)
         else:
             if verbose:
-                print("Connecting to PostgreSQL database: {}@{}:{} ... ".format(
-                    self.database_name, self.host, self.port), end="")
+                print("Connecting to PostgreSQL database: {} ... ".format(self.address), end="")
+
         try:
             # Create a SQLAlchemy connectable
             self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
             self.connection = self.engine.raw_connection()
-            print("Successfully.") if verbose else ""
+
+            print("Successfully. ") if verbose else ""
+
         except Exception as e:
-            print("Failed. CAUSE: \"{}\".".format(e))
+            print("Failed. {}.".format(e))
 
     def database_exists(self, database_name=None):
         """
-        Check if a database exists.
+        Check if a database exists in the PostgreSQL server being currently connected.
 
         :param database_name: name of a database, defaults to ``None``
         :type database_name: str, None
@@ -105,11 +108,12 @@ class PostgreSQL:
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT datname FROM pg_catalog.pg_database "
                                      "WHERE datname='{}');".format(database_name_))
+
         return result.fetchone()[0]
 
     def connect_database(self, database_name=None):
         """
-        Establish a connection to a database.
+        Establish a connection to a database of the PostgreSQL server being currently connected.
 
         :param database_name: name of a database; if ``None`` (default), the database name is input manually
         :type database_name: str, None
@@ -118,8 +122,10 @@ class PostgreSQL:
         self.database_name = str(database_name) if database_name is not None else input("Database name: ")
         self.database_info['database'] = self.database_name
         self.url = sqlalchemy.engine.url.URL(**self.database_info)
+
         if not sqlalchemy_utils.database_exists(self.url):
             sqlalchemy_utils.create_database(self.url)
+
         self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
         self.connection = self.engine.raw_connection()
 
@@ -140,14 +146,17 @@ class PostgreSQL:
             print("Creating a database \"{}\" ... ".format(database_name), end="") if verbose else ""
             self.disconnect_database()
             self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
+
             print("Done.") if verbose else ""
+
         else:
             print("The database already exists.") if verbose else ""
+
         self.connect_database(database_name)
 
     def get_database_size(self, database_name=None):
         """
-        Get the size of a database.
+        Get the size of a database in the PostgreSQL server being currently connected.
 
         If ``database_name is None`` (default), the currently connected database is checked.
 
@@ -159,11 +168,12 @@ class PostgreSQL:
 
         db_name = '\'{}\''.format(database_name) if database_name else 'current_database()'
         db_size = self.engine.execute('SELECT pg_size_pretty(pg_database_size({})) AS size;'.format(db_name))
+
         return db_size.fetchone()[0]
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
-        Kill the connection to the specified ``database_name``.
+        Kill the connection to a database in the PostgreSQL server being currently connected.
 
         If ``database_name is None`` (default), disconnect the current database.
 
@@ -174,21 +184,26 @@ class PostgreSQL:
         """
 
         db_name = self.database_name if database_name is None else database_name
+
         print("Disconnecting the database \"{}\" ... ".format(db_name), end="") if verbose else ""
         try:
             self.connect_database(database_name='postgres')
+
             self.engine.execute('REVOKE CONNECT ON DATABASE "{}" FROM PUBLIC, postgres;'.format(db_name))
+
             self.engine.execute(
                 'SELECT pg_terminate_backend(pid) '
                 'FROM pg_stat_activity '
                 'WHERE datname = \'{}\' AND pid <> pg_backend_pid();'.format(db_name))
+
             print("Done.") if verbose else ""
+
         except Exception as e:
-            print("Failed. CAUSE: \"{}\"".format(e))
+            print("Failed. {}".format(e))
 
     def disconnect_all_other_databases(self):
         """
-        Kill connections to all other databases.
+        Kill connections to all other databases of the PostgreSQL server being currently connected.
         """
 
         self.connect_database(database_name='postgres')
@@ -196,7 +211,7 @@ class PostgreSQL:
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
-        Drop the specified database.
+        Drop a database from the PostgreSQL server being currently connected.
 
         If ``database_name is None`` (default), drop the current database.
 
@@ -209,19 +224,23 @@ class PostgreSQL:
         """
 
         db_name = self.database_name if database_name is None else database_name
-        if confirmed("Confirmed to drop the database \"{}\" for {}@{}?".format(db_name, self.user, self.host),
+        if confirmed("Confirmed to drop the database: {}?".format(self.address),
                      confirmation_required=confirmation_required):
             self.disconnect_database(db_name)
+
             try:
                 print("Dropping the database \"{}\" ... ".format(db_name), end="") if verbose else ""
+
                 self.engine.execute('DROP DATABASE IF EXISTS "{}"'.format(db_name))
+
                 print("Done.") if verbose else ""
+
             except Exception as e:
-                print("Failed. CAUSE: \"{}\"".format(e))
+                print("Failed. {}".format(e))
 
     def schema_exists(self, schema_name):
         """
-        Check if a database exists.
+        Check if a schema exists in the PostgreSQL server being currently connected.
 
         :param schema_name: name of a schema
         :type schema_name: str
@@ -232,6 +251,7 @@ class PostgreSQL:
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT schema_name FROM information_schema.schemata "
                                      "WHERE schema_name='{}');".format(schema_name))
+
         return result.fetchone()[0]
 
     def create_schema(self, schema_name, verbose=False):
@@ -246,32 +266,42 @@ class PostgreSQL:
 
         try:
             print("Creating a schema \"{}\" ... ".format(schema_name), end="") if verbose else ""
-            self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name))
-            print("Done.") if verbose else ""
-        except Exception as e:
-            print("Failed. CAUSE: \"{}\"".format(e))
 
-    def printing_messages_for_multi_names(self, *schema_names, desc='schema'):
+            self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name))
+
+            print("Done.") if verbose else ""
+
+        except Exception as e:
+            print("Failed. {}".format(e))
+
+    def printing_messages_for_multi_names(self, *names, desc='schema'):
         """
         Formulate printing message for multiple names.
 
-        :param schema_names: name of one schema, or names of multiple schemas
-        :type schema_names: str, iterable
+        :param names: name of one table/schema, or names of several table/schemas
+        :type names: str, iterable
         :param desc: for additional description, defaults to ``'schema'``
         :type desc: str
         :return: printing message
         :rtype: tuple
         """
 
-        if schema_names:
-            schemas = tuple(schema_name for schema_name in schema_names)
+        if names:
+            names_ = [schema_name for schema_name in names]
         else:
-            schemas = tuple(
-                x for x in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names()
-                if x != 'public' and x != 'information_schema')
-        print_plural = (("{} " if len(schemas) == 1 else "{}s ").format(desc))
-        print_schema = ("\"{}\", " * (len(schemas) - 1) + "\"{}\"").format(*schemas)
-        return schemas, print_plural + print_schema
+            names_ = [x for x in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names()
+                      if x != 'public' and x != 'information_schema']
+
+        print_plural = (("{} " if len(names_) == 1 else "{}s ").format(desc))
+
+        if len(names_) == 1:
+            print_schema = "\"{}\"".format(names_[0])
+        elif len(names_) == 2:
+            print_schema = "\"{}\" and \"{}\"".format(*names_)
+        else:
+            print_schema = ("\"{}\", " * (len(names_) - 2) + "\"{}\" and \"{}\"").format(*names_)
+
+        return names_, print_plural + print_schema
 
     def drop_schema(self, *schema_names, confirmation_required=True, verbose=False):
         """
@@ -285,20 +315,25 @@ class PostgreSQL:
         :type verbose: bool
         """
 
-        schemas, schemas_msg = self.printing_messages_for_multi_names(*schema_names)
-        if confirmed("Confirmed to drop the {} from the database \"{}\"".format(schemas_msg, self.database_name),
+        schemas, schemas_msg = self.printing_messages_for_multi_names(
+            *([schema_names] if isinstance(schema_names, str) else schema_names))
+
+        if confirmed("Confirmed to drop the {} from {}?".format(schemas_msg, self.address),
                      confirmation_required=confirmation_required):
             try:
                 print("Dropping the {} ... ".format(schemas_msg), end="") if verbose else ""
+
                 self.engine.execute(
-                    'DROP SCHEMA IF EXISTS ' + ('%s, ' * (len(schemas) - 1) + '%s') % schemas + ' CASCADE;')
+                    'DROP SCHEMA IF EXISTS ' + ('%s, ' * (len(schemas) - 1) + '%s') % tuple(schemas) + ' CASCADE;')
+
                 print("Done.") if verbose else ""
+
             except Exception as e:
-                print("Failed. CAUSE: \"{}\"".format(e))
+                print("Failed. {}".format(e))
 
     def table_exists(self, table_name, schema_name='public'):
         """
-        Check if a table exists.
+        Check if a table exists in the database being currently connected.
 
         :param table_name: name of a table
         :type table_name: str
@@ -323,11 +358,12 @@ class PostgreSQL:
                                   "SELECT * FROM information_schema.tables "
                                   "WHERE table_schema='{}' "
                                   "AND table_name='{}');".format(schema_name, table_name))
+
         return res.fetchone()[0]
 
     def create_table(self, table_name, column_specs, schema_name='public', verbose=False):
         """
-        Create a new table.
+        Create a new table for the database being currently connected.
 
         :param table_name: name of a table
         :type table_name: str
@@ -359,12 +395,13 @@ class PostgreSQL:
             print("Creating a table '{}' ... ".format(table_name_), end="") if verbose else ""
             self.engine.execute('CREATE TABLE {} ({});'.format(table_name_, column_specs))
             print("Done.") if verbose else ""
+
         except Exception as e:
-            print("Failed. CAUSE: \"{}\"".format(e))
+            print("Failed. {}".format(e))
 
     def get_column_info(self, table_name, schema_name='public', as_dict=True):
         """
-        Get information about columns.
+        Get information about columns of a table.
 
         :param table_name: name of a table
         :type table_name: str
@@ -379,15 +416,19 @@ class PostgreSQL:
         column_info = self.engine.execute(
             "SELECT * FROM information_schema.columns "
             "WHERE table_schema='{}' AND table_name='{}';".format(schema_name, table_name))
+
         keys, values = column_info.keys(), column_info.fetchall()
+
         info_tbl = pd.DataFrame(values, index=['column_{}'.format(x) for x in range(len(values))], columns=keys).T
+
         if as_dict:
             info_tbl = {k: v.to_list() for k, v in info_tbl.iterrows()}
+
         return info_tbl
 
     def drop_table(self, table_name, schema_name='public', confirmation_required=True, verbose=False):
         """
-        Remove data from the database being currently connected.
+        Remove a table from the database being currently connected.
 
         :param table_name: name of a table
         :type table_name: str
@@ -399,22 +440,22 @@ class PostgreSQL:
         :type verbose: bool
         """
 
-        if confirmed("Confirmed to drop the table {}.\"{}\" from the database \"{}\"?".format(
-                schema_name, table_name, self.database_name), confirmation_required=confirmation_required):
+        if confirmed("Confirmed to drop the table {}.\"{}\" from {}?".format(
+                schema_name, table_name, self.address), confirmation_required=confirmation_required):
             try:
                 self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(schema_name, table_name))
                 print("The table \"{}\" has been dropped successfully.".format(table_name)) if verbose else ""
             except Exception as e:
-                print("Failed. CAUSE: \"{}\"".format(e))
+                print("Failed. {}".format(e))
 
     @staticmethod
-    def psql_insert_copy(pd_table, conn, keys, data_iter):
+    def psql_insert_copy(sql_table, sql_db_engine, column_name_list, data_iter):
         """
         A callable using PostgreSQL COPY clause for executing inserting data.
 
-        :param pd_table: pandas.io.sql.SQLTable
-        :param conn: sqlalchemy.engine.Connection or sqlalchemy.engine.Engine
-        :param keys: (list of str) column names
+        :param sql_table: pandas.io.sql.SQLTable
+        :param sql_db_engine: sqlalchemy.engine.Connection or sqlalchemy.engine.Engine
+        :param column_name_list: (list of str) column names
         :param data_iter: iterable that iterates the values to be inserted
 
         .. note::
@@ -423,22 +464,22 @@ class PostgreSQL:
             [`PIC-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_].
         """
 
-        cur = conn.connection.cursor()
-        s_buf = io.StringIO()
-        writer = csv.writer(s_buf)
-        writer.writerows(data_iter)
-        s_buf.seek(0)
+        con_cur = sql_db_engine.connection.cursor()
+        io_buffer = io.StringIO()
+        csv_writer = csv.writer(io_buffer)
+        csv_writer.writerows(data_iter)
+        io_buffer.seek(0)
 
-        columns = ', '.join('"{}"'.format(k) for k in keys)
-        table_name = '{}."{}"'.format(pd_table.schema, pd_table.name)
+        sql_column_names = ', '.join('"{}"'.format(k) for k in column_name_list)
+        sql_table_name = '{}."{}"'.format(sql_table.schema, sql_table.name)
 
-        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(table_name, columns)
-        cur.copy_expert(sql=sql, file=s_buf)
+        sql_query = 'COPY {} ({}) FROM STDIN WITH CSV'.format(sql_table_name, sql_column_names)
+        con_cur.copy_expert(sql=sql_query, file=io_buffer)
 
     def dump_data(self, data, table_name, schema_name='public', if_exists='replace', force_replace=False,
-                  chunk_size=None, col_type=None, method='multi', verbose=False, **kwargs):
+                  chunk_size=None, col_type=None, method='multi', index=False, verbose=False, **kwargs):
         """
-        Import data (as a pandas.DataFrame) into the database being currently connected.
+        Import data (e.g. a pandas.DataFrame) into a table of the database being currently connected.
 
         See also
         [`DD-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_] and
@@ -460,11 +501,13 @@ class PostgreSQL:
         :type col_type: dict, None
         :param method: method for SQL insertion clause, defaults to ``'multi'``
 
-            * `None`: uses standard SQL ``INSERT`` clause (one per row);
-            * `'multi'`: pass multiple values in a single ``INSERT`` clause;
+            * ``None``: uses standard SQL ``INSERT`` clause (one per row);
+            * ``'multi'``: pass multiple values in a single ``INSERT`` clause;
             * callable (e.g. ``PostgreSQL.psql_insert_copy``) with signature ``(pd_table, conn, keys, data_iter)``.
 
         :type method: None, str, callable
+        :param index: whether to dump the index as a column
+        :type index: bool
         :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
         :type verbose: bool
         :param kwargs: optional parameters of `pandas.DataFrame.to_sql`_
@@ -500,32 +543,37 @@ class PostgreSQL:
 
         if self.table_exists(table_name, schema_name):
             if if_exists == 'replace' and verbose:
-                print("The table \"{}\" already exists and will be replaced ... ".format(table_name_))
+                print("The table {} already exists and is replaced ... ".format(table_name_))
+
             if force_replace:
                 if verbose:
-                    print("The existing table \"{}\" will be dropped first ... ".format(table_name_))
+                    print("The existing table is dropped first ... ")
                 self.drop_table(table_name, schema_name, verbose=verbose)
 
         try:
-            print("Dumping the data as a table \"{}\" into {}.\"{}\"@{} ... ".format(
-                table_name, schema_name, self.database_name, self.host), end="") if verbose else ""
+            if verbose:
+                print("Dumping data to {} at {}".format(table_name_, self.address), end=" ... ")
+
             if isinstance(data, pandas.io.parsers.TextFileReader):
                 for chunk in data:
-                    chunk.to_sql(table_name, self.engine, schema_name, if_exists, index=False, dtype=col_type,
-                                 method=method, **kwargs)
+                    chunk.to_sql(table_name, self.engine, schema=schema_name, if_exists=if_exists, index=index,
+                                 dtype=col_type, method=method, **kwargs)
                     del chunk
                     gc.collect()
+
             else:
-                data.to_sql(table_name, self.engine, schema_name, if_exists=if_exists, index=False,
+                data.to_sql(table_name, self.engine, schema=schema_name, if_exists=if_exists, index=index,
                             chunksize=chunk_size, dtype=col_type, method=method, **kwargs)
                 gc.collect()
-            print("Done.") if verbose else ""
+
+            print("Done. ") if verbose else ""
+
         except Exception as e:
-            print("Failed. CAUSE: \"{}\"".format(e))
+            print("Failed. {}".format(e))
 
     def read_table(self, table_name, schema_name='public', condition=None, chunk_size=None, sorted_by=None, **kwargs):
         """
-        Read table data.
+        Read data from a table of the database being currently connected.
 
         See also [`RT-1 <https://stackoverflow.com/questions/24408557/pandas-read-sql-with-parameters>`_].
 
@@ -561,9 +609,7 @@ class PostgreSQL:
             import datetime
             import pandas as pd
 
-            sql_query = 'SELECT * FROM "table_name" '\
-                        'WHERE "timestamp_column_name" '\
-                        'BETWEEN %(ts_start)s AND %(ts_end)s'
+            sql_query = 'SELECT * FROM "table_name" WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
             params = {'ds_start': datetime.datetime.today(), 'ds_end': datetime.datetime.today()}
 
             data_frame = pd.read_sql(sql_query, testdb.engine, params=params)
@@ -572,18 +618,22 @@ class PostgreSQL:
         if condition:
             assert isinstance(condition, str), "'condition' must be 'str' type."
             sql_query = 'SELECT * FROM {}."{}" {};'.format(schema_name, table_name, condition)
+
         else:
             sql_query = 'SELECT * FROM {}."{}";'.format(schema_name, table_name)
+
         table_data = pd.read_sql(sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+
         if sorted_by and isinstance(sorted_by, str):
             table_data.sort_values(sorted_by, inplace=True)
             table_data.index = range(len(table_data))
+
         return table_data
 
     def read_sql_query(self, sql_query, method='spooled_tempfile', tempfile_mode='w+b', max_size_spooled=1,
                        delimiter=',', dtype=None, tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
         """
-        Read data by SQL query (recommended for large table).
+        Read table data by SQL query (recommended for large table).
 
         See also
         [`RSQ-1 <https://towardsdatascience.com/optimizing-pandas-read-sql-for-postgres-f31cd7f707ab>`_],
@@ -632,9 +682,11 @@ class PostgreSQL:
         if method == 'spooled_tempfile':
             # Use tempfile.SpooledTemporaryFile - data would be spooled in memory until its size > max_spooled_size
             csv_temp = tempfile.SpooledTemporaryFile(max_size_spooled * 10 ** 9, tempfile_mode, **tempfile_kwargs)
+
         elif method == 'tempfile':
             # Use tempfile.TemporaryFile
             csv_temp = tempfile.TemporaryFile(tempfile_mode, **tempfile_kwargs)
+
         else:  # method == 'stringio', i.e. use io.StringIO
             if stringio_kwargs is None:
                 stringio_kwargs = {'initial_value': '', 'newline': '\n'}
