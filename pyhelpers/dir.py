@@ -30,9 +30,9 @@ def cd(*sub_dir, mkdir=False, **kwargs):
         # <cwd>  # Current working directory
 
         mkdir = True
-        path = cd("tests/test_cd", mkdir=mkdir)
-        print(path)
-        # <cwd>\\tests\\test_cd
+        path = cd("tests", mkdir=mkdir)
+        print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
+        # <cwd>\\tests. (This directory will be created if it does not exists.)
     """
 
     path = os.getcwd()  # Current working directory
@@ -71,17 +71,18 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
         from pyhelpers.dir import cdd
 
         path = cdd()
-        print(path)
-        # <cwd>\\data
-
-        path = cdd("test_cdd")
-        print(path)
-        # <cwd>\\data\\test_cdd
+        print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
+        # <cwd>\\data. (This directory will NOT be created if it does not exists).
 
         mkdir = True
-        path = cdd("test_cdd", data_dir="tests", mkdir=mkdir)
-        print(path)
-        # <cwd>\\tests\\test_cdd
+
+        path = cdd(mkdir=mkdir)
+        print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
+        # <cwd>\\data. (This directory will be created if it does not exists.)
+
+        path = cdd("data", data_dir="tests", mkdir=mkdir)
+        print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
+        # <cwd>\\tests\\data. (This directory will be created if it does not exists.)
     """
 
     path = cd(data_dir, *sub_dir, mkdir=mkdir, **kwargs)
@@ -112,9 +113,9 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
         dat_dir = "dat"
         mkdir = False
 
-        path = cd_dat("test_cd_dat", dat_dir=dat_dir, mkdir=mkdir)
-        print(path)
-        # dat\\test_cd_dat
+        path = cd_dat("tests", dat_dir=dat_dir, mkdir=mkdir)
+        print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
+        # <package directory>\\dat\\tests. (This directory will NOT be created if it does not exists.)
     """
 
     path = pkg_resources.resource_filename(__name__, dat_dir)
@@ -132,12 +133,12 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-def is_dirname(x):
+def is_dirname(dir_name):
     """
     Check if a string is a path or just a string.
 
-    :param x: a string-type variable to be checked
-    :type x: str
+    :param dir_name: a string-type variable to be checked
+    :type dir_name: str
     :return: whether or not ``x`` is a path-like variable
     :rtype: bool
 
@@ -145,20 +146,19 @@ def is_dirname(x):
 
         from pyhelpers.dir import cd, is_dirname
 
-        x = "test_is_dirname"
-        is_dirname(x)
+        dir_name = "tests"
+        print(is_dirname(dir_name))
         # False
 
-        x = "/test_is_dirname"
-        is_dirname(x)
+        dir_name = "\\tests"
+        print(is_dirname(dir_name))
         # True
 
-        x = cd("test_is_dirname")
-        is_dirname(x)
-        # True
+        dir_name = cd("tests")
+        print(is_dirname(dir_name))
     """
 
-    if os.path.dirname(x):
+    if os.path.dirname(dir_name):
         return True
     else:
         return False
@@ -179,12 +179,12 @@ def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
 
         from pyhelpers.dir import validate_input_data_dir
 
-        data_dir = "test_regulate_input_data_dir"
-        msg = "Invalid input!"
+        data_dir = "tests"
 
-        data_dir_ = validate_input_data_dir(data_dir, msg)
+        data_dir_ = validate_input_data_dir(data_dir)
+
         print(data_dir_)
-        # <cwd>\\test_regulate_input_data_dir
+        # <cwd>\\tests
     """
 
     if data_dir:
@@ -203,12 +203,12 @@ def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
     return data_dir_
 
 
-def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
+def rm_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
     """
     Remove a directory.
 
-    :param path: a full path to a directory
-    :type path: str
+    :param path_to_dir: a full path to a directory
+    :type path_to_dir: str
     :param confirmation_required: whether to prompt a message for confirmation to proceed, defaults to ``True``
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs, defaults to ``False``
@@ -220,29 +220,32 @@ def rm_dir(path, confirmation_required=True, verbose=False, **kwargs):
         import os
         from pyhelpers.dir import cdd, rm_dir
 
-        path_to_dir = cdd("test_cdd", data_dir="tests", mkdir=True)
-        confirmation_required = True
-        verbose = True
+        path_to_dir = cdd(mkdir=True)
+        print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
+        # The directory "<cwd>\\data\\dat" exists? True
 
-        print(os.path.exists(path_to_dir))
-        # True
+        rm_dir(path_to_dir, confirmation_required=True, verbose=True)
+        # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: yes
+        # Done.
 
-        rm_dir(path_to_dir, confirmation_required=confirmation_required, verbose=verbose)
+        print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
+        # The directory "<cwd>\\data\\dat" exists? False
     """
 
     try:
-        if os.listdir(path):
-            if confirmed("\"{}\" is not empty. Confirmed to remove the directory?".format(path),
+        if os.listdir(path_to_dir):
+            if confirmed("\"{}\" is not empty. Confirmed to remove the directory?".format(path_to_dir),
                          confirmation_required=confirmation_required):
                 import shutil
-                shutil.rmtree(path, **kwargs)
+                shutil.rmtree(path_to_dir, **kwargs)
 
         else:
-            if confirmed("To remove the directory \"{}\"?".format(path), confirmation_required=confirmation_required):
-                os.rmdir(path)
+            if confirmed("To remove the directory \"{}\"?".format(path_to_dir),
+                         confirmation_required=confirmation_required):
+                os.rmdir(path_to_dir)
 
         if verbose:
-            print("Done.") if not os.path.exists(path) else print("Cancelled.")
+            print("Done.") if not os.path.exists(path_to_dir) else print("Cancelled.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
