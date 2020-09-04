@@ -10,7 +10,7 @@ def np_preferences(reset=False):
     """
     Set preferences for displaying results.
 
-    :param reset: reset to default settings, defaults to ``False``
+    :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     """
 
@@ -24,7 +24,7 @@ def pd_preferences(reset=False):
     """
     Set preferences for displaying results.
 
-    :param reset: reset to default settings, defaults to ``False``
+    :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     """
 
@@ -47,7 +47,7 @@ def mpl_preferences(reset=False, font_name=None):
     """
     Set preferences for plotting.
 
-    :param reset: reset to default settings, defaults to ``False``
+    :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     :param font_name: name of a font to be used, defaults to ``None``
     :type font_name: str, None
@@ -92,7 +92,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000):
     """
     Set GDAL configurations.
 
-    :param reset: reset to default settings, defaults to ``False``
+    :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     :param max_tmpfile_size: maximum size of the temporary file, defaults to ``5000``
     :type max_tmpfile_size: int
