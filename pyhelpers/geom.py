@@ -25,7 +25,11 @@ def wgs84_to_osgb36(longitude, latitude, **kwargs):
 
         longitude, latitude = -0.12772404, 51.507407
 
-        wgs84_to_osgb36(longitude, latitude)  # (530033.99829712, 180381.00751935126)
+        easting, northing = wgs84_to_osgb36(longitude, latitude)
+        print(f"Easting: {easting}")
+        print(f"Northing: {northing}")
+        # Easting: 530033.99829712
+        # Northing: 180381.00751935126
     """
 
     from pyproj import Transformer
@@ -56,7 +60,11 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
 
         easting, northing = 530034, 180381
 
-        osgb36_to_wgs84(easting, northing)  # (-0.12772400574286874, 51.50740692743041)
+        longitude, latitude = osgb36_to_wgs84(easting, northing)
+        print(f"Longitude: {longitude}")
+        print(f"Latitude: {latitude}")
+        # Longitude: -0.12772400574286874
+        # Latitude: 51.50740692743041
     """
 
     from pyproj import Transformer
@@ -92,11 +100,16 @@ def wgs84_to_osgb36_calc(longitude, latitude):
 
         longitude, latitude = -0.12772404, 51.507407
 
-        wgs84_to_osgb36_calc(longitude, latitude)  # (530034.0010406997, 180381.0084845958)
+        easting, northing = wgs84_to_osgb36_calc(longitude, latitude)
+        print(f"Easting: {easting}")
+        print(f"Northing: {northing}")
+        # Easting: 530034.0010406997
+        # Northing: 180381.0084845958
 
         # cp.
-        # from pyhelpers.geom import wgs84_to_osgb36
-        # wgs84_to_osgb36(longitude, latitude)  # (530033.99829712, 180381.00751935126)
+        # wgs84_to_osgb36(longitude, latitude)
+        # Easting: 530033.99829712
+        # Northing: 180381.00751935126
     """
 
     # First convert to radians. These are on the wrong ellipsoid currently: GRS80. (Denoted by _1)
@@ -207,11 +220,16 @@ def osgb36_to_wgs84_calc(easting, northing):
 
         easting, northing = 530034, 180381
 
-        osgb36_to_wgs84_calc(easting, northing)  # (-0.1277240422737611, 51.50740676560936)
+        longitude, latitude = osgb36_to_wgs84_calc(easting, northing)
+        print(f"Longitude: {longitude}")
+        print(f"Latitude: {latitude}")
+        # Longitude: -0.1277240422737611
+        # Latitude: 51.50740676560936
 
         # cp.
-        # from pyhelpers.geom import osgb36_to_wgs84
-        # osgb36_to_wgs84(easting, northing)  # (-0.12772400574286874, 51.50740692743041)
+        # test_osgb36_to_wgs84(longitude, latitude)
+        # Longitude: -0.12772400574286874
+        # Latitude: 51.50740692743041
     """
 
     # The Airy 180 semi-major and semi-minor axes used for OSGB36 (m)
@@ -330,32 +348,33 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
 
         import numpy as np
         from pyhelpers.geom import get_midpoint
-        from shapely.geometry import Point
 
         x1, y1 = 1.5429, 52.6347
         x2, y2 = 1.4909, 52.6271
-        midpoint = np.array([1.5169, 52.6309])
 
-        as_geom = False
-        res_0 = get_midpoint(x1, y1, x2, y2, as_geom)  # array([ 1.5169, 52.6309])
-        (res_0 == midpoint).all()  # True
+        midpoint = get_midpoint(x1, y1, x2, y2)
+        print(midpoint)
+        # [ 1.5169 52.6309]
 
         as_geom = True
-        res_1 = get_midpoint(x1, y1, x2, y2, as_geom=True)
-        res_1 == Point(midpoint)  # True
+        midpoint = get_midpoint(x1, y1, x2, y2, as_geom=as_geom)
+        print(midpoint)
+        # POINT (1.5169 52.6309)
 
         x1, y1 = np.array([1.5429, 1.4909]), np.array([52.6347, 52.6271])
         x2, y2 = np.array([2.5429, 2.4909]), np.array([53.6347, 53.6271])
-        midpoint = np.array([[2.0429, 53.1347],
-                             [1.9909, 53.1271]])
 
-        as_geom = False
-        res_0 = get_midpoint(x1, y1, x2, y2, as_geom)
-        (res_0 == midpoint).all()  # True
+        midpoint = get_midpoint(x1, y1, x2, y2)
+        print(midpoint)
+        # [[ 2.0429 53.1347]
+        #  [ 1.9909 53.1271]]
 
         as_geom = True
-        res_1 = get_midpoint(x1, y1, x2, y2, as_geom=True)
-        res_1 == [Point(x) for x in midpoint]  # True
+        midpoint = get_midpoint(x1, y1, x2, y2, as_geom=as_geom)
+        for x in midpoint:
+            print(x)
+        # POINT (2.0429 53.1347)
+        # POINT (1.9909 53.1271)
     """
 
     mid_pts = (x1 + x2) / 2, (y1 + y2) / 2
@@ -395,24 +414,36 @@ def transform_geom_point_type(*pts, as_geom=True):
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
 
-        as_geom = True
-        geom_points_0 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-        [(x.x, x.y) for x in geom_points_0] == [pt_x, pt_y]  # True
+        geom_points = transform_geom_point_type(pt_x, pt_y)
+        for x in geom_points:
+            print(x)
+        # POINT (1.5429 52.6347)
+        # POINT (1.4909 52.6271)
 
         as_geom = False
-        geom_points_1 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-        [(x, y) for x, y in geom_points_1] == [pt_x, pt_y]  # True
+        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        for x in geom_points:
+            print(x)
+        # (1.5429, 52.6347)
+        # (1.4909, 52.6271)
 
-        pt_x = Point(1.5429, 52.6347)
-        pt_y = Point(1.4909, 52.6271)
+        from shapely.geometry import Point
 
-        as_geom = True
-        geom_points_2 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-        [x for x in geom_points_2] == [pt_x, pt_y]  # True
+        pt_x = Point(pt_x)
+        pt_y = Point(pt_y)
+
+        geom_points = transform_geom_point_type(pt_x, pt_y)
+        for x in geom_points:
+            print(x)
+        # POINT (1.5429 52.6347)
+        # POINT (1.4909 52.6271)
 
         as_geom = False
-        geom_points_3 = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-        [Point(x) for x in geom_points_3] == [pt_x, pt_y]  # True
+        geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+        for x in geom_points:
+            print(x)
+        # (1.5429, 52.6347)
+        # (1.4909, 52.6271)
     """
 
     from shapely.geometry import Point
@@ -439,7 +470,7 @@ def transform_geom_point_type(*pts, as_geom=True):
             yield pt_
 
 
-def get_geometric_midpoint(pt_x, pt_y, as_geom=True):
+def get_geometric_midpoint(pt_x, pt_y, as_geom=False):
     """
     Get the midpoint between two points.
 
@@ -447,7 +478,7 @@ def get_geometric_midpoint(pt_x, pt_y, as_geom=True):
     :type pt_x: shapely.geometry.Point, array-like [of length 2]
     :param pt_y: a point
     :type pt_y: shapely.geometry.Point, array-like [of length 2]
-    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``True``
+    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
     :return: the midpoint between ``pt_x`` and ``pt_y``
     :rtype: array-like, shapely.geometry.Point, None
@@ -457,19 +488,18 @@ def get_geometric_midpoint(pt_x, pt_y, as_geom=True):
     **Examples**::
 
         from pyhelpers.geom import get_geometric_midpoint
-        from shapely.geometry import Point
 
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
-        midpoint = 1.5169, 52.6309
+
+        geometric_midpoint = get_geometric_midpoint(pt_x, pt_y)
+        print(geometric_midpoint)
+        # POINT (1.5169 52.6309)
 
         as_geom = False
-        res_0 = get_geometric_midpoint(pt_x, pt_y, as_geom)
-        res_0 == midpoint  # True
-
-        as_geom = True
-        res_1 = get_geometric_midpoint(pt_x, pt_y, as_geom)
-        res_1 == Point(midpoint)  # True
+        geometric_midpoint = get_geometric_midpoint(pt_x, pt_y, as_geom)
+        print(geometric_midpoint)
+        # (1.5169, 52.6309)
     """
 
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
@@ -505,18 +535,20 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     **Examples**::
 
         from pyhelpers.geom import get_geometric_midpoint_calc
-        from shapely.geometry import Point
 
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
-        midpoint = (1.5168977420748175, 52.630902845583094)
 
-        res_0 = get_geometric_midpoint_calc(pt_x, pt_y)
-        res_0 == midpoint  # True
+        geometric_midpoint = get_geometric_midpoint_calc(pt_x, pt_y)
+        print(geometric_midpoint)
+        # (1.5168977420748175, 52.630902845583094)
 
         as_geom = True
-        res_1 = get_geometric_midpoint_calc(pt_x, pt_y, as_geom)
-        res_1 == Point(midpoint)  # True
+        geometric_midpoint = get_geometric_midpoint_calc(pt_x, pt_y, as_geom)
+        print(geometric_midpoint)
+        # POINT (1.516897742074818 52.63090284558309)
+
+        # cp. get_geometric_midpoint(pt_x, pt_y)
     """
 
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
@@ -563,7 +595,9 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
 
-        arc_length = calc_distance_on_unit_sphere(pt_x, pt_y)  # 2.243709962588554
+        arc_length = calc_distance_on_unit_sphere(pt_x, pt_y)
+        print(arc_length)
+        # 2.243709962588554
     """
 
     # Convert latitude and longitude to spherical coordinates in radians.
@@ -627,7 +661,9 @@ def calc_hypotenuse_distance(pt_x, pt_y):
         pt_x = 1.5429, 52.6347
         pt_y = 1.4909, 52.6271
 
-        hypot_dist = calc_hypotenuse_distance(pt_x, pt_y)  # 0.05255244999046248
+        hypot_dist = calc_hypotenuse_distance(pt_x, pt_y)
+        print(hypot_dist)
+        # 0.05255244999046248
     """
 
     pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=False)
@@ -654,22 +690,29 @@ def find_closest_point_from(pt, ref_pts, as_geom=False):
     **Examples**::
 
         from pyhelpers.geom import find_closest_point_from
-        from shapely.geometry import Point
 
         pt = (2.5429, 53.6347)
         ref_pts = ((1.5429, 52.6347),
                    (1.4909, 52.6271),
                    (1.4248, 52.63075))
 
-        closest_point = find_closest_point_from(pt, ref_pts)  # (1.5429, 52.6347)
+        closest_point = find_closest_point_from(pt, ref_pts)
+        print(closest_point)
+        # (1.5429, 52.6347)
+
+        from shapely.geometry import Point
 
         pt = Point((2.5429, 53.6347))
         ref_pts = (Point((1.5429, 52.6347)), Point((1.4909, 52.6271)), Point((1.4248, 52.63075)))
 
-        closest_point = find_closest_point_from(pt, ref_pts)  # (1.5429, 52.6347)
+        closest_point = find_closest_point_from(pt, ref_pts)
+        print(closest_point)
+        # (1.5429, 52.6347)
 
-        res = find_closest_point_from(pt, ref_pts, as_geom=True)
-        (res.x, res.y) == closest_point  # True
+        as_geom = True
+        closest_point = find_closest_point_from(pt, ref_pts, as_geom)
+        print(closest_point)
+        # POINT (1.5429 52.6347)
     """
 
     from shapely.geometry import Point
@@ -709,28 +752,33 @@ def find_closest_points_between(pts, ref_pts, k=1, as_geom=False, **kwargs):
 
     **Examples**::
 
-        import numpy as np
         from pyhelpers.geom import find_closest_points_between
 
+        import numpy as np
+
         pts = np.array([[1.5429, 52.6347],
-                        [1.4909, 52.6271],
-                        [1.4248, 52.63075]])
+                    [1.4909, 52.6271],
+                    [1.4248, 52.63075]])
 
         ref_pts = np.array([[2.5429, 53.6347],
                             [2.4909, 53.6271],
                             [2.4248, 53.63075]])
-        k = 1
-        closest_points = np.array([[2.4248, 53.63075],
-                                   [2.4248, 53.63075],
-                                   [2.4248, 53.63075]])
 
-        as_geom = False
-        res = find_closest_points_between(pts, ref_pts, k, as_geom)
-        (res == closest_points).all()  # True
+        k = 1
+
+        closest_points = find_closest_points_between(pts, ref_pts, k)
+        print(closest_points)
+        # [[ 2.4248  53.63075]
+        #  [ 2.4248  53.63075]
+        #  [ 2.4248  53.63075]]
 
         as_geom = True
-        res = find_closest_points_between(pts, ref_pts, k, as_geom)
-        [np.array(x) for x in res_1] == closest_points  # True
+        closest_points = find_closest_points_between(pts, ref_pts, k, as_geom)
+        for x in closest_points:
+            print(x)
+        # POINT (2.4248 53.63075)
+        # POINT (2.4248 53.63075)
+        # POINT (2.4248 53.63075)
     """
 
     if isinstance(ref_pts, np.ndarray):
@@ -771,29 +819,26 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
 
     **Examples**::
 
-        import numpy as np
         from pyhelpers.geom import get_square_vertices
 
         ctr_x, ctr_y = -5.9375, 56.8125
         side_length = 0.125
+
         rotation_theta = 0
-
-        vertices = np.array([[-6.   , 56.75 ],
-                             [-6.   , 56.875],
-                             [-5.875, 56.875],
-                             [-5.875, 56.75 ]])
-
-        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0)
-        (res == vertices).all()  # True
-
-        vertices = np.array([[-5.96037659, 56.72712341],
-                             [-6.02287659, 56.83537659],
-                             [-5.91462341, 56.89787659],
-                             [-5.85212341, 56.78962341]])
+        vertices = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
+        print(vertices)
+        # [[-6.    56.75 ]
+        #  [-6.    56.875]
+        #  [-5.875 56.875]
+        #  [-5.875 56.75 ]]
 
         rotation_theta = 30  # rotate the square by 30° (anticlockwise)
-        res = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
-        (np.round(res, 8) == vertices).all()  # True
+        vertices = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
+        print(vertices)
+        # [[-5.96037659 56.72712341]
+        #  [-6.02287659 56.83537659]
+        #  [-5.91462341 56.89787659]
+        #  [-5.85212341 56.78962341]]
     """
 
     sides = np.ones(2) * side_length
@@ -827,26 +872,26 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
 
     **Examples**::
 
-        import numpy as np
         from pyhelpers.geom import get_square_vertices_calc
 
         ctr_x, ctr_y = -5.9375, 56.8125
         side_length = 0.125
 
         rotation_theta = 0
-        vertices = np.array([[-6., 56.75], [-6., 56.875], [-5.875, 56.875], [-5.875, 56.75]])
-
-        res = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
-        (res == vertices).all()  # True
+        vertices = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
+        print(vertices)
+        # [[-6.    56.75 ]
+        #  [-6.    56.875]
+        #  [-5.875 56.875]
+        #  [-5.875 56.75 ]]
 
         rotation_theta = 30  # rotate the square by 30° (anticlockwise)
-        vertices = np.array([[-5.96037659, 56.72712341],
-                             [-6.02287659, 56.83537659],
-                             [-5.91462341, 56.89787659],
-                             [-5.85212341, 56.78962341]])
-
-        res = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
-        (np.round(res, 8) == vertices).all()  # True
+        vertices = get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta)
+        print(vertices)
+        # [[-5.96037659 56.72712341]
+        #  [-6.02287659 56.83537659]
+        #  [-5.91462341 56.89787659]
+        #  [-5.85212341 56.78962341]]
     """
 
     theta_rad = np.deg2rad(rotation_theta)
@@ -901,8 +946,11 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         fig_size = (5, 5)
         annotation = True
 
+        import matplotlib.pyplot as plt
+
         rotation_theta = 0
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
+        plt.show()
 
     .. image:: _images/sketch-square-1.*
        :width: 350pt
@@ -914,6 +962,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
 
         rotation_theta = 75
         sketch_square(ctr_x, ctr_y, side_length, rotation_theta, annotation, fig_size=fig_size)
+        plt.show()
 
     .. image:: _images/sketch-square-2.*
        :width: 350pt
@@ -926,7 +975,8 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     vertices_ = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
     vertices = np.append(vertices_, [tuple(vertices_[0])], axis=0)
 
-    _, ax = plt.subplots(1, 1, figsize=fig_size)
+    fig = plt.figure(figsize=fig_size)
+    ax = fig.add_subplot(1, 1, 1)  # _, ax = plt.subplots(1, 1, figsize=fig_size)
     ax.plot(ctr_x, ctr_y, 'o', markersize=10)
     ax.annotate("({0:.2f}, {0:.2f})".format(ctr_x, ctr_y), xy=(ctr_x, ctr_y), xytext=(ctr_x + 0.025, ctr_y + 0.025),
                 fontsize=annot_font_size, **kwargs)
@@ -934,7 +984,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     if rotation_theta == 0:
         ax.plot(vertices[:, 0], vertices[:, 1], 'o-')
     else:
-        ax.plot(vertices[:, 0], vertices[:, 1], 'o-', label="$\\theta$ = {}°".format(rotation_theta))
+        ax.plot(vertices[:, 0], vertices[:, 1], 'o-', label="rotation $\\theta$ = {}°".format(rotation_theta))
         ax.legend(loc="best")
 
     if annotation:
