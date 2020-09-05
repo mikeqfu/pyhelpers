@@ -26,10 +26,25 @@ def fake_requests_headers(random=False):
     :type random: bool
     :return: fake HTTP headers
     :rtype: dict
+
+    **Examples**::
+
+        from pyhelpers.ops import fake_requests_headers
+
+        fake_header = fake_requests_headers()
+        print(fake_header)
+        # {'User-Agent': '<str>'}
+
+        random = True
+        fake_header = fake_requests_headers(random)
+        print(fake_header)
+        # {'User-Agent': '<str>'}
     """
 
     fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+
     fake_header = {'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
+
     return fake_header
 
 
@@ -51,15 +66,15 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
 
     **Example**::
 
-        from pyhelpers.dir import cd
         from pyhelpers.ops import download_file_from_url
 
-        wait_to_retry = 3600
-
         url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        path_to_file = cd("tests/images", "python-logo.png")
 
-        download_file_from_url(url, path_to_file, wait_to_retry)
+        from pyhelpers.dir import cd
+
+        path_to_file = cd("tests\\images", "python-logo.png")
+
+        download_file_from_url(url, path_to_file)
     """
 
     import requests
@@ -117,9 +132,10 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
         from pyhelpers.ops import confirmed
 
         prompt = "Create Directory?"
-        confirmed(prompt, resp=True)
-        # Create Directory? [No]|Yes:
-        # >? yes
+
+        if confirmed(prompt, resp=True):
+            print(True)
+        # Create Directory? [No]|Yes: yes
         # True
     """
 
@@ -159,13 +175,19 @@ def get_variable_name(variable):
         from pyhelpers.ops import get_variable_name
 
         x = 1
-        get_variable_name(x)  # 'x'
+        var_str = get_variable_name(x)
+        print(var_str)
+        # 'x'
 
         y = 2
-        get_variable_name(y)  # 'y'
+        var_str = get_variable_name(y)
+        print(var_str)
+        # y
 
         y = x
-        get_variable_name(y)  # 'x'
+        var_str = get_variable_name(y)
+        print(var_str)
+        # x
     """
 
     local_variables = inspect.currentframe().f_back.f_locals.items()
@@ -192,15 +214,18 @@ def get_variable_names(*variable):
 
         x = 1
         var_name = get_variable_names(x)
-        print(list(var_name))  # ['x']
+        print(list(var_name))
+        # ['x']
 
         y = 2
         var_names = get_variable_names(x, y)
-        print(list(var_names))  # ['x', 'y']
+        print(list(var_names))
+        # ['x', 'y']
 
         y = 1
         var_names = get_variable_names(x, y)
-        print(list(var_names))  # ['x', 'x']
+        print(list(var_names))
+        # ['x', 'x']
     """
 
     local_variables = inspect.currentframe().f_back.f_locals.items()
@@ -231,10 +256,11 @@ def split_list_by_size(lst, sub_len):
         from pyhelpers.ops import split_list_by_size
 
         lst = list(range(0, 10))
-        sub_len = 3
 
+        sub_len = 3
         lists = split_list_by_size(lst, sub_len)
-        print(list(lists))  # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+        print(list(lists))
+        # [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
     """
 
     for i in range(0, len(lst), sub_len):
@@ -259,10 +285,11 @@ def split_list(lst, num_of_sub):
         from pyhelpers.ops import split_list
 
         lst = list(range(0, 10))
-        num_of_sub = 3
 
+        num_of_sub = 3
         lists = list(split_list(lst, num_of_sub))
-        print(list(lists))  # [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+        print(list(lists))
+        # [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
     """
 
     chunk_size = math.ceil(len(lst) / num_of_sub)
@@ -285,26 +312,27 @@ def split_iterable(iterable, chunk_size):
 
     **Examples**::
 
-        import pandas as pd
         from pyhelpers.ops import split_iterable
 
         iterable = list(range(0, 10))
         chunk_size = 3
-        res = split_iterable(iterable, chunk_size)
-        for x in res:
-            print(list(x))
-        # [0, 1, 2]
-        # [3, 4, 5]
-        # [6, 7, 8]
-        # [9]
-
-        iterable = pd.Series(range(0, 10))
         for x in split_iterable(iterable, chunk_size):
             print(list(x))
         # [0, 1, 2]
         # [3, 4, 5]
         # [6, 7, 8]
         # [9]
+
+        import pandas as pd
+
+        iterable = pd.Series(range(0, 20))
+        chunk_size = 5
+        for x in split_iterable(iterable, chunk_size):
+            print(list(x))
+        # [0, 1, 2, 3, 4]
+        # [5, 6, 7, 8, 9]
+        # [10, 11, 12, 13, 14]
+        # [15, 16, 17, 18, 19]
     """
 
     iterator = iter(iterable)
@@ -331,32 +359,45 @@ def update_nested_dict(source_dict, updates):
 
         source_dict = {'key_1': 1}
         updates = {'key_2': 2}
-        update_nested_dict(source_dict, updates)  # {'key_1': 1, 'key_2': 2}
+        source_dict = update_nested_dict(source_dict, updates)
+        print(source_dict)
+        # {'key_1': 1, 'key_2': 2}
 
         source_dict = {'key': 'val_old'}
         updates = {'key': 'val_new'}
-        update_nested_dict(source_dict, updates)  # {'key': 'val_new'}
+        source_dict = update_nested_dict(source_dict, updates)
+        print(source_dict)
+        # {'key': 'val_new'}
 
         source_dict = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
         updates = {'key': {'k1': 'v1_new'}}
-        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1_new', 'k2': 'v2'}}
+        source_dict = update_nested_dict(source_dict, updates)
+        print(source_dict)
+        # {'key': {'k1': 'v1_new', 'k2': 'v2'}}
 
         source_dict = {'key': {'k1': {}, 'k2': 'v2'}}
         updates = {'key': {'k1': 'v1'}}
-        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}
+        source_dict = update_nested_dict(source_dict, updates)
+        print(source_dict)
+        # {'key': {'k1': 'v1', 'k2': 'v2'}}
 
         source_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
         updates = {'key': {'k1': {}}}
-        update_nested_dict(source_dict, updates)  # {'key': {'k1': 'v1', 'k2': 'v2'}}
+        source_dict = update_nested_dict(source_dict, updates)
+        print(source_dict)
+        # {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
     for key, val in updates.items():
         if isinstance(val, collections.abc.Mapping) or isinstance(val, dict):
             source_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
+
         elif isinstance(val, list):
             source_dict[key] = (source_dict.get(key, []) + val)
+
         else:
             source_dict[key] = updates[key]
+
     return source_dict
 
 
@@ -382,22 +423,26 @@ def get_all_values_from_nested_dict(key, target_dict):
         key = 'key'
         target_dict = {'key': 'val'}
         val = get_all_values_from_nested_dict(key, target_dict)
-        print(list(val))  # [['val']]
+        print(list(val))
+        # [['val']]
 
         key = 'k1'
         target_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
         val = get_all_values_from_nested_dict(key, target_dict)
-        print(list(val))  #  [['v1']]
+        print(list(val))
+        # [['v1']]
 
         key = 'k1'
         target_dict = {'key': {'k1': ['v1', 'v1_1']}}
         val = get_all_values_from_nested_dict(key, target_dict)
-        print(list(val))  #  [['v1', 'v1_1']]
+        print(list(val))
+        # [['v1', 'v1_1']]
 
         key = 'k2'
         target_dict = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
         val = get_all_values_from_nested_dict(key, target_dict)
-        print(list(val))  #  [['v2', 'v2_1']]
+        print(list(val))
+        # [['v2', 'v2_1']]
     """
 
     for k, v in target_dict.items():
@@ -427,8 +472,11 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
         from pyhelpers.ops import remove_multiple_keys_from_dict
 
         target_dict = {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4', 'k5': 'v5'}
+
         remove_multiple_keys_from_dict(target_dict, 'k1', 'k3', 'k4')
-        print(target_dict)  # {'k2': 'v2', 'k5': 'v5'}
+
+        print(target_dict)
+        # {'k2': 'v2', 'k5': 'v5'}
     """
 
     # assert isinstance(dictionary, dict)
@@ -450,18 +498,25 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
     **Example**::
 
-        import pandas as pd
         from pyhelpers.ops import get_extreme_outlier_bounds
 
+        import pandas as pd
+
         num_dat = pd.DataFrame(range(100), columns=['col'])
+
         k = 1.5
-        lower_bound, upper_bound = get_extreme_outlier_bounds(num_dat, k)  # (0.0, 148.5)
+        lower_bound, upper_bound = get_extreme_outlier_bounds(num_dat, k)
+
+        print((lower_bound, upper_bound))
+        # (0.0, 148.5)
     """
 
     q1, q3 = np.percentile(num_dat, 25), np.percentile(num_dat, 75)
     iqr = q3 - q1
+
     lower_bound = np.max([0, q1 - k * iqr])
     upper_bound = q3 + k * iqr
+
     return lower_bound, upper_bound
 
 
@@ -481,11 +536,17 @@ def interquartile_range(num_dat):
 
         from pyhelpers.ops import interquartile_range
 
+        import pandas as pd
+
         num_dat = pd.DataFrame(range(100), columns=['col'])
-        interquartile_range(num_dat)  # 49.5
+
+        iqr = interquartile_range(num_dat)
+        print(iqr)
+        # 49.5
     """
 
     iqr = np.subtract(*np.percentile(num_dat, [75, 25]))
+
     return iqr
 
 
@@ -508,23 +569,35 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 
         from pyhelpers.ops import find_closest_date
 
-        date = pd.to_datetime('2019-01-01')
-        date_list = []
-        for d in range(1, 11): date_list.append(date + pd.Timedelta(days=d))
-        find_closest_date(date, date_list, as_datetime=False)  # '2019-01-02 00:00:00.000000'
-
         date = '2019-01-01'
         date_list = ['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06']
-        find_closest_date(date, date_list, as_datetime=True)  # Timestamp('2019-01-02 00:00:00')
+
+        closest_date = find_closest_date(date, date_list, as_datetime=True)
+        print(closest_date)
+        # 2019-01-02 00:00:00
+
+        import pandas as pd
+
+        date = pd.to_datetime('2019-01-01')
+        date_list = []
+        for d in range(1, 11):
+            date_list.append(date + pd.Timedelta(days=d))
+
+        closest_date = find_closest_date(date, date_list, as_datetime=False)
+        print(closest_date)
+        # 2019-01-02 00:00:00.000000
     """
 
     closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
+
     if as_datetime:
         if isinstance(closest_date, str):
             closest_date = pd.to_datetime(closest_date)
+
     else:
         if isinstance(closest_date, datetime.datetime):
             closest_date = closest_date.strftime(fmt)
+
     return closest_date
 
 
@@ -545,13 +618,15 @@ def cmap_discretisation(cmap, n_colours):
 
     **Example**::
 
+        from pyhelpers.ops import cmap_discretisation
+
         import matplotlib.cm
         import matplotlib.pyplot as plt
         import numpy as np
-        from pyhelpers.ops import cmap_discretisation
 
         cmap = matplotlib.cm.Accent
         n_colours = 5
+
         cm_accent = cmap_discretisation(cmap, n_colours)
 
         x = np.resize(range(100), (5, 100))
@@ -560,6 +635,7 @@ def cmap_discretisation(cmap, n_colours):
         ax.imshow(x, cmap=cm_accent, interpolation='nearest')
         plt.axis('off')
         plt.tight_layout()
+        plt.show()
 
     .. image:: _images/cmap-discretisation.*
        :width: 350pt
@@ -608,9 +684,10 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     **Examples**::
 
+        from pyhelpers.ops import colour_bar_index
+
         import matplotlib.cm
         import matplotlib.pyplot as plt
-        from pyhelpers.ops import colour_bar_index
 
         cmap = matplotlib.cm.Accent
         n_colours = 5
@@ -620,6 +697,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         cbar.ax.tick_params(labelsize=18)
         plt.axis('off')
         plt.tight_layout()
+        plt.show()
 
     .. image:: _images/colour-bar-index-1.*
        :width: 120pt
@@ -634,6 +712,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         colour_bar.ax.tick_params(labelsize=18)
         plt.axis('off')
         plt.tight_layout()
+        plt.show()
 
     .. image:: _images/colour-bar-index-2.*
        :width: 120pt
@@ -671,15 +750,17 @@ def detect_nan_for_str_column(data_frame, column_names=None):
 
     **Example**::
 
+        from pyhelpers.ops import detect_nan_for_str_column
+
         import numpy as np
         import pandas as pd
-        from pyhelpers.ops import detect_nan_for_str_column
 
         data_frame = pd.DataFrame(np.resize(range(10), (10, 2)), columns=['a', 'b'])
         data_frame.iloc[3, 1] = np.nan
 
         nan_col_pos = detect_nan_for_str_column(data_frame, column_names=None)
-        print(list(nan_col_pos))  # [1]
+        print(list(nan_col_pos))
+        # [1]
     """
 
     if column_names is None:
@@ -709,8 +790,11 @@ def create_rotation_matrix(theta):
         # [[-0.98803162  0.15425145]
         #  [-0.15425145 -0.98803162]]
     """
+
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
+
     rotation_mat = np.array([[sin_theta, cos_theta], [-cos_theta, sin_theta]])
+
     return rotation_mat
 
 
@@ -738,7 +822,10 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
         # 0   a      1
         # 1   b      2
     """
+
     dict_keys = list(input_dict.keys())
     dict_vals = list(input_dict.values())
+
     data_frame = pd.DataFrame({k: dict_keys, v: dict_vals})
+
     return data_frame
