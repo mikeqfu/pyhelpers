@@ -2,7 +2,6 @@ from pyhelpers.geom import *
 
 
 def test_wgs84_to_osgb36():
-
     longitude, latitude = -0.12772404, 51.507407
 
     easting, northing = wgs84_to_osgb36(longitude, latitude)
@@ -13,7 +12,6 @@ def test_wgs84_to_osgb36():
 
 
 def test_osgb36_to_wgs84():
-
     easting, northing = 530034, 180381
 
     longitude, latitude = osgb36_to_wgs84(easting, northing)
@@ -24,7 +22,6 @@ def test_osgb36_to_wgs84():
 
 
 def test_wgs84_to_osgb36_calc():
-
     longitude, latitude = -0.12772404, 51.507407
 
     easting, northing = wgs84_to_osgb36_calc(longitude, latitude)
@@ -40,7 +37,6 @@ def test_wgs84_to_osgb36_calc():
 
 
 def test_osgb36_to_wgs84_calc():
-
     easting, northing = 530034, 180381
 
     longitude, latitude = osgb36_to_wgs84_calc(easting, northing)
@@ -56,7 +52,6 @@ def test_osgb36_to_wgs84_calc():
 
 
 def test_get_midpoint():
-
     x1, y1 = 1.5429, 52.6347
     x2, y2 = 1.4909, 52.6271
 
@@ -86,7 +81,6 @@ def test_get_midpoint():
 
 
 def test_transform_geom_point_type():
-
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
 
@@ -123,7 +117,6 @@ def test_transform_geom_point_type():
 
 
 def test_get_geometric_midpoint():
-
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
 
@@ -138,7 +131,6 @@ def test_get_geometric_midpoint():
 
 
 def test_get_geometric_midpoint_calc():
-
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
 
@@ -155,7 +147,6 @@ def test_get_geometric_midpoint_calc():
 
 
 def test_calc_distance_on_unit_sphere():
-
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
 
@@ -165,7 +156,6 @@ def test_calc_distance_on_unit_sphere():
 
 
 def test_calc_hypotenuse_distance():
-
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
 
@@ -175,7 +165,6 @@ def test_calc_hypotenuse_distance():
 
 
 def test_find_closest_point_from():
-
     pt = (2.5429, 53.6347)
     ref_pts = ((1.5429, 52.6347),
                (1.4909, 52.6271),
@@ -201,7 +190,6 @@ def test_find_closest_point_from():
 
 
 def test_find_closest_points_between():
-
     pts = np.array([[1.5429, 52.6347],
                     [1.4909, 52.6271],
                     [1.4248, 52.63075]])
@@ -228,7 +216,6 @@ def test_find_closest_points_between():
 
 
 def test_get_square_vertices():
-
     ctr_x, ctr_y = -5.9375, 56.8125
     side_length = 0.125
 
@@ -250,7 +237,6 @@ def test_get_square_vertices():
 
 
 def test_get_square_vertices_calc():
-
     ctr_x, ctr_y = -5.9375, 56.8125
     side_length = 0.125
 
@@ -272,7 +258,6 @@ def test_get_square_vertices_calc():
 
 
 def test_sketch_square():
-
     ctr_x, ctr_y = 1, 1
     side_length = 2
     fig_size = (5, 5)
@@ -294,7 +279,6 @@ def test_sketch_square():
 
 
 if __name__ == '__main__':
-
     print("\nTesting 'wgs84_to_osgb36()':")
 
     test_wgs84_to_osgb36()
