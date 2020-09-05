@@ -83,26 +83,26 @@ def test_rm_dir():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    print("\n")
+    print("\nTesting 'cd()':")
 
     test_cd()
 
-    print("\n")
+    print("\nTesting 'cdd()':")
 
     test_cdd()
 
-    print("\n")
+    print("\nTesting 'cd_dat()':")
 
     test_cd_dat()
 
-    print("\n")
+    print("\nTesting 'is_dir()':")
 
     test_is_dir()
 
-    print("\n")
+    print("\nTesting 'validate_input_data_dir()':")
 
     test_validate_input_data_dir()
 
-    print("\n")
+    print("\nTesting 'rm_dir()':")
 
     test_rm_dir()
