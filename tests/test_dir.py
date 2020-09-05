@@ -2,7 +2,6 @@ from pyhelpers.dir import *
 
 
 def test_cd():
-
     # Can use a breakpoint in the code line below to debug the script.
     path = cd()
     print(path)  # Press Ctrl+F8 to toggle the breakpoint.
@@ -15,7 +14,6 @@ def test_cd():
 
 
 def test_cdd():
-
     path = cdd()
     print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
     # <cwd>\\data. (This directory will NOT be created if it does not exists).
@@ -32,7 +30,6 @@ def test_cdd():
 
 
 def test_cd_dat():
-
     dat_dir = "dat"
     mkdir = False
 
@@ -42,7 +39,6 @@ def test_cd_dat():
 
 
 def test_is_dir():
-
     dir_name = "tests"
     print(is_dirname(dir_name))
     # False
@@ -57,7 +53,6 @@ def test_is_dir():
 
 
 def test_validate_input_data_dir():
-
     data_dir = "tests"
 
     data_dir_ = validate_input_data_dir(data_dir)
@@ -67,7 +62,6 @@ def test_validate_input_data_dir():
 
 
 def test_rm_dir():
-
     path_to_dir = cdd(mkdir=True)
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
     # The directory "<cwd>\\data\\dat" exists? True
@@ -82,7 +76,6 @@ def test_rm_dir():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-
     print("\nTesting 'cd()':")
 
     test_cd()
