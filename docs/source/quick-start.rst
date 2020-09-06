@@ -45,8 +45,9 @@ The :ref:`pyhelpers-dir` module can be used to help manipulate directories. For 
 
    >>> from pyhelpers.dir import cd
 
-   >>> print(cd())
-   [The full path to the cwd]
+   >>> cwd = cd()
+   >>> print(cwd)
+   <The full path to the cwd>
 
 If you would like to direct to a custom folder, say ``"pyhelpers_quick_start"``, use ``cd()`` to change directory:
 
@@ -54,7 +55,7 @@ If you would like to direct to a custom folder, say ``"pyhelpers_quick_start"``,
 
    >>> path_to_qs = cd("pyhelpers_quick_start")
    >>> print(path_to_qs)
-   [The full path to the cwd]/pyhelpers_quick_start/
+   <The full path to the cwd>/pyhelpers_quick_start/
 
 If the folder *'pyhelpers_quick_start'`* does not exist, setting ``mkdir=True`` (default: ``False``) will create it as you run the following line:
 
@@ -68,7 +69,7 @@ To get a full path to a file, just to further provide the filename:
 
    >>> path_to_pickle = cd(path_to_qs, "dat.pickle")  # equivalent to: cd("pyhelpers_quick_start", "dat.pickle")
    >>> print(path_to_pickle)
-   [The full path to the cwd]\pyhelpers_quick_start\dat.pickle
+   <The full path to the cwd>\pyhelpers_quick_start\dat.pickle
 
 If a filename (formed of a name and of a file and a suffix) is provided, setting ``mkdir=True`` will just create the parent folder rather than taking the filename as a folder name. For example:
 
@@ -79,30 +80,34 @@ If a filename (formed of a name and of a file and a suffix) is provided, setting
    >>> import os
 
    >>> path_to_qs_data_dir = cd(path_to_qs, "data") # equivalent to: cd("pyhelpers_quick_start\\data")
-   >>> os.path.exists(path_to_qs_data_dir)  # Check if "pyhelpers_quick_start\data\" exists
+   >>> res = os.path.exists(path_to_qs_data_dir)  # Check if "pyhelpers_quick_start\data\" exists
+   >>> print(res)
    False
 
    >>> dat_filename = "dat.pickle"
    >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename)
    >>> print(path_to_dat)
-   [The full path to the cwd]/pyhelpers_quick_start\data\dat.pickle
-   >>> os.path.exists(path_to_qs_data_dir)  # Check if "pyhelpers_quick_start\data\" exists
+   <The full path to the cwd>/pyhelpers_quick_start\data\dat.pickle
+   >>> res = os.path.exists(path_to_qs_data_dir)  # Check if "pyhelpers_quick_start\data\" exists
+   >>> print(res)
    False
 
    >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename, mkdir=True)
-   >>> os.path.isfile(path_to_dat)  # Check if the file "dat.pickle" exists
+   >>> res = os.path.isfile(path_to_dat)  # Check if the file "dat.pickle" exists
+   >>> print(res)
    False
-   >>> os.path.exists(path_to_qs_data_dir)  # Check again if the directory has been created
+   >>> res = os.path.exists(path_to_qs_data_dir)  # Check again if the directory has been created
+   >>> print(res)
    True
 
-To delete the ``path_to_qs_data_dir``, you may use the function :ref:`rm_dir()<dir-rm-dir>`:
+To delete the ``path_to_qs``, you may use the function :ref:`rm_dir()<dir-rm-dir>`:
 
 .. code-block:: python
 
    >>> from pyhelpers.dir import rm_dir
 
-   >>> rm_dir(path_to_qs_data_dir, verbose=True)
-   To remove the directory "[The full path to the cwd]\pyhelpers_quick_start\data"? [No]|Yes: >? yes
+   >>> rm_dir(path_to_qs, verbose=True)
+   To remove the directory "<The full path to the cwd>\pyhelpers_quick_start"? [No]|Yes: yes
    Done.
 
 |
@@ -152,7 +157,7 @@ If you would like to remove the download directory, ``"pyhelpers_quick_start\ima
 .. code-block:: python
 
    >>> rm_dir(python_logo_dir, verbose=True)
-   "[The full path to the current cwd]\pyhelpers_quick_start\images" is not empty. Confirmed to remove the directory? [No]|Yes: >? yes
+   "<The full path to the cwd>\pyhelpers_quick_start\images" is not empty. Confirmed to remove the directory? [No]|Yes: yes
    Done.
 
 Another function, :ref:`confirmed()<ops-confirmed>`, may also be quite helpful sometimes.
@@ -166,7 +171,7 @@ For example, if you would like to request a confirmation before proceeding with 
 .. code-block:: python
 
    >>> confirmed(prompt="Continue? ...", confirmation_required=True)
-   Continue? ... [No]|Yes: >? yes
+   Continue? ... [No]|Yes: yes
    True
 
 If you type ``Yes`` (or *Y*, *yes*, or something like *ye*), it should return ``True``; otherwise, ``False`` (if the input being *No* or *n*).
@@ -215,18 +220,21 @@ For example, to save ``dat`` to ``path_to_dat`` (see the :ref:`path_to_dat<path-
 .. code-block:: python
 
    >>> save_pickle(dat, path_to_dat, verbose=True)  # default: verbose=False
+   Saving "dat.pickle" to "..\pyhelpers_quick_start\data" ... Done.
 
 To retrieve ``dat`` from ``path_to_dat``:
 
 .. code-block:: python
 
    >>> dat_retrieved = load_pickle(path_to_dat, verbose=True)  # default: verbose=False
+   Loading "..\pyhelpers_quick_start\data\dat.pickle" ... Done.
 
 ``dat_retrieved`` should be equal to ``dat``:
 
 .. code-block:: python
 
-   >>> print(dat_retrieved.equals(dat))
+   >>> res = dat_retrieved.equals(dat)
+   >>> print(res)
    True
 
 The :ref:`pyhelpers-store` module also have functions for working with some other formats, such as ``.csv``, ``.txt``, ``.json``, ``.xlsx``/``.xls`` and ``.feather``.
@@ -343,6 +351,8 @@ To connect to 'postgres' using all the default parameters:
 
    >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres', password=None,
    ...                     database_name='postgres', verbose=True)
+   Password (postgres@localhost:5432): ********
+   Connecting to PostgreSQL database: postgres:***@localhost:5432/postgres ... Successfully.
 
 When ``password=None``, you will be asked to type your password manually. Similarly, if ``host``, ``port``, ``username`` and ``database_name`` are all ``None``, you will also be asked to type the information as you run :ref:`PostgreSQL()<pyhelpers-sql>`.
 
@@ -356,7 +366,7 @@ After you have successfully established the connection, you could try to dump ``
    >>> testdb.dump_data(dat, table_name='pyhelpers_quick_start', schema_name='public',
    ...                  if_exists='replace', force_replace=False, chunk_size=None,
    ...                  col_type=None, method='multi',verbose=True)
-   Dumping the data as a table "pyhelpers_quick_start" into public."postgres"@localhost ... Done.
+   Dumping data to public."pyhelpers_quick_start" at postgres:***@localhost:5432/postgres ... Done.
 
 The :ref:`.dump_data()<sql-postgresql-dump-data>` method relies on `pandas.DataFrame.to_sql`_; however, the default ``method`` is set to be ``'multi'`` (i.e. ``method='multi'``) for a faster process. In addition, :ref:`.dump_data()<sql-postgresql-dump-data>` further includes a callable :ref:`psql_insert_copy<sql-postgresql-psql-insert-copy>`, whereby the processing speed could be even faster.
 
@@ -366,8 +376,8 @@ For example:
 
    >>> testdb.dump_data(dat, table_name='pyhelpers_quick_start', method=testdb.psql_insert_copy,
    ...                  verbose=True)
-   The table "public."pyhelpers_quick_start"" already exists and will be replaced ...
-   Dumping the data as a table "pyhelpers_quick_start" into public."postgres"@localhost ... Done.
+   The table public."pyhelpers_quick_start" already exists and is replaced ...
+   Dumping data to public."pyhelpers_quick_start" at postgres:***@localhost:5432/postgres ... Done.
 
 **7.3 Read/retrieve data from the database**
 
@@ -376,7 +386,9 @@ To retrieve the dumped data, use the method :ref:`.read_table()<sql-postgresql-r
 .. code-block:: python
 
    >>> dat_retrieved = testdb.read_table('pyhelpers_quick_start')
-   >>> print(dat.equals(dat_retrieved))
+
+   >>> res = dat.equals(dat_retrieved)
+   >>> print(res)
    True
 
 Besides, there is an alternative way, :ref:`.read_sql_query()<sql-postgresql-read-sql-query>`, which is more flexible with PostgreSQL statement (and could be faster especially when the tabular data is fairly large):
@@ -385,7 +397,9 @@ Besides, there is an alternative way, :ref:`.read_sql_query()<sql-postgresql-rea
 
    >>> sql_query = 'SELECT * FROM pyhelpers_quick_start'  # Or 'SELECT * FROM public.test_table'
    >>> dat_retrieved_ = testdb.read_sql_query(sql_query)
-   >>> print(dat_retrieved_.equals(dat_retrieved))
+
+   >>> res = dat_retrieved_.equals(dat_retrieved)
+   >>> print(res)
    True
 
 Note that ``sql_query`` should end without **';'**
@@ -399,8 +413,8 @@ To drop ``'pyhelpers_quick_start'``, if ``confirmation_required=True`` (default:
 
    >>> testdb.drop_table('pyhelpers_quick_start', schema_name='public', confirmation_required=True,
    ...                   verbose=True)
-   Confirmed to drop the table public."pyhelpers_quick_start" from the database "postgres"? [No]|Yes: >? yes
-   The table "pyhelpers_quick_start" has been dropped successfully.
+   Confirmed to drop the table public."pyhelpers_quick_start" from postgres:***@localhost:5432/postgres? [No]|Yes: yes
+   The table 'public."pyhelpers_quick_start"' has been dropped successfully.
 
 To create your own database and name it as ``'test_database'``:
 
@@ -424,7 +438,7 @@ To drop the database, use the method :ref:`.drop_database()<sql-postgresql-drop-
 .. code-block:: python
 
    >>> testdb.drop_database(confirmation_required=True, verbose=True)
-   Confirmed to drop the database "test_database" for postgres@localhost? [No]|Yes: >? yes
+   Confirmed to drop the database: postgres:***@localhost:5432/postgres? [No]|Yes: yes
    Dropping the database "test_database" ... Done.
 
    >>> print(testdb.database_name)  # Check the currently connected database
