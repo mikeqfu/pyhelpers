@@ -553,7 +553,7 @@ class PostgreSQL:
             # Dumping data to points."England" at postgres:***@localhost:5432/postgres ... Done.
 
             res = testdb.table_exists(table_name, schema_name)
-            print("\nThe table '{}.{}' exists? {}.".format(schema_name, table_name, res))
+            print("The table '{}.{}' exists? {}.".format(schema_name, table_name, res))
             # True
         """
 
