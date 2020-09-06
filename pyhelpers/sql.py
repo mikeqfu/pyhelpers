@@ -105,6 +105,7 @@ class PostgreSQL:
         """
 
         database_name_ = str(database_name) if database_name is not None else self.database_name
+
         result = self.engine.execute("SELECT EXISTS("
                                      "SELECT datname FROM pg_catalog.pg_database "
                                      "WHERE datname='{}');".format(database_name_))
@@ -207,6 +208,7 @@ class PostgreSQL:
         """
 
         self.connect_database(database_name='postgres')
+
         self.engine.execute('SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid();')
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
@@ -224,6 +226,7 @@ class PostgreSQL:
         """
 
         db_name = self.database_name if database_name is None else database_name
+
         if confirmed("Confirmed to drop the database: {}?".format(self.address),
                      confirmation_required=confirmation_required):
             self.disconnect_database(db_name)
@@ -378,12 +381,18 @@ class PostgreSQL:
 
             from pyhelpers.sql import PostgreSQL
 
-            postgres_db = PostgreSQL(database_name='postgres')
-            table_name = 'test_tbl'
-            verbose = True
+            testdb = PostgreSQL()
 
+            table_name = 'test_table'
+            schema_name = 'public'
             column_specs = 'col_name_1 INT, col_name_2 TEXT'
-            postgres_db.create_table(table_name, column_specs, verbose=verbose)
+
+            testdb.create_table(table_name, column_specs, schema_name, verbose=True)
+            # Creating a table 'public."test_table"' ... Done.
+
+            res = testdb.table_exists(table_name, schema_name)
+            print("The table '{}.{}' exists? {}.".format(schema_name, table_name, res))
+            # True
         """
 
         table_name_ = '{schema}.\"{table}\"'.format(schema=schema_name, table=table_name)
@@ -440,13 +449,21 @@ class PostgreSQL:
         :type verbose: bool
         """
 
-        if confirmed("Confirmed to drop the table {}.\"{}\" from {}?".format(
-                schema_name, table_name, self.address), confirmation_required=confirmation_required):
-            try:
-                self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(schema_name, table_name))
-                print("The table \"{}\" has been dropped successfully.".format(table_name)) if verbose else ""
-            except Exception as e:
-                print("Failed. {}".format(e))
+        table = '{}.\"{}\"'.format(schema_name, table_name)
+
+        if not self.table_exists(table_name=table_name, schema_name=schema_name):
+            print("The table '{}' does not exist.".format(table))
+
+        else:
+            if confirmed("Confirmed to drop the table {} from {}?".format(table, self.address),
+                         confirmation_required=confirmation_required):
+
+                try:
+                    self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(schema_name, table_name))
+                    print("The table '{}' has been dropped successfully.".format(table)) if verbose else ""
+
+                except Exception as e:
+                    print("Failed. {}".format(e))
 
     @staticmethod
     def psql_insert_copy(sql_table, sql_db_engine, column_name_list, data_iter):
@@ -517,21 +534,27 @@ class PostgreSQL:
 
         **Example**::
 
-            import pandas as pd
             from pyhelpers.sql import PostgreSQL
 
-            testdb = PostgreSQL(database_name='postgres')
+            testdb = PostgreSQL()
 
             # Create a pandas.DataFrame
+            import pandas as pd
+
             xy_array = [(530034, 180381), (406689, 286822), (383819, 398052), (582044, 152953)]
             dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
 
             table_name = 'England'
             schema_name = 'points'
-            if_exists = 'replace'
 
-            testdb.dump_data(dat, table_name, schema_name, if_exists, chunk_size=None,
+            testdb.dump_data(dat, table_name, schema_name, if_exists='replace', chunk_size=None,
                              force_replace=False, col_type=None, verbose=True)
+            # Creating a schema "points" ... Done.
+            # Dumping data to points."England" at postgres:***@localhost:5432/postgres ... Done.
+
+            res = testdb.table_exists(table_name, schema_name)
+            print("\nThe table '{}.{}' exists? {}.".format(schema_name, table_name, res))
+            # True
         """
 
         if schema_name not in sqlalchemy.engine.reflection.Inspector.from_engine(self.engine).get_schema_names():
@@ -598,11 +621,19 @@ class PostgreSQL:
 
             from pyhelpers.sql import PostgreSQL
 
-            testdb = PostgreSQL(database_name='postgres')
+            testdb = PostgreSQL()
 
             table_name = 'England'
             schema_name = 'points'
+
             dat_retrieval = testdb.read_table(table_name, schema_name)
+            print(dat_retrieval)
+            #    Easting  Northing
+            # 0   530034    180381
+            # 1   406689    286822
+            # 2   383819    398052
+            # 3   582044    152953
+
 
             # Aside: a brief example of using the `params` of `pandas.read_sql`
 
