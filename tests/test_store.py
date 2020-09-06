@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from pyhelpers.store import *
 
 
@@ -226,28 +228,25 @@ def test_save():
 
 
 def test_save_fig():
-    import matplotlib.pyplot as plt
+
     from pyhelpers.dir import cd
 
     x, y = (1, 1), (2, 2)
     plt.figure()
     plt.plot([x[0], y[0]], [x[1], y[1]])
-    plt.show()
-
-    dpi = 300
+    # plt.show()
 
     path_to_fig_file = cd("tests\\images", "fig.png")
-    save_fig(path_to_fig_file, dpi, verbose=True)
+    save_fig(path_to_fig_file, dpi=300, verbose=True)
     # Saving "fig.png" to "..\\tests\\images" ... Done.
 
     path_to_fig_file = cd("tests\\images", "fig.svg")
-    save_fig(path_to_fig_file, dpi, verbose=True, conv_svg_to_emf=True)
+    save_fig(path_to_fig_file, dpi=300, verbose=True, conv_svg_to_emf=True)
     # Saving "fig.svg" to "..\\tests\\images" ... Done.
     # Saving the "fig.svg" as "..\\tests\\images\\fig.emf" ... Done.
 
 
 def test_save_svg_as_emf():
-    import matplotlib.pyplot as plt
     from pyhelpers.dir import cd
 
     x, y = (1, 1), (2, 2)
@@ -361,9 +360,13 @@ if __name__ == '__main__':
 
     test_save_fig()
 
+    plt.show()
+
     print("\nTesting 'save_svg_as_emf()':")
 
     test_save_svg_as_emf()
+
+    plt.show()
 
     print("\nTesting 'unzip()':")
 
