@@ -38,8 +38,8 @@ setuptools.setup(
         'sqlalchemy',
         'sqlalchemy-utils',
         'tqdm',
-        # 'xlrd',
-        # 'xlwt',
+        'xlrd',
+        'xlwt',
         'XlsxWriter'
     ],
 
