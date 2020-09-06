@@ -44,23 +44,46 @@ def find_similar_str(x, lookup_list, processor='fuzzywuzzy', **kwargs):
         lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
 
         processor = 'fuzzywuzzy'
-        find_similar_str(x, lookup_list, processor)  # 'app'
+        sim_str = find_similar_str(x, lookup_list, processor)
+        print(sim_str)
+        # app
 
         processor = 'nltk'
-        find_similar_str(x, lookup_list, processor, substitution_cost=1)  # 'apple'
-        find_similar_str(x, lookup_list, processor, substitution_cost=100)  # 'app'
+        sim_str = find_similar_str(x, lookup_list, processor, substitution_cost=1)
+        print(sim_str)
+        # aapl
+
+        sim_str = find_similar_str(x, lookup_list, processor, substitution_cost=100)
+        print(sim_str)
+        # app
     """
 
     assert processor in ('fuzzywuzzy', 'nltk'), "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
 
     if processor == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
+
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(x, a, **kwargs) for a in lookup_list]
-        return lookup_list[l_distances.index(max(l_distances))] if l_distances else None
+
+        if l_distances:
+            sim_str = lookup_list[l_distances.index(max(l_distances))]
+        else:
+            sim_str = None
+
     elif processor == 'nltk':
-        import nltk.metrics.distance
-        l_distances = [nltk.metrics.distance.edit_distance(x, a, **kwargs) for a in lookup_list]
-        return lookup_list[l_distances.index(min(l_distances))] if l_distances else None
+        import nltk
+
+        l_distances = [nltk.edit_distance(x, a, **kwargs) for a in lookup_list]
+
+        if l_distances:
+            sim_str = lookup_list[l_distances.index(min(l_distances))]
+        else:
+            sim_str = None
+
+    else:
+        sim_str = None
+
+    return sim_str
 
 
 def find_matched_str(x, lookup_list):
@@ -79,19 +102,24 @@ def find_matched_str(x, lookup_list):
         from pyhelpers.text import find_matched_str
 
         x = 'apple'
-        lookup_list_0 = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
 
-        res_0 = find_matched_str(x, lookup_list_0)  # list(res_0) == []
+        lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+        res = find_matched_str(x, lookup_list)
+        print(list(res))
+        # []
 
-        lookup_list_1 = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
-
-        res_1 = find_matched_str(x, lookup_list_1)  # list(res_1) == ['apple']
+        lookup_list = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
+        res = find_matched_str(x, lookup_list)
+        print(list(res))
+        # ['apple']
     """
 
     assert isinstance(x, str), "`x` must be a string."
     assert isinstance(lookup_list, collections.abc.Iterable), "`lookup_list` must be iterable."
+
     if x == '' or x is None:
         return None
+
     else:
         for y in lookup_list:
             if re.match(x, y, re.IGNORECASE):
@@ -114,19 +142,26 @@ def remove_punctuation(raw_txt, rm_whitespace=False):
         from pyhelpers.text import remove_punctuation
 
         raw_txt = 'Hello\tworld! :-)'
-        txt = remove_punctuation(raw_txt)  # 'Hello\tworld '
+        txt = remove_punctuation(raw_txt)
+        print(txt)
+        # Hello<\t>world<space>
 
         rm_whitespace = True
-        txt = remove_punctuation(raw_txt, rm_whitespace)  # 'Hello world'
+        txt = remove_punctuation(raw_txt, rm_whitespace)
+        print(txt)
+        # Hello world
     """
 
     try:
         txt = raw_txt.translate(str.maketrans('', '', string.punctuation))
+
     except Exception as e:
         print(e)
         txt = ''.join(x for x in raw_txt if x not in string.punctuation)
+
     if rm_whitespace:
         txt = ' '.join(txt.split())
+
     return txt
 
 
@@ -141,8 +176,9 @@ def count_words(raw_txt):
 
     **Examples**::
 
-        from pyhelpers.text import remove_punctuation
         from pyhelpers.text import count_words
+
+        from pyhelpers.text import remove_punctuation
 
         raw_txt = 'This is an apple. That is a pear. Hello world!'
 
@@ -172,9 +208,12 @@ def count_words(raw_txt):
     """
 
     import nltk
+
     doc_text = str(raw_txt)
     tokens = nltk.word_tokenize(doc_text)
+
     word_count_dict = dict(collections.Counter(tokens))
+
     return word_count_dict
 
 
@@ -191,13 +230,14 @@ def calculate_idf(raw_documents, rm_punc=False):
 
     **Examples**::
 
-        import pandas as pd
         from pyhelpers.text import calculate_idf
 
+        import pandas as pd
+
         raw_documents = pd.Series(['This is an apple.',
-                                   'That is a pear.',
-                                   'It is human being.',
-                                   'Hello world!'])
+                               'That is a pear.',
+                               'It is human being.',
+                               'Hello world!'])
 
         rm_punc = False
         docs_tf, corpus_idf = calculate_idf(raw_documents, rm_punc)
@@ -206,6 +246,7 @@ def calculate_idf(raw_documents, rm_punc=False):
         # 1      {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1}
         # 2    {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.'...
         # 3                     {'Hello': 1, 'world': 1, '!': 1}
+        # dtype: object
         print(corpus_idf)
         # {'This': 0.6931471805599453, 'is': 0.0, 'an': 0.6931471805599453, ...
 
@@ -216,6 +257,7 @@ def calculate_idf(raw_documents, rm_punc=False):
         # 1       {'That': 1, 'is': 1, 'a': 1, 'pear': 1}
         # 2    {'It': 1, 'is': 1, 'human': 1, 'being': 1}
         # 3                      {'Hello': 1, 'world': 1}
+        # dtype: object
         print(corpus_idf)
         # {'This': 0.6931471805599453, 'is': 0.0, 'an': 0.6931471805599453, ...
     """
@@ -252,8 +294,9 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
 
     **Examples**::
 
-        import pandas as pd
         from pyhelpers.text import calculate_tf_idf
+
+        import pandas as pd
 
         raw_documents = pd.Series(['This is an apple.',
                                    'That is a pear.',
@@ -276,7 +319,9 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
     """
 
     docs_tf, corpus_idf = calculate_idf(raw_documents=raw_documents, rm_punc=rm_punc)
+
     docs_tf_idf = docs_tf.apply(lambda x: {k: v * corpus_idf[k] for k, v in x.items() if k in corpus_idf})
+
     return docs_tf_idf
 
 
@@ -296,11 +341,15 @@ def euclidean_distance_between_texts(txt1, txt2):
         from pyhelpers.text import euclidean_distance_between_texts
 
         txt1, txt2 = 'This is an apple.', 'That is a pear.'
-        euclidean_distance_between_texts(txt1, txt2)  # 2.6457513110645907
+
+        ed = euclidean_distance_between_texts(txt1, txt2)
+        print(ed)
+        # 2.6457513110645907
     """
 
     if isinstance(txt1, str) and isinstance(txt2, str):
         doc_words = set(txt1.split() + txt2.split())
+
     else:
         assert isinstance(txt1, list), isinstance(txt2, list)
         doc_words = set(txt1 + txt2)
@@ -344,6 +393,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
     if isinstance(txt1, str) and isinstance(txt2, str):
         doc_words = set(txt1.split() + txt2.split())
+
     else:
         assert isinstance(txt1, list), isinstance(txt2, list)
         doc_words = set(txt1 + txt2)
@@ -385,8 +435,9 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
 
     **Example**::
 
-        from pyhelpers.dir import cd
         from pyhelpers.text import save_web_page_as_pdf
+
+        from pyhelpers.dir import cd
 
         page_size = 'A4'
         zoom = 1.0
@@ -394,14 +445,22 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         verbose = True
 
         url_to_web_page = 'https://github.com/mikeqfu/pyhelpers'
-        path_to_pdf = cd("tests/data", "pyhelpers.pdf")
+        path_to_pdf = cd("tests\\data", "pyhelpers.pdf")
 
-        save_web_page_as_pdf(url_to_web_page, path_to_pdf, verbose=verbose)
+        save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size, zoom, encoding, verbose)
+        # Saving "pyhelpers.pdf" to "..\\tests\\data" ...
+        # Loading pages (1/6)
+        # Counting pages (2/6)
+        # Resolving links (4/6)
+        # Loading headers and footers (5/6)
+        # Printing pages (6/6)
+        # Done
     """
 
     path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"
 
     import pdfkit
+
     if os.path.isfile(path_to_wkhtmltopdf):
         config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
     else:
@@ -418,10 +477,14 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
                        # 'margin-bottom': '0',
                        'zoom': str(float(zoom)),
                        'encoding': encoding}
+
         os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
+
         if os.path.isfile(path_to_pdf):
             os.remove(path_to_pdf)
+
         status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config, options=pdf_options, **kwargs)
+
         if verbose and not status:
             print("Failed. Check if the URL is available.")
 
@@ -447,14 +510,17 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
 
     **Example**::
 
-        from pyhelpers.dir import cd
         from pyhelpers.text import convert_md_to_rst
 
-        path_to_md = cd("tests/data", "markdown.md")
-        path_to_rst = cd("tests/data", "markdown.rst")
+        from pyhelpers.dir import cd
+
+        path_to_md = cd("tests\\data", "markdown.md")
+        path_to_rst = cd("tests\\data", "markdown.rst")
         verbose = True
 
         convert_md_to_rst(path_to_md, path_to_rst, verbose)
+        # Converting "markdown.md" to .rst ...
+        # Saving "markdown.rst" to "..\\tests\\data" ... Done.
     """
 
     abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
@@ -463,16 +529,22 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
     if verbose:
         print("Converting \"{}\" to .rst ... ".format(abs_md_path.name))
         get_specific_filepath_info(abs_rst_path, verbose=verbose, vb_end=" ... ")
+
     try:
         pandoc_exe = "C:\\Program Files\\Pandoc\\pandoc.exe"
+
         if os.path.isfile(pandoc_exe):
             subprocess.call('"{}" "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
         else:
             subprocess.call('pandoc "{}" -f markdown -t rst -s -o "{}"'.format(abs_md_path, abs_rst_path))
-        print("Successfully.") if verbose else ""
+
+        print("Done.") if verbose else ""
+
     except FileNotFoundError:
         import pypandoc
+
         pypandoc.convert_file(str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
-        print("Successfully.") if verbose else ""
+        print("Done.") if verbose else ""
+
     except Exception as e:
         print("Failed. {}".format(e))
