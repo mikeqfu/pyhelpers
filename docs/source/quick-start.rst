@@ -368,7 +368,7 @@ After you have successfully established the connection, you could try to dump ``
    ...                  col_type=None, method='multi',verbose=True)
    Dumping data to public."pyhelpers_quick_start" at postgres:***@localhost:5432/postgres ... Done.
 
-The :ref:`.dump_data()<sql-postgresql-dump-data>` method relies on `pandas.DataFrame.to_sql`_; however, the default ``method`` is set to be ``'multi'`` (i.e. ``method='multi'``) for a faster process. In addition, :ref:`.dump_data()<sql-postgresql-dump-data>` further includes a callable :ref:`psql_insert_copy<sql-postgresql-psql-insert-copy>`, whereby the processing speed could be even faster.
+The :ref:`.dump_data()<sql-postgresql-dump-data>` method relies on `pandas.DataFrame.to_sql`_; however, the default ``method`` is set to be ``'multi'`` (i.e. ``method='multi'``) for a faster process. In addition, :ref:`.dump_data()<sql-postgresql-dump-data>` further includes a callable :ref:`psql_insert_copy<sql-postgresql-psql-insert-copy>`, whereby the processing speed could be even faster.
 
 For example:
 
