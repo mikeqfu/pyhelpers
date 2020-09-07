@@ -10,7 +10,6 @@ import re
 import time
 import types
 
-import fake_useragent
 import numpy as np
 import pandas as pd
 import tqdm
@@ -40,6 +39,8 @@ def fake_requests_headers(random=False):
         print(fake_header)
         # {'User-Agent': '<str>'}
     """
+
+    import fake_useragent
 
     fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
 
