@@ -13,8 +13,8 @@ PyHelpers
    :target: https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers
 .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
    :target: https://pypistats.org/packages/pyhelpers
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4017439.svg
-   :target: https://doi.org/10.5281/zenodo.4017439
+.. |DOI| image:: https://zenodo.org/badge/173177909.svg
+   :target: https://zenodo.org/badge/latestdoi/173177909
 
 **Author**: Qian Fu |Twitter|
 
