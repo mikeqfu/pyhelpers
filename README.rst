@@ -1,7 +1,7 @@
 PyHelpers
 =========
 
-|PyPI| |Python| |License| |Code size| |Downloads|
+|PyPI| |Python| |License| |Code size| |Downloads| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=important&label=PyPI
    :target: https://pypi.org/project/pyhelpers/
@@ -13,6 +13,8 @@ PyHelpers
    :target: https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers
 .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
    :target: https://pypistats.org/packages/pyhelpers
+.. |DOI| image:: https://zenodo.org/badge/173177909.svg
+   :target: https://zenodo.org/badge/latestdoi/173177909
 
 **Author**: Qian Fu |Twitter|
 
