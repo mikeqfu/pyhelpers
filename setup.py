@@ -20,8 +20,9 @@ setuptools.setup(
     url='https://github.com/mikeqfu/pyhelpers',
 
     install_requires=[
-        # 'gdal',
+        'fake-useragent',
         'fuzzywuzzy',
+        # 'gdal',
         # 'matplotlib',
         # 'nltk',
         'numpy',
