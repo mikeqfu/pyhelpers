@@ -7,13 +7,13 @@ To install the latest release of `pyhelpers <https://github.com/mikeqfu/pyhelper
 
 .. code-block:: bash
 
-   pip install -U pyhelpers
+   pip install --upgrade pyhelpers
 
 If you would like to try the more recent version under development, install it from GitHub
 
 .. code-block:: bash
 
-   pip install git+https://github.com/mikeqfu/pyhelpers.git
+   pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
 To test if pyhelpers is correctly installed, try importing the package from an interpreter shell:
 
