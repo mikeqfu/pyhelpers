@@ -1,105 +1,64 @@
-.. _pyhelpers-geom:
+.. py:module:: pyhelpers.geom
 
 geom
-----
+====
 
-.. module:: pyhelpers.geom
+.. automodule:: pyhelpers.geom
+    :noindex:
+    :no-members:
+    :no-inherited-members:
 
-A module for manipulation of geometric/geographical data.
+
+.. rubric:: Transformation
 
 .. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-   wgs84_to_osgb36
-   osgb36_to_wgs84
-   wgs84_to_osgb36_calc
-   osgb36_to_wgs84_calc
-   get_midpoint
-   transform_geom_point_type
-   get_geometric_midpoint
-   get_geometric_midpoint_calc
-   calc_distance_on_unit_sphere
-   calc_hypotenuse_distance
-   find_closest_point_from
-   find_closest_points_between
-   get_square_vertices
-   get_square_vertices_calc
-   sketch_square
+    wgs84_to_osgb36
+    osgb36_to_wgs84
+    wgs84_to_osgb36_calc
+    osgb36_to_wgs84_calc
+    transform_geom_point_type
 
-.. _geom-wgs84-to-osgb36:
 
-wgs84_to_osgb36
-***************
+.. rubric:: Midpoint
 
-.. autofunction:: pyhelpers.geom.wgs84_to_osgb36
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. _geom-osgb36-to-wgs84:
+    get_midpoint
+    get_geometric_midpoint
+    get_geometric_midpoint_calc
 
-osgb36_to_wgs84
-***************
 
-.. autofunction:: pyhelpers.geom.osgb36_to_wgs84
+.. rubric:: Distance
 
-wgs84_to_osgb36_calc
-********************
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.geom.wgs84_to_osgb36_calc
+    calc_distance_on_unit_sphere
+    calc_hypotenuse_distance
 
-osgb36_to_wgs84_calc
-********************
 
-.. autofunction:: pyhelpers.geom.osgb36_to_wgs84_calc
+.. rubric:: Search
 
-get_midpoint
-************
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.geom.get_midpoint
+    find_closest_point_from
+    find_closest_points_between
+    get_square_vertices
+    get_square_vertices_calc
 
-transform_geom_point_type
-*************************
 
-.. autofunction:: pyhelpers.geom.transform_geom_point_type
+.. rubric:: Visualisation
 
-get_geometric_midpoint
-**********************
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.geom.get_geometric_midpoint
-
-get_geometric_midpoint_calc
-***************************
-
-.. autofunction:: pyhelpers.geom.get_geometric_midpoint_calc
-
-calc_distance_on_unit_sphere
-****************************
-
-.. autofunction:: pyhelpers.geom.calc_distance_on_unit_sphere
-
-calc_hypotenuse_distance
-************************
-
-.. autofunction:: pyhelpers.geom.calc_hypotenuse_distance
-
-find_closest_point_from
-***********************
-
-.. autofunction:: pyhelpers.geom.find_closest_point_from
-
-find_closest_points_between
-***************************
-
-.. autofunction:: pyhelpers.geom.find_closest_points_between
-
-get_square_vertices
-*******************
-
-.. autofunction:: pyhelpers.geom.get_square_vertices
-
-get_square_vertices_calc
-************************
-
-.. autofunction:: pyhelpers.geom.get_square_vertices_calc
-
-sketch_square
-*************
-
-.. autofunction:: pyhelpers.geom.sketch_square
+    sketch_square
