@@ -1,4 +1,6 @@
-""" A module for altering settings. """
+"""
+A module for altering settings.
+"""
 
 import os
 
@@ -12,6 +14,12 @@ def np_preferences(reset=False):
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
+
+    **Example**::
+
+        >>> from pyhelpers.settings import np_preferences
+
+        >>> np_preferences()
     """
 
     if not reset:
@@ -26,6 +34,12 @@ def pd_preferences(reset=False):
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
+
+    **Example**::
+
+        >>> from pyhelpers.settings import pd_preferences
+
+        >>> pd_preferences()
     """
 
     if not reset:
@@ -50,18 +64,15 @@ def mpl_preferences(reset=False, font_name=None):
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     :param font_name: name of a font to be used, defaults to ``None``
-    :type font_name: str, None
+    :type font_name: None or str
 
-    .. note::
+    **Example**::
 
-        Get a list of supported file formats for `matplotlib.pyplot.savefig` function
+        >>> from pyhelpers.settings import mpl_preferences
 
-        .. code-block:: python
+        >>> mpl_preferences()
 
-            import matplotlib.pyplot as plt
-
-            plt.gcf().canvas.get_supported_filetypes()  # `gcf` is short for 'get current fig' manager
-            plt.gcf().canvas.get_supported_filetypes_grouped()
+        >>> mpl_preferences(font_name='Times New Roman')
     """
 
     import matplotlib.pyplot as plt
@@ -75,7 +86,8 @@ def mpl_preferences(reset=False, font_name=None):
         if font_name:  # Use the font, 'Cambria'
             if os.path.isfile(matplotlib.font_manager.findfont(font_name)):
                 # Set 'font.family' to 'serif', then matplotlib will use that list
-                plt.rcParams['font.family'], serif_fonts = 'serif', plt.rcParams['font.serif']
+                plt.rcParams['font.family'] = 'serif'
+                serif_fonts = plt.rcParams['font.serif']
                 if font_name not in serif_fonts:
                     plt.rcParams['font.serif'] = [font_name] + plt.rcParams['font.serif']
                 else:
@@ -96,6 +108,12 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000):
     :type reset: bool
     :param max_tmpfile_size: maximum size of the temporary file, defaults to ``5000``
     :type max_tmpfile_size: int
+
+    **Example**::
+
+        >>> from pyhelpers.settings import gdal_configurations
+
+        >>> gdal_configurations()
     """
 
     import gdal
@@ -107,7 +125,8 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000):
         gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
         # Whether to compress nodes in temporary DB. Defaults to NO.
         gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
-        # Maximum size in MB of in-memory temporary file. If it exceeds that value, it will go to disk. Defaults to 100.
+        # Maximum size in MB of in-memory temporary file.
+        # If it exceeds that value, it will go to disk. Defaults to 100.
         gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
     else:
         gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
