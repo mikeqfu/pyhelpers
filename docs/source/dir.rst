@@ -1,51 +1,39 @@
-.. _pyhelpers-dir:
+.. py:module:: pyhelpers.dir
 
 dir
----
+===
 
-.. module:: pyhelpers.dir
+.. automodule:: pyhelpers.dir
+    :noindex:
+    :no-members:
+    :no-inherited-members:
 
-A module for manipulation of directories.
+
+.. rubric:: Directory
 
 .. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-   cd
-   cdd
-   cd_dat
-   is_dirname
-   validate_input_data_dir
-   rm_dir
+    cd
+    cdd
+    cd_dat
 
-.. _dir-cd:
 
-cd
-**
+.. rubric:: Validation
 
-.. autofunction:: pyhelpers.dir.cd
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-cdd
-***
+    is_dirname
+    validate_input_data_dir
 
-.. autofunction:: pyhelpers.dir.cdd
 
-cd_dat
-******
+.. rubric:: Deletion
 
-.. autofunction:: pyhelpers.dir.cd_dat
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-is_dirname
-**********
-
-.. autofunction:: pyhelpers.dir.is_dirname
-
-validate_input_data_dir
-***********************
-
-.. autofunction:: pyhelpers.dir.validate_input_data_dir
-
-.. _dir-rm-dir:
-
-rm_dir
-******
-
-.. autofunction:: pyhelpers.dir.rm_dir
+    delete_dir
