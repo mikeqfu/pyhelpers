@@ -61,12 +61,12 @@ def test_validate_input_data_dir():
     # <cwd>\\tests
 
 
-def test_rm_dir():
+def test_delete_dir():
     path_to_dir = cdd(mkdir=True)
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
     # The directory "<cwd>\\data\\dat" exists? True
 
-    rm_dir(path_to_dir, confirmation_required=True, verbose=True)
+    delete_dir(path_to_dir, confirmation_required=True, verbose=True)
     # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: yes
     # Done.
 
@@ -98,4 +98,4 @@ if __name__ == '__main__':
 
     print("\nTesting 'rm_dir()':")
 
-    test_rm_dir()
+    test_delete_dir()
