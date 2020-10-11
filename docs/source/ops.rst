@@ -1,123 +1,75 @@
-.. _pyhelpers-ops:
+.. py:module:: pyhelpers.ops
 
 ops
----
+===
 
-.. module:: pyhelpers.ops
+.. automodule:: pyhelpers.ops
+    :noindex:
+    :no-members:
+    :no-inherited-members:
 
-A module for miscellaneous use.
+For general use
+---------------
 
 .. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-   download_file_from_url
-   confirmed
-   get_variable_name
-   get_variable_names
-   split_list_by_size
-   split_list
-   split_iterable
-   update_nested_dict
-   get_all_values_from_nested_dict
-   remove_multiple_keys_from_dict
-   get_extreme_outlier_bounds
-   interquartile_range
-   find_closest_date
-   cmap_discretisation
-   colour_bar_index
-   detect_nan_for_str_column
-   create_rotation_matrix
-   dict_to_dataframe
+    confirmed
 
-.. _ops-download-file-from-url:
+For iterable manipulation
+-------------------------
 
-download_file_from_url
-**********************
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.ops.download_file_from_url
+    split_list_by_size
+    split_list
+    split_iterable
+    update_nested_dict
+    get_all_values_from_nested_dict
+    remove_multiple_keys_from_dict
 
-.. _ops-confirmed:
+For tabular data manipulation
+-----------------------------
 
-confirmed
-*********
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.ops.confirmed
+    detect_nan_for_str_column
+    create_rotation_matrix
+    dict_to_dataframe
+    parse_csr_matrix
 
-get_variable_name
-*****************
+For simple computation
+----------------------
 
-.. autofunction:: pyhelpers.ops.get_variable_name
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-get_variable_names
-******************
+    get_extreme_outlier_bounds
+    interquartile_range
+    find_closest_date
 
-.. autofunction:: pyhelpers.ops.get_variable_names
+For graph plotting
+------------------
 
-split_list_by_size
-******************
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-.. autofunction:: pyhelpers.ops.split_list_by_size
+    cmap_discretisation
+    colour_bar_index
 
-split_list
-**********
+For web scraping
+----------------
 
-.. autofunction:: pyhelpers.ops.split_list
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
 
-split_iterable
-**************
-
-.. autofunction:: pyhelpers.ops.split_iterable
-
-update_nested_dict
-******************
-
-.. autofunction:: pyhelpers.ops.update_nested_dict
-
-get_all_values_from_nested_dict
-*******************************
-
-.. autofunction:: pyhelpers.ops.get_all_values_from_nested_dict
-
-remove_multiple_keys_from_dict
-******************************
-
-.. autofunction:: pyhelpers.ops.remove_multiple_keys_from_dict
-
-get_extreme_outlier_bounds
-**************************
-
-.. autofunction:: pyhelpers.ops.get_extreme_outlier_bounds
-
-interquartile_range
-*******************
-
-.. autofunction:: pyhelpers.ops.interquartile_range
-
-find_closest_date
-*****************
-
-.. autofunction:: pyhelpers.ops.find_closest_date
-
-cmap_discretisation
-*******************
-
-.. autofunction:: pyhelpers.ops.cmap_discretisation
-
-colour_bar_index
-****************
-
-.. autofunction:: pyhelpers.ops.colour_bar_index
-
-detect_nan_for_str_column
-*************************
-
-.. autofunction:: pyhelpers.ops.detect_nan_for_str_column
-
-create_rotation_matrix
-**********************
-
-.. autofunction:: pyhelpers.ops.create_rotation_matrix
-
-dict_to_dataframe
-*****************
-
-.. autofunction:: pyhelpers.ops.dict_to_dataframe
+    fake_requests_headers
+    download_file_from_url
