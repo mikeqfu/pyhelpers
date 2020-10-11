@@ -1,3 +1,7 @@
+"""
+Test module settings.py
+"""
+
 from pyhelpers.settings import *
 
 
