@@ -1044,6 +1044,12 @@ class PostgreSQL:
             Dropping ...
                 "points" ... Done.
 
+            >>> testdb.drop_database(verbose=True)
+            Confirmed to drop the database "testdb"
+                from postgres:***@localhost:5432/testdb?
+              [No]|Yes: >? yes
+            Dropping the database "testdb" ... Done.
+
         **Aside**: a brief example of using the parameter ``params`` for
         `pandas.read_sql <https://pandas.pydata.org/pandas-docs/stable/reference/api/
         pandas.read_sql.html>`_
