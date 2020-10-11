@@ -1,7 +1,7 @@
 PyHelpers
 =========
 
-|PyPI| |Python| |License| |Code size| |Downloads| |DOI|
+|PyPI| |Python| |License| |Downloads| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=important&label=PyPI
    :target: https://pypi.org/project/pyhelpers/
@@ -9,8 +9,6 @@ PyHelpers
    :target: https://www.python.org/downloads/windows/
 .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers?color=green&label=License
    :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-.. |Code size| image:: https://img.shields.io/github/languages/code-size/mikeqfu/pyhelpers?color=yellowgreen&label=Code%20size
-   :target: https://github.com/mikeqfu/pyhelpers/tree/master/pyhelpers
 .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
    :target: https://pypistats.org/packages/pyhelpers
 .. |DOI| image:: https://zenodo.org/badge/173177909.svg
