@@ -9,8 +9,88 @@ import numpy as np
 
 from pyhelpers.ops import create_rotation_matrix
 
+""" Transformation ----------------------------------------------------------------- """
 
-# Transformation
+
+# Geometric type
+
+def transform_geom_point_type(*pts, as_geom=True):
+    """
+    Transform iterable to `shapely.geometry.Point` type, or the other way round.
+
+    :param pts: points (e.g. list of lists/tuples or shapely.geometry.Points)
+    :type pts: list or tuple or shapely.geometry.Point
+    :param as_geom: whether to return point(s) as `shapely.geometry.Point`_,
+        defaults to ``True``
+    :type as_geom: bool
+    :return: a sequence of points (incl. None, if errors occur)
+    :rtype: types.GeneratorType
+
+    .. _`shapely.geometry.Point`:
+        https://shapely.readthedocs.io/en/latest/manual.html#points
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import transform_geom_point_type
+
+        >>> pt_x = 1.5429, 52.6347
+        >>> pt_y = 1.4909, 52.6271
+
+        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
+        >>> for x in geom_points:
+        ...     print(x)
+        POINT (1.5429 52.6347)
+        POINT (1.4909 52.6271)
+
+        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
+        >>> for x in geom_points:
+        ...     print(x)
+        (1.5429, 52.6347)
+        (1.4909, 52.6271)
+
+        >>> from shapely.geometry import Point
+
+        >>> pt_x = Point(pt_x)
+        >>> pt_y = Point(pt_y)
+
+        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
+        >>> for x in geom_points:
+        ...     print(x)
+        POINT (1.5429 52.6347)
+        POINT (1.4909 52.6271)
+
+        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
+        >>> for x in geom_points:
+        ...     print(x)
+        (1.5429, 52.6347)
+        (1.4909, 52.6271)
+    """
+
+    from shapely.geometry import Point
+
+    if as_geom:
+        for pt in pts:
+            if isinstance(pt, Point):
+                pt_ = pt
+            elif isinstance(pt, collections.abc.Iterable):
+                assert len(list(pt)) == 2
+                pt_ = Point(pt)
+            else:
+                pt_ = None
+            yield pt_
+    else:
+        for pt in pts:
+            if isinstance(pt, Point):
+                pt_ = pt.x, pt.y
+            elif isinstance(pt, collections.abc.Iterable):
+                assert len(list(pt)) == 2
+                pt_ = pt
+            else:
+                pt_ = None
+            yield pt_
+
+
+# Coordinate system
 
 def wgs84_to_osgb36(longitude, latitude, **kwargs):
     """
@@ -345,80 +425,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     return long, lat
 
 
-def transform_geom_point_type(*pts, as_geom=True):
-    """
-    Transform iterable to `shapely.geometry.Point` type, or the other way round.
-
-    :param pts: points (e.g. list of lists/tuples or shapely.geometry.Points)
-    :type pts: list or tuple or shapely.geometry.Point
-    :param as_geom: whether to return point(s) as `shapely.geometry.Point`_,
-        defaults to ``True``
-    :type as_geom: bool
-    :return: a sequence of points (incl. None, if errors occur)
-    :rtype: types.GeneratorType
-
-    .. _`shapely.geometry.Point`:
-        https://shapely.readthedocs.io/en/latest/manual.html#points
-
-    **Examples**::
-
-        >>> from pyhelpers.geom import transform_geom_point_type
-
-        >>> pt_x = 1.5429, 52.6347
-        >>> pt_y = 1.4909, 52.6271
-
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points:
-        ...     print(x)
-        POINT (1.5429 52.6347)
-        POINT (1.4909 52.6271)
-
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points:
-        ...     print(x)
-        (1.5429, 52.6347)
-        (1.4909, 52.6271)
-
-        >>> from shapely.geometry import Point
-
-        >>> pt_x = Point(pt_x)
-        >>> pt_y = Point(pt_y)
-
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points:
-        ...     print(x)
-        POINT (1.5429 52.6347)
-        POINT (1.4909 52.6271)
-
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points:
-        ...     print(x)
-        (1.5429, 52.6347)
-        (1.4909, 52.6271)
-    """
-
-    from shapely.geometry import Point
-
-    if as_geom:
-        for pt in pts:
-            if isinstance(pt, Point):
-                pt_ = pt
-            elif isinstance(pt, collections.abc.Iterable):
-                assert len(list(pt)) == 2
-                pt_ = Point(pt)
-            else:
-                pt_ = None
-            yield pt_
-    else:
-        for pt in pts:
-            if isinstance(pt, Point):
-                pt_ = pt.x, pt.y
-            elif isinstance(pt, collections.abc.Iterable):
-                assert len(list(pt)) == 2
-                pt_ = pt
-            else:
-                pt_ = None
-            yield pt_
+""" Calculation -------------------------------------------------------------------- """
 
 
 # Midpoint
@@ -962,7 +969,10 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-# Visualisation
+""" Visualisation ------------------------------------------------------------------ """
+
+
+# Sketch
 
 def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=False,
                   annot_font_size=12, fig_size=(6.4, 4.8), ret_vertices=False,
