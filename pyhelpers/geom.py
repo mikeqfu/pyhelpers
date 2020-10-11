@@ -16,7 +16,9 @@ from pyhelpers.ops import create_rotation_matrix
 
 def transform_geom_point_type(*pts, as_geom=True):
     """
-    Transform iterable to `shapely.geometry.Point` type, or the other way round.
+    Transform iterable to `shapely.geometry.Point
+    <https://shapely.readthedocs.io/en/latest/manual.html#points>`_ type,
+    or the other way round.
 
     :param pts: points (e.g. list of lists/tuples or shapely.geometry.Points)
     :type pts: list or tuple or shapely.geometry.Point
@@ -25,9 +27,6 @@ def transform_geom_point_type(*pts, as_geom=True):
     :type as_geom: bool
     :return: a sequence of points (incl. None, if errors occur)
     :rtype: types.GeneratorType
-
-    .. _`shapely.geometry.Point`:
-        https://shapely.readthedocs.io/en/latest/manual.html#points
 
     **Examples**::
 
@@ -94,7 +93,10 @@ def transform_geom_point_type(*pts, as_geom=True):
 
 def wgs84_to_osgb36(longitude, latitude, **kwargs):
     """
-    Convert latitude and longitude (WGS84) to British national grid (OSGB36).
+    Convert latitude and longitude
+    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
+    to British national grid
+    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
 
     :param longitude: the longitude (abbr: long., λ, or lambda) of a point
         on Earth's surface
@@ -131,7 +133,10 @@ def wgs84_to_osgb36(longitude, latitude, **kwargs):
 
 def osgb36_to_wgs84(easting, northing, **kwargs):
     """
-    Convert British national grid (OSGB36) to latitude and longitude (WGS84).
+    Convert British national grid
+    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
+    to latitude and longitude
+    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_).
 
     :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
     :type easting: int or float
@@ -167,7 +172,10 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
 
 def wgs84_to_osgb36_calc(longitude, latitude):
     """
-    Convert latitude and longitude (WGS84) to British National Grid (OSGB36)
+    Convert latitude and longitude
+    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
+    to British national grid
+    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
     by calculation.
 
     :param longitude: the longitude (abbr: long., λ, or lambda) of a point
@@ -296,7 +304,10 @@ def wgs84_to_osgb36_calc(longitude, latitude):
 
 def osgb36_to_wgs84_calc(easting, northing):
     """
-    Convert british national grid (OSGB36) to latitude and longitude (WGS84)
+    Convert british national grid
+    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
+    to latitude and longitude
+    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
     by calculation.
 
     :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
