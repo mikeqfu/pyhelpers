@@ -1,26 +1,27 @@
-.. _pyhelpers-modules:
+.. py:module:: pyhelpers
 
+=======
 Modules
 =======
 
 .. toctree::
-   :hidden:
+    :maxdepth: 2
+    :hidden:
 
-   dir
-   geom
-   ops
-   settings
-   sql
-   store
-   text
-
+    settings
+    dir
+    ops
+    store
+    geom
+    text
+    sql
 
 .. autosummary::
 
-   pyhelpers.dir
-   pyhelpers.geom
-   pyhelpers.ops
-   pyhelpers.settings
-   pyhelpers.sql
-   pyhelpers.store
-   pyhelpers.text
+    settings
+    dir
+    ops
+    store
+    geom
+    text
+    sql
