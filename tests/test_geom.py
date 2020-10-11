@@ -1,6 +1,49 @@
 from pyhelpers.geom import *
 
 
+""" Transformation ----------------------------------------------------------------- """
+
+
+# Geometric type
+
+def test_transform_geom_point_type():
+    pt_x = 1.5429, 52.6347
+    pt_y = 1.4909, 52.6271
+
+    geom_points = transform_geom_point_type(pt_x, pt_y)
+    for x in geom_points:
+        print(x)
+    # POINT (1.5429 52.6347)
+    # POINT (1.4909 52.6271)
+
+    as_geom = False
+    geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+    for x in geom_points:
+        print(x)
+    # (1.5429, 52.6347)
+    # (1.4909, 52.6271)
+
+    from shapely.geometry import Point
+
+    pt_x = Point(pt_x)
+    pt_y = Point(pt_y)
+
+    geom_points = transform_geom_point_type(pt_x, pt_y)
+    for x in geom_points:
+        print(x)
+    # POINT (1.5429 52.6347)
+    # POINT (1.4909 52.6271)
+
+    as_geom = False
+    geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
+    for x in geom_points:
+        print(x)
+    # (1.5429, 52.6347)
+    # (1.4909, 52.6271)
+
+
+# Coordinate system
+
 def test_wgs84_to_osgb36():
     longitude, latitude = -0.12772404, 51.507407
 
@@ -51,6 +94,11 @@ def test_osgb36_to_wgs84_calc():
     # Latitude: 51.50740692743041
 
 
+""" Calculation -------------------------------------------------------------------- """
+
+
+# Midpoint
+
 def test_get_midpoint():
     x1, y1 = 1.5429, 52.6347
     x2, y2 = 1.4909, 52.6271
@@ -78,42 +126,6 @@ def test_get_midpoint():
         print(x)
     # POINT (2.0429 53.1347)
     # POINT (1.9909 53.1271)
-
-
-def test_transform_geom_point_type():
-    pt_x = 1.5429, 52.6347
-    pt_y = 1.4909, 52.6271
-
-    geom_points = transform_geom_point_type(pt_x, pt_y)
-    for x in geom_points:
-        print(x)
-    # POINT (1.5429 52.6347)
-    # POINT (1.4909 52.6271)
-
-    as_geom = False
-    geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-    for x in geom_points:
-        print(x)
-    # (1.5429, 52.6347)
-    # (1.4909, 52.6271)
-
-    from shapely.geometry import Point
-
-    pt_x = Point(pt_x)
-    pt_y = Point(pt_y)
-
-    geom_points = transform_geom_point_type(pt_x, pt_y)
-    for x in geom_points:
-        print(x)
-    # POINT (1.5429 52.6347)
-    # POINT (1.4909 52.6271)
-
-    as_geom = False
-    geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=as_geom)
-    for x in geom_points:
-        print(x)
-    # (1.5429, 52.6347)
-    # (1.4909, 52.6271)
 
 
 def test_get_geometric_midpoint():
@@ -146,6 +158,8 @@ def test_get_geometric_midpoint_calc():
     # cp. get_geometric_midpoint(pt_x, pt_y)
 
 
+# Distance
+
 def test_calc_distance_on_unit_sphere():
     pt_x = 1.5429, 52.6347
     pt_y = 1.4909, 52.6271
@@ -163,6 +177,8 @@ def test_calc_hypotenuse_distance():
     print(hypot_dist)
     # 0.05255244999046248
 
+
+# Search
 
 def test_find_closest_point_from():
     pt = (2.5429, 53.6347)
@@ -256,6 +272,11 @@ def test_get_square_vertices_calc():
     #  [-5.91462341 56.89787659]
     #  [-5.85212341 56.78962341]]
 
+
+""" Visualisation ------------------------------------------------------------------ """
+
+
+# Sketch
 
 def test_sketch_square():
     ctr_x, ctr_y = 1, 1
