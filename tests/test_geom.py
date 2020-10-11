@@ -1,5 +1,8 @@
-from pyhelpers.geom import *
+"""
+Test module geom.py
+"""
 
+from pyhelpers.geom import *
 
 """ Transformation ----------------------------------------------------------------- """
 
@@ -300,62 +303,59 @@ def test_sketch_square():
 
 
 if __name__ == '__main__':
-    print("\nTesting 'wgs84_to_osgb36()':")
+    """ Transformation ------------------------------------------------------------- """
 
+    # Geometric type
+    print("\nTesting 'transform_geom_point_type()':")
+    test_transform_geom_point_type()
+
+    # Coordinate system
+    print("\nTesting 'wgs84_to_osgb36()':")
     test_wgs84_to_osgb36()
 
     print("\nTesting 'osgb36_to_wgs84()':")
-
     test_osgb36_to_wgs84()
 
     print("\nTesting 'wgs84_to_osgb36_calc()':")
-
     test_wgs84_to_osgb36_calc()
 
     print("\nTesting 'osgb36_to_wgs84_calc()':")
-
     test_osgb36_to_wgs84_calc()
 
-    print("\nTesting 'get_midpoint()':")
+    """ Calculation ---------------------------------------------------------------- """
 
+    # Midpoint
+    print("\nTesting 'get_midpoint()':")
     test_get_midpoint()
 
-    print("\nTesting 'transform_geom_point_type()':")
-
-    test_transform_geom_point_type()
-
     print("\nTesting 'get_geometric_midpoint()':")
-
     test_get_geometric_midpoint()
 
     print("\nTesting 'get_geometric_midpoint_calc()':")
-
     test_get_geometric_midpoint_calc()
 
+    # Distance
     print("\nTesting 'calc_distance_on_unit_sphere()':")
-
     test_calc_distance_on_unit_sphere()
 
     print("\nTesting 'calc_hypotenuse_distance()':")
-
     test_calc_hypotenuse_distance()
 
+    # Search
     print("\nTesting 'find_closest_point_from()':")
-
     test_find_closest_point_from()
 
     print("\nTesting 'find_closest_points_between()':")
-
     test_find_closest_points_between()
 
     print("\nTesting 'get_square_vertices()':")
-
     test_get_square_vertices()
 
     print("\nTesting 'get_square_vertices_calc()':")
-
     test_get_square_vertices_calc()
 
-    print("\nTesting 'sketch_square()':")
+    """ Visualisation -------------------------------------------------------------- """
 
+    # Sketch
+    print("\nTesting 'sketch_square()':")
     test_sketch_square()
