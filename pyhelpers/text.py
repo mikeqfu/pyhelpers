@@ -71,7 +71,8 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     if processor == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
 
-        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs)
+                       for a in lookup_list]
 
         if l_distances:
             sim_str = lookup_list[l_distances.index(max(l_distances))]
@@ -450,7 +451,8 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     s1_count, s2_count = np.array(s1_count), np.array(s2_count)
 
     similarity = np.dot(s1_count, s2_count)
-    cos_similarity = np.divide(similarity, np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
+    cos_similarity = np.divide(similarity,
+                               np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
 
     if cosine_distance:
         cos_similarity = 1 - cos_similarity
