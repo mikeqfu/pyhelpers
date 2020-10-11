@@ -9,9 +9,11 @@ import pkg_resources
 from pyhelpers.ops import confirmed
 
 
+# Change directories -------------------------------------------------------------------
+
 def cd(*sub_dir, mkdir=False, **kwargs):
     """
-    Change directory.
+    Change directory and get path to sub-directories / files.
 
     :param sub_dir: name of directory or names of directories (and/or a filename)
     :type sub_dir: str
@@ -55,7 +57,7 @@ def cd(*sub_dir, mkdir=False, **kwargs):
 
 def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
-    Change directory to ``data_dir`` and sub-directories.
+    Get path to ``data_dir`` and/or sub-directories / files.
 
     :param sub_dir: name of directory or names of directories (and/or a filename)
     :type sub_dir: str
@@ -96,7 +98,7 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
 
 def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
-    Change directory to ``dat_dir`` and sub-directories within a package.
+    Get path to ``dat_dir`` and sub-directories / files in a package.
 
     :param sub_dir: name of directory or names of directories (and/or a filename)
     :type sub_dir: str
@@ -135,6 +137,8 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 
     return path
 
+
+# Validate directories -----------------------------------------------------------------
 
 def is_dirname(dir_name):
     """
@@ -208,6 +212,8 @@ def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
 
     return data_dir_
 
+
+# Delete directories -------------------------------------------------------------------
 
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
     """
