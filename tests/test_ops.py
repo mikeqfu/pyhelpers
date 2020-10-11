@@ -1,9 +1,13 @@
+"""
+Test module ops.py
+"""
+
 import matplotlib.pyplot as plt
 
 from pyhelpers.ops import *
 
 
-# For general use
+# For general use ----------------------------------------------------------------------
 
 def test_confirmed():
     prompt = "Create Directory?"
@@ -14,7 +18,7 @@ def test_confirmed():
     # True
 
 
-# For iterable manipulation
+# For iterable manipulation ------------------------------------------------------------
 
 def test_split_list_by_size():
     lst = list(range(0, 10))
@@ -121,7 +125,7 @@ def test_remove_multiple_keys_from_dict():
     # {'k2': 'v2', 'k5': 'v5'}
 
 
-# Tabular data
+# Tabular data -------------------------------------------------------------------------
 
 def test_detect_nan_for_str_column():
     data_frame = pd.DataFrame(np.resize(range(10), (10, 2)), columns=['a', 'b'])
@@ -178,7 +182,7 @@ def test_parse_csr_matrix():
     # True
 
 
-# For simple computation
+# For simple computation ---------------------------------------------------------------
 
 def test_get_extreme_outlier_bounds():
     num_dat = pd.DataFrame(range(100), columns=['col'])
@@ -216,7 +220,7 @@ def test_find_closest_date():
     # 2019-01-02 00:00:00.000000
 
 
-# For graph plotting
+# For graph plotting -------------------------------------------------------------------
 
 def test_cmap_discretisation():
     import matplotlib.cm
@@ -267,7 +271,7 @@ def test_colour_bar_index():
     print("Done.")
 
 
-# For web scraping
+# For web scraping ---------------------------------------------------------------------
 
 def test_fake_requests_headers():
     fake_header = fake_requests_headers()
@@ -291,11 +295,11 @@ def test_download_file_from_url():
 
 
 if __name__ == '__main__':
-    # For general use
+    # For general use ------------------------------------------------------------------
     print("\nTesting 'confirmed()':")
     test_confirmed()
 
-    # For iterable manipulation
+    # For iterable manipulation --------------------------------------------------------
     print("\nTesting 'split_list_by_size()':")
     test_split_list_by_size()
 
@@ -314,7 +318,7 @@ if __name__ == '__main__':
     print("\nTesting 'remove_multiple_keys_from_dict()':")
     test_remove_multiple_keys_from_dict()
 
-    # Tabular data
+    # Tabular data ---------------------------------------------------------------------
     print("\nTesting 'detect_nan_for_str_column()':")
     test_detect_nan_for_str_column()
 
@@ -327,7 +331,7 @@ if __name__ == '__main__':
     print("\nTesting 'load_csr_matrix()':")
     test_parse_csr_matrix()
 
-    # For simple computation
+    # For simple computation -----------------------------------------------------------
     print("\nTesting 'get_extreme_outlier_bounds()':")
     test_get_extreme_outlier_bounds()
 
@@ -337,7 +341,7 @@ if __name__ == '__main__':
     print("\nTesting 'find_closest_date()':")
     test_find_closest_date()
 
-    # For graph plotting
+    # For graph plotting ---------------------------------------------------------------
     print("\nTesting 'cmap_discretisation()':")
     test_cmap_discretisation()
 
@@ -346,7 +350,7 @@ if __name__ == '__main__':
 
     plt.show()
 
-    # For web scraping
+    # For web scraping -----------------------------------------------------------------
     print("\nTesting 'fake_requests_headers()':")
     test_fake_requests_headers()
 
