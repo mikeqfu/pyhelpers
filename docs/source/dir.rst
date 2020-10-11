@@ -8,8 +8,8 @@ dir
     :no-members:
     :no-inherited-members:
 
-
-.. rubric:: Directory
+Change directories
+------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -19,8 +19,8 @@ dir
     cdd
     cd_dat
 
-
-.. rubric:: Validation
+Validate directories
+--------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -29,8 +29,8 @@ dir
     is_dirname
     validate_input_data_dir
 
-
-.. rubric:: Deletion
+Delete directories
+------------------
 
 .. autosummary::
     :toctree: _generated/
