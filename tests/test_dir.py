@@ -1,5 +1,11 @@
+"""
+Test module dir.py
+"""
+
 from pyhelpers.dir import *
 
+
+# Change directories -------------------------------------------------------------------
 
 def test_cd():
     # Can use a breakpoint in the code line below to debug the script.
@@ -38,6 +44,8 @@ def test_cd_dat():
     # <package directory>\\dat\\tests. (This directory will NOT be created if it does not exists.)
 
 
+# Validate directories -----------------------------------------------------------------
+
 def test_is_dir():
     dir_name = "tests"
     print(is_dirname(dir_name))
@@ -61,6 +69,8 @@ def test_validate_input_data_dir():
     # <cwd>\\tests
 
 
+# Delete directories -------------------------------------------------------------------
+
 def test_delete_dir():
     path_to_dir = cdd(mkdir=True)
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
@@ -76,26 +86,26 @@ def test_delete_dir():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print("\nTesting 'cd()':")
+    # Change directories ---------------------------------------------------------------
 
+    print("\nTesting 'cd()':")
     test_cd()
 
     print("\nTesting 'cdd()':")
-
     test_cdd()
 
     print("\nTesting 'cd_dat()':")
-
     test_cd_dat()
 
-    print("\nTesting 'is_dir()':")
+    # Validate directories -------------------------------------------------------------
 
+    print("\nTesting 'is_dir()':")
     test_is_dir()
 
     print("\nTesting 'validate_input_data_dir()':")
-
     test_validate_input_data_dir()
 
-    print("\nTesting 'rm_dir()':")
+    # Delete directories ---------------------------------------------------------------
 
+    print("\nTesting 'rm_dir()':")
     test_delete_dir()
