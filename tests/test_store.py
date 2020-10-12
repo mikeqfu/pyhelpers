@@ -45,23 +45,25 @@ def test_save():
         index=['London', 'Birmingham', 'Manchester', 'Leeds'],
         columns=['Easting', 'Northing'])
 
-    path_to_file = cd("tests\\data", "dat.txt")
+    dat_dir = cd("tests\\data")
+
+    path_to_file = cd(dat_dir, "dat.txt")
     save(data, path_to_file, verbose=True)
     # Updating "dat.txt" at "\\tests\\data" ... Done.
 
-    path_to_file = cd("tests\\data", "dat.csv")
+    path_to_file = cd(dat_dir, "dat.csv")
     save(data, path_to_file, verbose=True)
     # Updating "dat.csv" at "\\tests\\data" ... Done.
 
-    path_to_file = cd("tests\\data", "dat.xlsx")
+    path_to_file = cd(dat_dir, "dat.xlsx")
     save(data, path_to_file, verbose=True)
     # Updating "dat.xlsx" at "\\tests\\data" ... Done.
 
-    path_to_file = cd("tests\\data", "dat.pickle")
+    path_to_file = cd(dat_dir, "dat.pickle")
     save(data, path_to_file, verbose=True)
     # Updating "dat.pickle" at "\\tests\\data" ... Done.
 
-    path_to_file = cd("tests\\data", "dat.feather")
+    path_to_file = cd(dat_dir, "dat.feather")
     save(data.reset_index(), path_to_file, verbose=True)
     # Updating "dat.feather" at "\\tests\\data" ... Done.
 
@@ -173,7 +175,6 @@ def test_save_feather():
 
 
 def test_save_fig():
-
     from pyhelpers.dir import cd
 
     x, y = (1, 1), (2, 2)
@@ -181,11 +182,13 @@ def test_save_fig():
     plt.plot([x[0], y[0]], [x[1], y[1]])
     # plt.show()
 
-    path_to_fig_file = cd("tests\\images", "fig.png")
+    img_dir = cd("tests\\images")
+
+    path_to_fig_file = cd(img_dir, "fig.png")
     save_fig(path_to_fig_file, dpi=300, verbose=True)
     # Saving "fig.png" to "\\tests\\images" ... Done.
 
-    path_to_fig_file = cd("tests\\images", "fig.svg")
+    path_to_fig_file = cd(img_dir, "fig.svg")
     save_fig(path_to_fig_file, dpi=300, verbose=True, conv_svg_to_emf=True)
     # Saving "fig.svg" to "\\tests\\images" ... Done.
     # Saving the "fig.svg" as "\\tests\\images\\fig.emf" ... Done.
@@ -198,11 +201,34 @@ def test_save_svg_as_emf():
     plt.figure()
     plt.plot([x[0], y[0]], [x[1], y[1]])
 
-    path_to_svg = cd("tests\\images", "fig.svg")
-    path_to_emf = cd("tests\\images", "fig.emf")
+    img_dir = cd("tests\\images")
+
+    path_to_svg = cd(img_dir, "fig.svg")
+    path_to_emf = cd(img_dir, "fig.emf")
 
     save_svg_as_emf(path_to_svg, path_to_emf, verbose=True)
     # Saving the "fig.svg" as "\\tests\\images\\fig.emf" ... Done.
+
+
+def test_save_web_page_as_pdf():
+    from pyhelpers.dir import cd
+
+    page_size = 'A4'
+    zoom = 1.0
+    encoding = 'UTF-8'
+    verbose = True
+
+    url_to_web_page = 'https://github.com/mikeqfu/pyhelpers'
+    path_to_pdf = cd("tests\\data", "pyhelpers.pdf")
+
+    save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size, zoom, encoding, verbose)
+    # Saving "pyhelpers.pdf" to "..\\tests\\data" ...
+    # Loading pages (1/6)
+    # Counting pages (2/6)
+    # Resolving links (4/6)
+    # Loading headers and footers (5/6)
+    # Printing pages (6/6)
+    # Done
 
 
 # Load files ---------------------------------------------------------------------------
@@ -227,7 +253,8 @@ def test_load_multiple_spreadsheets():
     verbose = True
 
     as_dict = True
-    workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose, index_col=0)
+    workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose,
+                                               index_col=0)
     # Loading "\\tests\\data\\dat.xlsx" ...
     #   'TestSheet1'. ... Done.
     #   'TestSheet2'. ... Done.
@@ -236,10 +263,12 @@ def test_load_multiple_spreadsheets():
     #   'TestSheet12'. ... Done.
     #   'TestSheet22'. ... Done.
     print(list(workbook_data.keys()))
-    # ['TestSheet1', 'TestSheet2', 'TestSheet11', 'TestSheet21', 'TestSheet12', 'TestSheet22']
+    # ['TestSheet1', 'TestSheet2', 'TestSheet11', 'TestSheet21',
+    #  'TestSheet12', 'TestSheet22']
 
     as_dict = False
-    workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose, index_col=0)
+    workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose,
+                                               index_col=0)
     # Loading "\\tests\\data\\dat.xlsx" ...
     #   'TestSheet1'. ... Done.
     #   'TestSheet2'. ... Done.
@@ -282,8 +311,10 @@ def test_load_feather():
 def test_unzip():
     from pyhelpers.dir import cd
 
-    path_to_zip_file = cd("tests\\data", "zipped.zip")
-    out_dir = cd("tests\\data")
+    dat_dir = cd("tests\\data")
+
+    path_to_zip_file = cd(dat_dir, "zipped.zip")
+    out_dir = cd(dat_dir)
     mode = 'r'
 
     unzip(path_to_zip_file, out_dir, mode, verbose=True)
@@ -296,10 +327,10 @@ def test_seven_zip():
     out_dir = cd("tests\\data")
     mode = 'aoa'
 
-    path_to_zip_file = cd("tests\\data", "zipped.zip")
+    path_to_zip_file = cd(out_dir, "zipped.zip")
     seven_zip(path_to_zip_file, out_dir, mode, verbose=True)
 
-    path_to_zip_file = cd("tests\\data", "zipped.7z")
+    path_to_zip_file = cd(out_dir, "zipped.7z")
     seven_zip(path_to_zip_file, out_dir, mode, verbose=True)
 
 
@@ -338,6 +369,9 @@ if __name__ == '__main__':
     test_save_svg_as_emf()
 
     plt.show()
+
+    print("\nTesting 'save_web_page_as_pdf()':")
+    test_save_web_page_as_pdf()
 
     # Load files -----------------------------------------------------------------------
 
