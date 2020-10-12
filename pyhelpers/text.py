@@ -462,7 +462,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
 # Text conversion
 
-def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
+def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
     """
     Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
     to a `reStructuredText
@@ -479,6 +479,10 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool
+    :param pandoc_exe: absolute path to 'pandoc.exe', defaults to ``None``
+        (on Windows, use the default installation path -
+        ``"C:\\Program Files\\Pandoc\\pandoc.exe"``)
+    :type pandoc_exe: str or None
     :param kwargs: optional parameters of
         `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
 
@@ -487,8 +491,10 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.text import convert_md_to_rst
 
-        >>> path_to_md_file = cd("tests\\data", "markdown.md")
-        >>> path_to_rst_file = cd("tests\\data", "markdown.rst")
+        >>> dat_dir = cd("tests\\data")
+
+        >>> path_to_md_file = cd(dat_dir, "markdown.md")
+        >>> path_to_rst_file = cd(dat_dir, "markdown.rst")
 
         >>> convert_md_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
         Converting "markdown.md" to RST (.rst) file ...
@@ -503,9 +509,10 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, **kwargs):
             abs_md_path.name))
         get_specific_filepath_info(abs_rst_path, verbose=verbose, verbose_end=" ... ")
 
-    try:
+    if pandoc_exe is None:
         pandoc_exe = "C:\\Program Files\\Pandoc\\pandoc.exe"
 
+    try:
         if os.path.isfile(pandoc_exe):
             subprocess.call('"{}" "{}" -f markdown -t rst -s -o "{}"'.format(
                 pandoc_exe, abs_md_path, abs_rst_path))
