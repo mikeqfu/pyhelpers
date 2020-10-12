@@ -1051,7 +1051,8 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
         print("Failed. {}".format(e))
 
 
-def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
+def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_exe=None,
+              **kwargs):
     """
     Use `7-Zip <https://www.7-zip.org/>`_ to extract data from a compressed file.
 
@@ -1064,6 +1065,10 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
+    :param seven_zip_exe: bsolute path to '7z.exe', defaults to ``None``
+        (on Windows, use the default installation path -
+        ``"C:\\Program Files\\7-Zip\\7z.exe"``)
+    :type seven_zip_exe: str or None
     :param kwargs: optional parameters of `subprocess.call`_
 
     .. _`subprocess.call`:
@@ -1121,8 +1126,10 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, **kwargs):
         File extracted successfully.
     """
 
-    try:
+    if seven_zip_exe is None:
         seven_zip_exe = "C:\\Program Files\\7-Zip\\7z.exe"
+
+    try:
         subprocess.call('"{}" x "{}" -o"{}" -{}'.format(
             seven_zip_exe, path_to_zip_file, out_dir, mode), **kwargs)
         print("\nFile extracted successfully.")
