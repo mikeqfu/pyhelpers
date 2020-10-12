@@ -396,7 +396,8 @@ If we would like to connect back to *'testdb'*:
 
 .. code-block:: python
 
-    >>> testdb.connect_database('testdb')
+    >>> testdb.connect_database('testdb', verbose=True)
+    Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
 
 *7.2 Import data into the database*
@@ -406,9 +407,10 @@ After we have established the connection, we can use the method :py:meth:`.impor
 .. code-block:: python
 
     >>> testdb.import_data(dat, table_name='pyhelpers_quick_start', verbose=True)
-    Dumping data to "public"."pyhelpers_quick_start"
-        at postgres:***@localhost:5432/testdb ...
-        Done.
+    Confirmed to import the data into table '"public"."pyhelpers_quick_start"'
+        at postgres:***@localhost:5432/testdb
+    ? [No]|Yes: yes
+    Importing data into '"public"."pyhelpers_quick_start"' ... Done.
 
 The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an an alternative ``'method'`` to significantly speed up importing data into the database:
 
@@ -416,10 +418,11 @@ The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relie
 
     >>> testdb.import_data(dat, table_name='pyhelpers_quick_start',
     ...                    method=testdb.psql_insert_copy, verbose=True)
+    Confirmed to import the data into table '"public"."pyhelpers_quick_start"'
+        at postgres:***@localhost:5432/testdb
+    ? [No]|Yes: yes
     The table "public"."pyhelpers_quick_start" already exists and is replaced ...
-    Dumping data to "public"."pyhelpers_quick_start"
-        at postgres:***@localhost:5432/testdb ...
-        Done.
+    Importing data into '"public"."pyhelpers_quick_start"' ... Done.
 
 
 *7.3 Fetch data from the database*
@@ -455,9 +458,9 @@ To drop ``'pyhelpers_quick_start'``, we can use the method :py:meth:`.drop_table
 .. code-block:: python
 
     >>> testdb.drop_table('pyhelpers_quick_start', verbose=True)
-    Confirmed to drop '"public"."pyhelpers_quick_start"'
-        from postgres:***@localhost:5432/testdb?
-      [No]|Yes: yes
+    Confirmed to drop the table '"public"."pyhelpers_quick_start"'
+        from postgres:***@localhost:5432/testdb
+    ? [No]|Yes: yes
     Dropping '"public"."pyhelpers_quick_start"' ... Done.
 
 Note that we have created two databases: *'testdb'* (currently being connected) and *'test_database'*. To drop both of them, we can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
@@ -466,20 +469,18 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 
     >>> # Drop 'testdb'
     >>> testdb.drop_database(verbose=True)
-    Confirmed to drop the database "testdb"
-        from postgres:***@localhost:5432/testdb?
-      [No]|Yes: yes
-    Dropping the database "testdb" ... Done.
+    Confirmed to drop the database "testdb" from postgres:***@localhost:5432
+    ? [No]|Yes: yes
+    Dropping "testdb" ... Done.
 
     >>> print(testdb.database_name)  # Check the currently connected database
     postgres
 
     >>> # Drop 'test_database'
     >>> testdb.drop_database('test_database', verbose=True)
-    Confirmed to drop the database "test_database"
-        from postgres:***@localhost:5432/testdb?
-      [No]|Yes: yes
-    Dropping the database "test_database" ... Done.
+    Confirmed to drop the database "test_database" from postgres:***@localhost:5432
+    ? [No]|Yes: yes
+    Dropping "test_database" ... Done.
 
 
 .. _`Python`: https://www.python.org/
