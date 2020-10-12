@@ -117,6 +117,7 @@ latex_elements = {
     'preamble': r'''
         \setlength{\headheight}{14pt}
         \DeclareUnicodeCharacter{229E}{\ensuremath{\boxplus}}
+        \setcounter{tocdepth}{2}
         \usepackage[none]{hyphenat}
         \usepackage[document]{ragged2e}
         \usepackage[utf8]{inputenc}
