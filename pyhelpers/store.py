@@ -1,5 +1,5 @@
 """
-A module for saving and retrieving data.
+A module for saving and loading data.
 """
 
 import os
