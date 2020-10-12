@@ -150,13 +150,16 @@ class PostgreSQL:
 
         return result.fetchone()[0]
 
-    def connect_database(self, database_name=None):
+    def connect_database(self, database_name=None, verbose=False):
         """
         Establish a connection to a database of the PostgreSQL server being connected.
 
         :param database_name: name of a database;
             if ``None`` (default), the database name is input manually
         :type database_name: str or None
+        :param verbose: whether to print relevant information in console
+            as the function runs, defaults to ``False``
+        :type verbose: bool
 
         **Example**::
 
@@ -170,21 +173,36 @@ class PostgreSQL:
             >>> print(testdb.database_name)
             testdb
 
-            >>> testdb.connect_database('postgres')
+            >>> testdb.connect_database('postgres', verbose=True)
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
             >>> print(testdb.database_name)
             postgres
         """
 
         if database_name:
             self.database_name = str(database_name)
-            self.database_info['database'] = self.database_name
-            self.url = sqlalchemy.engine.url.URL(**self.database_info)
 
-            if not sqlalchemy_utils.database_exists(self.url):
-                sqlalchemy_utils.create_database(self.url)
+            self.address = "{}:***@{}:{}/{}".format(
+                self.user, self.host, self.port, self.database_name)
 
-            self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
-            self.connection = self.engine.raw_connection()
+            print("Connecting {}".format(self.address), end=" ... ") if verbose else ""
+
+            try:
+                self.database_info['database'] = self.database_name
+                self.url = sqlalchemy.engine.url.URL(**self.database_info)
+
+                if not sqlalchemy_utils.database_exists(self.url):
+                    sqlalchemy_utils.create_database(self.url)
+
+                self.engine = sqlalchemy.create_engine(
+                    self.url, isolation_level='AUTOCOMMIT')
+                self.connection = self.engine.raw_connection()
+
+                print("Successfully. ") if verbose else ""
+
+            except Exception as e:
+                print("Failed. {}.".format(e))
 
     def create_database(self, database_name, verbose=False):
         """
@@ -348,10 +366,9 @@ class PostgreSQL:
             Password (postgres@localhost:5432): ***
 
             >>> testdb.drop_database(verbose=True)
-            Confirmed to drop the database "testdb"
-                from postgres:***@localhost:5432/testdb?
-              [No]|Yes: >? yes
-            Dropping the database "testdb" ... Done.
+            Confirmed to drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
 
             >>> testdb.database_exists(database_name='testdb')
             False
@@ -363,13 +380,18 @@ class PostgreSQL:
         db_name = self.database_name if database_name is None else database_name
 
         if confirmed(
-                "Confirmed to drop the database \"{}\"\n\tfrom {}?\n ".format(
-                    db_name, self.address),
+                "Confirmed to drop the database \"{}\" from {}\n?".format(
+                    db_name, self.address.replace(f"/{db_name}", "")),
                 confirmation_required=confirmation_required):
             self.disconnect_database(db_name)
 
             if verbose:
-                print("Dropping the database \"{}\"".format(db_name), end=" ... ")
+                if confirmation_required:
+                    log_msg = "Dropping \"{}\"".format(db_name)
+                else:
+                    log_msg = "Dropping the database \"{}\"".format(db_name)
+                print(log_msg, end=" ... ")
+
             try:
                 self.engine.execute('DROP DATABASE IF EXISTS "{}"'.format(db_name))
 
@@ -550,8 +572,8 @@ class PostgreSQL:
                 "lines",
                 "polygons" and
                 "test_schema"
-              from postgres:***@localhost:5432/testdb?
-              [No]|Yes: yes
+              from postgres:***@localhost:5432/testdb
+            ? [No]|Yes: yes
             Dropping ...
                 "points" ... Done.
                 "lines" ... Done.
@@ -562,11 +584,18 @@ class PostgreSQL:
         schemas, schemas_msg = self.msg_for_multi_schemas(schema_names_)
 
         if confirmed(
-                "Confirmed to drop the following {}  from {}?\n ".format(
+                "Confirmed to drop the following {}  from {}\n?".format(
                     schemas_msg, self.address),
                 confirmation_required=confirmation_required):
 
-            print("Dropping ... ") if verbose else ""
+            if verbose:
+                if confirmation_required:
+                    log_msg = "Dropping ... "
+                else:
+                    log_msg = "From {}, dropping the following {}".format(
+                        self.address, schemas_msg.split(" ")[0])
+                print(log_msg)
+
             for schema in schemas:
                 if not self.schema_exists(schema):
                     # `schema` does not exist
@@ -662,8 +691,8 @@ class PostgreSQL:
             >>> # Drop the table
             >>> testdb.drop_table(tbl_name, verbose=True)
             Confirmed to drop '"public"."test_table"'
-                from postgres:***@localhost:5432/postgres?
-              [No]|Yes: yes
+                from postgres:***@localhost:5432/testdb
+            ? [No]|Yes: >? yes
             Dropping '"public"."test_table"' ... Done.
         """
 
@@ -742,12 +771,17 @@ class PostgreSQL:
             print("The table '{}' does not exist.".format(table))
 
         else:
-            if confirmed(
-                    "Confirmed to drop '{}'\n\tfrom {}?\n ".format(table, self.address),
-                    confirmation_required=confirmation_required):
+            if confirmed("Confirmed to drop the table '{}'\n\tfrom {}\n?".format(
+                    table, self.address), confirmation_required=confirmation_required):
 
                 if verbose:
-                    print("Dropping '{}'".format(table), end=" ... ")
+                    if confirmation_required:
+                        log_msg = "Dropping '{}'".format(table)
+                    else:
+                        log_msg = "Dropping the table '{}'\n\tfrom {}".format(
+                            table, self.address)
+                    print(log_msg, end=" ... \n")
+
                 try:
                     self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(
                         schema_name, table_name))
@@ -790,7 +824,7 @@ class PostgreSQL:
 
     def import_data(self, data, table_name, schema_name='public', if_exists='replace',
                     force_replace=False, chunk_size=None, col_type=None, method='multi',
-                    index=False, verbose=False, **kwargs):
+                    index=False, confirmation_required=True, verbose=False, **kwargs):
         """
         Import tabular data into the database being connected.
 
@@ -826,6 +860,9 @@ class PostgreSQL:
         :type method: str or collections.abc.Iterable or None
         :param index: whether to dump the index as a column
         :type index: bool
+        :param confirmation_required: whether to prompt a message
+            for confirmation to proceed, defaults to ``True``
+        :type confirmation_required: bool
         :param verbose: whether to print relevant information in console
             as the function runs, defaults to ``False``
         :type verbose: bool
@@ -848,39 +885,48 @@ class PostgreSQL:
 
         table_name_ = '"{}"."{}"'.format(schema_name, table_name)
 
-        if self.table_exists(table_name, schema_name):
-            if if_exists == 'replace' and verbose:
-                print("The table {} already exists and is replaced ... ".format(
-                    table_name_))
+        if confirmed("Confirmed to import the data into table '{}'\n\tat {}\n?".format(
+                table_name_, self.address), confirmation_required=confirmation_required):
 
-            if force_replace:
+            if self.table_exists(table_name, schema_name):
+                if if_exists == 'replace' and verbose:
+                    print("The table {} already exists and is replaced ... ".format(
+                        table_name_))
+
+                if force_replace:
+                    if verbose:
+                        print("The existing table is dropped first ... ")
+                    self.drop_table(table_name, schema_name, verbose=verbose)
+
+            try:
                 if verbose:
-                    print("The existing table is dropped first ... ")
-                self.drop_table(table_name, schema_name, verbose=verbose)
+                    if confirmation_required:
+                        log_msg = "Importing data into '{}'".format(table_name_)
+                        log_end_msg = " ... "
+                    else:
+                        log_msg = "Importing the data into table '{}' ... " \
+                                  "\n\tat {}".format(table_name_, self.address)
+                        log_end_msg = " ... \n"
+                    print(log_msg, end=log_end_msg)
 
-        try:
-            if verbose:
-                print("Dumping data to {}\n\tat {}".format(table_name_, self.address),
-                      end=" ...\n\t")
+                if isinstance(data, pandas.io.parsers.TextFileReader):
+                    for chunk in data:
+                        chunk.to_sql(table_name, self.engine, schema=schema_name,
+                                     if_exists=if_exists, index=index, dtype=col_type,
+                                     method=method, **kwargs)
+                        del chunk
+                        gc.collect()
 
-            if isinstance(data, pandas.io.parsers.TextFileReader):
-                for chunk in data:
-                    chunk.to_sql(table_name, self.engine, schema=schema_name,
-                                 if_exists=if_exists, index=index, dtype=col_type,
-                                 method=method, **kwargs)
-                    del chunk
+                else:
+                    data.to_sql(table_name, self.engine, schema=schema_name,
+                                if_exists=if_exists, index=index, chunksize=chunk_size,
+                                dtype=col_type, method=method, **kwargs)
                     gc.collect()
 
-            else:
-                data.to_sql(table_name, self.engine, schema=schema_name,
-                            if_exists=if_exists, index=index, chunksize=chunk_size,
-                            dtype=col_type, method=method, **kwargs)
-                gc.collect()
+                print("Done. ") if verbose else ""
 
-            print("Done. ") if verbose else ""
-
-        except Exception as e:
-            print("Failed. {}".format(e))
+            except Exception as e:
+                print("Failed. {}".format(e))
 
     def read_table(self, table_name, schema_name='public', condition=None,
                    chunk_size=None, sorted_by=None, **kwargs):
@@ -1003,10 +1049,10 @@ class PostgreSQL:
             >>> testdb.import_data(dat, table, schema, if_exists='replace',
             ...                    chunk_size=None, force_replace=False, col_type=None,
             ...                    verbose=True)
-            Creating a schema "points" ... Done.
-            Dumping data to "points"."England"
-                at postgres:***@localhost:5432/testdb ...
-                Done.
+            Confirmed to import the data into table '"points"."England"'
+                at postgres:***@localhost:5432/testdb
+            ? [No]|Yes: yes
+            Importing data into '"points"."England"' ... Done.
 
             >>> res = testdb.table_exists(table, schema)
             >>> print(f"The table '\"{schema}\".\"{table}\"' exists? {res}.")
@@ -1031,9 +1077,9 @@ class PostgreSQL:
             3   582044    152953
 
             >>> testdb.drop_table(table_name=table, schema_name=schema, verbose=True)
-            Confirmed to drop '"points"."England"'
-                from postgres:***@localhost:5432/testdb?
-              [No]|Yes: >? yes
+            Confirmed to drop the table '"points"."England"'
+                from postgres:***@localhost:5432/testdb
+            ? [No]|Yes: yes
             Dropping '"points"."England"' ... Done.
 
             >>> testdb.drop_schema(schema, verbose=True)
