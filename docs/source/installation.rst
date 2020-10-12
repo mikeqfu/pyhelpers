@@ -4,15 +4,15 @@ Installation
 
 To install the latest release of PyHelpers at `PyPI`_ via `pip`_:
 
-.. code-block::
+.. code-block:: bash
 
-   pip install --upgrade pyhelpers
+    pip install --upgrade pyhelpers
 
 To install the more recent version hosted directly from `GitHub repository`_:
 
-.. code-block::
+.. code-block:: bash
 
-   pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
+    pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
 To test if PyHelpers is correctly installed, try importing the package via an interpreter shell:
 
