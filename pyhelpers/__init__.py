@@ -1,5 +1,5 @@
 __package_name__ = 'pyhelpers'
 __author__ = 'Qian Fu'
-__version__ = '1.2.4'
+__version__ = '1.2.5'
 __email__ = 'qian.fu@outlook.com'
-__description__ = 'A toolkit for facilitating data manipulation in Python.'
+__description__ = 'A handy toolkit for facilitating Python users\' data manipulation tasks.'
