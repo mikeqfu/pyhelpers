@@ -21,7 +21,8 @@ def test_cd():
 
 def test_cdd():
     path = cdd()
-    print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
+    print(".  ".join(
+        [path, "(This directory will NOT be created if it does not exists.)"]))
     # <cwd>\\data. (This directory will NOT be created if it does not exists).
 
     mkdir = True
@@ -40,8 +41,10 @@ def test_cd_dat():
     mkdir = False
 
     path = cd_dat("tests", dat_dir=dat_dir, mkdir=mkdir)
-    print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
-    # <package directory>\\dat\\tests. (This directory will NOT be created if it does not exists.)
+    print(".  ".join(
+        [path, "(This directory will NOT be created if it does not exists.)"]))
+    # <package directory>\\dat\\tests.
+    # (This directory will NOT be created if it does not exists.)
 
 
 # Validate directories -----------------------------------------------------------------
@@ -73,15 +76,17 @@ def test_validate_input_data_dir():
 
 def test_delete_dir():
     path_to_dir = cdd(mkdir=True)
-    print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
+    print("The directory \"{}\" exists? {}".format(
+        path_to_dir, os.path.exists(path_to_dir)))
     # The directory "<cwd>\\data\\dat" exists? True
 
     delete_dir(path_to_dir, confirmation_required=True, verbose=True)
-    # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: no
-    # Cancelled.
+    # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: yes
+    # Deleting "\data" ... Done.
 
-    print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\data\\dat" exists? True
+    print("The directory \"{}\" exists? {}".format(
+        path_to_dir, os.path.exists(path_to_dir)))
+    # The directory "<cwd>\\data" exists? False
 
 
 # Press the green button in the gutter to run the script.
