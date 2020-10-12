@@ -25,7 +25,6 @@ To test if PyHelpers is correctly installed, try importing the package via an in
 .. parsed-literal::
     The current release version is: |version|
 
-|
 
 .. note::
 
