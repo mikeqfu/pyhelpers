@@ -734,7 +734,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 def fake_requests_headers(random=False):
     """
     Make a fake HTTP headers for
-    `requests.get() <https://requests.readthedocs.io/en/master/user/
+    `requests.get <https://requests.readthedocs.io/en/master/user/
     advanced/#request-and-response-objects>`_.
 
     :param random: whether to go for a random agent, defaults to ``False``
