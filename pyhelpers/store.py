@@ -663,7 +663,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None,
     abs_svg_path, abs_emf_path = pathlib.Path(path_to_svg), pathlib.Path(path_to_emf)
     assert abs_svg_path.suffix == ".svg"
 
-    if inkscape_exe:
+    if inkscape_exe is None:
         inkscape_exe = "C:\\Program Files\\Inkscape\\inkscape.exe"
 
     if os.path.isfile(inkscape_exe):
@@ -1065,7 +1065,7 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param seven_zip_exe: bsolute path to '7z.exe', defaults to ``None``
+    :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``
         (on Windows, use the default installation path -
         ``"C:\\Program Files\\7-Zip\\7z.exe"``)
     :type seven_zip_exe: str or None
