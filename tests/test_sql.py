@@ -7,9 +7,9 @@ from pyhelpers.sql import *
 
 def test_postgresql():
     testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-                        database_name='postgres')
+                        database_name='testdb')
     # Password (postgres@localhost:5432): ***
-    # Connecting postgres:***@localhost:5432/postgres ... Successfully.
+    # Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
     table_name = 'England'
     schema_name = 'points'
@@ -34,7 +34,7 @@ def test_postgresql():
     print("")
     testdb.drop_table(table_name, verbose=True)
     # Confirmed to drop '"public"."test_table"'
-    # 	from postgres:***@localhost:5432/postgres?
+    # 	from postgres:***@localhost:5432/testdb?
     #   [No]|Yes: >? yes
     # Dropping '"public"."test_table"' ... Done.
 
@@ -48,8 +48,9 @@ def test_postgresql():
 
     testdb.import_data(dat, table_name, schema_name, if_exists='replace', chunk_size=None,
                        force_replace=False, col_type=None, verbose=True)
+    # Creating a schema "points" ... Done.
     # Dumping data to "points"."England"
-    # 	at postgres:***@localhost:5432/postgres ...
+    # 	at postgres:***@localhost:5432/testdb ...
     # 	Done.
 
     res = testdb.table_exists(table_name, schema_name)
@@ -71,10 +72,16 @@ def test_postgresql():
     testdb.drop_schema('points', verbose=True)
     # Confirmed to drop the following schema:
     # 	"points"
-    #   from postgres:***@localhost:5432/postgres?
+    #   from postgres:***@localhost:5432/testdb?
     #   [No]|Yes: >? yes
     # Dropping ...
     # 	"points" ... Done.
+
+    testdb.drop_database(verbose=True)
+    # Confirmed to drop the database "testdb"
+    # 	from postgres:***@localhost:5432/testdb?
+    #   [No]|Yes: >? yes
+    # Dropping the database "testdb" ... Done.
 
 
 if __name__ == '__main__':
