@@ -14,12 +14,10 @@ The current release includes the following modules, with each containing a numbe
 
 This part of the documentation provides some quick examples to demonstrate what these modules may offer to assist with our data manipulation.
 
-|
 
 .. _settings-examples:
 
-1. settings
------------
+.. rubric:: 1. settings
 
 The module :ref:`pyhelpers.settings<settings>` can be used to alter settings with `pandas`_, `numpy`_, `matplotlib`_ and `gdal`_ for our working environment. For example, the function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default `pandas`_ settings (given ``reset=False``), such as representation and maximum number of columns when displaying a `pandas.DataFrame`_:
 
@@ -38,8 +36,7 @@ When ``reset=True``, all parameters are reset to their default values.
 
 .. _dir-examples:
 
-2. dir
-------
+.. rubric:: 2. dir
 
 The module :ref:`pyhelpers.dir<dir>` can be used to help change/manipulate directories. For example, the function :py:func:`cd()<pyhelpers.dir.cd>` returns an absolute path to the current working directory (and, optionally, its any of its sub-directories / files):
 
@@ -124,8 +121,7 @@ To delete the directory of ``"pyhelpers_quick_start"``, we may use the function 
 
 .. _ops-examples:
 
-3. ops
-------
+.. rubric:: 3. ops
 
 The module :ref:`pyhelpers.ops<ops>` is intended to provide a miscellany of helper functions.
 
@@ -189,8 +185,7 @@ For another example, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>
 
 .. _store-examples:
 
-4. store
---------
+.. rubric:: 4. store
 
 The module :ref:`pyhelpers.store<store>` can be used to help save and load data. Some functions require `openpyxl`_, `XlsxWriter`_ and `xlrd`_.
 
@@ -260,8 +255,7 @@ Now, before we move on, we can delete the directory *'pyhelpers_quick_start'* (i
 
 .. _geom-examples:
 
-5. geom
--------
+.. rubric:: 5. geom
 
 The module :ref:`pyhelpers.geom<geom>` can be used to assist in manipulating geometric and geographical data.
 
@@ -301,8 +295,7 @@ Similarly, if we can use the function :py:func:`wgs84_to_osgb36()<pyhelpers.geom
 
 .. _text-examples:
 
-6. text
--------
+.. rubric:: 6. text
 
 The module :ref:`pyhelpers.text<text>` can be used to assist in manipulating textual data.
 
@@ -348,8 +341,7 @@ Alternatively, we could also turn to another Python library `NLTK`_ by setting `
 
 .. _sql-examples:
 
-7. sql
-------
+.. rubric:: 7. sql
 
 The module :ref:`pyhelpers.sql<sql>` provides a convenient way to establish a connection with a SQL server. The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` that represents a basic `PostgreSQL`_ instance.
 
@@ -358,8 +350,7 @@ The module :ref:`pyhelpers.sql<sql>` provides a convenient way to establish a co
     >>> from pyhelpers.sql import PostgreSQL
 
 
-7.1 Connect to a database
-~~~~~~~~~~~~~~~~~~~~~~~~~
+*7.1 Connect to a database*
 
 We can connect a PostgreSQL server by specifying the parameters: ``host``, ``port``, ``username``, ``password`` and ``database_name``.
 
@@ -408,8 +399,7 @@ If we would like to connect back to *'testdb'*:
     >>> testdb.connect_database('testdb')
 
 
-7.2 Import data into the database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*7.2 Import data into the database*
 
 After we have established the connection, we can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the example for :ref:`pyhelpers.store<store-dat>` above) into a table named *'pyhelpers_quick_start'*:
 
@@ -432,8 +422,7 @@ The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relie
         Done.
 
 
-7.3 Fetch data from the database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*7.3 Fetch data from the database*
 
 To retrieve the imported data, we can use the method :py:meth:`.read_table()<pyhelpers.sql.PostgreSQL.read_table>`:
 
@@ -459,8 +448,7 @@ Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sq
     ``sql_query`` should end without ``';'``.
 
 
-7.4 Drop data
-~~~~~~~~~~~~~
+*7.4 Drop data*
 
 To drop ``'pyhelpers_quick_start'``, we can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
 
