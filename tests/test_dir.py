@@ -77,11 +77,11 @@ def test_delete_dir():
     # The directory "<cwd>\\data\\dat" exists? True
 
     delete_dir(path_to_dir, confirmation_required=True, verbose=True)
-    # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: yes
-    # Done.
+    # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: no
+    # Cancelled.
 
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\data\\dat" exists? False
+    # The directory "<cwd>\\data\\dat" exists? True
 
 
 # Press the green button in the gutter to run the script.
