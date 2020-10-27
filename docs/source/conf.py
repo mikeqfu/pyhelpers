@@ -76,17 +76,17 @@ html_theme_options = {
     'navigation_depth': 3,
 }
 
-# Add custom CSS
-html_css_files = ['theme_overrides.css']
-
-# Add custom JavaScript
-html_js_files = ['copybutton.js']
-
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'  # or 'default'
 
 # Paths containing custom static files (e.g. style sheets), relative to this directory.
 html_static_path = ['_static']
+
+# Add custom CSS
+html_css_files = ['theme_overrides.css']
+
+# Add custom JavaScript
+html_js_files = ['copybutton.js']
 
 # Output file base name for HTML help builder. Default is 'pydoc'.
 htmlhelp_basename = project + 'doc'
