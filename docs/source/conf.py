@@ -24,11 +24,9 @@ version = pyhelpers.__version__  # The short X.Y version.
 release = version  # The full version, including alpha/beta/rc tags.
 
 # General configuration ================================================================
+import sphinx_rtd_theme
 
-
-def setup(app):
-    app.add_js_file('copybutton.js')
-
+_ = sphinx_rtd_theme.get_html_theme_path()
 
 # Sphinx extension module names,
 #   which can be extensions coming with Sphinx (named 'sphinx.ext.*') or custom ones.
@@ -73,6 +71,17 @@ templates_path = ['_templates']
 # Options for HTML and HTMLHelp output =================================================
 html_theme = 'sphinx_rtd_theme'  # The theme to use for HTML & HTML Help pages.
 
+html_theme_options = {
+    'collapse_navigation': False,
+    'navigation_depth': 3,
+}
+
+# Add custom CSS
+html_css_files = ['theme_overrides.css']
+
+# Add custom JavaScript
+html_js_files = ['copybutton.js']
+
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'  # or 'default'
 
@@ -101,9 +110,9 @@ latex_engine = 'pdflatex'
 # Grouping the document tree into LaTeX files.
 latex_documents = [
     ('index',  # source start file
-     'pyhelpers.tex',  # target name
-     u'PyHelpers Documentation',  # title
-     u'Qian Fu',  # author
+     '{}.tex'.format(pyhelpers.__package_name__),  # target name
+     u'{} Documentation'.format(pyhelpers.__package_name_alt__),  # title
+     pyhelpers.__author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]
      1  # toctree only
      ),
@@ -112,7 +121,7 @@ latex_documents = [
 # LaTeX customization.
 latex_elements = {
     'papersize': 'a4paper',  # The paper size ('letterpaper' or 'a4paper').
-    'pointsize': '10pt',  # The font size ('10pt', '11pt' or '12pt').
+    'pointsize': '11pt',  # The font size ('10pt', '11pt' or '12pt').
     'pxunit': '0.25bp',
     'preamble': r'''
         \setlength{\headheight}{14pt}
@@ -126,12 +135,37 @@ latex_elements = {
         \usepackage{textgreek}
         \usepackage{graphicx}
         \usepackage{svg}
+        \usepackage{booktabs}
+        \usepackage[sc,osf]{mathpazo}
+        \linespread{1.05}
+        \renewcommand{\sfdefault}{pplj}
+        \IfFileExists{zlmtt.sty}
+                     {\usepackage[light,scaled=1.05]{zlmtt}}
+                     {\renewcommand{\ttdefault}{lmtt}}
+        \let\oldlongtable\longtable
+        \let\endoldlongtable\endlongtable
+        \renewenvironment{longtable}
+                         {\rowcolors{1}{anti-flashwhite}{white}\oldlongtable}
+                         {\endoldlongtable}
+        ''',
+    'sphinxsetup': r'''
+        %verbatimwithframe=false,
+        %verbatimwrapslines=false,
+        %verbatimhintsturnover=false,
+        VerbatimColor={HTML}{F5F5F5},
+        VerbatimBorderColor={HTML}{E0E0E0},
+        noteBorderColor={HTML}{E0E0E0},
+        noteborder=1.5pt,
+        warningBorderColor={HTML}{E0E0E0},
+        warningborder=1.5pt,
+        warningBgColor={HTML}{FBFBFB},
+        hmargin={0.7in,0.7in}, vmargin={1.1in,1.1in},
         ''',
     'printindex': r'''
         \IfFileExists{\jobname.ind}
                      {\footnotesize\raggedright\printindex}
                      {\begin{sphinxtheindex}\end{sphinxtheindex}}
-    ''',
+        ''',
     'passoptionstopackages': r'\PassOptionsToPackage{svgnames}{xcolor}',
     'fvset': r'\fvset{fontsize=auto}',
     'figure_align': 'H'  # Latex figure (float) alignment
@@ -144,9 +178,9 @@ latex_theme = 'manual'
 
 man_pages = [  # How to group the document tree into manual pages.
     ('index',  # startdocname
-     'pyhelpers',  # name
-     u'PyHelpers Documentation',  # description
-     [u'Qian Fu'],  # authors
+     pyhelpers.__package_name__,  # name
+     u'{} Documentation'.format(pyhelpers.__package_name_alt__),  # description
+     [pyhelpers.__author__],  # authors
      1  # section
      )
 ]
@@ -155,11 +189,11 @@ man_pages = [  # How to group the document tree into manual pages.
 
 texinfo_documents = [  # Grouping the document tree into Texinfo files.
     (master_doc,  # source start file
-     'pyhelpers',  # target name
-     u'PyHelpers Documentation',  # title
-     u'Qian Fu',  # author
-     'PyHelpers',  # dir menu entry
-     'A toolkit for facilitating basic data manipulation.',
+     pyhelpers.__package_name__,  # target name
+     u'{} Documentation'.format(pyhelpers.__package_name_alt__),  # title
+     pyhelpers.__author__,  # author
+     pyhelpers.__package_name_alt__,  # dir menu entry
+     pyhelpers.__description__,
      'Data manipulation tools',  # category
      1  # toctree only
      ),
