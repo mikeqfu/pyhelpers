@@ -12,8 +12,8 @@ import subprocess
 import numpy as np
 import pandas as pd
 
-from pyhelpers.ops import dict_to_dataframe
-from pyhelpers.store import get_specific_filepath_info
+from .ops import dict_to_dataframe
+from .store import get_specific_filepath_info
 
 
 # Text compare
