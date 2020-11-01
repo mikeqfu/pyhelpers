@@ -800,7 +800,7 @@ class PostgreSQL:
                     else:
                         log_msg = "Dropping the table '{}'\n\tfrom {}".format(
                             table, self.address)
-                    print(log_msg, end=" ... \n")
+                    print(log_msg, end=" ... ")
 
                 try:
                     self.engine.execute('DROP TABLE IF EXISTS {}.\"{}\" CASCADE;'.format(
