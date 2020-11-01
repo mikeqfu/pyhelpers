@@ -1,5 +1,5 @@
 """
-A module for saving and loading data.
+Saving and loading data.
 """
 
 import os
@@ -13,8 +13,6 @@ import rapidjson
 
 from .ops import confirmed
 
-
-# General use --------------------------------------------------------------------------
 
 def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
                                ret_info=False):
@@ -97,7 +95,8 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
         return rel_path, filename
 
 
-# Save files ---------------------------------------------------------------------------
+""" Save data ---------------------------------------------------------------------- """
+
 
 def save(data, path_to_file, warning=False, **kwargs):
     """
@@ -773,7 +772,8 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
               "It is not found on this device.") if verbose else ""
 
 
-# Load files ---------------------------------------------------------------------------
+""" Load data ---------------------------------------------------------------------- """
+
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     """
@@ -1003,7 +1003,8 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-# Uncompress files ---------------------------------------------------------------------
+""" Uncompress data files ---------------------------------------------------------- """
+
 
 def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     """
