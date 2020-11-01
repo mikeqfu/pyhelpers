@@ -1,5 +1,7 @@
 """
-A module for manipulation of databases.
+Basic data manipulation with SQL.
+
+*(The current release includes* `PostgreSQL <https://www.postgresql.org/>`_ *only.)*
 """
 
 import csv
@@ -10,10 +12,6 @@ import tempfile
 
 import pandas as pd
 import pandas.io.parsers
-import sqlalchemy
-import sqlalchemy.engine.reflection
-import sqlalchemy.engine.url
-import sqlalchemy_utils
 
 from .ops import confirmed
 
@@ -79,6 +77,8 @@ class PostgreSQL:
         """
         Constructor method.
         """
+        import sqlalchemy.engine.url
+        import sqlalchemy_utils
 
         host_ = input("PostgreSQL Host: ") if host is None else str(host)
         port_ = input("PostgreSQL Port: ") if port is None else int(port)
@@ -120,6 +120,7 @@ class PostgreSQL:
                 print("Connecting {} ... ".format(self.address), end="")
 
         try:
+            import sqlalchemy
             # Create a SQLAlchemy connectable
             self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
             self.connection = self.engine.raw_connection()
@@ -193,6 +194,9 @@ class PostgreSQL:
             >>> print(testdb.database_name)
             postgres
         """
+
+        import sqlalchemy.engine.url
+        import sqlalchemy_utils
 
         if database_name:
             self.database_name = str(database_name)
@@ -530,6 +534,8 @@ class PostgreSQL:
 
         :meta private:
         """
+
+        import sqlalchemy.engine.reflection
 
         if schema_names:
             names_ = [schema_names] if isinstance(schema_names, str) else schema_names
@@ -889,6 +895,8 @@ class PostgreSQL:
         See the example for the method
         :py:meth:`.read_sql_query() <pyhelpers.sql.PostgreSQL.read_sql_query>`.
         """
+
+        import sqlalchemy.engine.reflection
 
         inspector = sqlalchemy.engine.reflection.Inspector.from_engine(self.engine)
 
