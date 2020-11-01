@@ -8,8 +8,17 @@ text
     :no-members:
     :no-inherited-members:
 
-Text compare
-------------
+Basic processing of textual data
+--------------------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    remove_punctuation
+
+Comparison of textual data
+--------------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -18,17 +27,8 @@ Text compare
     find_similar_str
     find_matched_str
 
-Text processing
----------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    remove_punctuation
-
-Text calculation
-----------------
+Basic computation of textual data
+---------------------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -40,8 +40,8 @@ Text calculation
     euclidean_distance_between_texts
     cosine_similarity_between_texts
 
-Text conversion
----------------
+Transformation of textual data
+------------------------------
 
 .. autosummary::
     :toctree: _generated/
