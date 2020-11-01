@@ -145,7 +145,13 @@ The module :ref:`pyhelpers.ops<ops>` is intended to provide a miscellany of help
     >>> # Or simply,
     >>> # from pyhelpers import download_file_from_url
 
-For example, we can use the function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` (requiring `requests`_ and `tqdm`_) to download files from a given URL. Suppose we would like to download a Python logo from the homepage of `Python`_, where the URL of the logo is:
+For example, we can use the function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` to download files from a given URL.
+
+.. note::
+
+    The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` depends on `requests`_ and `tqdm`_, which are not required for installation of PyHelpers. If any of the dependencies is currently not on our system, we should install it before we proceed.
+
+If we would like to download a Python logo from the homepage of `Python`_, where the URL of the logo is:
 
 .. code-block:: python
 
@@ -349,7 +355,11 @@ If we would like to find one, from the ``lookup_list`` below, that is the most s
     ...                'Wessex',
     ...                'Western']
 
-The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, meaning that it would rely on the Python library `FuzzyWuzzy`_:
+The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, meaning that it would rely on the Python package `FuzzyWuzzy`_:
+
+.. note::
+
+    `FuzzyWuzzy`_ is not required for installation of PyHelpers. If it is currently not on our system, we should install it before we proceed.
 
 .. code-block:: python
 
@@ -358,6 +368,10 @@ The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, mea
     Anglia
 
 Alternatively, we could also turn to another Python library `NLTK`_ by setting ``processor`` to be ``'nltk'``:
+
+.. note::
+
+    `NLTK`_ is also excluded from the installation requirement of PyHelpers. Again, if it is not available yet on our system, we should install it to run the following code.
 
 .. code-block:: python
 
@@ -373,21 +387,20 @@ Work with PostgreSQL database
 
 The module :ref:`pyhelpers.sql<sql>` provides a convenient way to establish a connection with a SQL database. The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` that allows us to implement some basic queries in a `PostgreSQL`_ database.
 
-.. note::
-
-    The :ref:`sql<sql>` module depends on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_, which are not required for installation of PyHelpers. If any of the three dependencies is currently not on our system, we should install it before we proceed.
-
 .. code-block:: python
 
     >>> from pyhelpers.sql import PostgreSQL
     >>> # Or simply,
     >>> # from pyhelpers import PostgreSQL
 
+.. note::
+
+    The constructor method of :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` depends on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_, which are not required for the installation of PyHelpers. To successfully create an instance of the class, we need make sure all of the three dependencies are installed on our system before we proceed.
 
 Connect to a database
 ---------------------
 
-We can connect a PostgreSQL server by specifying the parameters: ``host``, ``port``, ``username``, ``password`` and ``database_name``.
+We can now connect a PostgreSQL server by specifying the parameters: ``host``, ``port``, ``username``, ``password`` and ``database_name``.
 
 For example, to connect to a database named *'testdb'*:
 
