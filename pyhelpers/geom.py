@@ -7,7 +7,7 @@ import functools
 
 import numpy as np
 
-from pyhelpers.ops import create_rotation_matrix
+from .ops import create_rotation_matrix
 
 """ Transformation ----------------------------------------------------------------- """
 
