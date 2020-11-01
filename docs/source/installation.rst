@@ -36,7 +36,7 @@ To test if PyHelpers is correctly installed, try importing the package via an in
 
     - For *Windows* users, The ``pip`` method might fail to install some dependencies, such as `GDAL`_, `Shapely`_ and `python-Levenshtein`_. If errors occur when ``pip`` installing any of those dependencies, try instead to ``pip install`` their respective *.whl* files, which can be downloaded from the `Unofficial Windows Binaries for Python Extension Packages`_. After they are installed successfully, try to install pyhelpers again.
 
-    - It is possible to get a ``ModuleNotFoundError`` when using some functions, as not all dependencies are required (so as to minimise the requirements) for the installation of the package. In that case, just simply install the 'missing' module(s). See, for example, the use of the module :ref:`pyhelpers.sql<sql-examples>`.
+    - It is possible to get a ``ModuleNotFoundError`` when using some functions, as not all dependencies are required (so as to minimise the requirements) for the installation of the package. In that case, just install the 'missing' module(s). See, for example, the use of the functions :ref:`pyhelpers.ops.download_file_from_url()<ops-examples>` and :ref:`pyhelpers.text.find_similar_str<text-examples>`.
 
     - For more general instructions, check the "`Installing Packages <https://packaging.python.org/tutorials/installing-packages>`_".
 
