@@ -1,5 +1,5 @@
 """
-A module for manipulation of textual data.
+Manipulation of textual data.
 """
 
 import collections.abc
@@ -15,8 +15,51 @@ import pandas as pd
 from .ops import dict_to_dataframe
 from .store import get_specific_filepath_info
 
+""" Basic processing of textual data ----------------------------------------------- """
 
-# Text compare
+
+def remove_punctuation(raw_txt, rm_whitespace=False):
+    """
+    Remove punctuation from string-type data.
+
+    :param raw_txt: string-type data
+    :type raw_txt: str
+    :param rm_whitespace: whether to remove whitespace from the input string as well,
+        defaults to ``False``
+    :type rm_whitespace: bool
+    :return: text with punctuation removed
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import remove_punctuation
+
+        >>> raw_text = 'Hello\tworld! :-)'
+
+        >>> text = remove_punctuation(raw_text)
+        >>> print(text)
+        Hello	world
+
+        >>> text = remove_punctuation(raw_text, rm_whitespace=True)
+        >>> print(text)
+        Hello world
+    """
+
+    try:
+        txt = raw_txt.translate(str.maketrans('', '', string.punctuation))
+
+    except Exception as e:
+        print(e)
+        txt = ''.join(x for x in raw_txt if x not in string.punctuation)
+
+    if rm_whitespace:
+        txt = ' '.join(txt.split())
+
+    return txt
+
+
+""" Comparison of textual data ----------------------------------------------------- """
+
 
 def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     """
@@ -136,49 +179,8 @@ def find_matched_str(str_x, lookup_list):
                 yield y
 
 
-# Text processing
+""" Basic computation of textual data ---------------------------------------------- """
 
-def remove_punctuation(raw_txt, rm_whitespace=False):
-    """
-    Remove punctuation from string-type data.
-
-    :param raw_txt: string-type data
-    :type raw_txt: str
-    :param rm_whitespace: whether to remove whitespace from the input string as well,
-        defaults to ``False``
-    :type rm_whitespace: bool
-    :return: text with punctuation removed
-    :rtype: str
-
-    **Examples**::
-
-        >>> from pyhelpers.text import remove_punctuation
-
-        >>> raw_text = 'Hello\tworld! :-)'
-
-        >>> text = remove_punctuation(raw_text)
-        >>> print(text)
-        Hello	world
-
-        >>> text = remove_punctuation(raw_text, rm_whitespace=True)
-        >>> print(text)
-        Hello world
-    """
-
-    try:
-        txt = raw_txt.translate(str.maketrans('', '', string.punctuation))
-
-    except Exception as e:
-        print(e)
-        txt = ''.join(x for x in raw_txt if x not in string.punctuation)
-
-    if rm_whitespace:
-        txt = ' '.join(txt.split())
-
-    return txt
-
-
-# Text calculation
 
 def count_words(raw_txt):
     """
@@ -460,7 +462,8 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-# Text conversion
+""" Transformation of textual data ------------------------------------------------- """
+
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
     """
