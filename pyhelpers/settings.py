@@ -1,11 +1,13 @@
 """
-A module for altering settings.
+Altering settings of working environment.
 """
 
 import os
 
 import numpy as np
 import pandas as pd
+
+""" NumPy -------------------------------------------------------------------------- """
 
 
 def np_preferences(reset=False):
@@ -26,6 +28,9 @@ def np_preferences(reset=False):
         np.core.arrayprint._line_width = 120
     else:
         np.core.arrayprint._line_width = 80  # 75
+
+
+""" Pandas ------------------------------------------------------------------------- """
 
 
 def pd_preferences(reset=False, ignore_future_warning=True):
@@ -61,6 +66,9 @@ def pd_preferences(reset=False, ignore_future_warning=True):
             import warnings
             warnings.simplefilter(action='ignore', category=FutureWarning)
         pd.reset_option('all')
+
+
+""" Matplotlib --------------------------------------------------------------------- """
 
 
 def mpl_preferences(reset=False, font_name=None):
@@ -104,6 +112,9 @@ def mpl_preferences(reset=False, font_name=None):
     else:
         plt.rcParams = plt.rcParamsDefault
         plt.style.use('default')
+
+
+""" GDAL --------------------------------------------------------------------------- """
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000):
