@@ -8,8 +8,8 @@ ops
     :no-members:
     :no-inherited-members:
 
-For general use
----------------
+General use
+-----------
 
 .. autosummary::
     :toctree: _generated/
@@ -17,9 +17,10 @@ For general use
 
     confirmed
 
-For iterable manipulation
--------------------------
+Basic data manipulation
+-----------------------
 
+.. rubric:: Iterable
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
@@ -31,9 +32,7 @@ For iterable manipulation
     get_all_values_from_nested_dict
     remove_multiple_keys_from_dict
 
-For tabular data manipulation
------------------------------
-
+.. rubric:: Tabular data
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
@@ -43,8 +42,8 @@ For tabular data manipulation
     dict_to_dataframe
     parse_csr_matrix
 
-For simple computation
-----------------------
+Basic computation
+-----------------
 
 .. autosummary::
     :toctree: _generated/
@@ -54,8 +53,8 @@ For simple computation
     interquartile_range
     find_closest_date
 
-For graph plotting
-------------------
+Graph plotting
+--------------
 
 .. autosummary::
     :toctree: _generated/
@@ -64,8 +63,8 @@ For graph plotting
     cmap_discretisation
     colour_bar_index
 
-For web scraping
-----------------
+Web scraping
+------------
 
 .. autosummary::
     :toctree: _generated/
