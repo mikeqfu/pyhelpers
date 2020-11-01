@@ -764,10 +764,20 @@ def fake_requests_headers(random=False):
 
     import fake_useragent
 
-    fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+    try:
+        fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+        ua = fake_user_agent.random if random else fake_user_agent['google chrome']
 
-    fake_headers = {
-        'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
+    except fake_useragent.FakeUserAgentError:
+        fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+
+        if random:
+            import random
+            ua = random.choice(fake_user_agent.data_browsers['internetexplorer'])
+        else:
+            ua = fake_user_agent['Internet Explorer']
+
+    fake_headers = {'User-Agent': ua}
 
     return fake_headers
 
