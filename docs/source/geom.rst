@@ -52,8 +52,8 @@ Geometry calculation
     get_square_vertices
     get_square_vertices_calc
 
-Visualisation
--------------
+Geometric data visualisation
+----------------------------
 
 .. rubric:: Sketch
 .. autosummary::
