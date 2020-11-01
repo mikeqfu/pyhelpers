@@ -28,12 +28,15 @@ def np_preferences(reset=False):
         np.core.arrayprint._line_width = 80  # 75
 
 
-def pd_preferences(reset=False):
+def pd_preferences(reset=False, ignore_future_warning=True):
     """
     Set preferences for displaying results.
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
+    :param ignore_future_warning: whether to ignore/suppress future warnings,
+        defaults to ``True``
+    :type ignore_future_warning: bool
 
     **Example**::
 
@@ -54,6 +57,9 @@ def pd_preferences(reset=False):
         pd.set_option('mode.chained_assignment', None)
         # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
     else:
+        if ignore_future_warning:
+            import warnings
+            warnings.simplefilter(action='ignore', category=FutureWarning)
         pd.reset_option('all')
 
 
