@@ -13,7 +13,6 @@ import types
 
 import numpy as np
 import pandas as pd
-import tqdm
 
 """ General use -------------------------------------------------------------------- """
 
@@ -825,6 +824,8 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     else:
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+    import tqdm
 
     with open(path_to_file, mode='wb', **kwargs) as f:
         for data in tqdm.tqdm(resp.iter_content(block_size, decode_unicode=True),
