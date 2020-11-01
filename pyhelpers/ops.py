@@ -760,6 +760,10 @@ def fake_requests_headers(random=False):
         >>> print(fake_headers_)
         {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36'
                        ' (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'}
+
+    .. note::
+
+        The above ``fake_headers_`` may be different every time we run the examples.
     """
 
     import fake_useragent
