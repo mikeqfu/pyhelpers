@@ -1,5 +1,5 @@
 """
-A module for manipulation of directories.
+Manipulation of directories.
 """
 
 import os
@@ -8,8 +8,8 @@ import pkg_resources
 
 from .ops import confirmed
 
+""" Change directories ------------------------------------------------------------- """
 
-# Change directories -------------------------------------------------------------------
 
 def cd(*sub_dir, mkdir=False, **kwargs):
     """
@@ -138,7 +138,8 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-# Validate directories -----------------------------------------------------------------
+""" Validate directories ----------------------------------------------------------- """
+
 
 def is_dirname(dir_name):
     """
@@ -213,7 +214,8 @@ def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
     return data_dir_
 
 
-# Delete directories -------------------------------------------------------------------
+""" Delete directories ------------------------------------------------------------- """
+
 
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
     """
