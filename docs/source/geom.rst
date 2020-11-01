@@ -8,8 +8,8 @@ geom
     :no-members:
     :no-inherited-members:
 
-Transformation
---------------
+Geometric transformation
+------------------------
 
 .. rubric:: Geometric type
 .. autosummary::
@@ -28,17 +28,8 @@ Transformation
     wgs84_to_osgb36_calc
     osgb36_to_wgs84_calc
 
-Calculation
------------
-
-.. rubric:: Midpoint
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    get_midpoint
-    get_geometric_midpoint
-    get_geometric_midpoint_calc
+Geometry calculation
+--------------------
 
 .. rubric:: Distance
 .. autosummary::
@@ -47,14 +38,17 @@ Calculation
 
     calc_distance_on_unit_sphere
     calc_hypotenuse_distance
+    find_closest_point
+    find_closest_points
 
-.. rubric:: Search
+.. rubric:: Locating
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
-    find_closest_point_from
-    find_closest_points_between
+    get_midpoint
+    get_geometric_midpoint
+    get_geometric_midpoint_calc
     get_square_vertices
     get_square_vertices_calc
 
