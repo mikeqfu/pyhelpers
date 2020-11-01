@@ -17,7 +17,7 @@ The current release includes the following modules, with each containing a numbe
     text
     sql
 
-This part of the documentation provides **a couple of quick examples for each module** to demonstrate what they may offer to assist with our data manipulation.
+This part of the documentation provides a quick tutorial with **a couple of examples for each module** to demonstrate what the package may offer to assist with our data manipulation.
 
 
 .. _settings-examples:
@@ -25,13 +25,15 @@ This part of the documentation provides **a couple of quick examples for each mo
 Change settings of working environment
 ======================================
 
-The module :ref:`pyhelpers.settings<settings>` can be used to alter settings with `pandas`_, `numpy`_, `matplotlib`_ and `gdal`_ for our working environment. For example, the function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default `pandas`_ settings (given ``reset=False``), such as representation and maximum number of columns when displaying a `pandas.DataFrame`_:
+The module :ref:`pyhelpers.settings<settings>` can be used to alter settings with `pandas`_, `numpy`_, `matplotlib`_ and `GDAL`_ for our working environment. For example, the function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default `pandas`_ settings (given ``reset=False``), such as representation and maximum number of columns when displaying a `pandas.DataFrame`_:
 
 .. code-block:: python
 
-   >>> from pyhelpers.settings import pd_preferences
+    >>> from pyhelpers.settings import pd_preferences
+    >>> # Or simply,
+    >>> # from pyhelpers import pd_preferences
 
-   >>> pd_preferences(reset=False)
+    >>> pd_preferences(reset=False)
 
 When ``reset=True``, all parameters are reset to their default values.
 
@@ -50,6 +52,8 @@ The module :ref:`pyhelpers.dir<dir>` can be used to help change/manipulate direc
 .. code-block:: python
 
     >>> from pyhelpers.dir import cd
+    >>> # Or simply,
+    >>> # from pyhelpers import cd
 
     >>> cwd = cd()
     >>> print(cwd)
@@ -119,6 +123,8 @@ To delete the directory of ``"pyhelpers_quick_start"``, we may use the function 
 .. code-block:: python
 
     >>> from pyhelpers.dir import delete_dir
+    >>> # Or simply,
+    >>> # from pyhelpers import delete_dir
 
     >>> delete_dir(path_to_qs, verbose=True)
     The directory "\pyhelpers_quick_start" is not empty.
@@ -136,6 +142,8 @@ The module :ref:`pyhelpers.ops<ops>` is intended to provide a miscellany of help
 .. code-block:: python
 
     >>> from pyhelpers.ops import download_file_from_url
+    >>> # Or simply,
+    >>> # from pyhelpers import download_file_from_url
 
 For example, we can use the function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` (requiring `requests`_ and `tqdm`_) to download files from a given URL. Suppose we would like to download a Python logo from the homepage of `Python`_, where the URL of the logo is:
 
@@ -175,6 +183,8 @@ For another example, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>
 .. code-block:: python
 
     >>> from pyhelpers.ops import confirmed
+    >>> # Or simply,
+    >>> # from pyhelpers import confirmed
 
 .. code-block:: python
 
@@ -228,6 +238,8 @@ If we would like to save ``dat`` as a `pickle`_ file and retrieve it later, use 
 .. code-block:: python
 
     >>> from pyhelpers.store import save_pickle, load_pickle
+    >>> # Or simply,
+    >>> # from pyhelpers import save_pickle, load_pickle
 
 For example, to save ``dat`` to ``path_to_dat`` (see the :ref:`path_to_dat<path-to-dat>` in :ref:`dir<dir-examples>` above):
 
@@ -274,6 +286,8 @@ For example, to convert coordinates from OSGB36 (British national grid) to WGS84
 .. code-block:: python
 
     >>> from pyhelpers.geom import osgb36_to_wgs84
+    >>> # Or simply,
+    >>> # from pyhelpers import osgb36_to_wgs84
 
 To convert coordinate of a single point ``(530034, 180381)``:
 
@@ -321,6 +335,8 @@ If we would like to find one, from the ``lookup_list`` below, that is the most s
 .. code-block:: python
 
     >>> from pyhelpers.text import find_similar_str
+    >>> # Or simply,
+    >>> # from pyhelpers import find_similar_str
 
     >>> lookup_list = ['Anglia',
     ...                'East Coast',
@@ -352,14 +368,20 @@ Alternatively, we could also turn to another Python library `NLTK`_ by setting `
 
 .. _sql-examples:
 
-Work with PostgreSQL
-====================
+Work with PostgreSQL database
+=============================
 
-The module :ref:`pyhelpers.sql<sql>` provides a convenient way to establish a connection with a SQL server. The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` that represents a basic `PostgreSQL`_ instance.
+The module :ref:`pyhelpers.sql<sql>` provides a convenient way to establish a connection with a SQL database. The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` that allows us to implement some basic queries in a `PostgreSQL`_ database.
+
+.. note::
+
+    The :ref:`sql<sql>` module depends on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_, which are not required for installation of PyHelpers. If any of the three dependencies is currently not on our system, we should install it before we proceed.
 
 .. code-block:: python
 
     >>> from pyhelpers.sql import PostgreSQL
+    >>> # Or simply,
+    >>> # from pyhelpers import PostgreSQL
 
 
 Connect to a database
@@ -504,10 +526,10 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 .. _`pandas`: https://pandas.pydata.org/
 .. _`pandas.DataFrame`: https://pandas.pydata.org/pandas-docs/stable/user_guide/dsintro.html#dataframe
 .. _`matplotlib`: https://matplotlib.org/
-.. _`gdal`: https://pypi.org/project/GDAL/
-.. _`requests`: https://2.python-requests.org/en/master/
-.. _`tqdm`: https://pypi.org/project/tqdm/
-.. _`Pillow`: https://pypi.org/project/Pillow/
+.. _`GDAL`: https://gdal.org/
+.. _`requests`: https://github.com/psf/requests
+.. _`tqdm`: https://github.com/tqdm/tqdm
+.. _`Pillow`: https://python-pillow.org/
 .. _`openpyxl`: https://openpyxl.readthedocs.io/en/stable/
 .. _`XlsxWriter`: https://xlsxwriter.readthedocs.io
 .. _`xlrd`: https://xlrd.readthedocs.io/en/latest/
@@ -515,6 +537,9 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 .. _`FuzzyWuzzy`: https://github.com/seatgeek/fuzzywuzzy/
 .. _`NLTK`: https://www.nltk.org/
 .. _`PostgreSQL`: https://www.postgresql.org/
+.. _`SQLAlchemy`: https://www.sqlalchemy.org/
+.. _`SQLAlchemy-Utils`: https://github.com/kvesteri/sqlalchemy-utils
+.. _`psycopg2`: https://www.psycopg.org/
 .. _`pandas.DataFrame.to_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
 **(The end of the quick start)**
