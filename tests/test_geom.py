@@ -189,7 +189,7 @@ def test_find_closest_point_from():
                (1.4909, 52.6271),
                (1.4248, 52.63075))
 
-    closest_point = find_closest_point_from(pt, ref_pts)
+    closest_point = find_closest_point(pt, ref_pts)
     print(closest_point)
     # (1.5429, 52.6347)
 
@@ -198,12 +198,12 @@ def test_find_closest_point_from():
     pt = Point((2.5429, 53.6347))
     ref_pts = (Point((1.5429, 52.6347)), Point((1.4909, 52.6271)), Point((1.4248, 52.63075)))
 
-    closest_point = find_closest_point_from(pt, ref_pts)
+    closest_point = find_closest_point(pt, ref_pts)
     print(closest_point)
     # (1.5429, 52.6347)
 
     as_geom = True
-    closest_point = find_closest_point_from(pt, ref_pts, as_geom)
+    closest_point = find_closest_point(pt, ref_pts, as_geom)
     print(closest_point)
     # POINT (1.5429 52.6347)
 
@@ -219,14 +219,14 @@ def test_find_closest_points_between():
 
     k = 1
 
-    closest_points = find_closest_points_between(pts, ref_pts, k)
+    closest_points = find_closest_points(pts, ref_pts, k)
     print(closest_points)
     # [[ 2.4248  53.63075]
     #  [ 2.4248  53.63075]
     #  [ 2.4248  53.63075]]
 
     as_geom = True
-    closest_points = find_closest_points_between(pts, ref_pts, k, as_geom)
+    closest_points = find_closest_points(pts, ref_pts, k, as_geom)
     for x in closest_points:
         print(x)
     # POINT (2.4248 53.63075)
@@ -342,10 +342,10 @@ if __name__ == '__main__':
     test_calc_hypotenuse_distance()
 
     # Search
-    print("\nTesting 'find_closest_point_from()':")
+    print("\nTesting 'find_closest_point()':")
     test_find_closest_point_from()
 
-    print("\nTesting 'find_closest_points_between()':")
+    print("\nTesting 'find_closest_points()':")
     test_find_closest_points_between()
 
     print("\nTesting 'get_square_vertices()':")
