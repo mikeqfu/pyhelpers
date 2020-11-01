@@ -8,8 +8,8 @@ settings
     :no-members:
     :no-inherited-members:
 
-For NumPy
----------
+NumPy
+-----
 
 .. autosummary::
     :toctree: _generated/
@@ -17,8 +17,8 @@ For NumPy
 
     np_preferences
 
-For Pandas
-----------
+Pandas
+------
 
 .. autosummary::
     :toctree: _generated/
@@ -26,8 +26,8 @@ For Pandas
 
     pd_preferences
 
-For Matplotlib
---------------
+Matplotlib
+----------
 
 .. autosummary::
     :toctree: _generated/
@@ -35,8 +35,8 @@ For Matplotlib
 
     mpl_preferences
 
-For GDAL
---------
+GDAL
+----
 
 .. autosummary::
     :toctree: _generated/
