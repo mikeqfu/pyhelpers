@@ -1,5 +1,5 @@
 """
-A module for manipulation of geometric/geographical data.
+Manipulation of geometric/geographical data.
 """
 
 import collections.abc
@@ -9,7 +9,7 @@ import numpy as np
 
 from .ops import create_rotation_matrix
 
-""" Transformation ----------------------------------------------------------------- """
+""" Geometric transformation ------------------------------------------------------- """
 
 
 # Geometric type
@@ -436,7 +436,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     return long, lat
 
 
-""" Calculation -------------------------------------------------------------------- """
+""" Geometry calculation ----------------------------------------------------------- """
 
 
 # Distance
@@ -978,7 +978,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-""" Visualisation ------------------------------------------------------------------ """
+""" Geometric data visualisation --------------------------------------------------- """
 
 
 # Sketch
