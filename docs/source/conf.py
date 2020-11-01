@@ -16,7 +16,7 @@ import datetime
 import pyhelpers
 
 # General information about the project.
-project = u'PyHelpers'
+project = u'{}'.format(pyhelpers.__package_name_alt__)
 copyright = u'2019-{}, {}'.format(datetime.datetime.now().year, pyhelpers.__author__)
 
 # The version info for the project
@@ -54,7 +54,7 @@ exclude_patterns = ['_build', '../_build', '../build']
 autosummary_generate = True
 
 # A list of modules to be mocked up.
-autodoc_mock_imports = ['gdal', 'shapely']
+autodoc_mock_imports = ['gdal', 'shapely', 'python-Levenshtein', 'sqlalchemy', 'psycopg2']
 
 # The suffix(es) of source filenames (For multiple suffix, a list of string.
 source_suffix = '.rst'  # e.g. source_suffix = ['.rst', '.md'])
@@ -73,7 +73,7 @@ html_theme = 'sphinx_rtd_theme'  # The theme to use for HTML & HTML Help pages.
 
 html_theme_options = {
     'collapse_navigation': False,
-    'navigation_depth': 3,
+    'navigation_depth': 4,
 }
 
 # The name of the Pygments (syntax highlighting) style to use.
