@@ -8,8 +8,8 @@ store
     :no-members:
     :no-inherited-members:
 
-Save files
-----------
+Save data
+---------
 
 .. autosummary::
     :toctree: _generated/
@@ -25,8 +25,8 @@ Save files
     save_svg_as_emf
     save_web_page_as_pdf
 
-Load files
-----------
+Load data
+---------
 
 .. autosummary::
     :toctree: _generated/
@@ -37,8 +37,8 @@ Load files
     load_json
     load_feather
 
-Uncompress files
-----------------
+Uncompress data files
+---------------------
 
 .. autosummary::
     :toctree: _generated/
