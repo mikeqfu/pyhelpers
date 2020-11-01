@@ -602,15 +602,17 @@ def cmap_discretisation(cmap, n_colours):
     See also [`CD-1 <http://sensitivecities.com/
     so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, e.g. `matplotlib.cm.Accent`_
+    :param cmap: a colormap instance,
+        such as built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :return: a discrete colormap from (the continuous) ``cmap``
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
-    .. _`matplotlib.cm.Accent`:
-        https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html
+    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`matplotlib.cm.get_cmap`:
+        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
 
     **Example**::
 
@@ -619,10 +621,10 @@ def cmap_discretisation(cmap, n_colours):
         >>> import numpy as np_
         >>> from pyhelpers.ops import cmap_discretisation
 
-        >>> cm_accent = cmap_discretisation(cmap=matplotlib.cm.Accent, n_colours=5)
+        >>> cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
 
         >>> fig, ax = plt_.subplots(figsize=(10, 2))
-        >>> ax.imshow(np.resize(range(100), (5, 100)), cmap=cm_accent,
+        >>> ax.imshow(np_.resize(range(100), (5, 100)), cmap=cm_accent,
         ...           interpolation='nearest')
         >>> plt_.axis('off')
         >>> plt_.tight_layout()
@@ -662,7 +664,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     See also [`CBI-1 <http://sensitivecities.com/
     so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, e.g. `matplotlib.cm.Accent`_
+    :param cmap: a colormap instance,
+        such as built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
@@ -672,8 +675,9 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     :return: a colour bar object
     :rtype: matplotlib.colorbar.Colorbar
 
-    .. _`matplotlib.cm.Accent`:
-        https://matplotlib.org/3.2.1/gallery/color/colormap_reference.html
+    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`matplotlib.cm.get_cmap`:
+        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
     .. _`matplotlib.pyplot.colorbar`:
         https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
 
@@ -683,11 +687,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> import matplotlib.pyplot as plt_
         >>> from pyhelpers.ops import colour_bar_index
 
-        >>> cmap_ = matplotlib.cm.Accent
-        >>> n_colours_ = 5
-
         >>> plt_.figure(figsize=(2, 6))
-        >>> cbar = colour_bar_index(cmap_, n_colours_)
+        >>> cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5)
         >>> cbar.ax.tick_params(labelsize=18)
         >>> plt_.axis('off')
         >>> plt_.tight_layout()
@@ -698,10 +699,9 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     .. code-block:: python
 
-        >>> labels_ = list('abcde')
-
         >>> plt_.figure(figsize=(2, 6))
-        >>> cbar = colour_bar_index(cmap_, n_colours_, labels_)
+        >>> cbar = colour_bar_index(matplotlib.cm.get_cmap('Accent'), n_colours=5,
+        ...                         labels=list('abcde'))
         >>> cbar.ax.tick_params(labelsize=18)
         >>> plt_.axis('off')
         >>> plt_.tight_layout()
