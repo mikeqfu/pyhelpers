@@ -30,11 +30,13 @@ To test if PyHelpers is correctly installed, try importing the package via an in
 
     - If using a `virtual environment`_, ensure that it is activated.
 
-    - To ensure you get the most recent version, it is always recommended to add ``--upgrade`` (or ``-U``) to ``pip install``.
+    - It is always recommended to add ``--upgrade`` (or ``-U``) to ``pip install`` so as to get the latest version of the package.
 
     - The package has not yet been tested with `Python 2`_. For users who have installed both `Python 2`_ and `Python 3`_, it would be recommended to replace ``pip`` with ``pip3``. But you are more than welcome to volunteer testing the package with `Python 2`_ and any issues should be logged/reported onto the `Issues`_ page.
 
     - For *Windows* users, The ``pip`` method might fail to install some dependencies, such as `GDAL`_, `Shapely`_ and `python-Levenshtein`_. If errors occur when ``pip`` installing any of those dependencies, try instead to ``pip install`` their respective *.whl* files, which can be downloaded from the `Unofficial Windows Binaries for Python Extension Packages`_. After they are installed successfully, try to install pyhelpers again.
+
+    - It is possible to get a ``ModuleNotFoundError`` when using some functions, as not all dependencies are required (so as to minimise the requirements) for the installation of the package. In that case, just simply install the 'missing' module(s). See, for example, the use of the module :ref:`pyhelpers.sql<sql-examples>`.
 
     - For more general instructions, check the "`Installing Packages <https://packaging.python.org/tutorials/installing-packages>`_".
 
