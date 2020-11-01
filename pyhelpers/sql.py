@@ -15,7 +15,7 @@ import sqlalchemy.engine.reflection
 import sqlalchemy.engine.url
 import sqlalchemy_utils
 
-from pyhelpers.ops import confirmed
+from .ops import confirmed
 
 
 class PostgreSQL:
@@ -43,7 +43,7 @@ class PostgreSQL:
         defaults to ``True``
     :type verbose: bool
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.sql import PostgreSQL
 
@@ -56,6 +56,20 @@ class PostgreSQL:
         >>> # Connect a database 'testdb' (which will be created if it does not exist)
         >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
         ...                     database_name='testdb')
+        Password (postgres@localhost:5432): ***
+        Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+        >>> # Define a proxy object that inherits from pyhelpers.sql.PostgreSQL
+        >>> class ExampleProxyObj(PostgreSQL):
+        ...
+        ...     def __init__(self, host='localhost', port=5432, username='postgres',
+        ...                  password=None, database_name='testdb', **kwargs):
+        ...
+        ...         super().__init__(host=host, port=port, username=username,
+        ...                          password=password, database_name=database_name,
+        ...                          **kwargs)
+
+        >>> example_proxy_obj = ExampleProxyObj()
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/testdb ... Successfully.
     """
