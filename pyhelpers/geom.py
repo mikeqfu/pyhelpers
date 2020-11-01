@@ -439,7 +439,248 @@ def osgb36_to_wgs84_calc(easting, northing):
 """ Calculation -------------------------------------------------------------------- """
 
 
-# Midpoint
+# Distance
+
+def calc_distance_on_unit_sphere(pt_x, pt_y):
+    """
+    Calculate distance between two points.
+
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :return: distance (in miles) between ``pt_x`` and ``pt_y``
+        (relative to the earth's radius)
+    :rtype: float
+
+    .. note::
+
+        This function is modified from the original code available at
+        [`CDOUS-1 <http://www.johndcook.com/blog/python_longitude_latitude/>`_].
+        It assumes the earth is perfectly spherical and returns the distance
+        based on each point's longitude and latitude.
+
+    **Example**::
+
+        >>> from pyhelpers.geom import calc_distance_on_unit_sphere
+
+        >>> pt_1 = 1.5429, 52.6347
+        >>> pt_2 = 1.4909, 52.6271
+
+        >>> arc_len = calc_distance_on_unit_sphere(pt_1, pt_2)
+        >>> print(arc_len)
+        2.243709962588554
+    """
+
+    # Convert latitude and longitude to spherical coordinates in radians.
+    degrees_to_radians = np.pi / 180.0
+
+    from shapely.geometry import Point
+
+    if not all(isinstance(x, Point) for x in (pt_x, pt_y)):
+        try:
+            pt_x = Point(pt_x)
+            pt_y = Point(pt_y)
+        except Exception as e:
+            print(e)
+            return None
+
+    # phi = 90 - latitude
+    phi1 = (90.0 - pt_x.y) * degrees_to_radians
+    phi2 = (90.0 - pt_y.y) * degrees_to_radians
+
+    # theta = longitude
+    theta1 = pt_x.x * degrees_to_radians
+    theta2 = pt_y.x * degrees_to_radians
+
+    # Compute spherical distance from spherical coordinates.
+
+    # For two locations in spherical coordinates
+    # (1, theta, phi) and (1, theta', phi')
+    # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
+    # distance = rho * arc length
+
+    cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) +
+              np.cos(phi1) * np.cos(phi2))
+    arc_length = np.arccos(cosine) * 3960  # in miles
+
+    # To multiply arc by the radius of the earth in a set of units to get length.
+    return arc_length
+
+
+def calc_hypotenuse_distance(pt_x, pt_y):
+    """
+    Calculate hypotenuse given two points
+    (the right angled triangle, given its side and perpendicular).
+
+    :param pt_x: a point
+    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt_y: a point
+    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :return: hypotenuse
+    :rtype: float
+
+    .. note::
+
+        This is the length of the vector from the ``orig_pt`` to ``dest_pt``.
+
+        ``numpy.hypot(x, y)`` return the Euclidean norm, ``sqrt(x*x + y*y)``.
+
+        See also
+        [`CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
+
+    **Example**::
+
+        >>> from pyhelpers.geom import calc_hypotenuse_distance
+
+        >>> pt_1 = 1.5429, 52.6347
+        >>> pt_2 = 1.4909, 52.6271
+
+        >>> hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
+        >>> print(hypot_distance)
+        0.05255244999046248
+    """
+
+    pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=False)
+    x_diff, y_diff = pt_x_[0] - pt_y_[0], pt_x_[1] - pt_y_[1]
+    hypot_dist = np.hypot(x_diff, y_diff)
+    return hypot_dist
+
+
+def find_closest_point(pt, ref_pts, as_geom=False):
+    """
+    Find the closest point of the given point to a list of points.
+
+    :param pt: (longitude, latitude)
+    :type pt: tuple, list
+    :param ref_pts: a sequence of reference (tuple/list of length 2) points
+    :type ref_pts: tuple or list or iterable
+    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
+    :type as_geom: bool
+    :return: the point closest to ``pt``
+    :rtype: tuple or list or shapely.geometry.Point
+
+    .. _`shapely.geometry.Point`:
+        https://shapely.readthedocs.io/en/latest/manual.html#points
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import find_closest_point
+
+        >>> pt_x = (2.5429, 53.6347)
+        >>> pt_reference = ((1.5429, 52.6347),
+        ...                 (1.4909, 52.6271),
+        ...                 (1.4248, 52.63075))
+
+        >>> pt_closest = find_closest_point(pt_x, pt_reference)
+        >>> print(pt_closest)
+        (1.5429, 52.6347)
+
+        >>> from shapely.geometry import Point
+
+        >>> pt_x = Point((2.5429, 53.6347))
+        >>> pt_reference = (Point((1.5429, 52.6347)),
+        ...                 Point((1.4909, 52.6271)),
+        ...                 Point((1.4248, 52.63075)))
+
+        >>> pt_closest = find_closest_point(pt_x, pt_reference)
+        >>> print(pt_closest)
+        (1.5429, 52.6347)
+
+        >>> pt_closest = find_closest_point(pt_x, pt_reference, as_geom=True)
+        >>> print(pt_closest)
+        POINT (1.5429 52.6347)
+    """
+
+    from shapely.geometry import Point
+
+    pt_ = (pt.x, pt.y) if isinstance(pt, Point) else pt
+
+    if any(isinstance(x, Point) for x in ref_pts):
+        ref_pts_ = ((pt.x, pt.y) for pt in ref_pts)
+    else:
+        ref_pts_ = ref_pts
+
+    # Find the min value using the distance function with coord parameter
+    closest_point = min(ref_pts_, key=functools.partial(calc_hypotenuse_distance, pt_))
+
+    if as_geom:
+        closest_point = Point(closest_point)
+
+    return closest_point
+
+
+def find_closest_points(pts, ref_pts, k=1, as_geom=False, **kwargs):
+    """
+    Find the closest points from a given list of reference points
+    (applicable for vectorized computation).
+
+    See also [`FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
+
+    :param pts: an array of points
+    :type pts: numpy.ndarray [of size (n, 2)]
+    :param ref_pts: an array of reference points
+    :type ref_pts: numpy.ndarray [of size (n, 2)]
+    :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
+    :type k: integer, list of integer
+    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
+    :type as_geom: bool
+    :param kwargs: optional parameters of `scipy.spatial.cKDTree`_
+    :return: the closest point(s)
+    :rtype: numpy.ndarray, list
+
+    .. _`shapely.geometry.Point`:
+        https://shapely.readthedocs.io/en/latest/manual.html#points
+    .. _`scipy.spatial.cKDTree`:
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
+
+    **Examples**::
+
+        >>> import numpy
+        >>> from pyhelpers.geom import find_closest_points
+
+        >>> pt_x = numpy.array([[1.5429, 52.6347],
+        ...                     [1.4909, 52.6271],
+        ...                     [1.4248, 52.63075]])
+
+        >>> pt_reference = numpy.array([[2.5429, 53.6347],
+        ...                             [2.4909, 53.6271],
+        ...                             [2.4248, 53.63075]])
+
+        >>> pts_closest = find_closest_points(pt_x, pt_reference, k=1)
+        >>> print(pts_closest)
+        [[ 2.4248  53.63075]
+         [ 2.4248  53.63075]
+         [ 2.4248  53.63075]]
+
+        >>> pts_closest = find_closest_points(pt_x, pt_reference, k, as_geom=True)
+        >>> for x in pts_closest:
+        ...     print(x)
+        POINT (2.4248 53.63075)
+        POINT (2.4248 53.63075)
+        POINT (2.4248 53.63075)
+    """
+
+    if isinstance(ref_pts, np.ndarray):
+        ref_pts_ = ref_pts
+    else:
+        ref_pts_ = np.concatenate([np.array(geom.coords) for geom in ref_pts])
+
+    from scipy.spatial.ckdtree import cKDTree
+
+    ref_ckd_tree = cKDTree(ref_pts_, **kwargs)
+    distances, indices = ref_ckd_tree.query(pts, k=k)  # returns (distance, index)
+
+    if as_geom:
+        from shapely.geometry import Point
+        closest_points = [Point(ref_pts_[i]) for i in indices]
+    else:
+        closest_points = np.array([ref_pts_[i] for i in indices])
+
+    return closest_points
+
+
+# Locating
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
@@ -615,249 +856,6 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
         midpoint = Point(midpoint)
 
     return midpoint
-
-
-# Distance
-
-def calc_distance_on_unit_sphere(pt_x, pt_y):
-    """
-    Calculate distance between two points.
-
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :return: distance (in miles) between ``pt_x`` and ``pt_y``
-        (relative to the earth's radius)
-    :rtype: float
-
-    .. note::
-
-        This function is modified from the original code available at
-        [`CDOUS-1 <http://www.johndcook.com/blog/python_longitude_latitude/>`_].
-        It assumes the earth is perfectly spherical and returns the distance
-        based on each point's longitude and latitude.
-
-    **Example**::
-
-        >>> from pyhelpers.geom import calc_distance_on_unit_sphere
-
-        >>> pt_1 = 1.5429, 52.6347
-        >>> pt_2 = 1.4909, 52.6271
-
-        >>> arc_len = calc_distance_on_unit_sphere(pt_1, pt_2)
-        >>> print(arc_len)
-        2.243709962588554
-    """
-
-    # Convert latitude and longitude to spherical coordinates in radians.
-    degrees_to_radians = np.pi / 180.0
-
-    from shapely.geometry import Point
-
-    if not all(isinstance(x, Point) for x in (pt_x, pt_y)):
-        try:
-            pt_x = Point(pt_x)
-            pt_y = Point(pt_y)
-        except Exception as e:
-            print(e)
-            return None
-
-    # phi = 90 - latitude
-    phi1 = (90.0 - pt_x.y) * degrees_to_radians
-    phi2 = (90.0 - pt_y.y) * degrees_to_radians
-
-    # theta = longitude
-    theta1 = pt_x.x * degrees_to_radians
-    theta2 = pt_y.x * degrees_to_radians
-
-    # Compute spherical distance from spherical coordinates.
-
-    # For two locations in spherical coordinates
-    # (1, theta, phi) and (1, theta', phi')
-    # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
-    # distance = rho * arc length
-
-    cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) +
-              np.cos(phi1) * np.cos(phi2))
-    arc_length = np.arccos(cosine) * 3960  # in miles
-
-    # To multiply arc by the radius of the earth in a set of units to get length.
-    return arc_length
-
-
-def calc_hypotenuse_distance(pt_x, pt_y):
-    """
-    Calculate hypotenuse given two points
-    (the right angled triangle, given its side and perpendicular).
-
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :return: hypotenuse
-    :rtype: float
-
-    .. note::
-
-        This is the length of the vector from the ``orig_pt`` to ``dest_pt``.
-
-        ``numpy.hypot(x, y)`` return the Euclidean norm, ``sqrt(x*x + y*y)``.
-
-        See also
-        [`CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
-
-    **Example**::
-
-        >>> from pyhelpers.geom import calc_hypotenuse_distance
-
-        >>> pt_1 = 1.5429, 52.6347
-        >>> pt_2 = 1.4909, 52.6271
-
-        >>> hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
-        >>> print(hypot_distance)
-        0.05255244999046248
-    """
-
-    pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-    x_diff, y_diff = pt_x_[0] - pt_y_[0], pt_x_[1] - pt_y_[1]
-    hypot_dist = np.hypot(x_diff, y_diff)
-    return hypot_dist
-
-
-# Search
-
-def find_closest_point_from(pt, ref_pts, as_geom=False):
-    """
-    Find the closest point of the given point to a list of points.
-
-    :param pt: (longitude, latitude)
-    :type pt: tuple, list
-    :param ref_pts: a sequence of reference (tuple/list of length 2) points
-    :type ref_pts: tuple or list or iterable
-    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
-    :type as_geom: bool
-    :return: the point closest to ``pt``
-    :rtype: tuple or list or shapely.geometry.Point
-
-    .. _`shapely.geometry.Point`:
-        https://shapely.readthedocs.io/en/latest/manual.html#points
-
-    **Examples**::
-
-        >>> from pyhelpers.geom import find_closest_point_from
-
-        >>> pt_x = (2.5429, 53.6347)
-        >>> pt_reference = ((1.5429, 52.6347),
-        ...                 (1.4909, 52.6271),
-        ...                 (1.4248, 52.63075))
-
-        >>> pt_closest = find_closest_point_from(pt_x, pt_reference)
-        >>> print(pt_closest)
-        (1.5429, 52.6347)
-
-        >>> from shapely.geometry import Point
-
-        >>> pt_x = Point((2.5429, 53.6347))
-        >>> pt_reference = (Point((1.5429, 52.6347)),
-        ...                 Point((1.4909, 52.6271)),
-        ...                 Point((1.4248, 52.63075)))
-
-        >>> pt_closest = find_closest_point_from(pt_x, pt_reference)
-        >>> print(pt_closest)
-        (1.5429, 52.6347)
-
-        >>> pt_closest = find_closest_point_from(pt_x, pt_reference, as_geom=True)
-        >>> print(pt_closest)
-        POINT (1.5429 52.6347)
-    """
-
-    from shapely.geometry import Point
-
-    pt_ = (pt.x, pt.y) if isinstance(pt, Point) else pt
-
-    if any(isinstance(x, Point) for x in ref_pts):
-        ref_pts_ = ((pt.x, pt.y) for pt in ref_pts)
-    else:
-        ref_pts_ = ref_pts
-
-    # Find the min value using the distance function with coord parameter
-    closest_point = min(ref_pts_, key=functools.partial(calc_hypotenuse_distance, pt_))
-
-    if as_geom:
-        closest_point = Point(closest_point)
-
-    return closest_point
-
-
-def find_closest_points_between(pts, ref_pts, k=1, as_geom=False, **kwargs):
-    """
-    Find the closest points from a given list of reference points
-    (applicable for vectorized computation).
-
-    See also [`FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
-
-    :param pts: an array of points
-    :type pts: numpy.ndarray [of size (n, 2)]
-    :param ref_pts: an array of reference points
-    :type ref_pts: numpy.ndarray [of size (n, 2)]
-    :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
-    :type k: integer, list of integer
-    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
-    :type as_geom: bool
-    :param kwargs: optional parameters of `scipy.spatial.cKDTree`_
-    :return: the closest point(s)
-    :rtype: numpy.ndarray, list
-
-    .. _`shapely.geometry.Point`:
-        https://shapely.readthedocs.io/en/latest/manual.html#points
-    .. _`scipy.spatial.cKDTree`:
-        https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
-
-    **Examples**::
-
-        >>> import numpy
-        >>> from pyhelpers.geom import find_closest_points_between
-
-        >>> pt_x = numpy.array([[1.5429, 52.6347],
-        ...                     [1.4909, 52.6271],
-        ...                     [1.4248, 52.63075]])
-
-        >>> pt_reference = numpy.array([[2.5429, 53.6347],
-        ...                             [2.4909, 53.6271],
-        ...                             [2.4248, 53.63075]])
-
-        >>> pts_closest = find_closest_points_between(pt_x, pt_reference, k=1)
-        >>> print(pts_closest)
-        [[ 2.4248  53.63075]
-         [ 2.4248  53.63075]
-         [ 2.4248  53.63075]]
-
-        >>> pts_closest = find_closest_points_between(pt_x, pt_reference, k, as_geom=True)
-        >>> for x in pts_closest:
-        ...     print(x)
-        POINT (2.4248 53.63075)
-        POINT (2.4248 53.63075)
-        POINT (2.4248 53.63075)
-    """
-
-    if isinstance(ref_pts, np.ndarray):
-        ref_pts_ = ref_pts
-    else:
-        ref_pts_ = np.concatenate([np.array(geom.coords) for geom in ref_pts])
-
-    from scipy.spatial.ckdtree import cKDTree
-
-    ref_ckd_tree = cKDTree(ref_pts_, **kwargs)
-    distances, indices = ref_ckd_tree.query(pts, k=k)  # returns (distance, index)
-
-    if as_geom:
-        from shapely.geometry import Point
-        closest_points = [Point(ref_pts_[i]) for i in indices]
-    else:
-        closest_points = np.array([ref_pts_[i] for i in indices])
-
-    return closest_points
 
 
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
