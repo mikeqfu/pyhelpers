@@ -1,5 +1,5 @@
 """
-A module for miscellaneous operations.
+Miscellaneous operations.
 """
 
 import collections.abc
@@ -15,8 +15,8 @@ import numpy as np
 import pandas as pd
 import tqdm
 
+""" General use -------------------------------------------------------------------- """
 
-# For general use ----------------------------------------------------------------------
 
 def confirmed(prompt=None, resp=False, confirmation_required=True):
     """
@@ -68,7 +68,10 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
         return True
 
 
-# For iterable manipulation ------------------------------------------------------------
+""" Basic data manipulation -------------------------------------------------------- """
+
+
+# Iterable
 
 def split_list_by_size(lst, sub_len):
     """
@@ -317,7 +320,7 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
             target_dict.pop(k)
 
 
-# Tabular data -------------------------------------------------------------------------
+# Tabular data
 
 def detect_nan_for_str_column(data_frame, column_names=None):
     """
@@ -480,7 +483,8 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-# For simple computation ---------------------------------------------------------------
+""" Basic computation -------------------------------------------------------------- """
+
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
     """
@@ -593,7 +597,8 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-# For graph plotting -------------------------------------------------------------------
+""" Graph plotting ----------------------------------------------------------------- """
+
 
 def cmap_discretisation(cmap, n_colours):
     """
@@ -729,7 +734,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-# For web scraping ---------------------------------------------------------------------
+""" Web scraping ------------------------------------------------------------------- """
+
 
 def fake_requests_headers(random=False):
     """
@@ -761,7 +767,8 @@ def fake_requests_headers(random=False):
 
     fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
 
-    fake_headers = {'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
+    fake_headers = {
+        'User-Agent': fake_user_agent.random if random else fake_user_agent.chrome}
 
     return fake_headers
 
