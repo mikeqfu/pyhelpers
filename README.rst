@@ -14,17 +14,14 @@ PyHelpers
 .. |DOI| image:: https://zenodo.org/badge/173177909.svg
     :target: https://zenodo.org/badge/latestdoi/173177909
 
-**Author**: Qian Fu |Twitter|
-
-.. |Twitter| image:: https://img.shields.io/twitter/url/https/twitter.com/Qian_Fu?label=Follow&style=social
-    :target: https://twitter.com/Qian_Fu
+**Author**: Qian Fu
 
 PyHelpers is designed as a miscellaneous collection of simple but useful Python functions and classes, providing a handy toolkit for facilitating Python users' data manipulation tasks.
 
 Resources
 ---------
 
-- `Documentation <https://pyhelpers.readthedocs.io/>`_
+- `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_
 - `Issue Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
 
 License
