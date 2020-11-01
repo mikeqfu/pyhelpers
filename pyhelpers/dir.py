@@ -6,7 +6,7 @@ import os
 
 import pkg_resources
 
-from pyhelpers.ops import confirmed
+from .ops import confirmed
 
 
 # Change directories -------------------------------------------------------------------
