@@ -149,7 +149,7 @@ For example, we can use the function :py:func:`download_file_from_url()<pyhelper
 
 .. note::
 
-    The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` depends on `requests`_ and `tqdm`_, which are not required for installation of PyHelpers. If any of the dependencies is currently not on our system, we should install it before we proceed.
+    :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` depends on `requests`_ and `tqdm`_, which are not required for installation of PyHelpers. If any of the dependencies is currently not on our system, we need to install it before we proceed.
 
 If we would like to download a Python logo from the homepage of `Python`_, where the URL of the logo is:
 
@@ -289,6 +289,10 @@ The module :ref:`pyhelpers.geom<geom>` can be used to assist in manipulating geo
 
 For example, to convert coordinates from OSGB36 (British national grid) to WGS84 (latitude and longitude), we can use :py:func:`osgb36_to_wgs84()<pyhelpers.geom.osgb36_to_wgs84>`:
 
+.. note::
+
+    :py:func:`osgb36_to_wgs84()<pyhelpers.geom.osgb36_to_wgs84>` depends on `pyproj`_, which is not required for installing PyHelpers. If the dependency is currently not on our system, we need to install it before we proceed.
+
 .. code-block:: python
 
     >>> from pyhelpers.geom import osgb36_to_wgs84
@@ -359,7 +363,7 @@ The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, mea
 
 .. note::
 
-    `FuzzyWuzzy`_ is not required for installation of PyHelpers. If it is currently not on our system, we should install it before we proceed.
+    `FuzzyWuzzy`_ is not required for installation of PyHelpers. If it is currently not on our system, we need to install it before we proceed.
 
 .. code-block:: python
 
@@ -371,7 +375,7 @@ Alternatively, we could also turn to another Python library `NLTK`_ by setting `
 
 .. note::
 
-    `NLTK`_ is also excluded from the installation requirement of PyHelpers. Again, if it is not available yet on our system, we should install it to run the following code.
+    `NLTK`_ is also excluded from the installation requirement of PyHelpers. Again, if it is not available yet on our system, we need to install it to run the following code.
 
 .. code-block:: python
 
@@ -547,6 +551,7 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 .. _`XlsxWriter`: https://xlsxwriter.readthedocs.io
 .. _`xlrd`: https://xlrd.readthedocs.io/en/latest/
 .. _`pickle`: https://docs.python.org/3/library/pickle.html
+.. _`pyproj`: https://github.com/pyproj4/pyproj
 .. _`FuzzyWuzzy`: https://github.com/seatgeek/fuzzywuzzy/
 .. _`NLTK`: https://www.nltk.org/
 .. _`PostgreSQL`: https://www.postgresql.org/
