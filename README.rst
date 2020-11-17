@@ -1,3 +1,4 @@
+=========
 PyHelpers
 =========
 
@@ -19,12 +20,17 @@ PyHelpers
 PyHelpers is designed as a miscellaneous collection of simple but useful Python functions and classes, providing a handy toolkit for facilitating Python users' data manipulation tasks.
 
 Resources
----------
+=========
 
 - `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_
 - `Issue Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
 
 License
--------
+=======
 
 PyHelpers is licensed under `GNU General Public License, version 2 (GPLv2) <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_.
+
+Citing
+======
+
+Qian Fu, 2020. PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
