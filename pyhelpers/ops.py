@@ -789,11 +789,11 @@ def is_network_connected():
 
 def is_url_connectable(url):
     """
-    Check if the current machine can be connected to a given URL.
+    Check if the current machine can connect to a given URL.
 
-    :param url: URL
+    :param url: a URL
     :type url: str
-    :return: whether the machine can currently be connected to the given URL
+    :return: whether the machine can currently connect to the given URL
     :rtype: bool
 
     **Examples**::
@@ -876,7 +876,7 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
 
     See also [`DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
 
-    :param url: URL
+    :param url: a URL
     :type url: str
     :param path_to_file: a full path to which the downloaded object is saved as
     :type path_to_file: str
