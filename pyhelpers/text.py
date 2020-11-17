@@ -58,6 +58,91 @@ def remove_punctuation(raw_txt, rm_whitespace=False):
     return txt
 
 
+def get_acronym(text, only_capitals=False, capitals_in_words=False):
+    """
+    Get an acronym (in capital letters) of an input text.
+
+    :param text: any text
+    :type text: str
+    :param only_capitals: whether to include capital letters only, defaults to ``False``
+    :type only_capitals: bool
+    :param capitals_in_words: whether to include all captical letters in a single word,
+        defaults to ``False``
+    :type capitals_in_words: bool
+    :return: acronym of the input ``str_var``
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import get_acronym
+
+        >>> text_a = 'This is an apple.'
+        >>> acron = get_acronym(text_a)
+        >>> print(acron)
+        TIAA
+
+        >>> text_b = "I'm at the University of Birmingham."
+        >>> acron =get_acronym(text_b, only_capitals=True)
+        >>> print(acron)
+        IUB
+
+        >>> text_c = 'There is a "ConnectionError"!'
+        >>> acron =get_acronym(text_c, capitals_in_words=True)
+        >>> print(acron)
+        TCE
+    """
+
+    txt = remove_punctuation(text)
+
+    if only_capitals:
+        acronym = ''.join(x[0] for x in txt.split() if x[0].isupper())
+    elif capitals_in_words:
+        acronym = ''.join(list(filter(str.isupper, txt)))
+    else:
+        acronym = ''.join(x[0].upper() for x in txt.split())
+
+    return acronym
+
+
+def extract_words1upper(x, join_with=None):
+    """
+    Extract words from a string by spliting it at occurrence of an uppercase letter.
+
+    :param x: a string joined by a number of words each starting with an uppercase letter
+    :type x: str
+    :param join_with: a string with which to (re)join the single words,
+        defaults to ``None``
+    :type join_with: str or None
+    :return: a list of single words each starting with an uppercase letter,
+        or a single string joined together by them with ``join_with``
+    :rtype: list or str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import extract_words1upper
+
+        >>> x1 = 'NetworkWaymarks'
+        >>> res = extract_words1upper(x1, join_with=' ')
+        >>> print(res)
+        Network Waymarks
+
+        >>> x2 = 'Retaining_Wall'
+        >>> res = extract_words1upper(x2, join_with=' ')
+        >>> print(res)
+        Retaining Wall
+    """
+
+    x_ = remove_punctuation(x)
+
+    # re.sub(r"([A-Z])", r" \1", x).split()
+    extracted_words = re.findall(r'[a-zA-Z][^A-Z]*', x_)
+
+    if join_with:
+        extracted_words = join_with.join(extracted_words)
+
+    return extracted_words
+
+
 """ Comparison of textual data ----------------------------------------------------- """
 
 
