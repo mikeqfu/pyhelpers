@@ -789,7 +789,7 @@ def is_network_connected():
 
 def is_url_connectable(url):
     """
-    Check if the current machine can be connected to a URL.
+    Check if the current machine can be connected to a given URL.
 
     :param url: URL
     :type url: str
@@ -872,7 +872,7 @@ def fake_requests_headers(random=False):
 def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False,
                            **kwargs):
     """
-    Download an object available at the given ``url``.
+    Download an object available at a given URL.
 
     See also [`DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
 
