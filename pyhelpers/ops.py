@@ -8,8 +8,10 @@ import itertools
 import math
 import os
 import re
+import socket
 import time
 import types
+import urllib.parse
 
 import numpy as np
 import pandas as pd
@@ -317,6 +319,35 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
     for k in keys:
         if k in target_dict.keys():
             target_dict.pop(k)
+
+
+def merge_dicts(*dicts):
+    """
+    Merge multiple dictionaries.
+
+    :param dicts: (one or) multiple dictionaries
+    :type dicts: dict
+    :return: a single dictionary containing all elements of the input
+    :rtype: dict
+
+    **Example**::
+
+        >>> from pyhelpers.ops import merge_dicts
+
+        >>> dict_a = {'a': 1}
+        >>> dict_b = {'b': 2}
+        >>> dict_c = {'c': 3}
+
+        >>> merged_dict = merge_dicts(dict_a, dict_b, dict_c)
+        >>> print(merged_dict)
+        {'a': 1, 'b': 2, 'c': 3}
+    """
+
+    super_dict = {}
+    for d in dicts:
+        super_dict.update(d)
+
+    return super_dict
 
 
 # Tabular data
@@ -734,6 +765,58 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
 
 """ Web scraping ------------------------------------------------------------------- """
+
+
+def is_network_connected():
+    """
+    Check if the current machine can connect to the Internet.
+
+    :return: whether the Internet connection is currently working
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_network_connected
+
+        >>> is_network_connected()
+    """
+
+    host_name = socket.gethostname()
+    ip_address = socket.gethostbyname(host_name)
+
+    return False if ip_address == "127.0.0.1" else True
+
+
+def is_url_connectable(url):
+    """
+    Check if the current machine can be connected to a URL.
+
+    :param url: URL
+    :type url: str
+    :return: whether the machine can currently be connected to the given URL
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_url_connectable
+
+        >>> url_0 = 'https://www.python.org/'
+        >>> is_url_connectable(url_0)
+        True
+
+        >>> url_1 = 'https://www.python.org1/'
+        >>> is_url_connectable(url_1)
+        False
+    """
+
+    try:
+        netloc = urllib.parse.urlparse(url).netloc
+        host = socket.gethostbyname(netloc)
+        s = socket.create_connection((host, 80))
+        s.close()
+        return True
+    except (socket.gaierror, OSError):
+        return False
 
 
 def fake_requests_headers(random=False):
