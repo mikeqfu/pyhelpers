@@ -31,6 +31,7 @@ Basic data manipulation
     update_nested_dict
     get_all_values_from_nested_dict
     remove_multiple_keys_from_dict
+    merge_dicts
 
 .. rubric:: Tabular data
 .. autosummary::
@@ -70,5 +71,7 @@ Web scraping
     :toctree: _generated/
     :template: function.rst
 
+    is_network_connected
+    is_url_connectable
     fake_requests_headers
     download_file_from_url
