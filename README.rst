@@ -30,7 +30,7 @@ License
 
 PyHelpers is licensed under `GNU General Public License, version 2 (GPLv2) <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_.
 
-Citing
-======
+Cite as
+=======
 
 Qian Fu, 2020. PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
