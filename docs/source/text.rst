@@ -16,6 +16,8 @@ Basic processing of textual data
     :template: function.rst
 
     remove_punctuation
+    get_acronym
+    extract_words1upper
 
 Comparison of textual data
 --------------------------
