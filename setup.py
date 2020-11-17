@@ -40,7 +40,7 @@ setuptools.setup(
         # 'shapely',
         # 'sqlalchemy',
         # 'sqlalchemy-utils',
-        # 'tqdm',
+        'tqdm',
         'xlrd',
         'xlwt',
         'XlsxWriter'
