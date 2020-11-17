@@ -877,7 +877,7 @@ class PostgreSQL:
             * callable (e.g. ``PostgreSQL.psql_insert_copy``)
               with signature ``(pd_table, conn, keys, data_iter)``.
 
-        :type method: str or collections.abc.Iterable or None
+        :type method: str or None or types.FunctionType
         :param index: whether to dump the index as a column
         :type index: bool
         :param confirmation_required: whether to prompt a message
@@ -896,19 +896,19 @@ class PostgreSQL:
         :py:meth:`.read_sql_query() <pyhelpers.sql.PostgreSQL.read_sql_query>`.
         """
 
-        import sqlalchemy.engine.reflection
-
-        inspector = sqlalchemy.engine.reflection.Inspector.from_engine(self.engine)
-
-        if schema_name not in inspector.get_schema_names():
-            self.create_schema(schema_name, verbose=verbose)
-        # if not data.empty:
-        #   There may be a need to change column types
-
         table_name_ = '"{}"."{}"'.format(schema_name, table_name)
 
         if confirmed("Confirmed to import the data into table '{}'\n\tat {}\n?".format(
                 table_name_, self.address), confirmation_required=confirmation_required):
+
+            import sqlalchemy.engine.reflection
+
+            inspector = sqlalchemy.engine.reflection.Inspector.from_engine(self.engine)
+
+            if schema_name not in inspector.get_schema_names():
+                self.create_schema(schema_name, verbose=verbose)
+            # if not data.empty:
+            #   There may be a need to change column types
 
             if self.table_exists(table_name, schema_name):
                 if if_exists == 'replace' and verbose:
