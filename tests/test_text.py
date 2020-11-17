@@ -5,6 +5,47 @@ Test module text.py
 from pyhelpers.text import *
 
 
+def test_remove_punctuation():
+    raw_txt = 'Hello\tworld! :-)'
+    txt = remove_punctuation(raw_txt)
+    print(txt)
+    # Hello<\t>world<space>
+
+    rm_whitespace = True
+    txt = remove_punctuation(raw_txt, rm_whitespace)
+    print(txt)
+    # Hello world
+
+
+def test_get_acronym():
+    text_a = 'This is an apple.'
+    acron = get_acronym(text_a)
+    print(acron)
+    # TIAA
+
+    text_b = "I'm at the University of Birmingham."
+    acron = get_acronym(text_b, only_capitals=True)
+    print(acron)
+    # IUB
+
+    text_c = 'There is a "ConnectionError"!'
+    acron = get_acronym(text_c, capitals_in_words=True)
+    print(acron)
+    # TCE
+
+
+def test_extract_words1upper():
+    x1 = 'NetworkWaymarks'
+    res = extract_words1upper(x1, join_with=' ')
+    print(res)
+    # Network Waymarks
+
+    x2 = 'Retaining_Wall'
+    res = extract_words1upper(x2, join_with=' ')
+    print(res)
+    # Retaining Wall
+
+
 def test_find_similar_str():
     x = 'apple'
     lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
@@ -36,18 +77,6 @@ def test_find_matched_str():
     res = find_matched_str(x, lookup_list)
     print(list(res))
     # ['apple']
-
-
-def test_remove_punctuation():
-    raw_txt = 'Hello\tworld! :-)'
-    txt = remove_punctuation(raw_txt)
-    print(txt)
-    # Hello<\t>world<space>
-
-    rm_whitespace = True
-    txt = remove_punctuation(raw_txt, rm_whitespace)
-    print(txt)
-    # Hello world
 
 
 def test_count_words():
@@ -154,14 +183,20 @@ def test_convert_md_to_rst():
 
 
 if __name__ == '__main__':
+    print("\nTesting 'remove_punctuation()':")
+    test_remove_punctuation()
+
+    print("\nTesting 'get_acronym()':")
+    test_get_acronym()
+
+    print("\nTesting 'extract_words1upper()':")
+    test_extract_words1upper()
+
     print("\nTesting 'find_similar_str()':")
     test_find_similar_str()
 
     print("\nTesting 'find_matched_str()':")
     test_find_matched_str()
-
-    print("\nTesting 'remove_punctuation()':")
-    test_remove_punctuation()
 
     print("\nTesting 'count_words()':")
     test_count_words()
