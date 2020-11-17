@@ -125,6 +125,15 @@ def test_remove_multiple_keys_from_dict():
     # {'k2': 'v2', 'k5': 'v5'}
 
 
+def test_merge_dicts():
+    dict_a = {'a': 1}
+    dict_b = {'b': 2}
+    dict_c = {'c': 3}
+
+    merged_dict = merge_dicts(dict_a, dict_b, dict_c)
+    print(merged_dict)
+
+
 # Tabular data -------------------------------------------------------------------------
 
 def test_detect_nan_for_str_column():
@@ -225,7 +234,7 @@ def test_find_closest_date():
 def test_cmap_discretisation():
     import matplotlib.cm
 
-    cmap = matplotlib.cm.Accent
+    cmap = matplotlib.cm.get_cmap('Accent')
     n_colours = 5
 
     cm_accent = cmap_discretisation(cmap, n_colours)
@@ -245,7 +254,7 @@ def test_cmap_discretisation():
 def test_colour_bar_index():
     import matplotlib.cm
 
-    cmap = matplotlib.cm.Accent
+    cmap = matplotlib.cm.get_cmap('Accent')
     n_colours = 5
 
     print("Colour bar index 1", end=" ... ")
@@ -272,6 +281,15 @@ def test_colour_bar_index():
 
 
 # For web scraping ---------------------------------------------------------------------
+
+def test_is_network_connected():
+    print("Is the network connected? {}".format(is_network_connected()))
+
+
+def test_is_url_connectable():
+    url_0 = 'https://www.python.org/'
+    print("Can \"{}\" be connected? {}".format(url_0, is_url_connectable(url_0)))
+
 
 def test_fake_requests_headers():
     fake_header = fake_requests_headers()
@@ -318,6 +336,9 @@ if __name__ == '__main__':
     print("\nTesting 'remove_multiple_keys_from_dict()':")
     test_remove_multiple_keys_from_dict()
 
+    print("\nTesting 'merge_dicts()':")
+    test_merge_dicts()
+
     # Tabular data ---------------------------------------------------------------------
     print("\nTesting 'detect_nan_for_str_column()':")
     test_detect_nan_for_str_column()
@@ -351,6 +372,12 @@ if __name__ == '__main__':
     plt.show()
 
     # For web scraping -----------------------------------------------------------------
+    print("\nTesting 'is_network_connected()':")
+    test_is_network_connected()
+
+    print("\nTesting 'is_url_connectable()':")
+    test_is_url_connectable()
+
     print("\nTesting 'fake_requests_headers()':")
     test_fake_requests_headers()
 
