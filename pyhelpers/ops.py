@@ -4,6 +4,7 @@ Miscellaneous operations.
 
 import collections.abc
 import datetime
+import inspect
 import itertools
 import math
 import os
@@ -67,6 +68,48 @@ def confirmed(prompt=None, resp=False, confirmation_required=True):
 
     else:
         return True
+
+
+def get_obj_attr(obj, col_names=None):
+    """
+    Get main attributes of an object.
+
+    :param obj: a object, e.g. a class
+    :type obj: object
+    :param col_names: a list of column names
+    :type col_names: list
+    :return: tabular data of the main attributes of the given object
+    :rtype: pandas.DataFrame
+
+    **Test**::
+
+        >>> from pyhelpers import get_obj_attr, PostgreSQL
+
+        >>> postgres = PostgreSQL(host='localhost', port=5432, username='postgres',
+        ...                       database_name='postgres')
+        Password (postgres@localhost:5432): ***
+        Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+        >>> obj_attr = get_obj_attr(postgres)
+        >>> print(obj_attr.head())
+               Attribute                                              Value
+        0        address               postgres:***@localhost:5432/postgres
+        1        backend                                         postgresql
+        2     connection  <sqlalchemy.pool.base._ConnectionFairy object ...
+        3  database_info  {'drivername': 'postgresql+psycopg2', 'host': ...
+        4  database_name                                           postgres
+    """
+
+    if col_names is None:
+        col_names = ['Attribute', 'Value']
+
+    all_attrs = inspect.getmembers(obj, lambda x: not (inspect.isroutine(x)))
+
+    attrs = [x for x in all_attrs if not re.match(r'^__?', x[0])]
+
+    attrs_tbl = pd.DataFrame(attrs, columns=col_names)
+
+    return attrs_tbl
 
 
 """ Basic data manipulation -------------------------------------------------------- """
