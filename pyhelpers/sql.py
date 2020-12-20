@@ -7,6 +7,7 @@ Basic data manipulation with SQL.
 import csv
 import gc
 import getpass
+import inspect
 import io
 import tempfile
 
@@ -14,6 +15,35 @@ import pandas as pd
 import pandas.io.parsers
 
 from .ops import confirmed
+
+
+def get_tfdb_addr(db_cls):
+    """
+    Get default address of the Track Fixity database.
+
+    :param db_cls: a class representation of a database
+    :type db_cls: object
+    :return: default address of database
+    :rtype: str
+
+    **Test**::
+
+        >>> from pyhelpers.sql import get_tfdb_addr, PostgreSQL
+
+        >>> tfdb_addr = get_tfdb_addr(db_cls=PostgreSQL)
+
+        >>> print(tfdb_addr)
+        None:***@None:None/None
+    """
+
+    args_spec = inspect.getfullargspec(db_cls)
+
+    args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
+
+    db_address = "{}:***@{}:{}/{}".format(args_dict['username'], args_dict['host'],
+                                          args_dict['port'], args_dict['database_name'])
+
+    return db_address
 
 
 class PostgreSQL:
