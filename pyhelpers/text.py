@@ -87,7 +87,7 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False):
         IUB
 
         >>> text_c = 'There is a "ConnectionError"!'
-        >>> acron =get_acronym(text_c, capitals_in_words=True)
+        >>> acron = get_acronym(text_c, capitals_in_words=True)
         >>> print(acron)
         TCE
     """
