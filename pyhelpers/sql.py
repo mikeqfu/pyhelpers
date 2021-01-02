@@ -1015,12 +1015,14 @@ class PostgreSQL:
 
         if condition:
             assert isinstance(condition, str), "'condition' must be 'str' type."
-            sql_query = 'SELECT * FROM {}."{}" {};'.format(schema_name, table_name, condition)
+            sql_query = 'SELECT * FROM "{}"."{}" {};'.format(
+                schema_name, table_name, condition)
 
         else:
-            sql_query = 'SELECT * FROM {}."{}";'.format(schema_name, table_name)
+            sql_query = 'SELECT * FROM "{}"."{}";'.format(schema_name, table_name)
 
-        table_data = pd.read_sql(sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+        table_data = pd.read_sql(sql_query, con=self.engine, chunksize=chunk_size,
+                                 **kwargs)
 
         if sorted_by and isinstance(sorted_by, str):
             table_data.sort_values(sorted_by, inplace=True)
