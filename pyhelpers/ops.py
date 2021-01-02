@@ -695,21 +695,28 @@ def cmap_discretisation(cmap, n_colours):
     **Example**::
 
         >>> import matplotlib.cm
-        >>> import matplotlib.pyplot as plt_
-        >>> import numpy as np_
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy
         >>> from pyhelpers.ops import cmap_discretisation
 
         >>> cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
 
-        >>> fig, ax = plt_.subplots(figsize=(10, 2))
-        >>> ax.imshow(np_.resize(range(100), (5, 100)), cmap=cm_accent,
+        >>> fig, ax = plt.subplots(figsize=(10, 2))
+        >>> ax.imshow(numpy.resize(range(100), (5, 100)), cmap=cm_accent,
         ...           interpolation='nearest')
-        >>> plt_.axis('off')
-        >>> plt_.tight_layout()
-        >>> plt_.show()
+        >>> plt.axis('off')
+        >>> plt.tight_layout()
+        >>> plt.show()
 
-    .. image:: ../_images/cmap-discretisation.*
-       :width: 400pt
+    The exmaple is illustrated in :numref:`cmap-discretisation` below:
+
+    .. figure:: ../_images/cmap-discretisation.*
+        :name: cmap-discretisation
+        :align: center
+        :width: 60%
+
+        An example of discrete colour ramp, created by
+        :py:func:`cmap_discretisation()<pyhelpers.ops.cmap_discretisation>`.
     """
 
     if isinstance(cmap, str):
@@ -762,31 +769,43 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     **Examples**::
 
         >>> import matplotlib.cm
-        >>> import matplotlib.pyplot as plt_
+        >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.ops import colour_bar_index
 
-        >>> plt_.figure(figsize=(2, 6))
+        >>> plt.figure(figsize=(2, 6))
         >>> cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5)
         >>> cbar.ax.tick_params(labelsize=18)
-        >>> plt_.axis('off')
-        >>> plt_.tight_layout()
-        >>> plt_.show()
+        >>> plt.axis('off')
+        >>> plt.tight_layout()
+        >>> plt.show()
 
-    .. image:: ../_images/colour-bar-index-1.*
-        :width: 120pt
+    The above example is illustrated in :numref:`colour-bar-index-1` below:
+
+    .. figure:: ../_images/colour-bar-index-1.*
+        :name: colour-bar-index-1
+        :width: 17%
+
+        An example of colour bar with numerical index, created by
+        :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
 
     .. code-block:: python
 
-        >>> plt_.figure(figsize=(2, 6))
+        >>> plt.figure(figsize=(2, 6))
         >>> cbar = colour_bar_index(matplotlib.cm.get_cmap('Accent'), n_colours=5,
         ...                         labels=list('abcde'))
         >>> cbar.ax.tick_params(labelsize=18)
-        >>> plt_.axis('off')
-        >>> plt_.tight_layout()
-        >>> plt_.show()
+        >>> plt.axis('off')
+        >>> plt.tight_layout()
+        >>> plt.show()
 
-    .. image:: ../_images/colour-bar-index-2.*
-       :width: 120pt
+    This above example is illustrated in :numref:`colour-bar-index-2` below:
+
+    .. figure:: ../_images/colour-bar-index-2.*
+        :name: colour-bar-index-2
+        :width: 17%
+
+        An example of colour bar with textual index, created by
+        :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
     """
 
     cmap = cmap_discretisation(cmap, n_colours)
@@ -796,8 +815,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     mappable.set_array(np.array([]))
     mappable.set_clim(-0.5, n_colours + 0.5)
 
-    import matplotlib.pyplot as plt
-    colour_bar = plt.colorbar(mappable, **kwargs)
+    import matplotlib.pyplot
+    colour_bar = matplotlib.pyplot.colorbar(mappable, **kwargs)
     colour_bar.set_ticks(np.linspace(0, n_colours, n_colours))
     colour_bar.set_ticklabels(range(n_colours))
 
@@ -934,15 +953,16 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     **Example**::
 
         >>> from pyhelpers.dir import cd
+        >>> from urllib.parse import urljoin
         >>> from pyhelpers.ops import download_file_from_url
 
-        >>> url_to_python_logo = 'https://www.python.org/static/community_logos/' \
-        ...                      'python-logo-master-v3-TM.png'
+        >>> python_url = 'https://www.python.org/static'
+        >>> logo_url = urljoin(python_url, 'community_logos/python-logo-master-v3-TM.png')
 
         >>> img_dir = cd("tests\\images")
         >>> path_to_python_logo_png = cd(img_dir, "python-logo.png")
 
-        >>> download_file_from_url(url_to_python_logo, path_to_python_logo_png)
+        >>> download_file_from_url(logo_url, path_to_python_logo_png)
     """
 
     import requests
