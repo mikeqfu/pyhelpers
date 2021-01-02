@@ -173,15 +173,18 @@ def is_dirname(dir_name):
         return False
 
 
-def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
+def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir=""):
     """
     Validate the input data directory.
 
-    :param data_dir: data directory as input, defaults to ``None``
-    :type data_dir: str, None
+    :param input_data_dir: data directory as input, defaults to ``None``
+    :type input_data_dir: str, None
     :param msg: an error message if ``data_dir`` is not an absolute path,
         defaults to ``"Invalid input!"``
     :type msg: str
+    :param sub_dir: name of a sub-directory for when ``input_data_dir`` is ``None``,
+        defaults to ``""``
+    :type sub_dir: str
     :return: an absolute path to a valid data directory
     :rtype: str
 
@@ -190,26 +193,31 @@ def validate_input_data_dir(data_dir=None, msg="Invalid input!"):
         >>> import os
         >>> from pyhelpers.dir import validate_input_data_dir
 
-        >>> dat_dir = "tests"
+        >>> dat_dir = validate_input_data_dir()
+        >>> print(os.path.relpath(dat_dir))
+        .
 
-        >>> dat_dir_ = validate_input_data_dir(dat_dir)
-
-        >>> print(os.path.relpath(dat_dir_))
+        >>> dat_dir = validate_input_data_dir("tests")
+        >>> print(os.path.relpath(dat_dir))
         tests
+
+        >>> dat_dir = validate_input_data_dir(sub_dir="data")
+        >>> print(os.path.relpath(dat_dir))
+        data
     """
 
-    if data_dir:
-        assert isinstance(data_dir, str), msg
+    if input_data_dir:
+        assert isinstance(input_data_dir, str), msg
 
-        if not os.path.isabs(data_dir):  # Use default file directory
-            data_dir_ = cd(data_dir.strip('.\\.'))
+        if not os.path.isabs(input_data_dir):  # Use default file directory
+            data_dir_ = cd(input_data_dir.strip('.\\.'))
 
         else:
-            data_dir_ = os.path.realpath(data_dir.lstrip('.\\.'))
-            assert os.path.isabs(data_dir), msg
+            data_dir_ = os.path.realpath(input_data_dir.lstrip('.\\.'))
+            assert os.path.isabs(input_data_dir), msg
 
     else:
-        data_dir_ = cdd()
+        data_dir_ = cd(sub_dir) if sub_dir else cd()
 
     return data_dir_
 
