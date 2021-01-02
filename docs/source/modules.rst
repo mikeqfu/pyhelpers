@@ -4,9 +4,7 @@
 Modules
 =======
 
-.. toctree::
-    :maxdepth: 2
-    :hidden:
+.. autosummary::
 
     settings
     dir
@@ -16,7 +14,9 @@ Modules
     text
     sql
 
-.. autosummary::
+.. toctree::
+    :maxdepth: 2
+    :hidden:
 
     settings
     dir
