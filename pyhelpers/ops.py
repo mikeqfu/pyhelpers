@@ -20,21 +20,20 @@ import pandas as pd
 """ General use -------------------------------------------------------------------- """
 
 
-def confirmed(prompt=None, resp=False, confirmation_required=True):
+def confirmed(prompt=None, confirmation_required=True, resp=False):
     """
     Type to confirm whether to proceed or not.
 
-    See also
-    [`C-1 <http://sensitivecities.com/
-    so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    See also [`OPS-C-1
+    <https://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/>`_].
 
     :param prompt: a message that prompts an response (Yes/No), defaults to ``None``
     :type prompt: str or None
-    :param resp: default response, defaults to ``False``
-    :type resp: bool
     :param confirmation_required: whether to require users to confirm and proceed,
         defaults to ``True``
     :type confirmation_required: bool
+    :param resp: default response, defaults to ``False``
+    :type resp: bool
     :return: a response
     :rtype: bool
 
@@ -121,7 +120,7 @@ def split_list_by_size(lst, sub_len):
     """
     Split a list into (evenly sized) sub-lists.
 
-    See also [`SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
+    See also [`OPS-SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
 
     :param lst: a list of any
     :type lst: list
@@ -150,7 +149,7 @@ def split_list(lst, num_of_sub):
     """
     Split a list into a number of equally-sized sub-lists.
 
-    See also [`SL-1 <https://stackoverflow.com/questions/312443/>`_].
+    See also [`OPS-SL-1 <https://stackoverflow.com/questions/312443/>`_].
 
     :param lst: a list of any
     :type lst: list
@@ -180,7 +179,7 @@ def split_iterable(iterable, chunk_size):
     """
     Split a list into (evenly sized) chunks.
 
-    See also [`SI-1 <https://stackoverflow.com/questions/24527006/>`_].
+    See also [`OPS-SI-1 <https://stackoverflow.com/questions/24527006/>`_].
 
     :param iterable: iterable object
     :type iterable: list or tuple or collections.abc.Iterable
@@ -223,7 +222,7 @@ def update_nested_dict(source_dict, updates):
     """
     Update a nested dictionary or similar mapping.
 
-    See also [`UND-1 <https://stackoverflow.com/questions/3232943/>`_].
+    See also [`OPS-UND-1 <https://stackoverflow.com/questions/3232943/>`_].
 
     :param source_dict: a dictionary that needs to be updated
     :type source_dict: dict
@@ -285,8 +284,8 @@ def get_all_values_from_nested_dict(key, target_dict):
     Get all values in a nested dictionary.
 
     See also
-    [`GAVFND-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
-    [`GAVFND-2 <https://stackoverflow.com/questions/9807634/>`_].
+    [`OPS-GAVFND-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
+    [`OPS-GAVFND-2 <https://stackoverflow.com/questions/9807634/>`_].
 
     :param key: any that can be the key of a dictionary
     :type key: any
@@ -677,7 +676,7 @@ def cmap_discretisation(cmap, n_colours):
     """
     Create a discrete colour ramp.
 
-    See also [`CD-1 <http://sensitivecities.com/
+    See also [`OPS-CD-1 <http://sensitivecities.com/
     so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     :param cmap: a colormap instance,
@@ -746,7 +745,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     To stop making off-by-one errors. Takes a standard colour ramp, and discretizes it,
     then draws a colour bar with correctly aligned labels.
 
-    See also [`CBI-1 <http://sensitivecities.com/
+    See also [`OPS-CBI-1 <http://sensitivecities.com/
     so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     :param cmap: a colormap instance,
@@ -936,7 +935,7 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     """
     Download an object available at a given URL.
 
-    See also [`DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
+    See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
 
     :param url: a URL
     :type url: str
