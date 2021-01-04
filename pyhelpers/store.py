@@ -95,7 +95,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
         return rel_path, filename
 
 
-""" Save data ---------------------------------------------------------------------- """
+""" Save data --------------------------------------------------------------------------- """
 
 
 def save(data, path_to_file, warning=False, **kwargs):
@@ -117,7 +117,7 @@ def save(data, path_to_file, warning=False, **kwargs):
 
     **Examples**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save
 
@@ -131,7 +131,7 @@ def save(data, path_to_file, warning=False, **kwargs):
         >>> idx = ['London', 'Birmingham', 'Manchester', 'Leeds']
         >>> col = ['Easting', 'Northing']
 
-        >>> data_ = pd_.DataFrame(dat_, idx, col)
+        >>> data_ = pandas.DataFrame(dat_, idx, col)
         >>> path_to_file_ = cd(dat_dir, "dat.txt")
 
         >>> save(data_, path_to_file_, verbose=True)
@@ -249,8 +249,8 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
     :type path_to_spreadsheet: str
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
-    :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file
-        as a `".csv"` file, defaults to ``','``
+    :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file,
+        defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
@@ -313,9 +313,9 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
         print("Failed. {}.".format(e.args[0])) if verbose else ""
 
 
-def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet,
-                               mode='w', index=False, confirmation_required=True,
-                               verbose=False, **kwargs):
+def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w',
+                               index=False, confirmation_required=True, verbose=False,
+                               **kwargs):
     """
     Save data to a multi-sheet
     `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
@@ -344,33 +344,33 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
     **Examples**::
 
-        >>> import numpy as np_
-        >>> import pandas as pd_
+        >>> import numpy
+        >>> import pandas
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save_multiple_spreadsheets
 
-        >>> xy_array = np_.array([(530034, 180381),   # London
-        ...                       (406689, 286822),   # Birmingham
-        ...                       (383819, 398052),   # Manchester
-        ...                       (582044, 152953)])  # Leeds
+        >>> xy_array = numpy.array([(530034, 180381),   # London
+        ...                         (406689, 286822),   # Birmingham
+        ...                         (383819, 398052),   # Manchester
+        ...                         (582044, 152953)])  # Leeds
         >>> idx = ['London', 'Birmingham', 'Manchester', 'Leeds']
         >>> col = ['Easting', 'Northing']
 
-        >>> dat1 = pd_.DataFrame(xy_array, idx, col)
+        >>> dat1 = pandas.DataFrame(xy_array, idx, col)
         >>> dat2 = dat1.T
 
         >>> spreadsheets_dat = [dat1, dat2]
         >>> sheets = ['TestSheet1', 'TestSheet2']
         >>> spreadsheet_path = cd("tests\\data", "dat.xlsx")
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path,
-        ...                            index=True, verbose=True)
+        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, index=True,
+        ...                            verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path,
-        ...                            mode='a', index=True, verbose=True)
+        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, mode='a',
+        ...                            index=True, verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ... This sheet already exists;
                 Add a suffix to the sheet name? [No]|Yes: yes
@@ -379,9 +379,8 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
                 Add a suffix to the sheet name? [No]|Yes: yes
                 'TestSheet21' ... Done.
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path,
-        ...                            mode='a', index=True, confirmation_required=False,
-        ...                            verbose=True)
+        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, mode='a',
+        ...                            index=True, confirmation_required=False, verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ...
                 saved as 'TestSheet12' ... Done.
@@ -432,15 +431,13 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         print("\t'{}'".format(sheet_name), end=" ... ") if verbose else ""
 
         if sheet_name in cur_sheet_names:
-            if confirmed(
-                    "This sheet already exists;\n\t\tadd a suffix to the sheet name?",
-                    confirmation_required=confirmation_required):
+            if confirmed("This sheet already exists;\n\t\tadd a suffix to the sheet name?",
+                         confirmation_required=confirmation_required):
                 suffix_msg_ = "(Note that a suffix has been added to the sheet name.)"
 
                 print("\t\t" if confirmation_required else "\n\t\t", end="")
 
-                write_excel(dat=sheet_dat, name=sheet_name, idx=index,
-                            suffix_msg=suffix_msg_)
+                write_excel(dat=sheet_dat, name=sheet_name, idx=index, suffix_msg=suffix_msg_)
 
         else:
             write_excel(dat=sheet_dat, name=sheet_name, idx=index)
@@ -470,8 +467,8 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.store import save_json
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import save_json
 
         >>> json_dat = {'a': 1, 'b': 2, 'c': 3}
         >>> json_path = cd("tests\\data", "dat.json")
@@ -496,8 +493,7 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
 
 def save_feather(feather_data, path_to_feather, verbose=False):
     """
-    Save data frame as
-    a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Save data frame as a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
     :param feather_data: a data frame to be saved as a feather-formatted file
     :type feather_data: pandas.DataFrame
@@ -510,8 +506,8 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     **Example**::
 
         >>> import pandas
-        >>> from pyhelpers.store import save_feather
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import save_feather
 
         >>> feather_dat = pandas.DataFrame({'Col1': 1, 'Col2': 2}, index=[0])
         >>> feather_path = cd("tests\\data", "dat.feather")
@@ -534,24 +530,21 @@ def save_feather(feather_data, path_to_feather, verbose=False):
 
 # Images
 
-def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False,
-             **kwargs):
+def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
     Save a figure object as a supported file format.
 
-    This function relies on `matplotlib.pyplot.savefig`_
-    (and `Inkscape <https://inkscape.org>`_).
+    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape <https://inkscape.org>`_).
 
     :param path_to_fig_file: path where a figure file is saved
     :type path_to_fig_file: str
     :param dpi: the resolution in dots per inch;
         if ``None`` (default), use ``rcParams['savefig.dpi']``
     :type dpi: int, None
-    :param verbose: whether to print relevant information in console
-        as the function runs, defaults to ``False``
-    :type verbose: bool or int
-    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file,
+    :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
+    :type verbose: bool or int
+    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
     :type conv_svg_to_emf: bool
     :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
 
@@ -560,17 +553,23 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False,
 
     **Examples**::
 
-        >>> import matplotlib.pyplot as plt_
+        >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save_fig
 
         >>> x, y = (1, 1), (2, 2)
-        >>> plt_.figure()
-        >>> plt_.plot([x[0], y[0]], [x[1], y[1]])
-        >>> plt_.show()
+        >>> plt.figure()
+        >>> plt.plot([x[0], y[0]], [x[1], y[1]])
+        >>> plt.show()
 
-    .. image:: ../_images/fig.*
-        :width: 500pt
+    The above exmaple is illustrated in :numref:`fig-1`:
+
+    .. figure:: ../_images/fig.*
+        :name: fig-1
+        :align: center
+        :width: 76%
+
+        An example figure created for :py:func:`save_fig()<pyhelpers.store.save_fig>`.
 
     .. code-block:: python
 
@@ -591,10 +590,10 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False,
     file_ext = pathlib.Path(path_to_fig_file).suffix
 
     try:
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot
         # assert file_ext.strip(".") in plt.gcf().canvas.get_supported_filetypes().keys()
 
-        plt.savefig(path_to_fig_file, dpi=dpi, **kwargs)
+        matplotlib.pyplot.savefig(path_to_fig_file, dpi=dpi, **kwargs)
         print("Done.") if verbose else ""
 
     except Exception as e:
@@ -607,13 +606,11 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False,
         #     get_specific_filepath_info(path_to_emf, verbose=verbose, ret_info=False)
         #     subprocess.call([inkscape_exe, '-z', path_to_fig_file, '-M', path_to_emf])
         #     print("Conversion from .svg to .emf successfully.") if verbose else ""
-        save_svg_as_emf(
-            path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"),
-            verbose=verbose)
+        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"),
+                        verbose=verbose)
 
 
-def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None,
-                    **kwargs):
+def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
@@ -645,8 +642,14 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None,
         >>> plt_.plot([x[0], y[0]], [x[1], y[1]])
         >>> plt_.show()
 
-    .. image:: ../_images/fig.*
-        :width: 500pt
+    The above exmaple is illustrated in :numref:`fig-2`:
+
+    .. figure:: ../_images/fig.*
+        :name: fig-2
+        :align: center
+        :width: 76%
+
+        An example figure created for :py:func:`save_svg_as_emf()<pyhelpers.store.save_svg_as_emf>`.
 
     .. code-block:: python
 
@@ -688,8 +691,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None,
 # Web page
 
 def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
-                         encoding='UTF-8', verbose=False, wkhtmltopdf_exe=None,
-                         **kwargs):
+                         encoding='UTF-8', verbose=False, wkhtmltopdf_exe=None, **kwargs):
     """
     Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     by `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
@@ -711,8 +713,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         (on Windows, use the default installation path -
         ``"C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"``)
     :type wkhtmltopdf_exe: str or None
-    :param kwargs: optional parameters of
-        `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
+    :param kwargs: optional parameters of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
 
     **Example**::
 
@@ -772,7 +773,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
               "It is not found on this device.") if verbose else ""
 
 
-""" Load data ---------------------------------------------------------------------- """
+""" Load data --------------------------------------------------------------------------- """
 
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
@@ -794,8 +795,8 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
 
     Example::
 
-        >>> from pyhelpers.store import load_pickle
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import load_pickle
 
         >>> pickle_path = cd("tests\\data", "dat.pickle")
 
@@ -820,28 +821,24 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
-                               **kwargs):
+def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
     """
-    Load multiple sheets of
-    an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Load multiple sheets of an `Microsoft Excel
+    <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
-    :param as_dict: whether to return the retrieved data as a dictionary type,
-        defaults to ``True``
+    :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
     :param kwargs: optional parameters of `pandas.ExcelFile.parse`_
-    :return: all worksheet in an Excel workbook
-        from the specified file path ``path_to_spreadsheet``
+    :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
     :rtype: list or dict
 
     .. _`pandas.ExcelFile.parse`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/
-        pandas.ExcelFile.parse.html
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
 
     **Examples**::
 
@@ -926,8 +923,8 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.store import load_json
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import load_json
 
         >>> json_path = cd("tests\\data", "dat.json")
 
@@ -972,13 +969,12 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :rtype: pandas.DataFrame
 
     .. _`pandas.read_feather`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/
-        pandas.read_feather.html
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_feather.html
 
     **Example**::
 
-        >>> from pyhelpers.store import load_feather
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import load_feather
 
         >>> feather_path = cd("tests\\data", "dat.feather")
 
@@ -1003,14 +999,13 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-""" Uncompress data files ---------------------------------------------------------- """
+""" Uncompress data files --------------------------------------------------------------- """
 
 
 def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     """
     Extract data from a `zipped (compressed)
-    <https://support.microsoft.com/en-gb/help/14200/
-    windows-compress-uncompress-zip-files>`_ file.
+    <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_ file.
 
     :param path_to_zip_file: path where a Zip file is saved
     :type path_to_zip_file: str
@@ -1018,8 +1013,8 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     :type out_dir: str
     :param mode: defaults to ``'r'``
     :type mode: str
-    :param verbose: whether to print relevant information in console
-        as the function runs, defaults to ``False``
+    :param verbose: whether to print relevant information in console as the function runs,
+        defaults to ``False``
     :type verbose: bool or int
     :param kwargs: optional parameters of `zipfile.ZipFile.extractall`_
 
@@ -1039,8 +1034,7 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Unzipping \"\\{}\"".format(os.path.relpath(path_to_zip_file)),
-              end=" ... ")
+        print("Unzipping \"\\{}\"".format(os.path.relpath(path_to_zip_file)), end=" ... ")
 
     try:
         with zipfile.ZipFile(path_to_zip_file, mode) as zf:
@@ -1067,8 +1061,7 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
         defaults to ``False``
     :type verbose: bool or int
     :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``
-        (on Windows, use the default installation path -
-        ``"C:\\Program Files\\7-Zip\\7z.exe"``)
+        (on Windows, use the default installation path - ``"C:\\Program Files\\7-Zip\\7z.exe"``)
     :type seven_zip_exe: str or None
     :param kwargs: optional parameters of `subprocess.call`_
 
