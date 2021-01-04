@@ -951,19 +951,14 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     **Example**::
 
         >>> from pyhelpers.dir import cd
-        >>> from urllib.parse import urljoin
         >>> from pyhelpers.ops import download_file_from_url
 
-        >>> python_url = 'https://www.python.org/static'
-        >>> logo_url = urljoin(python_url, 'community_logos/python-logo-master-v3-TM.png')
+        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-        >>> img_dir = cd("tests\\images")
-        >>> path_to_python_logo_png = cd(img_dir, "python-logo.png")
-
-        >>> download_file_from_url(logo_url, path_to_python_logo_png)
+        >>> download_file_from_url(logo_url, cd("tests\\images", "python-logo.png"))
     """
 
-    headers = fake_requests_headers(random_header)
+    headers = fake_requests_headers(randomized=random_header)
     # Streaming, so we can iterate over the response
     resp = requests.get(url, stream=True, headers=headers)
 
