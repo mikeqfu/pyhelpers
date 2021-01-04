@@ -1044,7 +1044,7 @@ class PostgreSQL:
 
             if self.table_exists(table_name, schema_name):
                 if if_exists == 'replace' and verbose:
-                    print("{} already exists and is replaced ... ".format(table_name_))
+                    print("The table {} already exists and is replaced ... ".format(table_name_))
 
                 if force_replace:
                     print("The existing table is forced to be dropped ... ") if verbose else ""
