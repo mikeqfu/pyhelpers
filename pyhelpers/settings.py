@@ -3,11 +3,12 @@ Altering settings of working environment.
 """
 
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
 
-""" NumPy -------------------------------------------------------------------------- """
+""" NumPy ------------------------------------------------------------------------------- """
 
 
 def np_preferences(reset=False):
@@ -30,7 +31,7 @@ def np_preferences(reset=False):
         np.core.arrayprint._line_width = 80  # 75
 
 
-""" Pandas ------------------------------------------------------------------------- """
+""" Pandas ------------------------------------------------------------------------------ """
 
 
 def pd_preferences(reset=False, ignore_future_warning=True):
@@ -63,12 +64,11 @@ def pd_preferences(reset=False, ignore_future_warning=True):
         # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
     else:
         if ignore_future_warning:
-            import warnings
             warnings.simplefilter(action='ignore', category=FutureWarning)
         pd.reset_option('all')
 
 
-""" Matplotlib --------------------------------------------------------------------- """
+""" Matplotlib -------------------------------------------------------------------------- """
 
 
 def mpl_preferences(reset=False, font_name=None):
@@ -114,7 +114,7 @@ def mpl_preferences(reset=False, font_name=None):
         plt.style.use('default')
 
 
-""" GDAL --------------------------------------------------------------------------- """
+""" GDAL -------------------------------------------------------------------------------- """
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000):
