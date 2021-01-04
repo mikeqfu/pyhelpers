@@ -76,8 +76,9 @@ In the case the the folder ``'pyhelpers_quick_start'`` does not exist, we could 
 
     >>> path_to_qs = cd("pyhelpers_quick_start", mkdir=True)
 
-    >>> print(f"\"{os.path.relpath(path_to_qs)}\" exists? {os.path.isdir(path_to_qs)}.")
-    "pyhelpers_quick_start" exists? True.
+    >>> print("The directory \"{}\" exists? {}".format(
+    ...     os.path.relpath(path_to_qs), os.path.isdir(path_to_qs)))
+    he directory "pyhelpers_quick_start" exists? True.
 
 If we provide a filename (formed of a name and of a file and a file extension), we can get an absolute path to the file as well. For example:
 
@@ -97,9 +98,9 @@ When a filename is provided and ``mkdir=True``, the function will just create th
 
     >>> path_to_qs_data_dir = cd(path_to_qs, "data")
 
-    >>> print("\"{}\" exists? {}".format(
+    >>> print("The directory \"{}\" exists? {}".format(
     ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
-    "pyhelpers_quick_start\data" exists? False
+    he directory "pyhelpers_quick_start\data" exists? False
 
     >>> dat_filename = "dat.pickle"
 
@@ -108,15 +109,15 @@ When a filename is provided and ``mkdir=True``, the function will just create th
     >>> print(os.path.relpath(path_to_dat))
     pyhelpers_quick_start\data\dat.pickle
 
-    >>> print("\"{}\" exists? {}".format(
+    >>> print("The directory \"{}\" exists? {}".format(
     ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
-    "pyhelpers_quick_start\data" exists? False
+    The directory "pyhelpers_quick_start\data" exists? False
 
     >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename, mkdir=True)
 
-    >>> print("\"{}\" exists? {}".format(
+    >>> print("The directory \"{}\" exists? {}".format(
     ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
-    "pyhelpers_quick_start\data" exists? True
+    The directory "pyhelpers_quick_start\data" exists? True
 
 To delete the directory of ``"pyhelpers_quick_start"``, we may use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
 
@@ -233,7 +234,7 @@ Before we continue, let’s create a `pandas.DataFrame`_ first:
     >>> dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
 
     >>> print(dat)
-      Easting  Northing
+       Easting  Northing
     0   530034    180381
     1   406689    286822
     2   383819    398052
@@ -320,9 +321,9 @@ To convert an array of OSGB36 coordinates (e.g. ``xy_array``, see the example fo
 
     >>> print(longlat_array.T)
     [[-0.12772401 51.50740693]
-    [-1.90294064 52.47928436]
-    [-2.24527795 53.47894006]
-    [ 0.60693267 51.24669501]]
+     [-1.90294064 52.47928436]
+     [-2.24527795 53.47894006]
+     [ 0.60693267 51.24669501]]
 
 Similarly, if we can use the function :py:func:`wgs84_to_osgb36()<pyhelpers.geom.wgs84_to_osgb36>` to convert coordinates from latitude/longitude (WGS84) back to easting/northing (OSGB36).
 
@@ -410,8 +411,8 @@ For example, to connect to a database named *'testdb'*:
 
 .. code-block:: python
 
-    >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-    ...                     password=None, database_name='testdb', verbose=True)
+    >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres', password=None,
+    ...                     database_name='testdb')
     Password (postgres@localhost:5432): ***
     Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -428,7 +429,7 @@ To create another database ``'test_database'``:
 .. code-block:: python
 
     >>> testdb.create_database('test_database', verbose=True)
-    Creating a database "test_database" ... Done.
+    Creating a database: "test_database" ... Done.
 
 To check if the database has been successfully created:
 
@@ -460,22 +461,20 @@ After we have established the connection, we can use the method :py:meth:`.impor
 .. code-block:: python
 
     >>> testdb.import_data(dat, table_name='pyhelpers_quick_start', verbose=True)
-    Confirmed to import the data into table '"public"."pyhelpers_quick_start"'
-        at postgres:***@localhost:5432/testdb
+    To import the data into table "public"."pyhelpers_quick_start" at postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
-    Importing data into '"public"."pyhelpers_quick_start"' ... Done.
+    Importing data into "public"."pyhelpers_quick_start" ... Done.
 
 The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an an alternative ``'method'`` to significantly speed up importing data into the database:
 
 .. code-block:: python
 
-    >>> testdb.import_data(dat, table_name='pyhelpers_quick_start',
-    ...                    method=testdb.psql_insert_copy, verbose=True)
-    Confirmed to import the data into table '"public"."pyhelpers_quick_start"'
-        at postgres:***@localhost:5432/testdb
+    >>> testdb.import_data(dat, table_name='pyhelpers_quick_start', method=testdb.psql_insert_copy,
+    ...                    verbose=True)
+    To import the data into table "public"."pyhelpers_quick_start" at postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
     The table "public"."pyhelpers_quick_start" already exists and is replaced ...
-    Importing data into '"public"."pyhelpers_quick_start"' ... Done.
+    Importing data into "public"."pyhelpers_quick_start" ... Done.
 
 
 Fetch data from the database
@@ -513,10 +512,9 @@ To drop ``'pyhelpers_quick_start'``, we can use the method :py:meth:`.drop_table
 .. code-block:: python
 
     >>> testdb.drop_table('pyhelpers_quick_start', verbose=True)
-    Confirmed to drop the table '"public"."pyhelpers_quick_start"'
-        from postgres:***@localhost:5432/testdb
+    To drop the table "public"."pyhelpers_quick_start" from postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
-    Dropping '"public"."pyhelpers_quick_start"' ... Done.
+    Dropping "public"."pyhelpers_quick_start" ... Done.
 
 Note that we have created two databases: *'testdb'* (currently being connected) and *'test_database'*. To drop both of them, we can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
 
@@ -524,7 +522,7 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 
     >>> # Drop 'testdb'
     >>> testdb.drop_database(verbose=True)
-    Confirmed to drop the database "testdb" from postgres:***@localhost:5432
+    To drop the database "testdb" from postgres:***@localhost:5432
     ? [No]|Yes: yes
     Dropping "testdb" ... Done.
 
@@ -533,7 +531,7 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 
     >>> # Drop 'test_database'
     >>> testdb.drop_database('test_database', verbose=True)
-    Confirmed to drop the database "test_database" from postgres:***@localhost:5432
+    To drop the database "test_database" from postgres:***@localhost:5432/postgres
     ? [No]|Yes: yes
     Dropping "test_database" ... Done.
 
@@ -559,6 +557,8 @@ Note that we have created two databases: *'testdb'* (currently being connected) 
 .. _`SQLAlchemy-Utils`: https://github.com/kvesteri/sqlalchemy-utils
 .. _`psycopg2`: https://www.psycopg.org/
 .. _`pandas.DataFrame.to_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+
+|
 
 **(The end of the quick start)**
 
