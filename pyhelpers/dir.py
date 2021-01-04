@@ -8,7 +8,7 @@ import pkg_resources
 
 from .ops import confirmed
 
-""" Change directories ------------------------------------------------------------- """
+""" Change directories ------------------------------------------------------------------ """
 
 
 def cd(*sub_dir, mkdir=False, **kwargs):
@@ -138,7 +138,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-""" Validate directories ----------------------------------------------------------- """
+""" Validate directories ---------------------------------------------------------------- """
 
 
 def is_dirname(dir_name):
@@ -222,7 +222,7 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
     return data_dir_
 
 
-""" Delete directories ------------------------------------------------------------- """
+""" Delete directories ------------------------------------------------------------------ """
 
 
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
@@ -246,16 +246,17 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         >>> from pyhelpers.dir import cdd, delete_dir
 
         >>> dir_path = cdd(mkdir=True)
-        >>> print("The directory \"\\{}\" exists? {}".format(
-        ...     os.path.relpath(dir_path), os.path.exists(dir_path)))
-        The directory "\\data" exists? True
+        >>> print('The directory "\\{}" exists? '.format(os.path.relpath(dir_path)), end="")
+        >>> print(os.path.exists(dir_path))
+        The directory "\\data" exists?
+        True
 
         >>> delete_dir(dir_path, confirmation_required=True, verbose=True)
         To delete the directory "\\data"? [No]|Yes: yes
         Deleting "\\data" ... Done.
 
-        >>> print("The directory \"\\{}\" exists? {}".format(
-        ...     os.path.relpath(dir_path), os.path.exists(dir_path)))
+        >>> print('The directory "\\{}" exists? '.format(os.path.relpath(dir_path)), end="")
+        >>> print(os.path.exists(dir_path))
         The directory "\\data" exists? False
     """
 
