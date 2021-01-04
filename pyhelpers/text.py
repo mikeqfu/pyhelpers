@@ -15,7 +15,7 @@ import pandas as pd
 from .ops import dict_to_dataframe
 from .store import get_specific_filepath_info
 
-""" Basic processing of textual data ----------------------------------------------- """
+""" Basic processing of textual data ---------------------------------------------------- """
 
 
 def remove_punctuation(raw_txt, rm_whitespace=False):
@@ -143,7 +143,7 @@ def extract_words1upper(x, join_with=None):
     return extracted_words
 
 
-""" Comparison of textual data ----------------------------------------------------- """
+""" Comparison of textual data ---------------------------------------------------------- """
 
 
 def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
@@ -167,7 +167,8 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     :return: a string-type variable that should be similar to (or the same as) ``str_x``
     :rtype: str
 
-    .. _`fuzzywuzzy.fuzz.token_set_ratio`: https://github.com/seatgeek/fuzzywuzzy
+    .. _`fuzzywuzzy.fuzz.token_set_ratio`:
+        https://github.com/seatgeek/fuzzywuzzy
     .. _`nltk.metrics.distance.edit_distance`:
         https://www.nltk.org/api/nltk.metrics.html#nltk.metrics.distance.edit_distance
 
@@ -182,13 +183,11 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
         >>> print(str_similar)
         app
 
-        >>> str_similar = find_similar_str(x, lookup_lst, processor='nltk',
-        ...                                substitution_cost=1)
+        >>> str_similar = find_similar_str(x, lookup_lst, processor='nltk', substitution_cost=1)
         >>> print(str_similar)
         aapl
 
-        >>> str_similar = find_similar_str(x, lookup_list, processor='nltk',
-        ...                                substitution_cost=100)
+        >>> str_similar = find_similar_str(x, lookup_lst, 'nltk', substitution_cost=100)
         >>> print(str_similar)
         app
     """
@@ -236,19 +235,19 @@ def find_matched_str(str_x, lookup_list):
 
     **Examples**::
 
-        from pyhelpers.text import find_matched_str
+        >>> from pyhelpers.text import find_matched_str
 
-        x = 'apple'
+        >>> x = 'apple'
 
-        lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
-        res = find_matched_str(x, lookup_list)
-        print(list(res))
-        # []
+        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+        >>> res = find_matched_str(x, lookup_lst)
+        >>> print(list(res))
+        []
 
-        lookup_list = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
-        res = find_matched_str(x, lookup_list)
-        print(list(res))
-        # ['apple']
+        >>> lookup_lst = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
+        >>> res = find_matched_str(x, lookup_lst)
+        >>> print(list(res))
+        ['apple']
     """
 
     assert isinstance(str_x, str), "`x` must be a string."
@@ -264,7 +263,7 @@ def find_matched_str(str_x, lookup_list):
                 yield y
 
 
-""" Basic computation of textual data ---------------------------------------------- """
+""" Basic computation of textual data --------------------------------------------------- """
 
 
 def count_words(raw_txt):
@@ -278,8 +277,7 @@ def count_words(raw_txt):
 
     **Examples**::
 
-        >>> from pyhelpers.text import count_words
-        >>> from pyhelpers.text import remove_punctuation
+        >>> from pyhelpers.text import count_words, remove_punctuation
 
         >>> raw_text = 'This is an apple. That is a pear. Hello world!'
 
@@ -332,13 +330,13 @@ def calculate_idf(raw_documents, rm_punc=False):
 
     **Examples**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.text import calculate_idf
 
-        >>> raw_doc = pd_.Series(['This is an apple.',
-        ...                       'That is a pear.',
-        ...                       'It is human being.',
-        ...                       'Hello world!'])
+        >>> raw_doc = pandas.Series(['This is an apple.',
+        ...                          'That is a pear.',
+        ...                          'It is human being.',
+        ...                          'Hello world!'])
 
         >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=False)
         >>> print(docs_tf_)
@@ -398,8 +396,7 @@ def calculate_idf(raw_documents, rm_punc=False):
 
     n = len(raw_docs)
     tokens = [w for tokens in tokens_in_docs for w in tokens]
-    tokens_counter = dict_to_dataframe(dict(collections.Counter(tokens)),
-                                       'token', 'count')
+    tokens_counter = dict_to_dataframe(dict(collections.Counter(tokens)), 'token', 'count')
     tokens_counter['idf'] = np.log(n / (1 + tokens_counter['count'].values))
 
     corpus_idf = dict(zip(tokens_counter['token'], tokens_counter['idf']))
@@ -413,21 +410,20 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
 
     :param raw_documents: a series of documents
     :type raw_documents: pandas.Series
-    :param rm_punc: whether to remove punctuation from ``raw_documents``,
-        defaults to ``False``
+    :param rm_punc: whether to remove punctuation from ``raw_documents``, defaults to ``False``
     :type rm_punc: bool
     :return: tf-idf of the ``raw_documents``
     :rtype: dict
 
     **Examples**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.text import calculate_tf_idf
 
-        >>> raw_doc = pd_.Series(['This is an apple.',
-        ...                       'That is a pear.',
-        ...                       'It is human being.',
-        ...                       'Hello world!'])
+        >>> raw_doc = pandas.Series(['This is an apple.',
+        ...                          'That is a pear.',
+        ...                          'It is human being.',
+        ...                          'Hello world!'])
 
         >>> docs_tf_idf_ = calculate_tf_idf(raw_doc, rm_punc=False)
         >>> print(docs_tf_idf_)
@@ -502,8 +498,8 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     :type txt1: str
     :param txt2: any text
     :type txt2: str
-    :param cosine_distance: whether to get cosine distance,
-        which is (1 - cosine similarity), defaults to ``False``
+    :param cosine_distance: whether to get cosine distance, which is (1 - cosine similarity),
+        defaults to ``False``
     :type cosine_distance: bool
     :return: cosine similarity (or distance)
     :rtype: float
@@ -538,8 +534,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     s1_count, s2_count = np.array(s1_count), np.array(s2_count)
 
     similarity = np.dot(s1_count, s2_count)
-    cos_similarity = np.divide(similarity,
-                               np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
+    cos_similarity = np.divide(similarity, np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
 
     if cosine_distance:
         cos_similarity = 1 - cos_similarity
@@ -547,7 +542,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-""" Transformation of textual data ------------------------------------------------- """
+""" Transformation of textual data ------------------------------------------------------ """
 
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
@@ -593,8 +588,7 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
     # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
 
     if verbose:
-        print("Converting \"{}\" to RST (.rst) file ... ".format(
-            abs_md_path.name))
+        print("Converting \"{}\" to RST (.rst) file ... ".format(abs_md_path.name))
         get_specific_filepath_info(abs_rst_path, verbose=verbose, verbose_end=" ... ")
 
     if pandoc_exe is None:
@@ -602,19 +596,19 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
 
     try:
         if os.path.isfile(pandoc_exe):
-            subprocess.call('"{}" "{}" -f markdown -t rst -s -o "{}"'.format(
-                pandoc_exe, abs_md_path, abs_rst_path))
+            subprocess.call(
+                '"{}" "{}" -f markdown -t rst -s -o "{}"'.format(
+                    pandoc_exe, abs_md_path, abs_rst_path))
         else:
-            subprocess.call('pandoc "{}" -f markdown -t rst -s -o "{}"'.format(
-                abs_md_path, abs_rst_path))
+            subprocess.call(
+                'pandoc "{}" -f markdown -t rst -s -o "{}"'.format(abs_md_path, abs_rst_path))
 
         print("Done.") if verbose else ""
 
     except FileNotFoundError:
         import pypandoc
 
-        pypandoc.convert_file(str(abs_md_path), 'rst',
-                              outputfile=str(abs_rst_path), **kwargs)
+        pypandoc.convert_file(str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
         print("Done.") if verbose else ""
 
     except Exception as e:
