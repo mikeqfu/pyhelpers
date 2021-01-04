@@ -9,6 +9,7 @@ import re
 import string
 import subprocess
 
+import fuzzywuzzy.fuzz
 import numpy as np
 import pandas as pd
 
@@ -196,7 +197,6 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
         "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
 
     if processor == 'fuzzywuzzy':
-        import fuzzywuzzy.fuzz
 
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs)
                        for a in lookup_list]
@@ -251,8 +251,7 @@ def find_matched_str(str_x, lookup_list):
     """
 
     assert isinstance(str_x, str), "`x` must be a string."
-    assert isinstance(lookup_list, collections.abc.Iterable), \
-        "`lookup_list` must be iterable."
+    assert isinstance(lookup_list, collections.abc.Iterable), "`lookup_list` must be iterable."
 
     if str_x == '' or str_x is None:
         return None
