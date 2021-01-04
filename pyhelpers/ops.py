@@ -8,16 +8,20 @@ import inspect
 import itertools
 import math
 import os
+import random
 import re
 import socket
 import time
 import types
 import urllib.parse
 
+import fake_useragent
 import numpy as np
 import pandas as pd
+import requests
+import tqdm
 
-""" General use -------------------------------------------------------------------- """
+""" General use ------------------------------------------------------------------------- """
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -42,9 +46,9 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
         >>> from pyhelpers.ops import confirmed
 
         >>> if confirmed(prompt="Create Directory?", resp=True):
-        ...     print(True)
+        ...     print("Passed.")
         Create Directory? [No]|Yes: yes
-        True
+        Passed.
     """
 
     if confirmation_required:
@@ -111,7 +115,7 @@ def get_obj_attr(obj, col_names=None):
     return attrs_tbl
 
 
-""" Basic data manipulation -------------------------------------------------------- """
+""" Basic data manipulation ------------------------------------------------------------- """
 
 
 # Iterable
@@ -190,7 +194,7 @@ def split_iterable(iterable, chunk_size):
 
     **Examples**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.ops import split_iterable
 
         >>> lst = list(range(0, 10))
@@ -203,7 +207,7 @@ def split_iterable(iterable, chunk_size):
         [6, 7, 8]
         [9]
 
-        >>> lst = pd_.Series(range(0, 20))
+        >>> lst = pandas.Series(range(0, 20))
         >>> size_of_chunk = 5
         >>> for lst_ in split_iterable(lst, size_of_chunk):
         ...     print(list(lst_))
@@ -407,12 +411,12 @@ def detect_nan_for_str_column(data_frame, column_names=None):
 
     **Example**::
 
-        >>> import numpy as np_
-        >>> import pandas as pd_
+        >>> import numpy
+        >>> import pandas
         >>> from pyhelpers.ops import detect_nan_for_str_column
 
-        >>> df = pd_.DataFrame(np_.resize(range(10), (10, 2)), columns=['a', 'b'])
-        >>> df.iloc[3, 1] = np.nan
+        >>> df = pandas.DataFrame(numpy.resize(range(10), (10, 2)), columns=['a', 'b'])
+        >>> df.iloc[3, 1] = numpy.nan
 
         >>> nan_col_pos = detect_nan_for_str_column(df, column_names=None)
         >>> print(list(nan_col_pos))
@@ -423,8 +427,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         column_names = data_frame.columns
 
     for x in column_names:
-        temp = [str(v) for v in data_frame[x].unique() if isinstance(v, str)
-                or np.isnan(v)]
+        temp = [str(v) for v in data_frame[x].unique() if isinstance(v, str) or np.isnan(v)]
         if 'nan' in temp:
             yield data_frame.columns.get_loc(x)
 
@@ -444,9 +447,9 @@ def create_rotation_matrix(theta):
 
         >>> rot_mat = create_rotation_matrix(theta=30)
 
-        >>> print(rotation_mat)
-        # [[-0.98803162  0.15425145]
-        #  [-0.15425145 -0.98803162]]
+        >>> print(rot_mat)
+        [[-0.98803162  0.15425145]
+         [-0.15425145 -0.98803162]]
     """
 
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
@@ -478,9 +481,9 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
         >>> df = dict_to_dataframe(input_dict_)
 
         >>> print(df)
-        #   key  value
-        # 0   a      1
-        # 1   b      2
+          key  value
+        0   a      1
+        1   b      2
     """
 
     dict_keys = list(input_dict.keys())
@@ -497,30 +500,30 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
 
     :param path_to_csr: path where a CSR (e.g. .npz) file is saved
     :type path_to_csr: str
-    :param verbose: whether to print relevant information in console
-        as the function runs, defaults to ``False``
+    :param verbose: whether to print relevant information in console as the function runs,
+        defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of
+    :param kwargs: optional arguments of
         `numpy.load <https://numpy.org/doc/stable/reference/generated/numpy.load>`_
     :return: a compressed sparse row
     :rtype: scipy.sparse.csr.csr_matrix
 
     **Example**::
 
-        >>> import numpy as np_
+        >>> import numpy
         >>> import scipy.sparse
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.ops import parse_csr_matrix
 
-        >>> data_ = np_.array([1, 2, 3, 4, 5, 6])
-        >>> indices_ = np_.array([0, 2, 2, 0, 1, 2])
-        >>> indptr_ = np_.array([0, 2, 3, 6])
+        >>> data_ = numpy.array([1, 2, 3, 4, 5, 6])
+        >>> indices_ = numpy.array([0, 2, 2, 0, 1, 2])
+        >>> indptr_ = numpy.array([0, 2, 3, 6])
         >>> csr_m = scipy.sparse.csr_matrix((data_, indices_, indptr_), shape=(3, 3))
 
         >>> path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
-        >>> np_.savez_compressed(path_to_csr_npz, indptr=csr_m.indptr,
-        ...                      indices=csr_m.indices, data=csr_m.data,
-        ...                      shape=csr_m.shape)
+        >>> numpy.savez_compressed(path_to_csr_npz, indptr=csr_m.indptr,
+        ...                        indices=csr_m.indices, data=csr_m.data,
+        ...                        shape=csr_m.shape)
 
         >>> csr_mat_ = parse_csr_matrix(path_to_csr_npz, verbose=True)
         Loading "\\tests\\data\\csr_mat.npz" ... Done.
@@ -534,8 +537,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_csr)),
-              end=" ... ")
+        print("Loading \"\\{}\"".format(os.path.relpath(path_to_csr)), end=" ... ")
 
     try:
         csr_loader = np.load(path_to_csr, **kwargs)
@@ -555,7 +557,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-""" Basic computation -------------------------------------------------------------- """
+""" Basic computation ------------------------------------------------------------------- """
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
@@ -571,10 +573,10 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
     **Example**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.ops import get_extreme_outlier_bounds
 
-        >>> data = pd_.DataFrame(range(100), columns=['col'])
+        >>> data = pandas.DataFrame(range(100), columns=['col'])
 
         >>> lo_bound, up_bound = get_extreme_outlier_bounds(data, k=1.5)
 
@@ -595,8 +597,7 @@ def interquartile_range(num_dat):
     """
     Calculate interquartile range.
 
-    This function may be an alternative to
-    `scipy.stats.iqr
+    This function may be an alternative to `scipy.stats.iqr
     <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
 
     :param num_dat: an array of numbers
@@ -606,10 +607,10 @@ def interquartile_range(num_dat):
 
     **Example**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.ops import interquartile_range
 
-        >>> data = pd_.DataFrame(range(100), columns=['col'])
+        >>> data = pandas.DataFrame(range(100), columns=['col'])
 
         >>> iqr_ = interquartile_range(data)
         >>> print(iqr_)
@@ -639,24 +640,23 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 
     **Examples**::
 
-        >>> import pandas as pd_
+        >>> import pandas
         >>> from pyhelpers.ops import find_closest_date
 
-        >>> date_list = pd_.date_range('2019-01-02', '2019-12-31')
+        >>> date_list = pandas.date_range('2019-01-02', '2019-12-31')
 
         >>> date_ = '2019-01-01'
         >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=True)
         >>> print(closest_date_)  # Timestamp('2019-01-02 00:00:00', freq='D')
         2019-01-02 00:00:00
 
-        >>> date_ = pd_.to_datetime('2019-01-01')
+        >>> date_ = pandas.to_datetime('2019-01-01')
         >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=False)
         >>> print(closest_date_)  # '2019-01-02 00:00:00.000000'
         2019-01-02 00:00:00.000000
     """
 
-    closest_date = min(lookup_dates,
-                       key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
+    closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
 
     if as_datetime:
         if isinstance(closest_date, str):
@@ -669,25 +669,26 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-""" Graph plotting ----------------------------------------------------------------- """
+""" Graph plotting ---------------------------------------------------------------------- """
 
 
 def cmap_discretisation(cmap, n_colours):
     """
     Create a discrete colour ramp.
 
-    See also [`OPS-CD-1 <http://sensitivecities.com/
-    so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    See also [`OPS-CD-1
+    <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance,
-        such as built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance, such as built-in `colormaps`_ accessible
+        via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :return: a discrete colormap from (the continuous) ``cmap``
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
-    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`colormaps`:
+        https://matplotlib.org/tutorials/colors/colormaps.html
     .. _`matplotlib.cm.get_cmap`:
         https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
 
@@ -707,7 +708,7 @@ def cmap_discretisation(cmap, n_colours):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    The exmaple is illustrated in :numref:`cmap-discretisation` below:
+    The exmaple is illustrated in :numref:`cmap-discretisation`:
 
     .. figure:: ../_images/cmap-discretisation.*
         :name: cmap-discretisation
@@ -745,21 +746,22 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     To stop making off-by-one errors. Takes a standard colour ramp, and discretizes it,
     then draws a colour bar with correctly aligned labels.
 
-    See also [`OPS-CBI-1 <http://sensitivecities.com/
-    so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    See also [`OPS-CBI-1
+    <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance,
-        such as built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance, such as built-in `colormaps`_ accessible
+        via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :param labels: a list of labels for the colour bar, defaults to ``None``
     :type labels: list or None
-    :param kwargs: optional parameters of `matplotlib.pyplot.colorbar`_
+    :param kwargs: optional arguments of `matplotlib.pyplot.colorbar`_
     :return: a colour bar object
     :rtype: matplotlib.colorbar.Colorbar
 
-    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`colormaps`:
+        https://matplotlib.org/tutorials/colors/colormaps.html
     .. _`matplotlib.cm.get_cmap`:
         https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
     .. _`matplotlib.pyplot.colorbar`:
@@ -778,7 +780,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    The above example is illustrated in :numref:`colour-bar-index-1` below:
+    The above example is illustrated in :numref:`colour-bar-index-1`:
 
     .. figure:: ../_images/colour-bar-index-1.*
         :name: colour-bar-index-1
@@ -797,7 +799,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    This above example is illustrated in :numref:`colour-bar-index-2` below:
+    This second example is illustrated in :numref:`colour-bar-index-2`:
 
     .. figure:: ../_images/colour-bar-index-2.*
         :name: colour-bar-index-2
@@ -825,7 +827,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" Web scraping ------------------------------------------------------------------- """
+""" Web scraping ------------------------------------------------------------------------ """
 
 
 def is_network_connected():
@@ -840,6 +842,8 @@ def is_network_connected():
         >>> from pyhelpers.ops import is_network_connected
 
         >>> is_network_connected()
+        >>> # if the machine is currently connected to the Internet
+        True
     """
 
     host_name = socket.gethostname()
@@ -880,14 +884,13 @@ def is_url_connectable(url):
         return False
 
 
-def fake_requests_headers(random=False):
+def fake_requests_headers(randomized=False):
     """
-    Make a fake HTTP headers for
-    `requests.get <https://requests.readthedocs.io/en/master/user/
-    advanced/#request-and-response-objects>`_.
+    Make a fake HTTP headers for `requests.get
+    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
 
-    :param random: whether to go for a random agent, defaults to ``False``
-    :type random: bool
+    :param randomized: whether to go for a random agent, defaults to ``False``
+    :type randomized: bool
     :return: fake HTTP headers
     :rtype: dict
 
@@ -900,7 +903,7 @@ def fake_requests_headers(random=False):
         {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
                        '(KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'}
 
-        >>> fake_headers_ = fake_requests_headers(random=True)
+        >>> fake_headers_ = fake_requests_headers(randomized=True)
         >>> print(fake_headers_)
         {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36'
                        ' (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'}
@@ -910,17 +913,14 @@ def fake_requests_headers(random=False):
         The above ``fake_headers_`` may be different every time we run the examples.
     """
 
-    import fake_useragent
-
     try:
         fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
-        ua = fake_user_agent.random if random else fake_user_agent['google chrome']
+        ua = fake_user_agent.random if randomized else fake_user_agent['google chrome']
 
     except fake_useragent.FakeUserAgentError:
         fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
 
-        if random:
-            import random
+        if randomized:
             ua = random.choice(fake_user_agent.data_browsers['internetexplorer'])
         else:
             ua = fake_user_agent['Internet Explorer']
@@ -941,12 +941,11 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     :type url: str
     :param path_to_file: a full path to which the downloaded object is saved as
     :type path_to_file: str
-    :param wait_to_retry: a wait time to retry downloading,
-        defaults to ``3600`` (in second)
+    :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
     :type wait_to_retry: int or float
     :param random_header: whether to go for a random agent, defaults to ``False``
     :type random_header: bool
-    :param kwargs: optional parameters of
+    :param kwargs: optional arguments of
         `open <https://docs.python.org/3/library/functions.html#open>`_
 
     **Example**::
@@ -963,8 +962,6 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
 
         >>> download_file_from_url(logo_url, path_to_python_logo_png)
     """
-
-    import requests
 
     headers = fake_requests_headers(random_header)
     # Streaming, so we can iterate over the response
@@ -983,8 +980,6 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     else:
         if not os.path.exists(directory):
             os.makedirs(directory)
-
-    import tqdm
 
     with open(path_to_file, mode='wb', **kwargs) as f:
         for data in tqdm.tqdm(resp.iter_content(block_size, decode_unicode=True),
