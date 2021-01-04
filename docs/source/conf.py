@@ -2,19 +2,19 @@
 Configuration file for the Sphinx documentation builder.
 """
 
-# Path setup ===========================================================================
+# Path setup ================================================================================
 import os
 import sys
 
-# If the directory is relative to the documentation root,
-# use os.path.abspath to make it absolute, like shown here.
+# If the directory is relative to the documentation root, use os.path.abspath to make it absolute
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 # A list of modules to be mocked up.
-autodoc_mock_imports = ['gdal', 'shapely', 'python-Levenshtein', 'sqlalchemy', 'psycopg2']
+autodoc_mock_imports = ['fuzzywuzzy', 'numpy', 'pandas', 'scipy', 'sqlalchemy',
+                        'sqlalchemy-utils', 'pyproj', 'requests', 'tqdm', 'python-rapidjson']
 
-# Project information ==================================================================
+# Project information =======================================================================
 import datetime
 import pyhelpers
 
@@ -26,13 +26,12 @@ copyright = u'2019-{}, {}'.format(datetime.datetime.now().year, pyhelpers.__auth
 version = pyhelpers.__version__  # The short X.Y.Z version.
 release = version  # The full version, including alpha/beta/rc tags.
 
-# General configuration ================================================================
+# General configuration =====================================================================
 import sphinx_rtd_theme
 
 _ = sphinx_rtd_theme.get_html_theme_path()
 
-# Sphinx extension module names,
-#   which can be extensions coming with Sphinx (named 'sphinx.ext.*') or custom ones.
+# Sphinx extension module names
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
@@ -44,7 +43,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
-]
+]  # which can be extensions coming with Sphinx (named 'sphinx.ext.*') or custom ones.
 
 # Enable to reference numbered figures
 numfig = True
@@ -58,8 +57,7 @@ language = 'en'
 # Patterns (relative to source directory) that match files & directories to ignore.
 exclude_patterns = ['_build', '../_build', '../build']
 
-# Whether to scan all found documents for autosummary directives,
-#   and to generate stub pages for each.
+# Whether to scan all found documents for autosummary directives, and generate stub pages for each.
 autosummary_generate = True
 
 # The suffix(es) of source filenames (For multiple suffix, a list of string.
@@ -74,7 +72,7 @@ autodoc_member_order = 'bysource'
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-# Options for HTML and HTMLHelp output =================================================
+# Options for HTML and HTMLHelp output ======================================================
 html_theme = 'sphinx_rtd_theme'  # The theme to use for HTML & HTML Help pages.
 
 html_theme_options = {
@@ -97,7 +95,7 @@ html_js_files = ['copybutton.js']
 # Output file base name for HTML help builder. Default is 'pydoc'.
 htmlhelp_basename = project + 'doc'
 
-# Options for LaTeX output =============================================================
+# Options for LaTeX output ==================================================================
 from pygments.formatters.latex import LatexFormatter
 from sphinx.highlighting import PygmentsBridge
 
@@ -180,7 +178,7 @@ latex_elements = {
 # The theme that the LaTeX output should use.
 latex_theme = 'manual'
 
-# Options for manual page output =======================================================
+# Options for manual page output ============================================================
 
 man_pages = [  # How to group the document tree into manual pages.
     ('index',  # startdocname
@@ -191,7 +189,7 @@ man_pages = [  # How to group the document tree into manual pages.
      )
 ]
 
-# Options for Texinfo output ===========================================================
+# Options for Texinfo output ================================================================
 
 texinfo_documents = [  # Grouping the document tree into Texinfo files.
     (master_doc,  # source start file
