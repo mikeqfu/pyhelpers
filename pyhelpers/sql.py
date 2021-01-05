@@ -22,9 +22,9 @@ import sqlalchemy_utils
 from .ops import confirmed
 
 
-def get_tfdb_addr(db_cls):
+def get_db_address(db_cls):
     """
-    Get default address of the Track Fixity database.
+    Get default address of a database instance.
 
     :param db_cls: a class representation of a database
     :type db_cls: object
@@ -33,11 +33,11 @@ def get_tfdb_addr(db_cls):
 
     **Test**::
 
-        >>> from pyhelpers.sql import get_tfdb_addr, PostgreSQL
+        >>> from pyhelpers.sql import get_db_address, PostgreSQL
 
-        >>> tfdb_addr = get_tfdb_addr(db_cls=PostgreSQL)
+        >>> db_addr = get_db_address(db_cls=PostgreSQL)
 
-        >>> print(tfdb_addr)
+        >>> print(db_addr)
         None:***@None:None/None
     """
 
