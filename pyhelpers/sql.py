@@ -464,6 +464,7 @@ class PostgreSQL:
             >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
             ...                     database_name='testdb')
             Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.drop_database(verbose=True)
             To drop the database "testdb" from postgres:***@localhost:5432
@@ -473,32 +474,39 @@ class PostgreSQL:
             >>> testdb.database_exists(database_name='testdb')
             False
 
+            >>> testdb.drop_database(database_name='testdb', verbose=True)
+            The database "testdb" does not exist.
+
             >>> print(testdb.database_name)
             postgres
         """
 
         db_name = self.database_name if database_name is None else database_name
 
-        if confirmed(
-                "To drop the database \"{}\" from {}\n?".format(
-                    db_name, self.address.replace(f"/{db_name}", "")),
-                confirmation_required=confirmation_required):
-            self.disconnect_database(db_name)
-
+        if not self.database_exists(database_name=db_name):
             if verbose:
-                if confirmation_required:
-                    log_msg = "Dropping \"{}\"".format(db_name)
-                else:
-                    log_msg = "Dropping the database \"{}\"".format(db_name)
-                print(log_msg, end=" ... ")
+                print("The database \"{}\" does not exist.".format(db_name))
 
-            try:
-                self.engine.execute('DROP DATABASE IF EXISTS "{}"'.format(db_name))
+        else:
+            if confirmed("To drop the database \"{}\" from {}\n?".format(
+                    db_name, self.address.replace(f"/{db_name}", "")),
+                    confirmation_required=confirmation_required):
+                self.disconnect_database(db_name)
 
-                print("Done.") if verbose else ""
+                if verbose:
+                    if confirmation_required:
+                        log_msg = "Dropping \"{}\"".format(db_name)
+                    else:
+                        log_msg = "Dropping the database \"{}\"".format(db_name)
+                    print(log_msg, end=" ... ")
 
-            except Exception as e:
-                print("Failed. {}".format(e))
+                try:
+                    self.engine.execute('DROP DATABASE "{}"'.format(db_name))
+
+                    print("Done.") if verbose else ""
+
+                except Exception as e:
+                    print("Failed. {}".format(e))
 
     def schema_exists(self, schema_name):
         """
@@ -660,6 +668,7 @@ class PostgreSQL:
             >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
             ...                     database_name='testdb')
             Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> new_schema_names = ['points', 'lines', 'polygons']
             >>> new_schema_names_ = ['test_schema']
@@ -711,7 +720,7 @@ class PostgreSQL:
                 if not self.schema_exists(schema):
                     # `schema` does not exist
                     if len(schemas) == 1:
-                        print("Such a schema does not exist.")
+                        print("Such a schema does not exist.") if verbose else ""
                     else:
                         print("\t\"{}\" does not exist.".format(schema)) if verbose else ""
                 else:
@@ -719,7 +728,7 @@ class PostgreSQL:
                         print("\t\"{}\"".format(schema), end=" ... ") if verbose else ""
                     try:
                         # schema_ = ('%s, ' * (len(schemas) - 1) + '%s') % tuple(schemas)
-                        self.engine.execute('DROP SCHEMA IF EXISTS "{}" CASCADE;'.format(schema))
+                        self.engine.execute('DROP SCHEMA "{}" CASCADE;'.format(schema))
                         print("Done.") if verbose else ""
                     except Exception as e:
                         print("Failed. {}".format(e))
@@ -924,7 +933,8 @@ class PostgreSQL:
         table = '\"{}\".\"{}\"'.format(schema_name, table_name)
 
         if not self.table_exists(table_name=table_name, schema_name=schema_name):
-            print("The table {} does not exist.".format(table))
+            if verbose:
+                print("The table {} does not exist.".format(table))
 
         else:
             if confirmed("To drop the table {} from {}\n?".format(table, self.address),
