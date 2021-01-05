@@ -78,14 +78,15 @@ In the case the the folder ``'pyhelpers_quick_start'`` does not exist, we could 
 
     >>> print("The directory \"{}\" exists? {}".format(
     ...     os.path.relpath(path_to_qs), os.path.isdir(path_to_qs)))
-    he directory "pyhelpers_quick_start" exists? True.
+    The directory "pyhelpers_quick_start" exists? True.
 
 If we provide a filename (formed of a name and of a file and a file extension), we can get an absolute path to the file as well. For example:
 
 .. code-block:: python
 
     >>> path_to_pickle = cd(path_to_qs, "dat.pickle")
-    >>> # equivalent to: cd("pyhelpers_quick_start", "dat.pickle")
+    >>> # equivalent to:
+    >>> # cd("pyhelpers_quick_start", "dat.pickle")
 
     >>> print(os.path.relpath(path_to_pickle))
     pyhelpers_quick_start\dat.pickle
@@ -100,7 +101,7 @@ When a filename is provided and ``mkdir=True``, the function will just create th
 
     >>> print("The directory \"{}\" exists? {}".format(
     ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
-    he directory "pyhelpers_quick_start\data" exists? False
+    The directory "pyhelpers_quick_start\data" exists? False
 
     >>> dat_filename = "dat.pickle"
 
@@ -456,25 +457,24 @@ If we would like to connect back to *'testdb'*:
 Import data into the database
 -----------------------------
 
-After we have established the connection, we can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the example for :ref:`pyhelpers.store<store-dat>` above) into a table named *'pyhelpers_quick_start'*:
+After we have established the connection, we can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the example for :ref:`pyhelpers.store<store-dat>` above) into a table named *'pyhelpers_qs1'*:
 
 .. code-block:: python
 
-    >>> testdb.import_data(dat, table_name='pyhelpers_quick_start', verbose=True)
-    To import the data into table "public"."pyhelpers_quick_start" at postgres:***@localhost:5432/testdb
+    >>> testdb.import_data(dat, table_name='pyhelpers_qs1', verbose=True)
+    To import the data into table "public"."pyhelpers_qs1" at postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
-    Importing data into "public"."pyhelpers_quick_start" ... Done.
+    Importing data into "public"."pyhelpers_qs1" ... Done.
 
-The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an an alternative ``'method'`` to significantly speed up importing data into the database:
+The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an an alternative ``'method'`` to significantly speed up importing data into the database. Let's try importing the same data into a table named *'pyhelpers_qs2'* by setting ``method=testdb.psql_insert_copy``:
 
 .. code-block:: python
 
-    >>> testdb.import_data(dat, table_name='pyhelpers_quick_start', method=testdb.psql_insert_copy,
+    >>> testdb.import_data(dat, table_name='pyhelpers_qs2', method=testdb.psql_insert_copy,
     ...                    verbose=True)
-    To import the data into table "public"."pyhelpers_quick_start" at postgres:***@localhost:5432/testdb
+    To import the data into table "public"."pyhelpers_qs2" at postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
-    The table "public"."pyhelpers_quick_start" already exists and is replaced ...
-    Importing data into "public"."pyhelpers_quick_start" ... Done.
+    Importing data into "public"."pyhelpers_qs2" ... Done.
 
 
 Fetch data from the database
@@ -484,20 +484,23 @@ To retrieve the imported data, we can use the method :py:meth:`.read_table()<pyh
 
 .. code-block:: python
 
-    >>> dat_retrieval = testdb.read_table('pyhelpers_quick_start')
+    >>> dat_retrieval1 = testdb.read_table('pyhelpers_qs1')
 
-    >>> print("`dat_retrieval` is equal to `dat`? {}".format(dat_retrieval.equals(dat)))
-    `dat_retrieval` is equal to `dat`? True
+    >>> res = dat_retrieval1.equals(dat)
+    >>> print("`dat_retrieval1` and `dat` have the same shape and elements? {}".format(res))
+    `dat_retrieval1` and `dat` have the same shape and elements? True
 
-Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large):
+Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here we use this method to fetch the same data from the table *'pyhelpers_qs2'*:
 
 .. code-block:: python
 
-    >>> sql_query = 'SELECT * FROM public.pyhelpers_quick_start'
-    >>> dat_retrieval_ = testdb.read_sql_query(sql_query)
+    >>> sql_query = 'SELECT * FROM public.pyhelpers_qs2'
 
-    >>> print("`dat_retrieval_` is equal to `dat`? {}".format(dat_retrieval_.equals(dat)))
-    `dat_retrieval_` is equal to `dat`? True
+    >>> dat_retrieval2 = testdb.read_sql_query(sql_query)
+
+    >>> res = dat_retrieval2.equals(dat_retrieval1)
+    >>> print(f"`dat_retrieval2` and `dat_retrieval1` have the same shape and elements? {res}")
+    `dat_retrieval2` and `dat_retrieval1` have the same shape and elements? True
 
 .. note::
 
@@ -507,33 +510,33 @@ Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sq
 Drop data
 ---------
 
-To drop ``'pyhelpers_quick_start'``, we can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
+To drop the table *'pyhelpers_qs1'*, we can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
 
 .. code-block:: python
 
-    >>> testdb.drop_table('pyhelpers_quick_start', verbose=True)
-    To drop the table "public"."pyhelpers_quick_start" from postgres:***@localhost:5432/testdb
+    >>> testdb.drop_table('pyhelpers_qs1', verbose=True)
+    To drop the table "public"."pyhelpers_qs1" from postgres:***@localhost:5432/testdb
     ? [No]|Yes: yes
-    Dropping "public"."pyhelpers_quick_start" ... Done.
+    Dropping "public"."pyhelpers_qs1" ... Done.
 
-Note that we have created two databases: *'testdb'* (currently being connected) and *'test_database'*. To drop both of them, we can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
+Note that we have created two databases: *'testdb'* (currently being connected) and *'test_database'*. To remove both of them from the database, we can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
 
 .. code-block:: python
 
-    >>> # Drop 'testdb'
+    >>> # Drop 'testdb' (i.e. the currently connected database)
     >>> testdb.drop_database(verbose=True)
     To drop the database "testdb" from postgres:***@localhost:5432
     ? [No]|Yes: yes
     Dropping "testdb" ... Done.
-
-    >>> print(testdb.database_name)  # Check the currently connected database
-    postgres
 
     >>> # Drop 'test_database'
     >>> testdb.drop_database('test_database', verbose=True)
     To drop the database "test_database" from postgres:***@localhost:5432/postgres
     ? [No]|Yes: yes
     Dropping "test_database" ... Done.
+
+    >>> print(testdb.database_name)  # Check the currently connected database
+    postgres
 
 
 .. _`Python`: https://www.python.org/
