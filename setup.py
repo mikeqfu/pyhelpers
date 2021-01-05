@@ -8,10 +8,8 @@ with open("README.rst", 'r', encoding='utf-8') as readme:
 setuptools.setup(
 
     name=pyhelpers.__package_name__,
-    version=pyhelpers.__version__,
 
-    author=pyhelpers.__author__,
-    author_email=pyhelpers.__email__,
+    version=pyhelpers.__version__,
 
     description=pyhelpers.__description__,
     long_description=long_description,
@@ -19,9 +17,41 @@ setuptools.setup(
 
     url='https://github.com/mikeqfu/pyhelpers',
 
+    author=pyhelpers.__author__,
+    author_email=pyhelpers.__email__,
+
+    license='GPLv2',
+
+    classifiers=[
+        'Intended Audience :: Education',
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: Science/Research',
+
+        'Topic :: Education',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Utilities',
+
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+
+        'Programming Language :: Python :: 3',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux'
+    ],
+
+    keywords=['python', 'helper functions', 'utilities'],
+
+    project_urls={
+        'Documentation': 'https://pyhelpers.readthedocs.io/en/latest/',
+        'Source': 'https://github.com/mikeqfu/pyhelpers',
+        'Tracker': 'https://github.com/mikeqfu/pyhelpers/issues',
+    },
+
+    packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
+
     install_requires=[
         'fake-useragent',
-        # 'fuzzywuzzy',
+        'fuzzywuzzy',
         # 'gdal',
         'html5lib',
         'lxml',
@@ -29,32 +59,25 @@ setuptools.setup(
         # 'nltk',
         'numpy',
         'openpyxl',
-        'pandas',
+        'pandas~=1.1.5',
         # 'pdfkit',
-        # 'psycopg2',
+        'psycopg2',
         'python-rapidjson',
-        'python-Levenshtein',
-        # 'pyproj',
-        # 'pyxlsb',
-        # 'requests',
+        # 'python-Levenshtein',
+        'pyproj',
+        'pyxlsb',
+        'requests',
+        'scipy',
         # 'shapely',
-        # 'sqlalchemy',
-        # 'sqlalchemy-utils',
+        'sqlalchemy',
+        'sqlalchemy-utils',
         'tqdm',
-        'xlrd',
+        'xlrd~=1.2.0',
         'xlwt',
         'XlsxWriter'
     ],
 
-    packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
-
     package_data={"": ["requirements.txt", "LICENSE"]},
     include_package_data=True,
 
-    classifiers=[
-        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
-        'Programming Language :: Python :: 3',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux'
-    ],
 )
