@@ -77,9 +77,9 @@ class PostgreSQL:
 
     :ivar dict database_info: basic information about the server/database being connected
     :ivar sqlalchemy.engine.url.URL url: PostgreSQL database URL
-        (see also [`SP-1 <https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql>`_])
+        (see also [`SQL-P-SP-1 <https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql>`_])
     :ivar type dialect: system that SQLAlchemy uses to communicate with PostgreSQL
-        (see also [`SP-2 <https://docs.sqlalchemy.org/en/13/dialects/postgresql.html>`_])
+        (see also [`SQL-P-SP-2 <https://docs.sqlalchemy.org/en/13/dialects/postgresql.html>`_])
     :ivar str backend: name of database backend
     :ivar str driver: name of database driver
     :ivar str user: username
