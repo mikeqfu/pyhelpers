@@ -16,6 +16,7 @@ General use
     :template: function.rst
 
     confirmed
+    get_obj_attr
 
 Basic data manipulation
 -----------------------
