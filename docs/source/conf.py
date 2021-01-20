@@ -34,7 +34,6 @@ _ = sphinx_rtd_theme.get_html_theme_path()
 # Sphinx extension module names
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
@@ -79,6 +78,10 @@ html_theme_options = {
     'collapse_navigation': False,
     'navigation_depth': 4,
 }
+
+# Source link
+html_copy_source = False
+html_show_sourcelink = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'  # or 'default'
