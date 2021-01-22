@@ -17,6 +17,7 @@ General use
 
     confirmed
     get_obj_attr
+    eval_dtype
 
 Basic data manipulation
 -----------------------
@@ -43,6 +44,8 @@ Basic data manipulation
     create_rotation_matrix
     dict_to_dataframe
     parse_csr_matrix
+    swap_cols
+    swap_rows
 
 Basic computation
 -----------------
