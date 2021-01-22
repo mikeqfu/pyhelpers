@@ -590,6 +590,90 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
+def swap_cols(array, c1, c2, as_list=False):
+    """
+    Swap positions of two columns in an array.
+
+    :param array: an array
+    :type array: numpy.ndarray
+    :param c1: index of a column
+    :type c1: int
+    :param c2: index of another column
+    :type c2: int
+    :param as_list: whether to return a list
+    :type as_list: bool
+    :return: a new array/list in which the positions of the c1-th and c2-th columns are swapped
+    :rtype: numpy.ndarray or list
+
+    **Test**::
+
+        >>> import numpy
+        >>> from pyhelpers.ops import swap_cols
+
+        >>> arr = numpy.array([[55.95615851, -2.96251228],
+        ...                    [55.95705685, -2.96253458],
+        ...                    [55.95706935, -2.96093324],
+        ...                    [55.956171  , -2.96091098]])
+
+        >>> new_arr = swap_cols(arr, 0, 1)
+
+        >>> new_arr
+        array([[55.95615851, -2.96251228],
+               [55.95705685, -2.96253458],
+               [55.95706935, -2.96093324],
+               [55.956171  , -2.96091098]])
+    """
+
+    array[:, c1], array[:, c2] = array[:, c2], array[:, c1].copy()
+
+    if as_list:
+        array = list(array)
+
+    return array
+
+
+def swap_rows(array, r1, r2, as_list=False):
+    """
+    Swap positions of two rows in an array.
+
+    :param array: an array
+    :type array: numpy.ndarray
+    :param r1: index of a row
+    :type r1: int
+    :param r2: index of another row
+    :type r2: int
+    :param as_list: whether to return a list
+    :type as_list: bool
+    :return: a new array/list in which the positions of the r1-th and r2-th rows are swapped
+    :rtype: numpy.ndarray or list
+
+    **Test**::
+
+        >>> import numpy
+        >>> from pyhelpers.ops import swap_rows
+
+        >>> arr = numpy.array([[55.95615851, -2.96251228],
+        ...                    [55.95705685, -2.96253458],
+        ...                    [55.95706935, -2.96093324],
+        ...                    [55.956171  , -2.96091098]])
+
+        >>> new_arr = swap_rows(arr, 0, 1)
+
+        >>> new_arr
+        array([[55.95705685, -2.96253458],
+               [55.95615851, -2.96251228],
+               [55.95706935, -2.96093324],
+               [55.956171  , -2.96091098]])
+    """
+
+    array[r1, :], array[r2, :] = array[r2, :], array[r1, :].copy()
+
+    if as_list:
+        array = list(array)
+
+    return array
+
+
 """ Basic computation ------------------------------------------------------------------------ """
 
 
