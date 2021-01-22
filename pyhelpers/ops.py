@@ -2,6 +2,7 @@
 Miscellaneous operations.
 """
 
+import ast
 import collections.abc
 import datetime
 import inspect
@@ -21,20 +22,19 @@ import pandas as pd
 import requests
 import tqdm
 
-""" General use ------------------------------------------------------------------------- """
+""" General use ------------------------------------------------------------------------------ """
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
     """
     Type to confirm whether to proceed or not.
 
-    See also [`OPS-C-1
-    <https://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/>`_].
+    See also
+    [`OPS-C-1 <https://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/>`_].
 
     :param prompt: a message that prompts an response (Yes/No), defaults to ``None``
     :type prompt: str or None
-    :param confirmation_required: whether to require users to confirm and proceed,
-        defaults to ``True``
+    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
     :type confirmation_required: bool
     :param resp: default response, defaults to ``False``
     :type resp: bool
@@ -45,8 +45,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
         >>> from pyhelpers.ops import confirmed
 
-        >>> if confirmed(prompt="Create Directory?", resp=True):
-        ...     print("Passed.")
+        >>> if confirmed(prompt="Create Directory?", resp=True): print("Passed.")
         Create Directory? [No]|Yes: yes
         Passed.
     """
@@ -88,8 +87,7 @@ def get_obj_attr(obj, col_names=None):
 
         >>> from pyhelpers import get_obj_attr, PostgreSQL
 
-        >>> postgres = PostgreSQL(host='localhost', port=5432, username='postgres',
-        ...                       database_name='postgres')
+        >>> postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
@@ -115,7 +113,43 @@ def get_obj_attr(obj, col_names=None):
     return attrs_tbl
 
 
-""" Basic data manipulation ------------------------------------------------------------- """
+def eval_dtype(str_val):
+    """
+    Convert a string to its intrinsic data type.
+
+    :param str_val: a string-type variable
+    :type str_val: str
+    :return: converted value
+    :rtype: any
+
+    **Tests**::
+
+        >>> from pyhelpers.ops import eval_dtype
+
+        >>> val_1 = '1'
+        >>> origin_val = eval_dtype(val_1)
+        >>> type(origin_val)
+        int
+        >>> print(origin_val)
+        1
+
+        >>> val_2 = '1.1.1'
+        >>> origin_val = eval_dtype(val_2)
+        >>> type(origin_val)
+        str
+        >>> print(origin_val)
+        1.1.1
+    """
+
+    try:
+        val = ast.literal_eval(str_val)
+    except (ValueError, SyntaxError):
+        val = str_val
+
+    return val
+
+
+""" Basic data manipulation ------------------------------------------------------------------ """
 
 
 # Iterable
@@ -200,8 +234,7 @@ def split_iterable(iterable, chunk_size):
         >>> lst = list(range(0, 10))
         >>> size_of_chunk = 3
 
-        >>> for lst_ in split_iterable(lst, size_of_chunk):
-        ...     print(list(lst_))
+        >>> for lst_ in split_iterable(lst, size_of_chunk): print(list(lst_))
         [0, 1, 2]
         [3, 4, 5]
         [6, 7, 8]
@@ -209,8 +242,7 @@ def split_iterable(iterable, chunk_size):
 
         >>> lst = pandas.Series(range(0, 20))
         >>> size_of_chunk = 5
-        >>> for lst_ in split_iterable(lst, size_of_chunk):
-        ...     print(list(lst_))
+        >>> for lst_ in split_iterable(lst, size_of_chunk): print(list(lst_))
         [0, 1, 2, 3, 4]
         [5, 6, 7, 8, 9]
         [10, 11, 12, 13, 14]
@@ -503,10 +535,11 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional arguments of
-        `numpy.load <https://numpy.org/doc/stable/reference/generated/numpy.load>`_
+    :param kwargs: optional parameters of `numpy.load`_
     :return: a compressed sparse row
     :rtype: scipy.sparse.csr.csr_matrix
+
+    .. _`numpy.load`: https://numpy.org/doc/stable/reference/generated/numpy.load
 
     **Example**::
 
@@ -557,7 +590,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-""" Basic computation ------------------------------------------------------------------- """
+""" Basic computation ------------------------------------------------------------------------ """
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
@@ -597,8 +630,8 @@ def interquartile_range(num_dat):
     """
     Calculate interquartile range.
 
-    This function may be an alternative to `scipy.stats.iqr
-    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
+    This function may be an alternative to
+    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
 
     :param num_dat: an array of numbers
     :type num_dat: array-like
@@ -630,8 +663,7 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     :type date: str or datetime.datetime
     :param lookup_dates: an array of dates
     :type lookup_dates: list or tuple or collections.abc.Iterable
-    :param as_datetime: whether to return a datetime.datetime-formatted date,
-        defaults to ``False``
+    :param as_datetime: whether to return a datetime.datetime-formatted date, defaults to ``False``
     :type as_datetime: bool
     :param fmt: datetime format, defaults to ``'%Y-%m-%d %H:%M:%S.%f'``
     :type fmt: str
@@ -669,7 +701,7 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-""" Graph plotting ---------------------------------------------------------------------- """
+""" Graph plotting --------------------------------------------------------------------------- """
 
 
 def cmap_discretisation(cmap, n_colours):
@@ -679,18 +711,15 @@ def cmap_discretisation(cmap, n_colours):
     See also [`OPS-CD-1
     <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, such as built-in `colormaps`_ accessible
-        via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :return: a discrete colormap from (the continuous) ``cmap``
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
-    .. _`colormaps`:
-        https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap`:
-        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
+    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`matplotlib.cm.get_cmap`: https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
 
     **Example**::
 
@@ -702,8 +731,9 @@ def cmap_discretisation(cmap, n_colours):
         >>> cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
 
         >>> fig, ax = plt.subplots(figsize=(10, 2))
-        >>> ax.imshow(numpy.resize(range(100), (5, 100)), cmap=cm_accent,
-        ...           interpolation='nearest')
+
+        >>> ax.imshow(numpy.resize(range(100), (5, 100)), cmap=cm_accent, interpolation='nearest')
+
         >>> plt.axis('off')
         >>> plt.tight_layout()
         >>> plt.show()
@@ -729,12 +759,11 @@ def cmap_discretisation(cmap, n_colours):
     c_dict = {}
 
     for ki, key in enumerate(('red', 'green', 'blue')):
-        c_dict[key] = [(indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki])
-                       for x in range(n_colours + 1)]
+        c_dict[key] = [
+            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)]
 
     import matplotlib.colors
-    colour_map = matplotlib.colors.LinearSegmentedColormap(
-        cmap.name + '_%d' % n_colours, c_dict, 1024)
+    colour_map = matplotlib.colors.LinearSegmentedColormap(cmap.name + '_%d' % n_colours, c_dict, 1024)
 
     return colour_map
 
@@ -749,23 +778,19 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     See also [`OPS-CBI-1
     <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, such as built-in `colormaps`_ accessible
-        via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :param labels: a list of labels for the colour bar, defaults to ``None``
     :type labels: list or None
-    :param kwargs: optional arguments of `matplotlib.pyplot.colorbar`_
+    :param kwargs: optional parameters of `matplotlib.pyplot.colorbar`_
     :return: a colour bar object
     :rtype: matplotlib.colorbar.Colorbar
 
-    .. _`colormaps`:
-        https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap`:
-        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
-    .. _`matplotlib.pyplot.colorbar`:
-        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
+    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`matplotlib.cm.get_cmap`: https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
+    .. _`matplotlib.pyplot.colorbar`: https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
 
     **Examples**::
 
@@ -774,8 +799,11 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> from pyhelpers.ops import colour_bar_index
 
         >>> plt.figure(figsize=(2, 6))
+
         >>> cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5)
+
         >>> cbar.ax.tick_params(labelsize=18)
+
         >>> plt.axis('off')
         >>> plt.tight_layout()
         >>> plt.show()
@@ -786,15 +814,18 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         :name: colour-bar-index-1
         :width: 17%
 
-        An example of colour bar with numerical index, created by
-        :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        An example of colour bar with numerical index,
+        created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
 
     .. code-block:: python
 
         >>> plt.figure(figsize=(2, 6))
-        >>> cbar = colour_bar_index(matplotlib.cm.get_cmap('Accent'), n_colours=5,
-        ...                         labels=list('abcde'))
+
+        >>> labels_ = list('abcde')
+        >>> cbar = colour_bar_index(matplotlib.cm.get_cmap('Accent'), n_colours=5, labels=labels_)
+
         >>> cbar.ax.tick_params(labelsize=18)
+
         >>> plt.axis('off')
         >>> plt.tight_layout()
         >>> plt.show()
@@ -805,8 +836,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         :name: colour-bar-index-2
         :width: 17%
 
-        An example of colour bar with textual index, created by
-        :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        An example of colour bar with textual index,
+        created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
     """
 
     cmap = cmap_discretisation(cmap, n_colours)
@@ -827,7 +858,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" Web scraping ------------------------------------------------------------------------ """
+""" Web scraping ----------------------------------------------------------------------------- """
 
 
 def is_network_connected():
@@ -841,8 +872,7 @@ def is_network_connected():
 
         >>> from pyhelpers.ops import is_network_connected
 
-        >>> is_network_connected()
-        >>> # if the machine is currently connected to the Internet
+        >>> is_network_connected()  # assuming the machine is currently connected to the Internet
         True
     """
 
@@ -905,8 +935,8 @@ def fake_requests_headers(randomized=False):
 
         >>> fake_headers_ = fake_requests_headers(randomized=True)
         >>> print(fake_headers_)
-        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36'
-                       ' (KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'}
+        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 '
+                       '(KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'}
 
     .. note::
 
@@ -930,8 +960,7 @@ def fake_requests_headers(randomized=False):
     return fake_headers
 
 
-def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False,
-                           **kwargs):
+def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False, **kwargs):
     """
     Download an object available at a given URL.
 
@@ -945,8 +974,9 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     :type wait_to_retry: int or float
     :param random_header: whether to go for a random agent, defaults to ``False``
     :type random_header: bool
-    :param kwargs: optional arguments of
-        `open <https://docs.python.org/3/library/functions.html#open>`_
+    :param kwargs: optional parameters of `open`_
+
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
 
     **Example**::
 
@@ -955,7 +985,7 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-        >>> download_file_from_url(logo_url, cd("tests\\images", "python-logo.png"))
+        >>> download_file_from_url(logo_url, cd("tests", "images", "python-logo.png"))
     """
 
     headers = fake_requests_headers(randomized=random_header)
@@ -977,8 +1007,8 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
             os.makedirs(directory)
 
     with open(path_to_file, mode='wb', **kwargs) as f:
-        for data in tqdm.tqdm(resp.iter_content(block_size, decode_unicode=True),
-                              total=total_size // block_size, unit='MB'):
+        temp = resp.iter_content(block_size, decode_unicode=True)
+        for data in tqdm.tqdm(temp, total=total_size // block_size, unit='MB'):
             wrote = wrote + len(data)
             try:
                 f.write(data)
