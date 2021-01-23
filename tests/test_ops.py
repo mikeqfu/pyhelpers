@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from pyhelpers.ops import *
 
 
-# For general use ----------------------------------------------------------------------
+# For general use --------------------------------------------------------------------------------
 
 def test_confirmed():
     prompt = "Create Directory?"
@@ -18,7 +18,39 @@ def test_confirmed():
     # True
 
 
-# For iterable manipulation ------------------------------------------------------------
+def test_get_obj_attr():
+
+    from pyhelpers.sql import PostgreSQL
+
+    postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
+
+    cls_attr = get_obj_attr(postgres)
+    print(cls_attr.head())
+    #        Attribute                                              Value
+    # 0        address               postgres:***@localhost:5432/postgres
+    # 1        backend                                         postgresql
+    # 2     connection  <sqlalchemy.pool.base._ConnectionFairy object ...
+    # 3  database_info  {'drivername': 'postgresql+psycopg2', 'host': ...
+    # 4  database_name                                           postgres
+
+
+def test_eval_dtype():
+    val_1 = '1'
+    origin_val = eval_dtype(val_1)
+    type(origin_val)
+    # int
+    print(origin_val)
+    # 1
+
+    val_2 = '1.1.1'
+    origin_val = eval_dtype(val_2)
+    type(origin_val)
+    # str
+    print(origin_val)
+    # 1.1.1
+
+
+# For iterable manipulation ----------------------------------------------------------------------
 
 def test_split_list_by_size():
     lst = list(range(0, 10))
@@ -134,7 +166,7 @@ def test_merge_dicts():
     print(merged_dict)
 
 
-# Tabular data -------------------------------------------------------------------------
+# Tabular data -----------------------------------------------------------------------------------
 
 def test_detect_nan_for_str_column():
     data_frame = pd.DataFrame(np.resize(range(10), (10, 2)), columns=['a', 'b'])
@@ -166,19 +198,16 @@ def test_dict_to_dataframe():
 
 def test_parse_csr_matrix():
     import scipy.sparse
-    from pyhelpers.dir import cd
+    from pyhelpers.dir import cdd
 
     indptr = np.array([0, 2, 3, 6])
     indices = np.array([0, 2, 2, 0, 1, 2])
     data = np.array([1, 2, 3, 4, 5, 6])
     csr_m = scipy.sparse.csr_matrix((data, indices, indptr), shape=(3, 3))
 
-    path_to_csr = cd("tests\\data", "csr_mat.npz")
+    path_to_csr = cdd("csr_mat.npz")
     np.savez_compressed(path_to_csr,
-                        indptr=csr_m.indptr,
-                        indices=csr_m.indices,
-                        data=csr_m.data,
-                        shape=csr_m.shape)
+                        indptr=csr_m.indptr, indices=csr_m.indices, data=csr_m.data, shape=csr_m.shape)
 
     csr_mat = parse_csr_matrix(path_to_csr, verbose=True)
     # Loading "..\\tests\\data\\csr_mat.npz" ... Done.
@@ -191,7 +220,33 @@ def test_parse_csr_matrix():
     # True
 
 
-# For simple computation ---------------------------------------------------------------
+def test_swap_cols():
+    import numpy
+
+    arr = numpy.array([[55.95615851, -2.96251228],
+                       [55.95705685, -2.96253458],
+                       [55.95706935, -2.96093324],
+                       [55.956171, -2.96091098]])
+
+    new_arr = swap_cols(arr, 0, 1)
+
+    print(new_arr)
+
+
+def test_swap_rows():
+    import numpy
+
+    arr = numpy.array([[55.95615851, -2.96251228],
+                       [55.95705685, -2.96253458],
+                       [55.95706935, -2.96093324],
+                       [55.956171, -2.96091098]])
+
+    new_arr = swap_rows(arr, 0, 1)
+
+    print(new_arr)
+
+
+# For simple computation -------------------------------------------------------------------------
 
 def test_get_extreme_outlier_bounds():
     num_dat = pd.DataFrame(range(100), columns=['col'])
@@ -229,7 +284,7 @@ def test_find_closest_date():
     # 2019-01-02 00:00:00.000000
 
 
-# For graph plotting -------------------------------------------------------------------
+# For graph plotting -----------------------------------------------------------------------------
 
 def test_cmap_discretisation():
     import matplotlib.cm
@@ -280,7 +335,7 @@ def test_colour_bar_index():
     print("Done.")
 
 
-# For web scraping ---------------------------------------------------------------------
+# For web scraping -------------------------------------------------------------------------------
 
 def test_is_network_connected():
     print("Is the network connected? {}".format(is_network_connected()))
@@ -296,8 +351,7 @@ def test_fake_requests_headers():
     print(fake_header)
     # {'User-Agent': '<str>'}
 
-    random = True
-    fake_header = fake_requests_headers(random)
+    fake_header = fake_requests_headers(randomized=True)
     print(fake_header)
     # {'User-Agent': '<str>'}
 
@@ -307,17 +361,23 @@ def test_download_file_from_url():
 
     from pyhelpers.dir import cd
 
-    path_to_file = cd("tests\\images", "python-logo.png")
+    path_to_file = cd("images", "python-logo.png")
 
     download_file_from_url(url, path_to_file)
 
 
 if __name__ == '__main__':
-    # For general use ------------------------------------------------------------------
+    # For general use ----------------------------------------------------------------------------
     print("\nTesting 'confirmed()':")
     test_confirmed()
 
-    # For iterable manipulation --------------------------------------------------------
+    print("\nTesting 'get_obj_attr()':")
+    test_get_obj_attr()
+
+    print("\nTesting 'eval_dtype()':")
+    test_eval_dtype()
+
+    # For iterable manipulation ------------------------------------------------------------------
     print("\nTesting 'split_list_by_size()':")
     test_split_list_by_size()
 
@@ -339,7 +399,7 @@ if __name__ == '__main__':
     print("\nTesting 'merge_dicts()':")
     test_merge_dicts()
 
-    # Tabular data ---------------------------------------------------------------------
+    # Tabular data -------------------------------------------------------------------------------
     print("\nTesting 'detect_nan_for_str_column()':")
     test_detect_nan_for_str_column()
 
@@ -352,7 +412,13 @@ if __name__ == '__main__':
     print("\nTesting 'load_csr_matrix()':")
     test_parse_csr_matrix()
 
-    # For simple computation -----------------------------------------------------------
+    print("\nTesting 'swap_cols()':")
+    test_swap_cols()
+
+    print("\nTesting 'swap_rows()':")
+    test_swap_rows()
+
+    # For simple computation ---------------------------------------------------------------------
     print("\nTesting 'get_extreme_outlier_bounds()':")
     test_get_extreme_outlier_bounds()
 
@@ -362,7 +428,7 @@ if __name__ == '__main__':
     print("\nTesting 'find_closest_date()':")
     test_find_closest_date()
 
-    # For graph plotting ---------------------------------------------------------------
+    # For graph plotting -------------------------------------------------------------------------
     print("\nTesting 'cmap_discretisation()':")
     test_cmap_discretisation()
 
@@ -371,7 +437,7 @@ if __name__ == '__main__':
 
     plt.show()
 
-    # For web scraping -----------------------------------------------------------------
+    # For web scraping ---------------------------------------------------------------------------
     print("\nTesting 'is_network_connected()':")
     test_is_network_connected()
 
