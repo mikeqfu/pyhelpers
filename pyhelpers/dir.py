@@ -8,7 +8,7 @@ import pkg_resources
 
 from .ops import confirmed
 
-""" Change directories ------------------------------------------------------------------ """
+""" Change directories ----------------------------------------------------------------------- """
 
 
 def cd(*sub_dir, mkdir=False, **kwargs):
@@ -138,7 +138,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-""" Validate directories ---------------------------------------------------------------- """
+""" Validate directories --------------------------------------------------------------------- """
 
 
 def is_dirname(dir_name):
@@ -179,11 +179,9 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
 
     :param input_data_dir: data directory as input, defaults to ``None``
     :type input_data_dir: str, None
-    :param msg: an error message if ``data_dir`` is not an absolute path,
-        defaults to ``"Invalid input!"``
+    :param msg: error message if ``data_dir`` is not an absolute path, defaults to ``"Invalid input!"``
     :type msg: str
-    :param sub_dir: name of a sub-directory for when ``input_data_dir`` is ``None``,
-        defaults to ``""``
+    :param sub_dir: name of a sub-directory for when ``input_data_dir`` is ``None``, defaults to ``""``
     :type sub_dir: str
     :return: an absolute path to a valid data directory
     :rtype: str
@@ -222,7 +220,7 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
     return data_dir_
 
 
-""" Delete directories ------------------------------------------------------------------ """
+""" Delete directories ----------------------------------------------------------------------- """
 
 
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
@@ -237,8 +235,9 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool
-    :param kwargs: optional parameters of
-        `shutil.rmtree <https://docs.python.org/3/library/shutil.html#shutil.rmtree>`_
+    :param kwargs: optional parameters of `shutil.rmtree`_
+
+    .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
 
     **Example**::
 
