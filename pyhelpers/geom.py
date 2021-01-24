@@ -843,6 +843,36 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     return midpoint
 
 
+def get_rectangle_centroid(rectangle_geom):
+    """
+    Get coordinates of the centroid of a rectangle
+
+    :param rectangle_geom: polygon or multipolygon geometry object
+    :type rectangle_geom: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+    :return: coordinates [Longitude, Latitude] or [Easting, Northing]
+    :rtype: list
+
+    **Test**::
+
+        >>> from pyhelpers.geom import get_rectangle_centroid
+
+        >>> import shapely.geometry
+
+        >>> rectangle = shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
+
+        >>> rec_cen = get_rectangle_centroid(rectangle)
+
+        >>> print(rec_cen)
+        [0.5, 0.5]
+    """
+
+    ll_lon, ll_lat, ur_lon, ur_lat = rectangle_geom.bounds
+
+    rec_centre = [np.round((ur_lon + ll_lon) / 2, 4), np.round((ll_lat + ur_lat) / 2, 4)]
+
+    return rec_centre
+
+
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
     Get the four vertices of a square given its centre and side length.
