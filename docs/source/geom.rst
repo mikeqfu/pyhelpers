@@ -49,6 +49,7 @@ Geometry calculation
     get_midpoint
     get_geometric_midpoint
     get_geometric_midpoint_calc
+    get_rectangle_centroid
     get_square_vertices
     get_square_vertices_calc
 
