@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-""" NumPy ------------------------------------------------------------------------------- """
+""" NumPy ------------------------------------------------------------------------------------ """
 
 
 def np_preferences(reset=False):
@@ -31,7 +31,7 @@ def np_preferences(reset=False):
         np.core.arrayprint._line_width = 80  # 75
 
 
-""" Pandas ------------------------------------------------------------------------------ """
+""" Pandas ----------------------------------------------------------------------------------- """
 
 
 def pd_preferences(reset=False, ignore_future_warning=True):
@@ -40,8 +40,7 @@ def pd_preferences(reset=False, ignore_future_warning=True):
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
-    :param ignore_future_warning: whether to ignore/suppress future warnings,
-        defaults to ``True``
+    :param ignore_future_warning: whether to ignore/suppress future warnings, defaults to ``True``
     :type ignore_future_warning: bool
 
     **Example**::
@@ -68,7 +67,7 @@ def pd_preferences(reset=False, ignore_future_warning=True):
         pd.reset_option('all')
 
 
-""" Matplotlib -------------------------------------------------------------------------- """
+""" Matplotlib ------------------------------------------------------------------------------- """
 
 
 def mpl_preferences(reset=False, font_name=None):
@@ -114,7 +113,7 @@ def mpl_preferences(reset=False, font_name=None):
         plt.style.use('default')
 
 
-""" GDAL -------------------------------------------------------------------------------- """
+""" GDAL ------------------------------------------------------------------------------------- """
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000):
@@ -143,7 +142,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000):
         # Whether to compress nodes in temporary DB. Defaults to NO.
         gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
         # Maximum size in MB of in-memory temporary file.
-        # If it exceeds that value, it will go to disk. Defaults to 100.
+        #   If it exceeds that value, it will go to disk. Defaults to 100.
         gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
     else:
         gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
