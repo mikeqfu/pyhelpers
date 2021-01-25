@@ -11,7 +11,7 @@ from scipy.spatial.ckdtree import cKDTree
 
 from .ops import create_rotation_matrix
 
-""" Geometric transformation ------------------------------------------------------------ """
+""" Geometric transformation ----------------------------------------------------------------- """
 
 
 # Geometric type
@@ -19,8 +19,7 @@ from .ops import create_rotation_matrix
 def transform_geom_point_type(*pts, as_geom=True):
     """
     Transform iterable to `shapely.geometry.Point
-    <https://shapely.readthedocs.io/en/latest/manual.html#points>`_ type,
-    or the other way round.
+    <https://shapely.readthedocs.io/en/latest/manual.html#points>`_ type, or the other way round.
 
     :param pts: points (e.g. list of lists/tuples or shapely.geometry.Points)
     :type pts: list or tuple or shapely.geometry.Point
@@ -37,14 +36,12 @@ def transform_geom_point_type(*pts, as_geom=True):
         >>> pt_y = 1.4909, 52.6271
 
         >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points:
-        ...     print(x)
+        >>> for x in geom_points: print(x)
         POINT (1.5429 52.6347)
         POINT (1.4909 52.6271)
 
         >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points:
-        ...     print(x)
+        >>> for x in geom_points: print(x)
         (1.5429, 52.6347)
         (1.4909, 52.6271)
 
@@ -54,14 +51,12 @@ def transform_geom_point_type(*pts, as_geom=True):
         >>> pt_y = Point(pt_y)
 
         >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points:
-        ...     print(x)
+        >>> for x in geom_points: print(x)
         POINT (1.5429 52.6347)
         POINT (1.4909 52.6271)
 
         >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points:
-        ...     print(x)
+        >>> for x in geom_points: print(x)
         (1.5429, 52.6347)
         (1.4909, 52.6271)
     """
@@ -94,10 +89,8 @@ def transform_geom_point_type(*pts, as_geom=True):
 
 def wgs84_to_osgb36(longitude, latitude, **kwargs):
     """
-    Convert latitude and longitude
-    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
-    to British national grid
-    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
+    Convert latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
+    to British national grid (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
 
     :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
     :type longitude: float or int
@@ -133,8 +126,7 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
     """
     Convert British national grid
     (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
-    to latitude and longitude
-    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_).
+    to latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_).
 
     :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
     :type easting: int or float
@@ -168,10 +160,8 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
 
 def wgs84_to_osgb36_calc(longitude, latitude):
     """
-    Convert latitude and longitude
-    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
-    to British national grid
-    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
+    Convert latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
+    to British national grid (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
     by calculation.
 
     :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
@@ -265,8 +255,7 @@ def wgs84_to_osgb36_calc(longitude, latitude):
     eta2 = nu * f0 / rho - 1
 
     m1 = (1 + y + (5 / 4) * y ** 2 + (5 / 4) * y ** 3) * (latitude - lat0)
-    m2 = (3 * y +
-          3 * y ** 2 + (21 / 8) * y ** 3) * np.sin(latitude - lat0) * np.cos(latitude + lat0)
+    m2 = (3 * y + 3 * y ** 2 + (21 / 8) * y ** 3) * np.sin(latitude - lat0) * np.cos(latitude + lat0)
     m3 = ((15 / 8) * y ** 2 +
           (15 / 8) * y ** 3) * np.sin(2 * (latitude - lat0)) * np.cos(2 * (latitude + lat0))
     m4 = (35 / 24) * y ** 3 * np.sin(3 * (latitude - lat0)) * np.cos(3 * (latitude + lat0))
@@ -286,10 +275,9 @@ def wgs84_to_osgb36_calc(longitude, latitude):
             5 - 18 * np.tan(latitude) ** 2 + np.tan(latitude) ** 4 + 14 * eta2 -
             58 * eta2 * np.tan(latitude) ** 2) / 120
 
-    y = i + ii * (longitude - lon0) ** 2 + \
-        iii * (longitude - lon0) ** 4 + iii_a * (longitude - lon0) ** 6
-    x = e0 + iv * (longitude - lon0) + \
-        v * (longitude - lon0) ** 3 + vi * (longitude - lon0) ** 5
+    y = i + ii * (longitude - lon0) ** 2 + iii * (
+            longitude - lon0) ** 4 + iii_a * (longitude - lon0) ** 6
+    x = e0 + iv * (longitude - lon0) + v * (longitude - lon0) ** 3 + vi * (longitude - lon0) ** 5
 
     return x, y
 
@@ -298,8 +286,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     """
     Convert british national grid
     (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
-    to latitude and longitude
-    (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
+    to latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
     by calculation.
 
     :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
@@ -347,8 +334,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     while northing - n0 - m >= 0.00001:  # Accurate to 0.01mm
         lat += (northing - n0 - m) / (a * f0)
         m1 = (1 + n + (5. / 4) * n ** 2 + (5. / 4) * n ** 3) * (lat - lat0)
-        m2 = (3 * n + 3 * n ** 2 +
-              (21. / 8) * n ** 3) * np.sin(lat - lat0) * np.cos(lat + lat0)
+        m2 = (3 * n + 3 * n ** 2 + (21. / 8) * n ** 3) * np.sin(lat - lat0) * np.cos(lat + lat0)
         m3 = ((15. / 8) * n ** 2 + (15. / 8) * n ** 3) * np.sin(
             2 * (lat - lat0)) * np.cos(2 * (lat + lat0))
         m4 = (35. / 24) * n ** 3 * np.sin(3 * (lat - lat0)) * np.cos(3 * (lat + lat0))
@@ -371,8 +357,8 @@ def osgb36_to_wgs84_calc(easting, northing):
     x_ = sec_lat / nu
     xi = sec_lat / (6 * nu ** 3) * (nu / rho + 2 * np.tan(lat) ** 2)
     xii = sec_lat / (120 * nu ** 5) * (5 + 28 * np.tan(lat) ** 2 + 24 * np.tan(lat) ** 4)
-    xiia = sec_lat / (5040 * nu ** 7) * (61 + 662 * np.tan(lat) ** 2 +
-                                         1320 * np.tan(lat) ** 4 + 720 * np.tan(lat) ** 6)
+    xiia = sec_lat / (5040 * nu ** 7) * (
+            61 + 662 * np.tan(lat) ** 2 + 1320 * np.tan(lat) ** 4 + 720 * np.tan(lat) ** 6)
     de = easting - e0
 
     # These are on the wrong ellipsoid currently: Airy1830. (Denoted by _1)
@@ -427,7 +413,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     return long, lat
 
 
-""" Geometry calculation ---------------------------------------------------------------- """
+""" Geometry calculation --------------------------------------------------------------------- """
 
 
 # Distance
@@ -490,8 +476,7 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
     # distance = rho * arc length
 
-    cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) +
-              np.cos(phi1) * np.cos(phi2))
+    cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
     arc_length = np.arccos(cosine) * 3960  # in miles
 
     # To multiply arc by the radius of the earth in a set of units to get length.
@@ -604,8 +589,7 @@ def find_closest_point(pt, ref_pts, as_geom=False):
 
 def find_closest_points(pts, ref_pts, k=1, as_geom=False, **kwargs):
     """
-    Find the closest points from a given list of reference points
-    (applicable for vectorized computation).
+    Find the closest points from a list of reference points (applicable for vectorized computation).
 
     See also [`GEOM-FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
 
@@ -717,8 +701,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
          [ 1.9909 53.1271]]
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2, as_geom=True)
-        >>> for pt in midpt:
-        ...    print(pt)
+        >>> for pt in midpt: print(pt)
         POINT (2.0429 53.1347)
         POINT (1.9909 53.1271)
     """
@@ -854,9 +837,8 @@ def get_rectangle_centroid(rectangle_geom):
 
     **Test**::
 
-        >>> from pyhelpers.geom import get_rectangle_centroid
-
         >>> import shapely.geometry
+        >>> from pyhelpers.geom import get_rectangle_centroid
 
         >>> rectangle = shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
 
@@ -932,8 +914,7 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
 
 def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    Get the four vertices of a square given its centre and side length
-    (by elementary calculation).
+    Get the four vertices of a square given its centre and side length (by elementary calculation).
 
     See also [`GEOM-GSVC-1 <https://math.stackexchange.com/questions/1490115>`_].
 
@@ -992,7 +973,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-""" Geometric data visualisation -------------------------------------------------------- """
+""" Geometric data visualisation ------------------------------------------------------------- """
 
 
 # Sketch
@@ -1031,11 +1012,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.geom import sketch_square
 
-        >>> ctr_1, ctr_2 = 1, 1
+        >>> c1, c2 = 1, 1
         >>> side_len = 2
 
-        >>> sketch_square(ctr_1, ctr_2, side_len, rotation_theta=0, annotation=True,
-        ...               fig_size=(5, 5))
+        >>> sketch_square(c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5))
         >>> plt.show()
 
     The above exmaple is illustrated in :numref:`sketch-square-1`:
@@ -1050,8 +1030,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
 
     .. code-block:: python
 
-        >>> sketch_square(ctr_1, ctr_2, side_len, rotation_theta=75, annotation=True,
-        ...               fig_size=(5, 5))
+        >>> sketch_square(c1, c2, side_len, rotation_theta=75, annotation=True, fig_size=(5, 5))
         >>> plt.show()
 
     This second example is illustrated in :numref:`sketch-square-2`:
