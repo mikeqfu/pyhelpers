@@ -4,7 +4,7 @@ Test module geom.py
 
 from pyhelpers.geom import *
 
-""" Transformation ----------------------------------------------------------------- """
+""" Geometric transformation ----------------------------------------------------------------- """
 
 
 # Geometric type
@@ -97,10 +97,81 @@ def test_osgb36_to_wgs84_calc():
     # Latitude: 51.50740692743041
 
 
-""" Calculation -------------------------------------------------------------------- """
+""" Geometry calculation --------------------------------------------------------------------- """
 
 
-# Midpoint
+# Distance
+
+def test_calc_distance_on_unit_sphere():
+    pt_x = 1.5429, 52.6347
+    pt_y = 1.4909, 52.6271
+
+    arc_length = calc_distance_on_unit_sphere(pt_x, pt_y)
+    print(arc_length)
+    # 2.243709962588554
+
+
+def test_calc_hypotenuse_distance():
+    pt_x = 1.5429, 52.6347
+    pt_y = 1.4909, 52.6271
+
+    hypot_dist = calc_hypotenuse_distance(pt_x, pt_y)
+    print(hypot_dist)
+    # 0.05255244999046248
+
+
+def test_find_closest_point_from():
+    pt = (2.5429, 53.6347)
+    ref_pts = ((1.5429, 52.6347),
+               (1.4909, 52.6271),
+               (1.4248, 52.63075))
+
+    closest_point = find_closest_point(pt, ref_pts)
+    print(closest_point)
+    # (1.5429, 52.6347)
+
+    from shapely.geometry import Point
+
+    pt = Point((2.5429, 53.6347))
+    ref_pts = (Point((1.5429, 52.6347)), Point((1.4909, 52.6271)), Point((1.4248, 52.63075)))
+
+    closest_point = find_closest_point(pt, ref_pts)
+    print(closest_point)
+    # (1.5429, 52.6347)
+
+    as_geom = True
+    closest_point = find_closest_point(pt, ref_pts, as_geom)
+    print(closest_point)
+    # POINT (1.5429 52.6347)
+
+
+def test_find_closest_points_between():
+    pts = np.array([[1.5429, 52.6347],
+                    [1.4909, 52.6271],
+                    [1.4248, 52.63075]])
+
+    ref_pts = np.array([[2.5429, 53.6347],
+                        [2.4909, 53.6271],
+                        [2.4248, 53.63075]])
+
+    k = 1
+
+    closest_points = find_closest_points(pts, ref_pts, k)
+    print(closest_points)
+    # [[ 2.4248  53.63075]
+    #  [ 2.4248  53.63075]
+    #  [ 2.4248  53.63075]]
+
+    as_geom = True
+    closest_points = find_closest_points(pts, ref_pts, k, as_geom)
+    for x in closest_points:
+        print(x)
+    # POINT (2.4248 53.63075)
+    # POINT (2.4248 53.63075)
+    # POINT (2.4248 53.63075)
+
+
+# Locating
 
 def test_get_midpoint():
     x1, y1 = 1.5429, 52.6347
@@ -161,77 +232,15 @@ def test_get_geometric_midpoint_calc():
     # cp. get_geometric_midpoint(pt_x, pt_y)
 
 
-# Distance
+def test_get_rectangle_centroid():
+    import shapely.geometry
 
-def test_calc_distance_on_unit_sphere():
-    pt_x = 1.5429, 52.6347
-    pt_y = 1.4909, 52.6271
+    rectangle = shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
 
-    arc_length = calc_distance_on_unit_sphere(pt_x, pt_y)
-    print(arc_length)
-    # 2.243709962588554
+    rec_cen = get_rectangle_centroid(rectangle)
 
-
-def test_calc_hypotenuse_distance():
-    pt_x = 1.5429, 52.6347
-    pt_y = 1.4909, 52.6271
-
-    hypot_dist = calc_hypotenuse_distance(pt_x, pt_y)
-    print(hypot_dist)
-    # 0.05255244999046248
-
-
-# Search
-
-def test_find_closest_point_from():
-    pt = (2.5429, 53.6347)
-    ref_pts = ((1.5429, 52.6347),
-               (1.4909, 52.6271),
-               (1.4248, 52.63075))
-
-    closest_point = find_closest_point(pt, ref_pts)
-    print(closest_point)
-    # (1.5429, 52.6347)
-
-    from shapely.geometry import Point
-
-    pt = Point((2.5429, 53.6347))
-    ref_pts = (Point((1.5429, 52.6347)), Point((1.4909, 52.6271)), Point((1.4248, 52.63075)))
-
-    closest_point = find_closest_point(pt, ref_pts)
-    print(closest_point)
-    # (1.5429, 52.6347)
-
-    as_geom = True
-    closest_point = find_closest_point(pt, ref_pts, as_geom)
-    print(closest_point)
-    # POINT (1.5429 52.6347)
-
-
-def test_find_closest_points_between():
-    pts = np.array([[1.5429, 52.6347],
-                    [1.4909, 52.6271],
-                    [1.4248, 52.63075]])
-
-    ref_pts = np.array([[2.5429, 53.6347],
-                        [2.4909, 53.6271],
-                        [2.4248, 53.63075]])
-
-    k = 1
-
-    closest_points = find_closest_points(pts, ref_pts, k)
-    print(closest_points)
-    # [[ 2.4248  53.63075]
-    #  [ 2.4248  53.63075]
-    #  [ 2.4248  53.63075]]
-
-    as_geom = True
-    closest_points = find_closest_points(pts, ref_pts, k, as_geom)
-    for x in closest_points:
-        print(x)
-    # POINT (2.4248 53.63075)
-    # POINT (2.4248 53.63075)
-    # POINT (2.4248 53.63075)
+    print(rec_cen)
+    # [0.5, 0.5]
 
 
 def test_get_square_vertices():
@@ -276,7 +285,7 @@ def test_get_square_vertices_calc():
     #  [-5.85212341 56.78962341]]
 
 
-""" Visualisation ------------------------------------------------------------------ """
+""" Geometric data visualisation ------------------------------------------------------------- """
 
 
 # Sketch
@@ -303,7 +312,7 @@ def test_sketch_square():
 
 
 if __name__ == '__main__':
-    """ Transformation ------------------------------------------------------------- """
+    """ Geometric transformation ------------------------------------------------------------- """
 
     # Geometric type
     print("\nTesting 'transform_geom_point_type()':")
@@ -322,9 +331,15 @@ if __name__ == '__main__':
     print("\nTesting 'osgb36_to_wgs84_calc()':")
     test_osgb36_to_wgs84_calc()
 
-    """ Calculation ---------------------------------------------------------------- """
+    """ Geometry calculation ----------------------------------------------------------------- """
 
-    # Midpoint
+    # Distance
+    print("\nTesting 'calc_distance_on_unit_sphere()':")
+    test_calc_distance_on_unit_sphere()
+
+    print("\nTesting 'calc_hypotenuse_distance()':")
+    test_calc_hypotenuse_distance()
+
     print("\nTesting 'get_midpoint()':")
     test_get_midpoint()
 
@@ -334,19 +349,15 @@ if __name__ == '__main__':
     print("\nTesting 'get_geometric_midpoint_calc()':")
     test_get_geometric_midpoint_calc()
 
-    # Distance
-    print("\nTesting 'calc_distance_on_unit_sphere()':")
-    test_calc_distance_on_unit_sphere()
-
-    print("\nTesting 'calc_hypotenuse_distance()':")
-    test_calc_hypotenuse_distance()
-
-    # Search
+    # Locating
     print("\nTesting 'find_closest_point()':")
     test_find_closest_point_from()
 
     print("\nTesting 'find_closest_points()':")
     test_find_closest_points_between()
+
+    print("\nTesting 'get_rectangle_centroid()':")
+    test_get_rectangle_centroid()
 
     print("\nTesting 'get_square_vertices()':")
     test_get_square_vertices()
@@ -354,7 +365,7 @@ if __name__ == '__main__':
     print("\nTesting 'get_square_vertices_calc()':")
     test_get_square_vertices_calc()
 
-    """ Visualisation -------------------------------------------------------------- """
+    """ Geometric data visualisation --------------------------------------------------------- """
 
     # Sketch
     print("\nTesting 'sketch_square()':")
