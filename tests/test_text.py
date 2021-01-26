@@ -2,7 +2,10 @@
 Test module text.py
 """
 
+from pyhelpers.dir import cdd
 from pyhelpers.text import *
+
+""" Basic processing of textual data --------------------------------------------------------- """
 
 
 def test_remove_punctuation():
@@ -46,6 +49,9 @@ def test_extract_words1upper():
     # Retaining Wall
 
 
+""" Comparison of textual data --------------------------------------------------------------- """
+
+
 def test_find_similar_str():
     x = 'apple'
     lookup_list = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
@@ -77,6 +83,9 @@ def test_find_matched_str():
     res = find_matched_str(x, lookup_list)
     print(list(res))
     # ['apple']
+
+
+""" Basic computation of textual data -------------------------------------------------------- """
 
 
 def test_count_words():
@@ -168,13 +177,12 @@ def test_cosine_similarity_between_texts():
     # 0.3036893761772086
 
 
+""" Transformation of textual data ----------------------------------------------------------- """
+
+
 def test_convert_md_to_rst():
-    from pyhelpers.dir import cd
-
-    dat_dir = cd("tests\\data")
-
-    path_to_md = cd(dat_dir, "markdown.md")
-    path_to_rst = cd(dat_dir, "markdown.rst")
+    path_to_md = cdd("markdown.md")
+    path_to_rst = cdd("markdown.rst")
     verbose = True
 
     convert_md_to_rst(path_to_md, path_to_rst, verbose)
