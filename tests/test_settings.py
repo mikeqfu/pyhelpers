@@ -20,6 +20,10 @@ def test_pd_preferences():
 
     pd_preferences(reset=False)
 
+    import warnings
+    warnings.filterwarnings(action='ignore')
+    warnings.simplefilter(action='ignore', category=Warning)
+
     pd_preferences(reset=True)
 
     print("Done. ")
@@ -46,9 +50,6 @@ def test_gdal_configurations():
 
 
 if __name__ == '__main__':
-    import warnings
-    warnings.filterwarnings('ignore')
-
     test_np_preferences()
 
     test_pd_preferences()
