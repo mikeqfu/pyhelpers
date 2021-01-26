@@ -16,7 +16,7 @@ import pandas as pd
 from .ops import dict_to_dataframe
 from .store import get_specific_filepath_info
 
-""" Basic processing of textual data ---------------------------------------------------- """
+""" Basic processing of textual data --------------------------------------------------------- """
 
 
 def remove_punctuation(raw_txt, rm_whitespace=False):
@@ -25,8 +25,7 @@ def remove_punctuation(raw_txt, rm_whitespace=False):
 
     :param raw_txt: string-type data
     :type raw_txt: str
-    :param rm_whitespace: whether to remove whitespace from the input string as well,
-        defaults to ``False``
+    :param rm_whitespace: whether to remove whitespace, defaults to ``False``
     :type rm_whitespace: bool
     :return: text with punctuation removed
     :rtype: str
@@ -111,8 +110,7 @@ def extract_words1upper(x, join_with=None):
 
     :param x: a string joined by a number of words each starting with an uppercase letter
     :type x: str
-    :param join_with: a string with which to (re)join the single words,
-        defaults to ``None``
+    :param join_with: a string with which to (re)join the single words, defaults to ``None``
     :type join_with: str or None
     :return: a list of single words each starting with an uppercase letter,
         or a single string joined together by them with ``join_with``
@@ -144,7 +142,7 @@ def extract_words1upper(x, join_with=None):
     return extracted_words
 
 
-""" Comparison of textual data ---------------------------------------------------------- """
+""" Comparison of textual data --------------------------------------------------------------- """
 
 
 def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
@@ -155,16 +153,16 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     :type str_x: str
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: list or tuple or iter
-    :param processor: either `'fuzzywuzzy'` (default) or `'nltk'`
 
-        - if ``processor='fuzzywuzzy'``,
-          the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
-        - if ``processor='nltk'``,
-          the function relies on `nltk.metrics.distance.edit_distance`_
+    :param processor: either ``'fuzzywuzzy'`` (default) or ``'nltk'``
+
+        - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if ``processor='nltk'``, the function relies on `nltk.metrics.distance.edit_distance`_
 
     :type processor: str
-    :param kwargs: optional parameters of `fuzzywuzzy.fuzz.token_set_ratio`_
-        or `nltk.metrics.distance.edit_distance`_
+
+    :param kwargs: optional parameters of
+        `fuzzywuzzy.fuzz.token_set_ratio`_ or `nltk.metrics.distance.edit_distance`_
     :return: a string-type variable that should be similar to (or the same as) ``str_x``
     :rtype: str
 
@@ -193,13 +191,11 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
         app
     """
 
-    assert processor in ('fuzzywuzzy', 'nltk'), \
-        "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
+    assert processor in ('fuzzywuzzy', 'nltk'), "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
 
     if processor == 'fuzzywuzzy':
 
-        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs)
-                       for a in lookup_list]
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
 
         if l_distances:
             sim_str = lookup_list[l_distances.index(max(l_distances))]
@@ -262,7 +258,7 @@ def find_matched_str(str_x, lookup_list):
                 yield y
 
 
-""" Basic computation of textual data --------------------------------------------------- """
+""" Basic computation of textual data -------------------------------------------------------- """
 
 
 def count_words(raw_txt):
@@ -541,18 +537,17 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-""" Transformation of textual data ------------------------------------------------------ """
+""" Transformation of textual data ----------------------------------------------------------- """
 
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
     """
     Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
-    to a `reStructuredText
-    <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_ (.rst)
-    file.
+    to a `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
+    (.rst) file.
 
-    This function relies on `Pandoc <https://pandoc.org/>`_ or
-    `pypandoc <https://github.com/bebraw/pypandoc>`_.
+    This function relies on
+    `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
 
     :param path_to_md: path where a markdown file is saved
     :type path_to_md: str
@@ -562,11 +557,9 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
         defaults to ``False``
     :type verbose: bool
     :param pandoc_exe: absolute path to 'pandoc.exe', defaults to ``None``
-        (on Windows, use the default installation path -
-        ``"C:\\Program Files\\Pandoc\\pandoc.exe"``)
+        (on Windows, use the default installation path - ``"C:\\Program Files\\Pandoc\\pandoc.exe"``)
     :type pandoc_exe: str or None
-    :param kwargs: optional parameters of
-        `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
+    :param kwargs: optional parameters of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
 
     **Example**::
 
@@ -596,8 +589,7 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
     try:
         if os.path.isfile(pandoc_exe):
             subprocess.call(
-                '"{}" "{}" -f markdown -t rst -s -o "{}"'.format(
-                    pandoc_exe, abs_md_path, abs_rst_path))
+                '"{}" "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
         else:
             subprocess.call(
                 'pandoc "{}" -f markdown -t rst -s -o "{}"'.format(abs_md_path, abs_rst_path))
