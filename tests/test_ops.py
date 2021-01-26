@@ -365,6 +365,11 @@ def test_download_file_from_url():
 
     download_file_from_url(url, path_to_file)
 
+    from PIL import Image
+
+    img = Image.open(path_to_file)
+    img.show()
+
 
 if __name__ == '__main__':
     # For general use ----------------------------------------------------------------------------
