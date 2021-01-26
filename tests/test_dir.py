@@ -14,9 +14,9 @@ def test_cd():
     # <cwd>  # Current working directory
 
     mkdir = True
-    path = cd("tests", mkdir=mkdir)
+    path = cd("test_dir", mkdir=mkdir)
     print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
-    # <cwd>\\tests. (This directory will be created if it does not exists.)
+    # <cwd>\\test_dir. (This directory will be created if it does not exists.)
 
 
 def test_cdd():
@@ -30,33 +30,32 @@ def test_cdd():
     print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
     # <cwd>\\data. (This directory will be created if it does not exists.)
 
-    path = cdd("data", data_dir="tests", mkdir=mkdir)
+    path = cdd("test_dir", data_dir="tests", mkdir=mkdir)
     print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
-    # <cwd>\\tests\\data. (This directory will be created if it does not exists.)
+    # <cwd>\\data\\test_dir. (This directory will be created if it does not exists.)
 
 
 def test_cd_dat():
     dat_dir = "dat"
     mkdir = False
 
-    path = cd_dat("tests", dat_dir=dat_dir, mkdir=mkdir)
+    path = cd_dat("test_dir", dat_dir=dat_dir, mkdir=mkdir)
     print(".  ".join([path, "(This directory will NOT be created if it does not exists.)"]))
-    # <package directory>\\dat\\tests.
-    # (This directory will NOT be created if it does not exists.)
+    # <package directory>\\dat\\test_dir. (This directory will NOT be created if it does not exists.)
 
 
 # Validate directories -----------------------------------------------------------------
 
 def test_is_dir():
-    dir_name = "tests"
+    dir_name = "test_dir"
     print(is_dirname(dir_name))
     # False
 
-    dir_name = "\\tests"
+    dir_name = "\\test_dir"
     print(is_dirname(dir_name))
     # True
 
-    dir_name = cd("tests")
+    dir_name = cd("test_dir")
     print(is_dirname(dir_name))
     # True
 
@@ -73,16 +72,18 @@ def test_validate_input_data_dir():
 # Delete directories -------------------------------------------------------------------
 
 def test_delete_dir():
-    path_to_dir = cdd(mkdir=True)
+    path_to_dir = cd("test_dir", mkdir=True)
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\data\\dat" exists? True
+    # The directory "<cwd>\\test_dir" exists? True
 
     delete_dir(path_to_dir, confirmation_required=True, verbose=True)
-    # To remove the directory "<cwd>\\data\\dat"? [No]|Yes: yes
-    # Deleting "\data" ... Done.
+    # To delete the directory "\\test_dir"? [No]|Yes: yes
+    # Deleting "\\test_dir" ... Done.
 
     print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\data" exists? False
+    # The directory "<cwd>\\test_dir" exists? False
+
+    delete_dir(cd("tests"), confirmation_required=False, verbose=False)
 
 
 # Press the green button in the gutter to run the script.
