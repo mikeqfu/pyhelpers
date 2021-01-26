@@ -45,8 +45,8 @@ def get_db_address(db_cls):
 
     args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
 
-    db_address = "{}:***@{}:{}/{}".format(args_dict['username'], args_dict['host'],
-                                          args_dict['port'], args_dict['database_name'])
+    db_address = "{}:***@{}:{}/{}".format(
+        args_dict['username'], args_dict['host'], args_dict['port'], args_dict['database_name'])
 
     return db_address
 
@@ -55,8 +55,8 @@ class PostgreSQL:
     """
     A class for a basic `PostgreSQL <https://www.postgresql.org/>`_ instance.
 
-    :param host: host address,
-        e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation), defaults to ``None``
+    :param host: host address, e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation),
+        defaults to ``None``
     :type host: str or None
     :param port: port, e.g. ``5432`` (default by installation), defaults to ``None``
     :type port: int or None
@@ -76,10 +76,10 @@ class PostgreSQL:
     :type verbose: bool
 
     :ivar dict database_info: basic information about the server/database being connected
-    :ivar sqlalchemy.engine.url.URL url: PostgreSQL database URL
-        (see also [`SQL-P-SP-1 <https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql>`_])
-    :ivar type dialect: system that SQLAlchemy uses to communicate with PostgreSQL
-        (see also [`SQL-P-SP-2 <https://docs.sqlalchemy.org/en/13/dialects/postgresql.html>`_])
+    :ivar sqlalchemy.engine.url.URL url: PostgreSQL database URL;
+        see also [`SQL-P-SP-1`_]
+    :ivar type dialect: system that SQLAlchemy uses to communicate with PostgreSQL;
+        see also [`SQL-P-SP-2`_]
     :ivar str backend: name of database backend
     :ivar str driver: name of database driver
     :ivar str user: username
@@ -87,14 +87,21 @@ class PostgreSQL:
     :ivar str port: port number
     :ivar str database_name: name of a database
     :ivar str address: brief description of the database address
-    :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ Engine class
-        (see also [`SQL-P-SP-3 <https://docs.sqlalchemy.org/en/13/core/connections.html
-        #sqlalchemy.engine.Engine>`_])
-    :ivar sqlalchemy.pool.base._ConnectionFairy connection: `SQLAlchemy`_ Connection class
-        (see also [`SQL-P-SP-4 <https://docs.sqlalchemy.org/en/13/core/connections.html#
-        sqlalchemy.engine.Connection>`_])
+    :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ Engine class;
+        see also [`SQL-P-SP-3`_]
+    :ivar sqlalchemy.pool.base._ConnectionFairy connection: `SQLAlchemy`_ Connection class;
+        see also [`SQL-P-SP-4`_]
 
-    .. _`SQLAlchemy`: https://www.sqlalchemy.org/
+    .. _`SQL-P-SP-1`:
+        https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql
+    .. _`SQL-P-SP-2`:
+        https://docs.sqlalchemy.org/en/13/dialects/postgresql.html
+    .. _`SQL-P-SP-3`:
+        https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine
+    .. _`SQL-P-SP-4`:
+        https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Connection
+    .. _`SQLAlchemy`:
+        https://www.sqlalchemy.org/
 
     **Examples**::
 
@@ -169,10 +176,7 @@ class PostgreSQL:
         self.user, self.host, self.port = self.url.username, self.url.host, self.url.port
         self.database_name = self.database_info['database']
 
-        self.address = "{}:***@{}:{}/{}".format(self.user,
-                                                self.host,
-                                                self.port,
-                                                self.database_name)
+        self.address = "{}:***@{}:{}/{}".format(self.user, self.host, self.port, self.database_name)
 
         if not sqlalchemy_utils.database_exists(self.url):
             if confirmed("The database \"{}\" does not exist. "
@@ -268,8 +272,7 @@ class PostgreSQL:
         if database_name:
             self.database_name = str(database_name)
 
-            self.address = "{}:***@{}:{}/{}".format(
-                self.user, self.host, self.port, self.database_name)
+            self.address = "{}:***@{}:{}/{}".format(self.user, self.host, self.port, self.database_name)
 
             print("Connecting {}".format(self.address), end=" ... ") if verbose else ""
 
@@ -439,8 +442,7 @@ class PostgreSQL:
         self.connect_database(database_name='postgres')
 
         self.engine.execute(
-            'SELECT pg_terminate_backend(pid) FROM pg_stat_activity '
-            'WHERE pid <> pg_backend_pid();')
+            'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid();')
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
@@ -673,8 +675,7 @@ class PostgreSQL:
             >>> new_schema_names = ['points', 'lines', 'polygons']
             >>> new_schema_names_ = ['test_schema']
 
-            >>> for new_schema in new_schema_names:
-            ...     testdb.create_schema(new_schema, verbose=True)
+            >>> for new_schema in new_schema_names: testdb.create_schema(new_schema, verbose=True)
             Creating a schema: "points" ... Done.
             Creating a schema: "lines" ... Done.
             Creating a schema: "polygons" ... Done.
@@ -708,8 +709,7 @@ class PostgreSQL:
                     if confirmation_required:
                         print("Dropping {}".format(schemas_msg.split(" ")[1]), end=" ... ")
                     else:
-                        print("Dropping the {} from {}".format(schemas_msg, self.address),
-                              end=" ... ")
+                        print("Dropping the {} from {}".format(schemas_msg, self.address), end=" ... ")
                 else:
                     if confirmation_required:
                         print("Dropping ... ")
@@ -885,20 +885,17 @@ class PostgreSQL:
         :type table_name: str
         :param schema_name: name of a schema, defaults to ``'public'``
         :type schema_name: str
-        :param as_dict: whether to return the column information as a dictionary,
-            defaults to ``True``
+        :param as_dict: whether to return the column information as a dictionary, defaults to ``True``
         :type as_dict: bool
         :return: information about each column of the given table
         :rtype: pandas.DataFrame or dict
 
-        See the example for the method
-        :py:meth:`.create_table()<pyhelpers.sql.PostgreSQL.create_table>`.
+        See the example for the method :py:meth:`.create_table()<pyhelpers.sql.PostgreSQL.create_table>`.
         """
 
         column_info = self.engine.execute(
             "SELECT * FROM information_schema.columns "
-            "WHERE table_schema='{}' AND table_name='{}';".format(
-                schema_name, table_name))
+            "WHERE table_schema='{}' AND table_name='{}';".format(schema_name, table_name))
 
         keys, values = column_info.keys(), column_info.fetchall()
         idx = ['column_{}'.format(x) for x in range(len(values))]
@@ -926,8 +923,7 @@ class PostgreSQL:
             defaults to ``False``
         :type verbose: bool
 
-        See the example for the method
-        :py:meth:`.create_table()<pyhelpers.sql.PostgreSQL.create_table>`.
+        See the example for the method :py:meth:`.create_table()<pyhelpers.sql.PostgreSQL.create_table>`.
         """
 
         table = '\"{}\".\"{}\"'.format(schema_name, table_name)
@@ -948,8 +944,7 @@ class PostgreSQL:
                     print(log_msg, end=" ... ")
 
                 try:
-                    self.engine.execute(
-                        'DROP TABLE "{}"."{}" CASCADE;'.format(schema_name, table_name))
+                    self.engine.execute('DROP TABLE "{}"."{}" CASCADE;'.format(schema_name, table_name))
                     print("Done.") if verbose else ""
                 except Exception as e:
                     print("Failed. {}".format(e))
@@ -972,8 +967,8 @@ class PostgreSQL:
         .. note::
 
             This function is copied and slightly modified from the source code available at
-            [`SQL-P-PIC-1 <https://pandas.pydata.org/pandas-docs/stable/user_guide/
-            io.html#io-sql-method>`_].
+            [`SQL-P-PIC-1
+            <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_].
         """
 
         con_cur = sql_db_engine.connection.cursor()
@@ -1010,8 +1005,7 @@ class PostgreSQL:
         :type if_exists: str
         :param force_replace: whether to force to replace existing table, defaults to ``False``
         :type force_replace: bool
-        :param chunk_size: the number of rows in each batch to be written at a time,
-            defaults to ``None``
+        :param chunk_size: the number of rows in each batch to be written at a time, defaults to ``None``
         :type chunk_size: int or None
         :param col_type: data types for columns, defaults to ``None``
         :type col_type: dict, None
@@ -1034,8 +1028,7 @@ class PostgreSQL:
         :param kwargs: optional parameters of `pandas.DataFrame.to_sql`_
 
         .. _`pandas.DataFrame.to_sql`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/
-            pandas.DataFrame.to_sql.html
+            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
         See the example for the method
         :py:meth:`.read_sql_query() <pyhelpers.sql.PostgreSQL.read_sql_query>`.
@@ -1043,8 +1036,8 @@ class PostgreSQL:
 
         table_name_ = '"{}"."{}"'.format(schema_name, table_name)
 
-        if confirmed("To import the data into table {} at {}\n?".format(
-                table_name_, self.address), confirmation_required=confirmation_required):
+        if confirmed("To import the data into table {} at {}\n?".format(table_name_, self.address),
+                     confirmation_required=confirmation_required):
 
             inspector = sqlalchemy.engine.reflection.Inspector.from_engine(self.engine)
             if schema_name not in inspector.get_schema_names():
@@ -1059,8 +1052,7 @@ class PostgreSQL:
                 if force_replace:
                     print("The existing table is forced to be dropped ... ") if verbose else ""
                     self.drop_table(table_name, schema_name,
-                                    confirmation_required=confirmation_required,
-                                    verbose=verbose)
+                                    confirmation_required=confirmation_required, verbose=verbose)
 
             try:
                 if verbose:
@@ -1075,16 +1067,15 @@ class PostgreSQL:
 
                 if isinstance(data, pandas.io.parsers.TextFileReader):
                     for chunk in data:
-                        chunk.to_sql(table_name, self.engine, schema=schema_name,
-                                     if_exists=if_exists, index=index, dtype=col_type,
-                                     method=method, **kwargs)
+                        chunk.to_sql(table_name, self.engine, schema=schema_name, if_exists=if_exists,
+                                     index=index, dtype=col_type, method=method, **kwargs)
                         del chunk
                         gc.collect()
 
                 else:
-                    data.to_sql(table_name, self.engine, schema=schema_name,
-                                if_exists=if_exists, index=index, chunksize=chunk_size,
-                                dtype=col_type, method=method, **kwargs)
+                    data.to_sql(table_name, self.engine, schema=schema_name, if_exists=if_exists,
+                                index=index, chunksize=chunk_size, dtype=col_type, method=method,
+                                **kwargs)
                     gc.collect()
 
                 print("Done.") if verbose else ""
@@ -1097,8 +1088,8 @@ class PostgreSQL:
         """
         Read data from a table of the database being connected.
 
-        See also [`SQL-P-RT-1
-        <https://stackoverflow.com/questions/24408557/pandas-read-sql-with-parameters>`_].
+        See also
+        [`SQL-P-RT-1 <https://stackoverflow.com/questions/24408557/pandas-read-sql-with-parameters>`_].
 
         :param table_name: name of a table
         :type table_name: str
@@ -1108,8 +1099,8 @@ class PostgreSQL:
         :type condition: str or None
         :param chunk_size: number of rows to include in each chunk, defaults to ``None``
         :type chunk_size: int or None
-        :param sorted_by: name(s) of a column (or columns)
-            by which the retrieved data is sorted, defaults to ``None``
+        :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted,
+            defaults to ``None``
         :type sorted_by: str or None
         :param kwargs: optional parameters of `pandas.read_sql`_
 
@@ -1117,8 +1108,7 @@ class PostgreSQL:
         :rtype: pandas.DataFrame
 
         .. _`pandas.read_sql`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/
-            pandas.read_sql.html
+            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
 
         See the example for the method
         :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>`.
@@ -1139,9 +1129,9 @@ class PostgreSQL:
 
         return table_data
 
-    def read_sql_query(self, sql_query, method='spooled_tempfile', tempfile_mode='w+b',
-                       max_size_spooled=1, delimiter=',', dtype=None, tempfile_kwargs=None,
-                       stringio_kwargs=None, **kwargs):
+    def read_sql_query(self, sql_query, method='tempfile', tempfile_mode='w+b', max_size_spooled=1,
+                       delimiter=',', dtype=None, tempfile_kwargs=None, stringio_kwargs=None,
+                       **kwargs):
         """
         Read table data by SQL query (recommended for large table).
 
@@ -1153,13 +1143,15 @@ class PostgreSQL:
 
         :param sql_query: SQL query to be executed
         :type sql_query: str
+
         :param method: method to be used for buffering temporary data
 
-            * `'spooled_tempfile'` (default): use `tempfile.SpooledTemporaryFile`_
-            * `'tempfile'`: use `tempfile.TemporaryFile`_
-            * `'stringio'`: use `io.StringIO`_
+            * ``'tempfile'`` (default): use `tempfile.TemporaryFile`_
+            * ``'stringio'``: use `io.StringIO`_
+            * ``'spooled'``: use `tempfile.SpooledTemporaryFile`_
 
         :type method: str
+
         :param tempfile_mode: mode of the specified `method`, defaults to ``'w+b'``
         :type tempfile_mode: str
         :param max_size_spooled: ``max_size`` of `tempfile.SpooledTemporaryFile`_,
@@ -1167,11 +1159,11 @@ class PostgreSQL:
         :type max_size_spooled: int, float
         :param delimiter: delimiter used in data, defaults to ``','``
         :type delimiter: str
-        :param dtype: data type for specified data columns,
-            `dtype` used by `pandas.read_csv`_, defaults to ``None``
+        :param dtype: data type for specified data columns, `dtype` used by `pandas.read_csv`_,
+            defaults to ``None``
         :type dtype: dict, None
-        :param tempfile_kwargs: optional parameters of
-            `tempfile.TemporaryFile`_ or `tempfile.SpooledTemporaryFile`_
+        :param tempfile_kwargs: optional parameters of `tempfile.TemporaryFile`_
+            or `tempfile.SpooledTemporaryFile`_
         :param stringio_kwargs: optional parameters of `io.StringIO`_,
             e.g. ``initial_value`` (default: ``''``)
         :param kwargs: optional parameters of `pandas.read_csv`_
@@ -1208,6 +1200,13 @@ class PostgreSQL:
             ...             (582044, 152953)]
             >>> col_name = ['Easting', 'Northing']
             >>> dat = pandas.DataFrame(xy_array, columns=col_name)
+
+            >>> print(dat)
+               Easting  Northing
+            0   530034    180381
+            1   406689    286822
+            2   383819    398052
+            3   582044    152953
 
             >>> table = 'England'
             >>> schema = 'points'
@@ -1256,24 +1255,22 @@ class PostgreSQL:
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
 
-        **Aside**: a brief example of using the parameter ``params`` for
-        `pandas.read_sql <https://pandas.pydata.org/pandas-docs/stable/reference/api/
-        pandas.read_sql.html>`_
+        **Aside**: a brief example of using the parameter ``params`` for `pandas.read_sql
+        <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html>`_
 
         .. code-block:: python
 
             import datetime
 
             sql_query_ = 'SELECT * FROM "table_name" '
-                         'WHERE "timestamp_column_name" '
-                         'BETWEEN %(ts_start)s AND %(ts_end)s'
+                         'WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
 
             params = {'ds_start': datetime.datetime.today(), 'ds_end': datetime.datetime.today()}
 
             data_frame = pd_.read_sql(sql_query_, testdb.engine, params=params)
         """
 
-        methods = ('stringio', 'tempfile', 'spooled_tempfile')
+        methods = ('tempfile', 'stringio', 'spooled')
         ast_msg = "The argument `method` must be one of {'%s', '%s', '%s'}" % methods
         assert method in methods, ast_msg
 
@@ -1286,20 +1283,18 @@ class PostgreSQL:
                                'dir': None,
                                'errors': None}
 
-        if method == 'spooled_tempfile':
-            # Use tempfile.SpooledTemporaryFile - data would be spooled in memory until
-            # its size > max_spooled_size
-            csv_temp = tempfile.SpooledTemporaryFile(max_size_spooled * 10 ** 9, tempfile_mode,
-                                                     **tempfile_kwargs)
-
-        elif method == 'tempfile':
-            # Use tempfile.TemporaryFile
+        if method == 'tempfile':  # using tempfile.TemporaryFile
             csv_temp = tempfile.TemporaryFile(tempfile_mode, **tempfile_kwargs)
 
-        else:  # method == 'stringio', i.e. use io.StringIO
+        elif method == 'stringio':  # using io.StringIO
             if stringio_kwargs is None:
                 stringio_kwargs = {'initial_value': '', 'newline': '\n'}
             csv_temp = io.StringIO(**stringio_kwargs)
+
+        else:  # method == 'spooled_tempfile': using tempfile.SpooledTemporaryFile
+            # Data would be spooled in memory until its size > max_spooled_size
+            csv_temp = tempfile.SpooledTemporaryFile(max_size_spooled * 10 ** 9, tempfile_mode,
+                                                     **tempfile_kwargs)
 
         # Specify the SQL query for "COPY"
         copy_sql = "COPY ({query}) TO STDOUT WITH DELIMITER '{delimiter}' CSV HEADER;".format(
