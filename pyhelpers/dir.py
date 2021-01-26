@@ -247,8 +247,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         >>> dir_path = cdd(mkdir=True)
         >>> print('The directory "\\{}" exists? '.format(os.path.relpath(dir_path)), end="")
         >>> print(os.path.exists(dir_path))
-        The directory "\\data" exists?
-        True
+        The directory "\\data" exists? True
 
         >>> delete_dir(dir_path, confirmation_required=True, verbose=True)
         To delete the directory "\\data"? [No]|Yes: yes
