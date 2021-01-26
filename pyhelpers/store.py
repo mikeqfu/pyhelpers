@@ -14,8 +14,7 @@ import rapidjson
 from .ops import confirmed
 
 
-def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
-                               ret_info=False):
+def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
     """
     Get information about the path of a file.
 
@@ -95,7 +94,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
         return rel_path, filename
 
 
-""" Save data --------------------------------------------------------------------------- """
+""" Save data -------------------------------------------------------------------------------- """
 
 
 def save(data, path_to_file, warning=False, **kwargs):
@@ -175,11 +174,9 @@ def save(data, path_to_file, warning=False, **kwargs):
 
     else:
         if warning:
-            print("Note that the current file extension is not recognisable "
-                  "by this \"save()\" function.")
+            print("Note that the current file extension is not recognisable by this \"save()\".")
 
-        if confirmed("To save \"{}\" as a .pickle file? ".format(
-                os.path.basename(path_to_file))):
+        if confirmed("To save \"{}\" as a .pickle file? ".format(os.path.basename(path_to_file))):
             save_pickle(dat, path_to_file, **kwargs)
 
 
@@ -229,8 +226,8 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
 
 # Spreadsheets
 
-def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimiter=',',
-                     verbose=False, **kwargs):
+def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None,
+                     delimiter=',', verbose=False, **kwargs):
     """
     Save data as a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_
     or an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
@@ -241,7 +238,6 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
 
         - `xlsxwriter <https://xlsxwriter.readthedocs.io/>`_ for .xlsx
         - `openpyxl <https://openpyxl.readthedocs.io/en/stable/>`_ for .xlsx/.xlsm
-        - `xlwt <https://pypi.org/project/xlwt/>`_ for .xls
 
     :param spreadsheet_data: data that could be saved as a spreadsheet, e.g. .xlsx, .csv
     :type spreadsheet_data: pandas.DataFrame
@@ -249,21 +245,22 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
     :type path_to_spreadsheet: str
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
+    :param engine: options include ``'openpyxl'`` for latest Excel file formats,
+        ``'xlrd'`` for .xls ``'odf'`` for OpenDocument file formats (.odf, .ods, .odt), and
+        ``'pyxlsb'`` for Binary Excel files; defaults to ``None``
+    :type engine: str or None
     :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file,
         defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or
-        `pandas.DataFrame.to_csv`_
+    :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
     .. _`pandas.DataFrame.to_excel`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/
-        pandas.DataFrame.to_excel.html
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/
-        pandas.DataFrame.to_csv.html
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html
 
     **Examples**::
 
@@ -287,25 +284,23 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
         Saving "dat.xlsx" to "\\tests\\data" ... Done.
     """
 
-    _, spreadsheet_filename = get_specific_filepath_info(path_to_spreadsheet,
+    _, spreadsheet_filename = get_specific_filepath_info(path_to_file=path_to_spreadsheet,
                                                          verbose=verbose, ret_info=True)
 
     try:  # to save the data
         if spreadsheet_filename.endswith(".xlsx"):  # a .xlsx file
-            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine='openpyxl',
-                                      **kwargs)
+            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine=engine, **kwargs)
 
         elif spreadsheet_filename.endswith(".xls"):  # a .xls file
-            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine='xlwt',
-                                      **kwargs)
+            if engine is None or engine == 'xlwt':
+                engine = 'openpyxl'
+            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine=engine, **kwargs)
 
         elif spreadsheet_filename.endswith((".csv", ".txt")):  # a .csv file
-            spreadsheet_data.to_csv(path_to_spreadsheet, index=index, sep=delimiter,
-                                    **kwargs)
+            spreadsheet_data.to_csv(path_to_spreadsheet, index=index, sep=delimiter, **kwargs)
 
         else:
-            raise AssertionError(
-                'File extension must be ".txt", ".csv", ".xlsx" or ".xls"')
+            raise AssertionError('File extension must be ".txt", ".csv", ".xlsx" or ".xls"')
 
         print("Done.") if verbose else ""
 
@@ -313,12 +308,11 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, delimit
         print("Failed. {}.".format(e.args[0])) if verbose else ""
 
 
-def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w',
-                               index=False, confirmation_required=True, verbose=False,
+def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, engine=None,
+                               mode='w', index=False, confirmation_required=True, verbose=False,
                                **kwargs):
     """
-    Save data to a multi-sheet
-    `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Save data to a multi-sheet `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
 
     :param spreadsheets_data: a sequence of pandas.DataFrame
     :type spreadsheets_data: list or tuple or iterable
@@ -326,8 +320,9 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :type sheet_names: list or tuple or iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
-    :param mode: mode to write to excel file,
-        including ``'w'`` (default) for 'write' and ``'a'`` for 'append'
+    :param engine: options include ``'openpyxl'`` and ``'xlsxwriter'``; defaults to ``None``
+    :type engine: str or None
+    :param mode: mode to write to excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
@@ -396,20 +391,25 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
         cur_sheet_names = excel_file_reader.sheet_names
 
+        if engine is None:
+            engine = 'openpyxl'
+
     else:
         cur_sheet_names = []
         mode = 'w'
 
-    excel_file_writer = pd.ExcelWriter(path_to_spreadsheet, engine='openpyxl', mode=mode,
-                                       **kwargs)
+    excel_file_writer = pd.ExcelWriter(path_to_spreadsheet, engine=engine, mode=mode, **kwargs)
 
     def write_excel(dat, name, idx, suffix_msg=None):
         try:
             dat.to_excel(excel_file_writer, sheet_name=name, index=idx)
 
-            sheet_name_ = excel_file_writer.sheets[name].title
+            try:
+                sheet_name_ = excel_file_writer.sheets[name].get_name()
+            except AttributeError:
+                sheet_name_ = excel_file_writer.sheets[name].title
             if sheet_name_ in sheet_names:
-                msg_ = "Done. "
+                msg_ = "Done."
             else:
                 msg_ = "saved as '{}' ... Done. ".format(sheet_name_)
 
@@ -417,13 +417,12 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
                 if verbose == 2:
                     print("{} {}".format(msg_, suffix_msg))
                 else:
-                    if verbose:
-                        print(msg_)
+                    print(msg_) if verbose else ""
             else:
                 print(msg_) if verbose else ""
 
         except Exception as e:
-            print("Failed. {}.".format(e)) if verbose else ""
+            print("Failed. {}.".format(e))
 
     print("") if verbose else ""
     for sheet_dat, sheet_name in zip(spreadsheets_data, sheet_names):
@@ -690,8 +689,8 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
 
 # Web page
 
-def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
-                         encoding='UTF-8', verbose=False, wkhtmltopdf_exe=None, **kwargs):
+def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0, encoding='UTF-8',
+                         verbose=False, wkhtmltopdf_exe=None, **kwargs):
     """
     Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     by `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
@@ -773,7 +772,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
               "It is not found on this device.") if verbose else ""
 
 
-""" Load data --------------------------------------------------------------------------- """
+""" Load data -------------------------------------------------------------------------------- """
 
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
@@ -823,8 +822,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
 
 def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
     """
-    Load multiple sheets of an `Microsoft Excel
-    <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Load multiple sheets of an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
@@ -849,8 +847,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
 
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
-        >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, as_dict=True, verbose=True,
-        ...                                      ndex_col=0)
+        >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
         Loading "\\tests\\data\\dat.xlsx" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
@@ -859,7 +856,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
             'TestSheet12'. ... Done.
             'TestSheet22'. ... Done.
 
-        >>> print(list(wb_data.keys()))
+        >>> list(wb_data.keys())
         ['TestSheet1',
          'TestSheet2',
          'TestSheet11',
@@ -870,7 +867,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
         >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
 
         >>> type(wb_data)
-        <class 'list'>
+        list
     """
 
     excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
@@ -951,8 +948,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
 
 def load_feather(path_to_feather, verbose=False, **kwargs):
     """
-    Load data frame from a
-    `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Load data frame from a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str
@@ -987,8 +983,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_feather)),
-              end=" ... ")
+        print("Loading \"\\{}\"".format(os.path.relpath(path_to_feather)), end=" ... ")
 
     try:
         feather_data = pd.read_feather(path_to_feather, **kwargs)
@@ -999,7 +994,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-""" Uncompress data files --------------------------------------------------------------- """
+""" Uncompress data files -------------------------------------------------------------------- """
 
 
 def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
@@ -1039,15 +1034,14 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     try:
         with zipfile.ZipFile(path_to_zip_file, mode) as zf:
             zf.extractall(out_dir, **kwargs)
-        print("Done. ") if verbose else ""
+        print("Done.") if verbose else ""
         zf.close()
 
     except Exception as e:
         print("Failed. {}".format(e))
 
 
-def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_exe=None,
-              **kwargs):
+def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_exe=None, **kwargs):
     """
     Use `7-Zip <https://www.7-zip.org/>`_ to extract data from a compressed file.
 
