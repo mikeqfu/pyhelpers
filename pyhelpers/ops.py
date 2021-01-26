@@ -17,6 +17,9 @@ import types
 import urllib.parse
 
 import fake_useragent
+import matplotlib.cm
+import matplotlib.colors
+import matplotlib.pyplot
 import numpy as np
 import pandas as pd
 import requests
@@ -175,7 +178,7 @@ def split_list_by_size(lst, sub_len):
         >>> sub_lst_len = 3
 
         >>> lists = split_list_by_size(lst_, sub_lst_len)
-        >>> print(list(lists))
+        >>> list(lists)
         [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
     """
 
@@ -204,7 +207,7 @@ def split_list(lst, num_of_sub):
         >>> num_of_sub_lists = 3
 
         >>> lists = list(split_list(lst_, num_of_sub_lists))
-        >>> print(list(lists))
+        >>> list(lists)
         [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
     """
 
@@ -337,25 +340,25 @@ def get_all_values_from_nested_dict(key, target_dict):
         >>> key_ = 'key'
         >>> target_dict_ = {'key': 'val'}
         >>> val = get_all_values_from_nested_dict(key_, target_dict_)
-        >>> print(list(val))
+        >>> list(val)
         [['val']]
 
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': 'v2'}}
         >>> val = get_all_values_from_nested_dict(key_, target_dict_)
-        >>> print(list(val))
+        >>> list(val)
         [['v1']]
 
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': ['v1', 'v1_1']}}
         >>> val = get_all_values_from_nested_dict(key_, target_dict_)
-        >>> print(list(val))
+        >>> list(val)
         [['v1', 'v1_1']]
 
         >>> key_ = 'k2'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
         >>> val = get_all_values_from_nested_dict(key_, target_dict_)
-        >>> print(list(val))
+        >>> list(val)
         [['v2', 'v2_1']]
     """
 
@@ -451,7 +454,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         >>> df.iloc[3, 1] = numpy.nan
 
         >>> nan_col_pos = detect_nan_for_str_column(df, column_names=None)
-        >>> print(list(nan_col_pos))
+        >>> list(nan_col_pos)
         [1]
     """
 
@@ -617,11 +620,13 @@ def swap_cols(array, c1, c2, as_list=False):
 
         >>> new_arr = swap_cols(arr, 0, 1)
 
-        >>> new_arr
-        array([[55.95615851, -2.96251228],
-               [55.95705685, -2.96253458],
-               [55.95706935, -2.96093324],
-               [55.956171  , -2.96091098]])
+        >>> type(new_arr)
+        numpy.ndarray
+        >>> print(new_arr)
+        [[-2.96251228 55.95615851]
+         [-2.96253458 55.95705685]
+         [-2.96093324 55.95706935]
+         [-2.96091098 55.956171  ]]
     """
 
     array[:, c1], array[:, c2] = array[:, c2], array[:, c1].copy()
@@ -659,11 +664,13 @@ def swap_rows(array, r1, r2, as_list=False):
 
         >>> new_arr = swap_rows(arr, 0, 1)
 
-        >>> new_arr
-        array([[55.95705685, -2.96253458],
-               [55.95615851, -2.96251228],
-               [55.95706935, -2.96093324],
-               [55.956171  , -2.96091098]])
+        >>> type(new_arr)
+        numpy.ndarray
+        >>> print(new_arr)
+        [[-2.96253458 55.95705685]
+         [-2.96251228 55.95615851]
+         [-2.96093324 55.95706935]
+         [-2.96091098 55.956171  ]]
     """
 
     array[r1, :], array[r2, :] = array[r2, :], array[r1, :].copy()
@@ -834,7 +841,6 @@ def cmap_discretisation(cmap, n_colours):
     """
 
     if isinstance(cmap, str):
-        import matplotlib.cm
         cmap = matplotlib.cm.get_cmap(cmap)
 
     colours_i = np.concatenate((np.linspace(0, 1., n_colours), (0., 0., 0., 0.)))
@@ -844,9 +850,9 @@ def cmap_discretisation(cmap, n_colours):
 
     for ki, key in enumerate(('red', 'green', 'blue')):
         c_dict[key] = [
-            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)]
+            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)
+        ]
 
-    import matplotlib.colors
     colour_map = matplotlib.colors.LinearSegmentedColormap(cmap.name + '_%d' % n_colours, c_dict, 1024)
 
     return colour_map
@@ -886,9 +892,11 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
         >>> cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5)
 
-        >>> cbar.ax.tick_params(labelsize=18)
+        >>> plt.xticks(fontsize=12)
+        >>> plt.yticks(fontsize=12)
+        >>> cbar.ax.tick_params(labelsize=14)
 
-        >>> plt.axis('off')
+        >>> # plt.axis('off')
         >>> plt.tight_layout()
         >>> plt.show()
 
@@ -896,7 +904,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     .. figure:: ../_images/colour-bar-index-1.*
         :name: colour-bar-index-1
-        :width: 17%
+        :align: center
+        :width: 23%
 
         An example of colour bar with numerical index,
         created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
@@ -908,9 +917,11 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> labels_ = list('abcde')
         >>> cbar = colour_bar_index(matplotlib.cm.get_cmap('Accent'), n_colours=5, labels=labels_)
 
-        >>> cbar.ax.tick_params(labelsize=18)
+        >>> plt.xticks(fontsize=12)
+        >>> plt.yticks(fontsize=12)
+        >>> cbar.ax.tick_params(labelsize=14)
 
-        >>> plt.axis('off')
+        >>> # plt.axis('off')
         >>> plt.tight_layout()
         >>> plt.show()
 
@@ -918,7 +929,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     .. figure:: ../_images/colour-bar-index-2.*
         :name: colour-bar-index-2
-        :width: 17%
+        :align: center
+        :width: 23%
 
         An example of colour bar with textual index,
         created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
@@ -926,12 +938,10 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     cmap = cmap_discretisation(cmap, n_colours)
 
-    import matplotlib.cm
     mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
     mappable.set_array(np.array([]))
     mappable.set_clim(-0.5, n_colours + 0.5)
 
-    import matplotlib.pyplot
     colour_bar = matplotlib.pyplot.colorbar(mappable, **kwargs)
     colour_bar.set_ticks(np.linspace(0, n_colours, n_colours))
     colour_bar.set_ticklabels(range(n_colours))
@@ -1014,13 +1024,11 @@ def fake_requests_headers(randomized=False):
 
         >>> fake_headers_ = fake_requests_headers()
         >>> print(fake_headers_)
-        {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 '
-                       '(KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'}
+        {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
 
         >>> fake_headers_ = fake_requests_headers(randomized=True)
         >>> print(fake_headers_)
-        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 '
-                       '(KHTML, like Gecko) Chrome/36.0.1944.0 Safari/537.36'}
+        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML ...
 
     .. note::
 
@@ -1065,11 +1073,23 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     **Example**::
 
         >>> from pyhelpers.dir import cd
+        >>> from PIL import Image
         >>> from pyhelpers.ops import download_file_from_url
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> path_to_img = cd("tests", "images", "python-logo.png")
 
-        >>> download_file_from_url(logo_url, cd("tests", "images", "python-logo.png"))
+        >>> download_file_from_url(logo_url, path_to_img)
+
+        >>> img = Image.open(path_to_img)
+        >>> img.show()  # as illustrated below
+
+    .. figure:: ../_images/python-logo.*
+        :name: python-logo
+        :align: center
+        :width: 65%
+
+        The Python Logo.
     """
 
     headers = fake_requests_headers(randomized=random_header)
