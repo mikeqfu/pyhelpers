@@ -55,17 +55,18 @@ The module :ref:`pyhelpers.dir<dir>` can be used to help change/manipulate direc
     >>> # Or simply,
     >>> # from pyhelpers import cd
 
-    >>> cwd = cd()
-    >>> print(cwd)
-    <An absolute path to the current working directory (cwd)>
+    >>> cwd = cd()  # The current working directory
+
+    >>> import os
+
+    >>> print(os.path.relpath(cwd))
+    .
 
 To direct to a custom folder, say ``"pyhelpers_quick_start"``:
 
 .. code-block:: python
 
     >>> path_to_qs = cd("pyhelpers_quick_start")
-
-    >>> import os
 
     >>> print(os.path.relpath(path_to_qs))
     pyhelpers_quick_start
@@ -74,19 +75,24 @@ In the case the the folder ``'pyhelpers_quick_start'`` does not exist, we could 
 
 .. code-block:: python
 
+    >>> # Set `mkdir` to be `True` to create a folder named "pyhelpers_quick_start"
     >>> path_to_qs = cd("pyhelpers_quick_start", mkdir=True)
 
-    >>> print("The directory \"{}\" exists? {}".format(
-    ...     os.path.relpath(path_to_qs), os.path.isdir(path_to_qs)))
+    >>> rel_path = os.path.relpath(path_to_qs)  # relative path to a directory "pyhelpers_quick_start"
+    >>> id_dir = os.path.isdir(path_to_qs)  # whether the directory exists
+
+    >>> print("The directory \"{}\" exists? {}".format(rel_path, id_dir))
     The directory "pyhelpers_quick_start" exists? True.
 
 If we provide a filename (formed of a name and of a file and a file extension), we can get an absolute path to the file as well. For example:
 
 .. code-block:: python
 
-    >>> path_to_pickle = cd(path_to_qs, "dat.pickle")
+    >>> dat_filename = "dat.pickle"
+
+    >>> path_to_pickle = cd(path_to_qs, dat_filename)  # path to a file named "dat.pickle"
     >>> # equivalent to:
-    >>> # cd("pyhelpers_quick_start", "dat.pickle")
+    >>> # cd("pyhelpers_quick_start", dat_filename)
 
     >>> print(os.path.relpath(path_to_pickle))
     pyhelpers_quick_start\dat.pickle
@@ -97,27 +103,29 @@ When a filename is provided and ``mkdir=True``, the function will just create th
 
 .. code-block:: python
 
-    >>> path_to_qs_data_dir = cd(path_to_qs, "data")
+    >>> path_to_qs_data_dir = cd(path_to_qs, "data")  # a directory "pyhelpers_quick_start\data"
 
-    >>> print("The directory \"{}\" exists? {}".format(
-    ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
+    >>> rel_path_data = os.path.relpath(path_to_qs_data_dir)  # relative path to the data directory
+    >>> is_dir_data = os.path.exists(path_to_qs_data_dir)  # whether the data directory exists
+
+    >>> print("The directory \"{}\" exists? {}".format(rel_path_data, is_dir_data))
     The directory "pyhelpers_quick_start\data" exists? False
 
-    >>> dat_filename = "dat.pickle"
+    >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename)  # path to the pickle file "dat.pickle"
+    >>> rel_path_dat = os.path.relpath(path_to_dat)  # relative path to "dat.pickle"
 
-    >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename)
-
-    >>> print(os.path.relpath(path_to_dat))
+    >>> print(rel_path_dat)
     pyhelpers_quick_start\data\dat.pickle
 
-    >>> print("The directory \"{}\" exists? {}".format(
-    ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
-    The directory "pyhelpers_quick_start\data" exists? False
+    >>> is_file_dat = os.path.exists(path_to_dat)  # whether the file "dat.pickle" exists
 
+    >>> print("The file \"{}\" exists? {}".format(dat_filename, is_file_dat))
+    The file "dat.pickle" exists? False
+
+    >>> # Set `mkdir` to be `True` to create the data folder
     >>> path_to_dat = cd(path_to_qs_data_dir, dat_filename, mkdir=True)
 
-    >>> print("The directory \"{}\" exists? {}".format(
-    ...     os.path.relpath(path_to_qs_data_dir), os.path.exists(path_to_qs_data_dir)))
+    >>> print("The directory \"{}\" exists? {}".format(rel_path_data, is_dir_data))
     The directory "pyhelpers_quick_start\data" exists? True
 
 To delete the directory of ``"pyhelpers_quick_start"``, we may use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
@@ -128,7 +136,7 @@ To delete the directory of ``"pyhelpers_quick_start"``, we may use the function 
     >>> # Or simply,
     >>> # from pyhelpers import delete_dir
 
-    >>> delete_dir(path_to_qs, verbose=True)
+    >>> delete_dir(path_to_qs, verbose=True)  # Delete the folder "pyhelpers_quick_start"
     The directory "\pyhelpers_quick_start" is not empty.
     Confirmed to delete it? [No]|Yes: yes
     Deleting "\pyhelpers_quick_start" ... Done.
