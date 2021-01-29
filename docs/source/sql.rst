@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.sql
-
 sql
 ===
+
+.. py:module:: pyhelpers.sql
 
 .. automodule:: pyhelpers.sql
     :noindex:
