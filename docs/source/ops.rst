@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.ops
-
 ops
 ===
+
+.. py:module:: pyhelpers.ops
 
 .. automodule:: pyhelpers.ops
     :noindex:
