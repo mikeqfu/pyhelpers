@@ -17,9 +17,6 @@ import types
 import urllib.parse
 
 import fake_useragent
-import matplotlib.cm
-import matplotlib.colors
-import matplotlib.pyplot
 import numpy as np
 import pandas as pd
 import requests
@@ -840,6 +837,9 @@ def cmap_discretisation(cmap, n_colours):
         :py:func:`cmap_discretisation()<pyhelpers.ops.cmap_discretisation>`.
     """
 
+    import matplotlib.cm
+    import matplotlib.colors
+
     if isinstance(cmap, str):
         cmap = matplotlib.cm.get_cmap(cmap)
 
@@ -935,6 +935,9 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         An example of colour bar with textual index,
         created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
     """
+
+    import matplotlib.cm
+    import matplotlib.pyplot
 
     cmap = cmap_discretisation(cmap, n_colours)
 
