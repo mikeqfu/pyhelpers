@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.geom
-
 geom
 ====
+
+.. py:module:: pyhelpers.geom
 
 .. automodule:: pyhelpers.geom
     :noindex:
