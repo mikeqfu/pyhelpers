@@ -108,19 +108,18 @@ def test_save_multiple_spreadsheets():
     spreadsheets_data = [dat1, dat2]
     sheet_names = ['TestSheet1', 'TestSheet2']
     path_to_spreadsheet = cdd("dat.xlsx")
-    engine = None
     index = True
     verbose = True
 
     mode = 'w'
-    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, engine, mode, index,
+    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                verbose=verbose)
     # Updating "dat.xlsx" at "\\data" ...
     # 	'TestSheet1' ... Done.
     # 	'TestSheet2' ... Done.
 
     mode = 'a'
-    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, engine, mode, index,
+    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                verbose=verbose)
     # Updating "dat.xlsx" at "\\data" ...
     # 	'TestSheet1' ... This sheet already exists;
@@ -132,7 +131,7 @@ def test_save_multiple_spreadsheets():
 
     mode = 'a'
     confirmation_required = False
-    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, engine, mode, index,
+    save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                confirmation_required, verbose)
     # Updating "dat.xlsx" at "\\data" ...
     # 	'TestSheet1' ...
