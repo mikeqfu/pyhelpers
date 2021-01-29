@@ -1,8 +1,8 @@
-.. py:module:: pyhelpers
-
 =======
 Modules
 =======
+
+.. py:module:: pyhelpers
 
 .. autosummary::
 
