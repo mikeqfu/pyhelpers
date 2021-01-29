@@ -308,9 +308,8 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         print("Failed. {}.".format(e.args[0])) if verbose else ""
 
 
-def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, engine=None,
-                               mode='w', index=False, confirmation_required=True, verbose=False,
-                               **kwargs):
+def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w',
+                               index=False, confirmation_required=True, verbose=False, **kwargs):
     """
     Save data to a multi-sheet `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
 
@@ -320,8 +319,6 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :type sheet_names: list or tuple or iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
-    :param engine: options include ``'openpyxl'`` and ``'xlsxwriter'``; defaults to ``None``
-    :type engine: str or None
     :param mode: mode to write to excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
     :param index: whether to include the index as a column, defaults to ``False``
@@ -354,18 +351,16 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         >>> dat1 = pandas.DataFrame(xy_array, idx, col)
         >>> dat2 = dat1.T
 
-        >>> spreadsheets_dat = [dat1, dat2]
-        >>> sheets = ['TestSheet1', 'TestSheet2']
-        >>> spreadsheet_path = cd("tests\\data", "dat.xlsx")
+        >>> ss_dat = [dat1, dat2]  # spreadsheets_data = ss_dat
+        >>> s_names = ['TestSheet1', 'TestSheet2']  # sheet_names = s_names
+        >>> ss_path = cd("tests\\data", "dat.xlsx")  # path_to_spreadsheet = ss_path
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, index=True,
-        ...                            verbose=True)
+        >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, index=True, verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, mode='a',
-        ...                            index=True, verbose=True)
+        >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True, verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ... This sheet already exists;
                 Add a suffix to the sheet name? [No]|Yes: yes
@@ -374,8 +369,8 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
                 Add a suffix to the sheet name? [No]|Yes: yes
                 'TestSheet21' ... Done.
 
-        >>> save_multiple_spreadsheets(spreadsheets_dat, sheets, spreadsheet_path, mode='a',
-        ...                            index=True, confirmation_required=False, verbose=True)
+        >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True,
+        ...                            confirmation_required=False, verbose=True)
         Updating "dat.xlsx" at "\\tests\\data" ...
             'TestSheet1' ...
                 saved as 'TestSheet12' ... Done.
@@ -388,36 +383,33 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     get_specific_filepath_info(path_to_spreadsheet, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_spreadsheet) and mode == 'a':
-        excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
-        cur_sheet_names = excel_file_reader.sheet_names
-
-        if engine is None:
-            engine = 'openpyxl'
-
+        excel_file = pd.ExcelFile(path_to_spreadsheet)
+        cur_sheet_names = excel_file.sheet_names
+        excel_file.close()
     else:
         cur_sheet_names = []
-        mode = 'w'
 
-    excel_file_writer = pd.ExcelWriter(path_to_spreadsheet, engine=engine, mode=mode, **kwargs)
+    excel_writer = pd.ExcelWriter(path_to_spreadsheet, mode=mode, **kwargs)
 
-    def write_excel(dat, name, idx, suffix_msg=None):
+    def _write_excel(_suffix_msg=None):
+        """
+        :meta private:
+        """
         try:
-            dat.to_excel(excel_file_writer, sheet_name=name, index=idx)
+            sheet_data.to_excel(excel_writer, sheet_name=sheet_name, index=index)
 
             try:
-                sheet_name_ = excel_file_writer.sheets[name].get_name()
+                sheet_name_ = excel_writer.sheets[sheet_name].get_name()
             except AttributeError:
-                sheet_name_ = excel_file_writer.sheets[name].title
+                sheet_name_ = excel_writer.sheets[sheet_name].title
+
             if sheet_name_ in sheet_names:
                 msg_ = "Done."
             else:
                 msg_ = "saved as '{}' ... Done. ".format(sheet_name_)
 
-            if suffix_msg:
-                if verbose == 2:
-                    print("{} {}".format(msg_, suffix_msg))
-                else:
-                    print(msg_) if verbose else ""
+            if _suffix_msg:
+                print(f"{msg_} {_suffix_msg}") if verbose == 2 else print(msg_) if verbose else ""
             else:
                 print(msg_) if verbose else ""
 
@@ -425,23 +417,23 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
             print("Failed. {}.".format(e))
 
     print("") if verbose else ""
-    for sheet_dat, sheet_name in zip(spreadsheets_data, sheet_names):
-
+    for sheet_data, sheet_name in zip(spreadsheets_data, sheet_names):
+        # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
         print("\t'{}'".format(sheet_name), end=" ... ") if verbose else ""
 
         if sheet_name in cur_sheet_names:
             if confirmed("This sheet already exists;\n\t\tadd a suffix to the sheet name?",
                          confirmation_required=confirmation_required):
-                suffix_msg_ = "(Note that a suffix has been added to the sheet name.)"
+                suffix_msg = "(Note that a suffix has been added to the sheet name.)"
 
                 print("\t\t" if confirmation_required else "\n\t\t", end="")
 
-                write_excel(dat=sheet_dat, name=sheet_name, idx=index, suffix_msg=suffix_msg_)
+                _write_excel(suffix_msg)
 
         else:
-            write_excel(dat=sheet_dat, name=sheet_name, idx=index)
+            _write_excel()
 
-    excel_file_writer.close()
+    excel_writer.close()
 
 
 # JSON files
