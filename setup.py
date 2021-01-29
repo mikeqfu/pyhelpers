@@ -36,7 +36,7 @@ setuptools.setup(
 
         'Programming Language :: Python :: 3',
         'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux'
+        'Operating System :: POSIX :: Linux',
     ],
 
     keywords=['python', 'helper functions', 'utilities'],
@@ -53,13 +53,11 @@ setuptools.setup(
         'fake-useragent',
         'fuzzywuzzy',
         # 'gdal',
-        'html5lib',
-        'lxml',
         # 'matplotlib',
         # 'nltk',
         'numpy',
         'openpyxl',
-        'pandas~=1.1.5',
+        'pandas',
         # 'pdfkit',
         'psycopg2',
         'python-rapidjson',
@@ -68,13 +66,12 @@ setuptools.setup(
         'pyxlsb',
         'requests',
         'scipy',
-        # 'shapely',
+        'shapely',
         'sqlalchemy',
         'sqlalchemy-utils',
         'tqdm',
-        'xlrd~=1.2.0',
-        'xlwt',
-        'XlsxWriter'
+        'xlrd',
+        'XlsxWriter',
     ],
 
     package_data={"": ["requirements.txt", "LICENSE"]},
