@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.settings
-
 settings
 ========
+
+.. py:module:: pyhelpers.settings
 
 .. automodule:: pyhelpers.settings
     :noindex:
