@@ -1,7 +1,7 @@
 fake-useragent
 fuzzywuzzy
 numpy
-pandas~=1.1.5
+pandas
 pyproj
 python-rapidjson
 requests
@@ -9,4 +9,5 @@ scipy
 SQLAlchemy
 SQLAlchemy-Utils
 tqdm
-Sphinx~=3.4.2
+Sphinx>=3.4.3
+
