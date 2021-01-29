@@ -6,6 +6,7 @@ pyproj
 python-rapidjson
 requests
 scipy
+Shapely
 SQLAlchemy
 SQLAlchemy-Utils
 tqdm
