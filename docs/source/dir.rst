@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.dir
-
 dir
 ===
+
+.. py:module:: pyhelpers.dir
 
 .. automodule:: pyhelpers.dir
     :noindex:
