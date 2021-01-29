@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.store
-
 store
 =====
+
+.. py:module:: pyhelpers.store
 
 .. automodule:: pyhelpers.store
     :noindex:
