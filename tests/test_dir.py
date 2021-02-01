@@ -72,18 +72,29 @@ def test_validate_input_data_dir():
 # Delete directories -------------------------------------------------------------------
 
 def test_delete_dir():
-    path_to_dir = cd("test_dir", mkdir=True)
-    print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\test_dir" exists? True
 
-    delete_dir(path_to_dir, confirmation_required=True, verbose=True)
-    # To delete the directory "\\test_dir"? [No]|Yes: yes
-    # Deleting "\\test_dir" ... Done.
+    dir_path = cd("test_dir", mkdir=True)
+    rel_dir_path = os.path.relpath(dir_path)
 
-    print("The directory \"{}\" exists? {}".format(path_to_dir, os.path.exists(path_to_dir)))
-    # The directory "<cwd>\\test_dir" exists? False
+    print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+    # The directory "test_dir" exists? True
+    delete_dir(dir_path, verbose=True)
+    # To delete the directory "test_dir"? [No]|Yes: yes
+    # Deleting "test_dir" ... Done.
+    print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+    # The directory "test_dir" exists? False
 
-    delete_dir(cd("tests"), confirmation_required=False, verbose=False)
+    dir_path = cd("test_dir", "folder", mkdir=True)
+    rel_dir_path = os.path.relpath(dir_path)
+
+    print('The directory "{}" exists? '.format(rel_dir_path, os.path.exists(dir_path)))
+    # The directory "test_dir\\folder" exists? True
+    delete_dir(cd("test_dir"), verbose=True)
+    # The directory "test_dir" is not empty.
+    # Confirmed to delete it? [No]|Yes: yes
+    # Deleting "test_dir" ... Done.
+    print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+    # The directory "test_dir\\folder" exists? False
 
 
 # Press the green button in the gutter to run the script.
