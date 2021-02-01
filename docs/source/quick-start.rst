@@ -25,7 +25,7 @@ As a quick tutorial to get started, this part of the documentation provides a fe
 Change settings of working environment
 ======================================
 
-The module :py:mod:`settings<pyhelpers.settings>` can be used to alter settings of `pandas`_, `numpy`_, `matplotlib`_ and `GDAL`_ for your working environment. For example, the function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default pandas `options and settings`_ (providing ``reset=False``), such as representation and maximum number of columns when displaying a `pandas.DataFrame`_ in console:
+The module :py:mod:`settings<pyhelpers.settings>` can be used to alter settings of `Pandas`_, `NumPy`_, `Matplotlib`_ and `GDAL`_ for your working environment. For example, the function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default Pandas `options and settings`_ (providing ``reset=False``), such as representation and maximum number of columns when displaying a `pandas.DataFrame`_ in console:
 
 .. code-block:: python
 
@@ -33,7 +33,7 @@ The module :py:mod:`settings<pyhelpers.settings>` can be used to alter settings 
 
     >>> pd_preferences(reset=False)
 
-When ``reset=True``, all parameters are reset to their default values.
+The parameter ``reset`` is by default ``False``. When ``reset=True``, all parameters are reset to their default values.
 
 .. note::
 
@@ -71,11 +71,14 @@ To direct to a temporary folder, named ``"pyhelpers_quick_start"``, for this tut
     >>> print(rel_path_qs)
     pyhelpers_quick_start
 
-    >>> # Whether the directory "pyhelpers_quick_start" exists
+Check whether the directory "pyhelpers_quick_start" exists:
+
+.. code-block:: python
+
     >>> print("The directory \"{}\" exists? {}".format(rel_path_qs, os.path.exists(path_to_qs)))
     The directory "pyhelpers_quick_start" exists? False
 
-In the case the folder ``'pyhelpers_quick_start'`` does not exist, you could set the parameter ``mkdir`` (which defaults to ``False``) to be ``True``, and so the folder will be created:
+In the case that the folder ``'pyhelpers_quick_start'`` does not exist, you could set the parameter ``mkdir`` (which defaults to ``False``) to be ``True``, and the folder will be created as the path is specified:
 
 .. code-block:: python
 
@@ -99,15 +102,19 @@ If you provide a filename (with a file extension), you can then get an absolute 
     >>> print(dat_rel_path)
     pyhelpers_quick_start\data.dat
 
-When only one filename is provided and ``mkdir=True``, the function will only create the parent folder (if it does not exist) rather than taking the filename as a folder name. See the example below:
+When only one filename (with a file extension) is provided and ``mkdir=True``, the function will only create the folder (if it does not exist) for the file, rather than taking the filename as a folder name. See the example below:
 
 .. _pickle-file-path:
 
 .. code-block:: python
 
-    >>> path_to_data = cd(path_to_qs, "data")  # A data directory "pyhelpers_quick_start\data"
+    >>> from pyhelpers.dir import is_dirname
 
+    >>> path_to_data = cd(path_to_qs, "data")  # A data directory "pyhelpers_quick_start\data"
     >>> rel_path_data = os.path.relpath(path_to_data)  # Relative path of the data directory
+
+    >>> # Whether `rel_path_data` is a directory
+    >>> print("\"{}\" is a directory? {}".format(rel_path_data, is_dirname(rel_path_data)))
 
     >>> # Whether the data directory exists
     >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
@@ -119,16 +126,26 @@ When only one filename is provided and ``mkdir=True``, the function will only cr
     >>> print(os.path.relpath(pickle_file_path))  # Relative path of the pickle file
     pyhelpers_quick_start\data\dat.pickle
 
-    >>> # Whether the file "dat.pickle" exists
+    >>> # Whether `pickle_file_path` is a directory
+    >>> print("`pickle_file_path` is a directory? {}".format(os.path.isdir(pickle_file_path)))
+    `pickle_file_path` is a directory? False
+
+    >>> # Check again whether the file "dat.pickle" exists
     >>> print("The file \"{}\" exists? {}".format(pickle_filename, os.path.exists(pickle_file_path)))
     The file "dat.pickle" exists? False
 
     >>> # Set `mkdir` to be `True` to create the data folder
     >>> pickle_file_path = cd(path_to_data, pickle_filename, mkdir=True)
 
+    >>> is_dirname(pickle_file_path)
+
     >>> # Whether the data directory exists now
     >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
     The directory "pyhelpers_quick_start\data" exists? True
+
+    >>> # Check again whether the file "dat.pickle" exists
+    >>> print("The file \"{}\" exists? {}".format(pickle_filename, os.path.exists(pickle_file_path)))
+    The file "dat.pickle" exists? False
 
 To delete the directory ``"pyhelpers_quick_start"``, you can use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
 
@@ -158,13 +175,13 @@ For example, you can use the function :py:func:`download_file_from_url()<pyhelpe
 
     The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ and `tqdm`_.
 
-If you would like to download a Python logo from the homepage of `Python`_, where the URL of the logo is:
+If you would like to download a Python logo from the homepage of `Python`_, firstly, specify the URL:
 
 .. code-block:: python
 
     >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-Then specify where you would like to save the .png file and what the filename it is. For example, to name the downloaded file as ``"python-logo.png"`` and save it to the directory ``"\pyhelpers_quick_start\images\"``:
+Then specify where you would like to save the .png file and what the filename it would be. For example, to name the file as ``"python-logo.png"`` and save it to the directory ``"pyhelpers_quick_start\images"``:
 
 .. code-block:: python
 
@@ -535,10 +552,10 @@ Note that you have created two databases: *'test_db'* (currently being connected
 
 
 .. _`Python`: https://www.python.org/
-.. _`numpy`: https://numpy.org/
-.. _`pandas`: https://pandas.pydata.org/
+.. _`Numpy`: https://numpy.org/
+.. _`Pandas`: https://pandas.pydata.org/
 .. _`pandas.DataFrame`: https://pandas.pydata.org/pandas-docs/stable/user_guide/dsintro.html#dataframe
-.. _`matplotlib`: https://matplotlib.org/
+.. _`Matplotlib`: https://matplotlib.org/
 .. _`GDAL`: https://gdal.org/
 .. _`options and settings`: https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html
 .. _`requests`: https://github.com/psf/requests
