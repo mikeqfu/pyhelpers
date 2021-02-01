@@ -117,6 +117,7 @@ See the following example:
 
     >>> # Whether `rel_path_data` is a directory
     >>> print("\"{}\" is a directory? {}".format(rel_path_data, is_dirname(rel_path_data)))
+    "pyhelpers_quick_start\data" is a directory? True
 
     >>> # Whether the data directory exists
     >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
@@ -138,8 +139,6 @@ See the following example:
 
     >>> # Set `mkdir` to be `True` to create the data folder
     >>> pickle_file_path = cd(path_to_data, pickle_filename, mkdir=True)
-
-    >>> is_dirname(pickle_file_path)
 
     >>> # Whether the data directory exists now
     >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
