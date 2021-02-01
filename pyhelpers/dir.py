@@ -3,6 +3,7 @@ Manipulation of directories.
 """
 
 import os
+import shutil
 
 import pkg_resources
 
@@ -239,42 +240,51 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
 
-    **Example**::
+    **Examples**::
 
         >>> import os
-        >>> from pyhelpers.dir import cdd, delete_dir
+        >>> from pyhelpers.dir import cd, delete_dir
 
-        >>> dir_path = cdd(mkdir=True)
-        >>> print('The directory "\\{}" exists? '.format(os.path.relpath(dir_path)), end="")
-        >>> print(os.path.exists(dir_path))
-        The directory "\\data" exists? True
+        >>> dir_path = cd("test_dir", mkdir=True)
+        >>> rel_dir_path = os.path.relpath(dir_path)
 
-        >>> delete_dir(dir_path, confirmation_required=True, verbose=True)
-        To delete the directory "\\data"? [No]|Yes: yes
-        Deleting "\\data" ... Done.
+        >>> print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+        The directory "test_dir" exists? True
+        >>> delete_dir(dir_path, verbose=True)
+        To delete the directory "test_dir"? [No]|Yes: yes
+        Deleting "test_dir" ... Done.
+        >>> print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+        The directory "test_dir" exists? False
 
-        >>> print('The directory "\\{}" exists? '.format(os.path.relpath(dir_path)), end="")
-        >>> print(os.path.exists(dir_path))
-        The directory "\\data" exists? False
+        >>> dir_path = cd("test_dir", "folder", mkdir=True)
+        >>> rel_dir_path = os.path.relpath(dir_path)
+
+        >>> print('The directory "{}" exists? '.format(rel_dir_path, os.path.exists(dir_path)))
+        The directory "test_dir\\folder" exists? True
+        >>> delete_dir(cd("test_dir"), verbose=True)
+        The directory "test_dir" is not empty.
+        Confirmed to delete it? [No]|Yes: yes
+        Deleting "test_dir" ... Done.
+        >>> print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
+        The directory "test_dir\\folder" exists? False
     """
 
     rel_path_to_dir = os.path.relpath(path_to_dir)
 
     def print_msg():
         if verbose:
-            print("Deleting \"\\{}\"".format(rel_path_to_dir), end=" ... ")
+            print("Deleting \"{}\"".format(rel_path_to_dir), end=" ... ")
 
     try:
         if os.listdir(path_to_dir):
-            if confirmed("The directory \"\\{}\" is not empty.\n"
+            if confirmed("The directory \"{}\" is not empty.\n"
                          "Confirmed to delete it?".format(rel_path_to_dir),
                          confirmation_required=confirmation_required):
-                import shutil
                 print_msg()
                 shutil.rmtree(path_to_dir, **kwargs)
 
         else:
-            if confirmed("To delete the directory \"\\{}\"?".format(rel_path_to_dir),
+            if confirmed("To delete the directory \"{}\"?".format(rel_path_to_dir),
                          confirmation_required=confirmation_required):
                 print_msg()
                 os.rmdir(path_to_dir)
