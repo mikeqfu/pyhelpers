@@ -1128,7 +1128,7 @@ class PostgreSQL:
         :param chunk_size: the number of rows in each batch to be written at a time, defaults to ``None``
         :type chunk_size: int or None
         :param col_type: data types for columns, defaults to ``None``
-        :type col_type: dict, None
+        :type col_type: dict or None
         :param method: method for SQL insertion clause, defaults to ``'multi'``
 
             * ``None``: uses standard SQL ``INSERT`` clause (one per row);
@@ -1276,12 +1276,12 @@ class PostgreSQL:
         :type tempfile_mode: str
         :param max_size_spooled: ``max_size`` of `tempfile.SpooledTemporaryFile`_,
             defaults to ``1`` (in gigabyte)
-        :type max_size_spooled: int, float
+        :type max_size_spooled: int or float
         :param delimiter: delimiter used in data, defaults to ``','``
         :type delimiter: str
         :param dtype: data type for specified data columns, `dtype` used by `pandas.read_csv`_,
             defaults to ``None``
-        :type dtype: dict, None
+        :type dtype: dict or None
         :param tempfile_kwargs: optional parameters of `tempfile.TemporaryFile`_
             or `tempfile.SpooledTemporaryFile`_
         :param stringio_kwargs: optional parameters of `io.StringIO`_,
