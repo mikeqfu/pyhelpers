@@ -56,8 +56,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    assert not abs_path_to_file.is_dir(), \
-        "The input for `path_to_file` may not be a file path."
+    assert not abs_path_to_file.is_dir(), "The input for `path_to_file` may not be a file path."
 
     filename = pathlib.Path(abs_path_to_file).name if abs_path_to_file.suffix else ""
 
@@ -68,7 +67,7 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
             rel_path = abs_path_to_file.parent
             msg_fmt = "{} \"{}\""  # "{} \"{}\" {} \"{}\""
         else:
-            msg_fmt = "{} \"{}\" {} \"\\{}\""
+            msg_fmt = "{} \"{}\" {} \"{}\""
             # The specified path exists?
             os.makedirs(abs_path_to_file.parent, exist_ok=True)
 
@@ -81,14 +80,13 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
         msg_fmt = "{} \"{}\""  # "{} \"{}\" {} \"{}\""
 
     if verbose:
-        status, prep = ("Updating", "at") if os.path.isfile(abs_path_to_file) \
-            else ("Saving", "to")
+        status, prep = ("Updating", "at") if os.path.isfile(abs_path_to_file) else ("Saving", "to")
+        verbose_end_ = verbose_end if verbose_end else "\n"
+
         if rel_path == rel_path.parent:
-            print(msg_fmt.format(status, filename),
-                  end=verbose_end if verbose_end else "\n")
+            print(msg_fmt.format(status, filename), end=verbose_end_)
         else:
-            print(msg_fmt.format(status, filename, prep, rel_path),
-                  end=verbose_end if verbose_end else "\n")
+            print(msg_fmt.format(status, filename, prep, rel_path), end=verbose_end_)
 
     if ret_info:
         return rel_path, filename
@@ -120,64 +118,64 @@ def save(data, path_to_file, warning=False, **kwargs):
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save
 
-        >>> dat_dir = cd("tests\\data")
+        >>> data_dir = cd("tests\\data")
 
-        >>> dat_ = [(530034, 180381),
-        ...         (406689, 286822),
-        ...         (383819, 398052),
-        ...         (582044, 152953)]
+        >>> dat_list = [(530034, 180381),
+        ...             (406689, 286822),
+        ...             (383819, 398052),
+        ...             (582044, 152953)]
 
         >>> idx = ['London', 'Birmingham', 'Manchester', 'Leeds']
         >>> col = ['Easting', 'Northing']
 
-        >>> data_ = pandas.DataFrame(dat_, idx, col)
-        >>> path_to_file_ = cd(dat_dir, "dat.txt")
+        >>> dat = pandas.DataFrame(dat_list, idx, col)
+        >>> dat_file_path = cd(data_dir, "dat.txt")
 
-        >>> save(data_, path_to_file_, verbose=True)
-        Updating "dat.txt" at "\\tests\\data" ... Done.
+        >>> save(dat, dat_file_path, verbose=True)
+        Updating "dat.txt" at "tests\\data" ... Done.
 
-        >>> path_to_file_ = cd(dat_dir, "dat.csv")
-        >>> save(data_, path_to_file_, verbose=True)
-        Updating "dat.csv" at "\\tests\\data" ... Done.
+        >>> dat_file_path = cd(data_dir, "dat.csv")
+        >>> save(dat, dat_file_path, verbose=True)
+        Updating "dat.csv" at "tests\\data" ... Done.
 
-        >>> path_to_file_ = cd(dat_dir, "dat.xlsx")
-        >>> save(data_, path_to_file_, verbose=True)
-        Updating "dat.xlsx" at "\\tests\\data" ... Done.
+        >>> dat_file_path = cd(data_dir, "dat.xlsx")
+        >>> save(dat, dat_file_path, verbose=True)
+        Updating "dat.xlsx" at "tests\\data" ... Done.
 
-        >>> path_to_file_ = cd(dat_dir, "dat.pickle")
-        >>> save(data_, path_to_file_, verbose=True)
-        Updating "dat.pickle" at "\\tests\\data" ... Done.
+        >>> dat_file_path = cd(data_dir, "dat.pickle")
+        >>> save(dat, dat_file_path, verbose=True)
+        Updating "dat.pickle" at "tests\\data" ... Done.
 
-        >>> path_to_file_ = cd(dat_dir, "dat.feather")
-        >>> # `save(data_[, ...])` may produce an error due to the index of `data_`
-        >>> save(data_.reset_index(), path_to_file_, verbose=True)
-        Updating "dat.feather" at "\\tests\\data" ... Done.
+        >>> dat_file_path = cd(data_dir, "dat.feather")
+        >>> # `save(data_[, ...])` may produce an error due to the index of `dat`
+        >>> save(dat.reset_index(), dat_file_path, verbose=True)
+        Updating "dat.feather" at "tests\\data" ... Done.
     """
 
     # Make a copy the original data
-    dat = data.copy()
+    data_ = data.copy()
     if isinstance(data, pd.DataFrame) and data.index.nlevels > 1:
-        dat.reset_index(inplace=True)
+        data_.reset_index(inplace=True)
 
     # Save the data according to the file extension
     if path_to_file.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        save_spreadsheet(dat, path_to_file, **kwargs)
+        save_spreadsheet(data_, path_to_file, **kwargs)
 
     elif path_to_file.endswith(".feather"):
-        save_feather(dat, path_to_file, **kwargs)
+        save_feather(data_, path_to_file, **kwargs)
 
     elif path_to_file.endswith(".json"):
-        save_json(dat, path_to_file, **kwargs)
+        save_json(data_, path_to_file, **kwargs)
 
     elif path_to_file.endswith(".pickle"):
-        save_pickle(dat, path_to_file, **kwargs)
+        save_pickle(data_, path_to_file, **kwargs)
 
     else:
         if warning:
             print("Note that the current file extension is not recognisable by this \"save()\".")
 
         if confirmed("To save \"{}\" as a .pickle file? ".format(os.path.basename(path_to_file))):
-            save_pickle(dat, path_to_file, **kwargs)
+            save_pickle(data_, path_to_file, **kwargs)
 
 
 # Pickle files
@@ -209,7 +207,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
         >>> pickle_path = cd("tests\\data", "dat.pickle")
 
         >>> save_pickle(pickle_dat, pickle_path, verbose=True)
-        Saving "dat.pickle" to "\\tests\\data" ... Done.
+        Saving "dat.pickle" to "tests\\data" ... Done.
     """
 
     get_specific_filepath_info(path_to_pickle, verbose=verbose, ret_info=False)
@@ -270,18 +268,17 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
 
         >>> spreadsheet_dat = pandas.DataFrame({'Col1': 1, 'Col2': 2}, index=['data'])
 
-        >>> # path_to_spreadsheet = cd("tests\\data", "dat.txt")
         >>> spreadsheet_path = cd("tests\\data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.csv" to "\\tests\\data" ... Done.
+        Saving "dat.csv" to "tests\\data" ... Done.
 
         >>> spreadsheet_path = cd("tests\\data", "dat.xls")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.xls" to "\\tests\\data" ... Done.
+        Saving "dat.xls" to "tests\\data" ... Done.
 
         >>> spreadsheet_path = cd("tests\\data", "dat.xlsx")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.xlsx" to "\\tests\\data" ... Done.
+        Saving "dat.xlsx" to "tests\\data" ... Done.
     """
 
     _, spreadsheet_filename = get_specific_filepath_info(path_to_file=path_to_spreadsheet,
@@ -356,12 +353,12 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         >>> ss_path = cd("tests\\data", "dat.xlsx")  # path_to_spreadsheet = ss_path
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, index=True, verbose=True)
-        Updating "dat.xlsx" at "\\tests\\data" ...
+        Saving "dat.xlsx" to "tests\\data" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True, verbose=True)
-        Updating "dat.xlsx" at "\\tests\\data" ...
+        Updating "dat.xlsx" at "tests\\data" ...
             'TestSheet1' ... This sheet already exists;
                 Add a suffix to the sheet name? [No]|Yes: yes
                 'TestSheet11' ... Done.
@@ -371,7 +368,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True,
         ...                            confirmation_required=False, verbose=True)
-        Updating "dat.xlsx" at "\\tests\\data" ...
+        Updating "dat.xlsx" at "tests\\data" ...
             'TestSheet1' ...
                 saved as 'TestSheet12' ... Done.
             'TestSheet2' ...
@@ -465,7 +462,7 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
         >>> json_path = cd("tests\\data", "dat.json")
 
         >>> save_json(json_dat, json_path, verbose=True)
-        Saving "dat.json" to "\\tests\\data" ... Done.
+        Saving "dat.json" to "tests\\data" ... Done.
     """
 
     get_specific_filepath_info(path_to_json, verbose=verbose, ret_info=False)
@@ -504,7 +501,7 @@ def save_feather(feather_data, path_to_feather, verbose=False):
         >>> feather_path = cd("tests\\data", "dat.feather")
 
         >>> save_feather(feather_dat, feather_path, verbose=True)
-        Saving "dat.feather" to "\\tests\\data" ... Done.
+        Saving "dat.feather" to "tests\\data" ... Done.
     """
 
     assert isinstance(feather_data, pd.DataFrame)
@@ -529,8 +526,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
     :param path_to_fig_file: path where a figure file is saved
     :type path_to_fig_file: str
-    :param dpi: the resolution in dots per inch;
-        if ``None`` (default), use ``rcParams['savefig.dpi']``
+    :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
     :type dpi: int, None
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
@@ -568,12 +564,12 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
         >>> path_to_fig = cd(img_dir, "fig.png")
         >>> save_fig(path_to_fig, dpi, verbose=True)
-        Saving "fig.png" to "\\tests\\images" ... Done.
+        Saving "fig.png" to "tests\\images" ... Done.
 
         >>> path_to_fig = cd(img_dir, "fig.svg")
         >>> save_fig(path_to_fig, dpi=300, verbose=True, conv_svg_to_emf=True)
-        Saving "fig.svg" to "\\tests\\images" ... Done.
-        Saving the "fig.svg" as "\\tests\\images\\fig.emf" ... Done.
+        Saving "fig.svg" to "tests\\images" ... Done.
+        Saving the "fig.svg" as "tests\\images\\fig.emf" ... Done.
     """
 
     get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
@@ -650,7 +646,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         >>> path_to_emf_ = cd(img_dir, "fig.emf")
 
         >>> save_svg_as_emf(path_to_svg_, path_to_emf_, verbose=True)
-        Saving the "fig.svg" as "\\tests\\images\\fig.emf" ... Done.
+        Saving the "fig.svg" as "tests\\images\\fig.emf" ... Done.
     """
 
     abs_svg_path, abs_emf_path = pathlib.Path(path_to_svg), pathlib.Path(path_to_emf)
@@ -715,7 +711,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         >>> path_to_pdf_file = cd("tests\\data", "pyhelpers.pdf")
 
         >>> save_web_page_as_pdf(url_to_a_web_page, path_to_pdf_file, verbose=True)
-        Saving "pyhelpers.pdf" to "\\tests\\data" ...
+        Saving "pyhelpers.pdf" to "tests\\data" ...
         Loading pages (1/6)
         Counting pages (2/6)
         Resolving links (4/6)
@@ -792,7 +788,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
         >>> pickle_path = cd("tests\\data", "dat.pickle")
 
         >>> pickle_dat = load_pickle(pickle_path, verbose=True)
-        Loading "\\tests\\data\\dat.pickle" ... Done.
+        Loading "tests\\data\\dat.pickle" ... Done.
 
         >>> print(pickle_dat)
         1
@@ -840,7 +836,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
         >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        Loading "\\tests\\data\\dat.xlsx" ...
+        Loading "tests\\data\\dat.xlsx" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
             'TestSheet11'. ... Done.
@@ -918,7 +914,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
         >>> json_path = cd("tests\\data", "dat.json")
 
         >>> json_dat = load_json(json_path, verbose=True)
-        Loading "\\tests\\data\\dat.json" ... Done.
+        Loading "tests\\data\\dat.json" ... Done.
 
         >>> print(json_dat)
         {'a': 1, 'b': 2, 'c': 3}
@@ -950,8 +946,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :param kwargs: optional parameters of `pandas.read_feather`_
 
         * columns: (sequence, None) a sequence of column names, if ``None``, all columns
-        * use_threads: (bool) whether to parallelize reading using multiple threads,
-          defaults to ``True``
+        * use_threads: (bool) whether to parallelize reading using multiple threads, defaults to ``True``
 
     :return: data retrieved from the specified path ``path_to_feather``
     :rtype: pandas.DataFrame
@@ -967,7 +962,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         >>> feather_path = cd("tests\\data", "dat.feather")
 
         >>> feather_dat = load_feather(feather_path, verbose=True)
-        Loading "\\tests\\data\\dat.feather" ... Done.
+        Loading "tests\\data\\dat.feather" ... Done.
 
         >>> print(feather_dat)
            Col1  Col2
@@ -1017,7 +1012,7 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
         >>> zip_file_path = cd(output_dir, "zipped.zip")
 
         >>> unzip(zip_file_path, output_dir, verbose=True)
-        Unzipping "\\tests\\data\\zipped.zip" ... Done.
+        Unzipping "tests\\data\\zipped.zip" ... Done.
     """
 
     if verbose:
@@ -1051,8 +1046,7 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
     :type seven_zip_exe: str or None
     :param kwargs: optional parameters of `subprocess.call`_
 
-    .. _`subprocess.call`:
-        https://docs.python.org/3/library/subprocess.html#subprocess.call
+    .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
 
     **Examples**::
 
