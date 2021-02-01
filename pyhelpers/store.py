@@ -657,7 +657,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
 
     if os.path.isfile(inkscape_exe):
         if verbose:
-            print("Saving the \"{}\" as \"\\{}\"".format(
+            print("Saving the \"{}\" as \"{}\"".format(
                 abs_svg_path.name, abs_emf_path.relative_to(os.getcwd())),
                 end=" ... ")
 
@@ -795,7 +795,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_pickle)), end=" ... ")
+        print("Loading \"{}\"".format(os.path.relpath(path_to_pickle)), end=" ... ")
 
     try:
         pickle_in = open(path_to_pickle, mode=mode, **kwargs)
@@ -864,7 +864,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     workbook_dat = []
 
     if verbose:
-        print("Loading \"\\{}\" ... ".format(os.path.relpath(path_to_spreadsheet)))
+        print("Loading \"{}\" ... ".format(os.path.relpath(path_to_spreadsheet)))
 
     for sheet_name in sheet_names:
         print("\t'{}'.".format(sheet_name), end=" ... ") if verbose else ""
@@ -921,7 +921,7 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_json)), end=" ... ")
+        print("Loading \"{}\"".format(os.path.relpath(path_to_json)), end=" ... ")
 
     try:
         json_in = open(path_to_json, mode=mode, **kwargs)
@@ -970,7 +970,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_feather)), end=" ... ")
+        print("Loading \"{}\"".format(os.path.relpath(path_to_feather)), end=" ... ")
 
     try:
         feather_data = pd.read_feather(path_to_feather, **kwargs)
@@ -1016,7 +1016,7 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
     """
 
     if verbose:
-        print("Unzipping \"\\{}\"".format(os.path.relpath(path_to_zip_file)), end=" ... ")
+        print("Unzipping \"{}\"".format(os.path.relpath(path_to_zip_file)), end=" ... ")
 
     try:
         with zipfile.ZipFile(path_to_zip_file, mode) as zf:
