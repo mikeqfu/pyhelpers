@@ -39,23 +39,23 @@ def test_save():
 
     path_to_file = cdd("dat.txt")
     save(data, path_to_file, verbose=True)
-    # Saving "dat.csv" to "\\data" ... Done.
+    # Saving "dat.csv" to "data" ... Done.
 
     path_to_file = cdd("dat.csv")
     save(data, path_to_file, verbose=True)
-    # Saving "dat.csv" to "\\data" ... Done.
+    # Saving "dat.csv" to "data" ... Done.
 
     path_to_file = cdd("dat.xlsx")
     save(data, path_to_file, verbose=True)
-    # Saving "dat.xlsx" to "\\data" ... Done.
+    # Saving "dat.xlsx" to "data" ... Done.
 
     path_to_file = cdd("dat.pickle")
     save(data, path_to_file, verbose=True)
-    # Saving "dat.pickle" to "\\data" ... Done.
+    # Saving "dat.pickle" to "data" ... Done.
 
     path_to_file = cdd("dat.feather")
     save(data.reset_index(), path_to_file, verbose=True)
-    # Saving "dat.feather" to "\\data" ... Done.
+    # Saving "dat.feather" to "data" ... Done.
 
 
 def test_save_pickle():
@@ -65,7 +65,7 @@ def test_save_pickle():
     verbose = True
 
     save_pickle(pickle_data, path_to_pickle, mode, verbose)
-    # Updating "dat.pickle" at "\\data" ... Done.
+    # Updating "dat.pickle" at "data" ... Done.
 
 
 def test_save_spreadsheet():
@@ -82,15 +82,15 @@ def test_save_spreadsheet():
     path_to_spreadsheet = cdd("dat.csv")
     # path_to_spreadsheet = cdd("dat.txt")
     save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, engine, delimiter, verbose)
-    # Updating "dat.csv" at "\\data" ... Done.
+    # Updating "dat.csv" at "data" ... Done.
 
     path_to_spreadsheet = cdd("dat.xls")
     save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, engine, delimiter, verbose)
-    # Saving "dat.xls" to "\\data" ... Done.
+    # Saving "dat.xls" to "data" ... Done.
 
     path_to_spreadsheet = cdd("dat.xlsx")
     save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index, engine, delimiter, verbose)
-    # Updating "dat.xlsx" at "\\data" ... Done.
+    # Updating "dat.xlsx" at "data" ... Done.
 
 
 def test_save_multiple_spreadsheets():
@@ -114,14 +114,14 @@ def test_save_multiple_spreadsheets():
     mode = 'w'
     save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                verbose=verbose)
-    # Updating "dat.xlsx" at "\\data" ...
+    # Updating "dat.xlsx" at "data" ...
     # 	'TestSheet1' ... Done.
     # 	'TestSheet2' ... Done.
 
     mode = 'a'
     save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                verbose=verbose)
-    # Updating "dat.xlsx" at "\\data" ...
+    # Updating "dat.xlsx" at "data" ...
     # 	'TestSheet1' ... This sheet already exists;
     # 		add a suffix to the sheet name? [No]|Yes: yes
     # 		saved as 'TestSheet11' ... Done.
@@ -133,7 +133,7 @@ def test_save_multiple_spreadsheets():
     confirmation_required = False
     save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode, index,
                                confirmation_required, verbose)
-    # Updating "dat.xlsx" at "\\data" ...
+    # Updating "dat.xlsx" at "data" ...
     # 	'TestSheet1' ...
     # 		saved as 'TestSheet12' ... Done.
     # 	'TestSheet2' ...
@@ -147,7 +147,7 @@ def test_save_json():
     verbose = True
 
     save_json(json_data, path_to_json, mode, verbose)
-    # Saving "dat.json" to "\\data" ... Done.
+    # Saving "dat.json" to "data" ... Done.
 
 
 def test_save_feather():
@@ -156,7 +156,7 @@ def test_save_feather():
     verbose = True
 
     save_feather(feather_data, path_to_feather, verbose)
-    # Updating "dat.feather" at "\\data" ... Done.
+    # Updating "dat.feather" at "data" ... Done.
 
 
 def test_save_fig():
@@ -197,7 +197,7 @@ def test_save_web_page_as_pdf():
     path_to_pdf = cdd("pyhelpers.pdf")
 
     save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size, zoom, encoding, verbose)
-    # Saving "pyhelpers.pdf" to "\\data" ...
+    # Saving "pyhelpers.pdf" to "data" ...
     # Loading pages (1/6)
     # Counting pages (2/6)
     # Resolving links (4/6)
@@ -214,7 +214,7 @@ def test_load_pickle():
     verbose = True
 
     pickle_data = load_pickle(path_to_pickle, mode, verbose)
-    # Loading "\\data\\dat.pickle" ... Done.
+    # Loading "data\\dat.pickle" ... Done.
     print(pickle_data)
     # 1
 
@@ -225,7 +225,7 @@ def test_load_multiple_spreadsheets():
 
     as_dict = True
     workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose, index_col=0)
-    # Loading "\\data\\dat.xlsx" ...
+    # Loading "data\\dat.xlsx" ...
     # 	'TestSheet1'. ... Done.
     # 	'TestSheet2'. ... Done.
     # 	'TestSheet11'. ... Done.
@@ -237,7 +237,7 @@ def test_load_multiple_spreadsheets():
 
     as_dict = False
     workbook_data = load_multiple_spreadsheets(path_to_spreadsheet, as_dict, verbose, index_col=0)
-    # Loading "\\data\\dat.xlsx" ...
+    # Loading "data\\dat.xlsx" ...
     # 	'TestSheet1'. ... Done.
     # 	'TestSheet2'. ... Done.
     # 	'TestSheet11'. ... Done.
@@ -254,7 +254,7 @@ def test_load_json():
     verbose = True
 
     json_data = load_json(path_to_json, mode, verbose)
-    # Loading "\\data\\dat.json" ... Done.
+    # Loading "data\\dat.json" ... Done.
     print(json_data)
     # {'a': 1, 'b': 2, 'c': 3}
 
@@ -264,7 +264,7 @@ def test_load_feather():
     verbose = True
 
     feather_data = load_feather(path_to_feather, verbose)
-    # Loading "\\data\\dat.feather" ... Done.
+    # Loading "data\\dat.feather" ... Done.
     print(feather_data)
     #    Col1  Col2
     # 0     1     2
@@ -278,7 +278,7 @@ def test_unzip():
     mode = 'r'
 
     unzip(path_to_zip_file, out_dir, mode, verbose=True)
-    # Unzipping "\\data\\zipped.zip" ... Done.
+    # Unzipping "data\\zipped.zip" ... Done.
 
 
 def test_seven_zip():
