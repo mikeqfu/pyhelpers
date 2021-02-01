@@ -155,9 +155,9 @@ To delete the directory ``"pyhelpers_quick_start"``, you can use the function :p
     >>> from pyhelpers.dir import delete_dir  # from pyhelpers import delete_dir
 
     >>> delete_dir(path_to_qs, verbose=True)  # Delete the directory "pyhelpers_quick_start"
-    The directory "\pyhelpers_quick_start" is not empty.
+    The directory "pyhelpers_quick_start" is not empty.
     Confirmed to delete it? [No]|Yes: yes
-    Deleting "\pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start" ... Done.
 
 
 Download an image file
@@ -214,7 +214,7 @@ Again, if you would like to delete the download directory, ``"pyhelpers_quick_st
 .. code-block:: python
 
     >>> delete_dir(path_to_qs, confirmation_required=False, verbose=True)
-    Deleting "\pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start" ... Done.
 
 From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>` may be quite helpful especially when you would like to request a confirmation before proceeding with some processes. For example:
 
@@ -282,14 +282,14 @@ For example, to save ``dat`` to ``pickle_file_path`` (see the :ref:`pickle_file_
 .. code-block:: python
 
     >>> save_pickle(dat, pickle_file_path, verbose=True)
-    Saving "dat.pickle" to "\pyhelpers_quick_start\data" ... Done.
+    Saving "dat.pickle" to "pyhelpers_quick_start\data" ... Done.
 
 To retrieve ``dat`` from ``pickle_file_path``:
 
 .. code-block:: python
 
     >>> dat_retrieved = load_pickle(pickle_file_path, verbose=True)
-    Loading "\pyhelpers_quick_start\data\dat.pickle" ... Done.
+    Loading "pyhelpers_quick_start\data\dat.pickle" ... Done.
 
 ``dat_retrieved`` should be equal to ``dat``:
 
@@ -305,7 +305,7 @@ Now, before you move on, you can delete the directory *'pyhelpers_quick_start'* 
 .. code-block:: python
 
     >>> delete_dir(path_to_qs, confirmation_required=False, verbose=True)
-    Deleting "\pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start" ... Done.
 
 
 .. _geom-examples:
