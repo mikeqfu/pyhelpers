@@ -722,7 +722,7 @@ def interquartile_range(num_dat):
     `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
 
     :param num_dat: an array of numbers
-    :type num_dat: array-like
+    :type num_dat: numpy.ndarry or list or tuple
     :return: interquartile range of ``num_dat``
     :rtype: float
 
