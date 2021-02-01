@@ -179,7 +179,7 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
     Validate the input data directory.
 
     :param input_data_dir: data directory as input, defaults to ``None``
-    :type input_data_dir: str, None
+    :type input_data_dir: str or None
     :param msg: error message if ``data_dir`` is not an absolute path, defaults to ``"Invalid input!"``
     :type msg: str
     :param sub_dir: name of a sub-directory for when ``input_data_dir`` is ``None``, defaults to ``""``
@@ -235,7 +235,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool or int
     :param kwargs: optional parameters of `shutil.rmtree`_
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
