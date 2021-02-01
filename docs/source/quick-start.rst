@@ -102,9 +102,11 @@ If you provide a filename (with a file extension), you can then get an absolute 
     >>> print(dat_rel_path)
     pyhelpers_quick_start\data.dat
 
-When only one filename (with a file extension) is provided and ``mkdir=True``, the function will only create the folder (if it does not exist) for the file, rather than taking the filename as a folder name. See the example below:
+When only one filename (with a file extension) is provided and ``mkdir=True``, the function will only create the folder (if it does not exist) for the file, rather than taking the filename as a folder name.
 
 .. _pickle-file-path:
+
+See the following example:
 
 .. code-block:: python
 
@@ -175,7 +177,7 @@ For example, you can use the function :py:func:`download_file_from_url()<pyhelpe
 
     The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ and `tqdm`_.
 
-If you would like to download a Python logo from the homepage of `Python`_, firstly, specify the URL:
+Suppose you would like to download a Python logo from the homepage of `Python`_, firstly, specify the URL:
 
 .. code-block:: python
 
@@ -199,6 +201,8 @@ You may view the downloaded picture by using `Pillow`_:
     >>> python_logo = Image.open(python_logo_file_path)
     >>> python_logo.show()
 
+If you are using Jupyter Notebook, you can also view the picture using `IPython.display.Image`_:
+
 .. figure:: _images/python-logo.*
     :name: python-logo-qs
     :align: center
@@ -213,7 +217,7 @@ Again, if you would like to delete the download directory, ``"pyhelpers_quick_st
     >>> delete_dir(path_to_qs, confirmation_required=False, verbose=True)
     Deleting "\pyhelpers_quick_start" ... Done.
 
-From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>` may also be quite helpful especially when you would like to request a confirmation before proceeding with some processes. For example:
+From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>` may be quite helpful especially when you would like to request a confirmation before proceeding with some processes. For example:
 
 .. code-block:: python
 
@@ -221,9 +225,10 @@ From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()
 
 .. code-block:: python
 
-    >>> confirmed(prompt="Continue? ...", confirmation_required=True)
+    >>> if confirmed(prompt="Continue? ...", confirmation_required=True):
+    ...     print("Yes and go ahead.")
     Continue? ... [No]|Yes: yes
-    True
+    Yes and go ahead.
 
 .. note::
 
@@ -239,9 +244,9 @@ From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()
 Save and load data with Pickle
 ==============================
 
-The module :py:mod:`store<pyhelpers.store>` can be used to help save and load data. Some functions require `openpyxl`_, `XlsxWriter`_ or `xlrd`_.
+The module :py:mod:`store<pyhelpers.store>` can be used to help save and load data. Some functions from this module require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which have been installed along with the installation of PyHelpers.
 
-Before you continue, let’s create a `pandas.DataFrame`_ first:
+Before proceeding to the examples for this module, let’s create a `pandas.DataFrame`_ first:
 
 .. _store-xy-array:
 .. _store-dat:
@@ -273,7 +278,7 @@ If you would like to save ``dat`` as a `pickle`_ file and retrieve it later, use
     >>> from pyhelpers.store import save_pickle, load_pickle
     >>> # from pyhelpers import save_pickle, load_pickle
 
-For example, to save ``dat`` to ``pickle_file_path`` (see the :ref:`pickle_file_path<pickle-file-path>` in :ref:`dir<dir-examples>` above):
+For example, to save ``dat`` to ``pickle_file_path`` (see the :ref:`pickle_file_path<pickle-file-path>` specified above):
 
 .. code-block:: python
 
@@ -311,7 +316,7 @@ Convert coordinates between OSGB36 and WGS84
 
 The module :py:mod:`geom<pyhelpers.geom>` can be used to assist in manipulating geometric and geographical data.
 
-For example, to convert coordinates from OSGB36 (British national grid) to WGS84 (latitude and longitude), you can use :py:func:`osgb36_to_wgs84()<pyhelpers.geom.osgb36_to_wgs84>`:
+For example, to convert coordinates from `OSGB36`_ (British national grid) to `WGS84`_ (latitude and longitude), you can use the function :py:func:`osgb36_to_wgs84()<pyhelpers.geom.osgb36_to_wgs84>`:
 
 .. note::
 
@@ -330,9 +335,9 @@ To convert coordinate of a single point ``(530034, 180381)``:
     >>> lon, lat = osgb36_to_wgs84(easting, northing)  # Longitude and latitude
 
     >>> print((lon, lat))
-    (-0.12772400574286874, 51.50740692743041)
+    (-0.12772400574286916, 51.50740692743041)
 
-To convert an array of OSGB36 coordinates (e.g. ``xy_array``, see the example for :ref:`pyhelpers.store<store-xy-array>` above):
+To convert an array of OSGB36 coordinates (e.g. ``xy_array``, see the :ref:`example<store-xy-array>` above):
 
 .. code-block:: python
 
@@ -346,7 +351,7 @@ To convert an array of OSGB36 coordinates (e.g. ``xy_array``, see the example fo
      [-2.24527795 53.47894006]
      [ 0.60693267 51.24669501]]
 
-Similarly, you can use the function :py:func:`wgs84_to_osgb36()<pyhelpers.geom.wgs84_to_osgb36>` to convert from the latitude/longitude (WGS84) coordinates back to easting/northing (OSGB36).
+Similarly, you can use the function :py:func:`wgs84_to_osgb36()<pyhelpers.geom.wgs84_to_osgb36>` to convert from the latitude/longitude (`WGS84`_) coordinates back to easting/northing (`OSGB36`_).
 
 
 .. _text-examples:
@@ -404,7 +409,7 @@ Work with PostgreSQL database
 
 The module :py:mod:`sql<pyhelpers.sql>` provides a convenient way to establish a connection with a SQL database.
 
-The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` that allows us to implement some basic queries in a `PostgreSQL`_ database.
+The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` class that allows us to implement some basic queries in a `PostgreSQL`_ database.
 
 .. code-block:: python
 
@@ -412,7 +417,7 @@ The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.s
 
 .. note::
 
-    The constructor method of :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` relies on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_ to successfully create an instance of the class.
+    The constructor method of the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` relies on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_ to successfully create an instance of the class.
 
 Connect to a database
 ---------------------
@@ -423,14 +428,21 @@ After the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` is successfully
 
     ``password`` is by default ``None``. If you do not wish to specify the password explicitly in your script, then you will be asked to type in the password manually when you create an instance of the class.
 
-For example, to create an instance named ``db`` and connect to a database named *'test_db'*:
+For example, to create an instance named ``pgdb`` and connect to a database named *'test_db'*:
 
 .. code-block:: python
 
     >>> pgdb = PostgreSQL(host='localhost', port=5432, username='postgres', database_name='test_db',
     ...                   password=None)
     Password (postgres@localhost:5432): ***
-    Connecting postgres:***@localhost:5432/testdb ... Successfully.
+    Connecting postgres:***@localhost:5432/test_db ... Successfully.
+
+.. figure:: _images/qs-sql-test-db.png
+    :name: qs-sql-test-db
+    :align: center
+    :width: 50%
+
+    The database *'test_db'*.
 
 .. note::
 
@@ -449,42 +461,53 @@ To check if the database has been successfully created:
 
 .. code-block:: python
 
-    >>> pgdb.database_exists('test_database')
-    True
+    >>> res = pgdb.database_exists('test_database')
+    >>> print("The database 'test_database' has been successfully created? {}".format(res))
+    The database 'test_database' has been successfully created? True
 
-    >>> print(pgdb.database_name)
-    test_database
+    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
+    The database being currently connected is 'test_database'.
+
+.. figure:: _images/qs-sql-test-database.png
+    :name: qs-sql-test-database
+    :align: center
+    :width: 50%
+
+    The database *'test_database'*.
 
 .. note::
 
-    Once a new database is created, the instance ``db`` is by default connected with the new database *'test_database'*.
+    Once a new database is created, the instance ``pgdb`` is by default connected with the new database *'test_database'*.
 
 If you would like to connect back to *'test_db'*:
 
 .. code-block:: python
 
     >>> pgdb.connect_database('test_db', verbose=True)
-    Connecting postgres:***@localhost:5432/testdb ... Successfully.
+    Connecting postgres:***@localhost:5432/test_db ... Successfully.
+
+    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
+    The database being currently connected is 'test_db'.
 
 
 Import data into the database
 -----------------------------
 
-After you have established the connection, you can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the example for :ref:`pyhelpers.store<store-dat>` above) into a table named *'pyhelpers_qs1'*:
+After the database connection has been established, you can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the :ref:`example<store-dat>` above) into a table named *'pyhelpers_qs1'*:
 
 .. code-block:: python
 
     >>> pgdb.import_data(dat, table_name='pyhelpers_qs1', verbose=True)
-    To import the data into table "public"."pyhelpers_qs1" at postgres:***@localhost:5432/testdb
+    To import the data into table "public"."pyhelpers_qs1" at postgres:***@localhost:5432/test_db
     ? [No]|Yes: yes
     Importing data into "public"."pyhelpers_qs1" ... Done.
 
-The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an alternative ``'method'`` to significantly speed up importing data into the database. Let's try importing the same data into a table named *'pyhelpers_qs2'* by setting ``method=pgdb.psql_insert_copy``:
+The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an alternative ``'method'`` to significantly speed up importing data into the database. Try to import the same data into a table named *'pyhelpers_qs2'* by setting ``method=pgdb.psql_insert_copy``:
 
 .. code-block:: python
 
     >>> pgdb.import_data(dat, table_name='pyhelpers_qs2', method=pgdb.psql_insert_copy, verbose=True)
-    To import the data into table "public"."pyhelpers_qs2" at postgres:***@localhost:5432/testdb
+    To import the data into table "public"."pyhelpers_qs2" at postgres:***@localhost:5432/test_db
     ? [No]|Yes: yes
     Importing data into "public"."pyhelpers_qs2" ... Done.
 
@@ -502,7 +525,7 @@ To retrieve the imported data, you can use the method :py:meth:`.read_table()<py
     >>> print("`dat_retrieval1` and `dat` have the same shape and elements? {}".format(res))
     `dat_retrieval1` and `dat` have the same shape and elements? True
 
-Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here you can use this method to fetch the same data from the table *'pyhelpers_qs2'*:
+Alternatively, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here you can use this method to fetch the same data from the table *'pyhelpers_qs2'*:
 
 .. code-block:: python
 
@@ -516,7 +539,7 @@ Besides, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sq
 
 .. note::
 
-    ``sql_query`` should end without ``';'``.
+    The parameter ``sql_query`` for the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` must end without ``';'``.
 
 
 Drop data
@@ -527,19 +550,19 @@ To drop the table *'pyhelpers_qs1'*, you can use the method :py:meth:`.drop_tabl
 .. code-block:: python
 
     >>> pgdb.drop_table('pyhelpers_qs1', verbose=True)
-    To drop the table "public"."pyhelpers_qs1" from postgres:***@localhost:5432/testdb
+    To drop the table "public"."pyhelpers_qs1" from postgres:***@localhost:5432/test_db
     ? [No]|Yes: yes
     Dropping "public"."pyhelpers_qs1" ... Done.
 
-Note that you have created two databases: *'test_db'* (currently being connected) and *'test_database'*. To remove both of them from the database, you can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
+Note that you have created two databases: *'test_db'* (being currently connected) and *'test_database'*. To remove both of them from the database, you can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
 
 .. code-block:: python
 
     >>> # Drop 'test_db' (i.e. the currently connected database)
     >>> pgdb.drop_database(verbose=True)
-    To drop the database "testdb" from postgres:***@localhost:5432
+    To drop the database "test_db" from postgres:***@localhost:5432
     ? [No]|Yes: yes
-    Dropping "testdb" ... Done.
+    Dropping "test_db" ... Done.
 
     >>> # Drop 'test_database'
     >>> pgdb.drop_database('test_database', verbose=True)
@@ -547,8 +570,9 @@ Note that you have created two databases: *'test_db'* (currently being connected
     ? [No]|Yes: yes
     Dropping "test_database" ... Done.
 
-    >>> print(pgdb.database_name)  # Check the currently connected database
-    postgres
+    >>> # Check the currently connected database
+    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
+    The database being currently connected is 'postgres'.
 
 
 .. _`Python`: https://www.python.org/
@@ -561,11 +585,14 @@ Note that you have created two databases: *'test_db'* (currently being connected
 .. _`requests`: https://github.com/psf/requests
 .. _`tqdm`: https://github.com/tqdm/tqdm
 .. _`Pillow`: https://python-pillow.org/
+.. _`IPython.display.Image`: https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.Image
 .. _`openpyxl`: https://openpyxl.readthedocs.io/en/stable/
 .. _`XlsxWriter`: https://xlsxwriter.readthedocs.io
 .. _`xlrd`: https://xlrd.readthedocs.io/en/latest/
 .. _`pickle`: https://docs.python.org/3/library/pickle.html
 .. _`pyproj`: https://github.com/pyproj4/pyproj
+.. _`OSGB36`: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
+.. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
 .. _`str`: https://docs.python.org/3/library/stdtypes.html#textseq
 .. _`FuzzyWuzzy`: https://github.com/seatgeek/fuzzywuzzy/
 .. _`NLTK`: https://www.nltk.org/
