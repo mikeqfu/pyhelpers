@@ -1,7 +1,7 @@
-.. py:module:: pyhelpers.text
-
 text
 ====
+
+.. py:module:: pyhelpers.text
 
 .. automodule:: pyhelpers.text
     :noindex:
