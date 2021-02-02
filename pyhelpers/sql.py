@@ -108,8 +108,7 @@ class PostgreSQL:
         >>> from pyhelpers.sql import PostgreSQL
 
         >>> # Connect the default database 'postgres'
-        >>> postgres = PostgreSQL(host='localhost', port=5432, username='postgres',
-        ...                       database_name='postgres')
+        >>> postgres = PostgreSQL('localhost', 5432, username='postgres', database_name='postgres')
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
@@ -117,8 +116,7 @@ class PostgreSQL:
         postgres:***@localhost:5432/postgres
 
         >>> # Connect a database 'testdb' (which will be created if it does not exist)
-        >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-        ...                     database_name='testdb')
+        >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -213,8 +211,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -253,8 +250,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -306,8 +302,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -352,8 +347,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -385,8 +379,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -426,8 +419,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -463,8 +455,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -523,8 +514,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -557,8 +547,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -607,8 +596,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -667,8 +655,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -687,7 +674,7 @@ class PostgreSQL:
                 "polygons"
                 "test_schema"
              from postgres:***@localhost:5432/testdb
-            ? [No]|Yes: >? yes
+            ? [No]|Yes: yes
             Dropping ...
                 "points" ... Done.
                 "lines" ... Done.
@@ -748,8 +735,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -788,8 +774,7 @@ class PostgreSQL:
 
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -853,7 +838,7 @@ class PostgreSQL:
             >>> # Drop the table
             >>> testdb.drop_table(tbl_name, verbose=True)
             To drop the table "public"."test_table" from postgres:***@localhost:5432/testdb
-            ? [No]|Yes: >? yes
+            ? [No]|Yes: yes
             Dropping "public"."test_table" ... Done.
         """
 
@@ -907,8 +892,7 @@ class PostgreSQL:
 
         return info_tbl
 
-    def drop_table(self, table_name, schema_name='public', confirmation_required=True,
-                   verbose=False):
+    def drop_table(self, table_name, schema_name='public', confirmation_required=True, verbose=False):
         """
         Remove a table from the database being connected.
 
@@ -926,21 +910,21 @@ class PostgreSQL:
         See the example for the method :py:meth:`.create_table()<pyhelpers.sql.PostgreSQL.create_table>`.
         """
 
-        table = '\"{}\".\"{}\"'.format(schema_name, table_name)
+        table_name_ = '"{}"."{}"'.format(schema_name, table_name)
 
         if not self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
-                print("The table {} does not exist.".format(table))
+                print("The table {} does not exist.".format(table_name_))
 
         else:
-            if confirmed("To drop the table {} from {}\n?".format(table, self.address),
+            if confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
                          confirmation_required=confirmation_required):
 
                 if verbose:
                     if confirmation_required:
-                        log_msg = "Dropping {}".format(table)
+                        log_msg = "Dropping {}".format(table_name_)
                     else:
-                        log_msg = "Dropping the table {} from {}".format(table, self.address)
+                        log_msg = "Dropping the table {} from {}".format(table_name_, self.address)
                     print(log_msg, end=" ... ")
 
                 try:
@@ -948,6 +932,142 @@ class PostgreSQL:
                     print("Done.") if verbose else ""
                 except Exception as e:
                     print("Failed. {}".format(e))
+
+    def list_table_names(self, schema_name='public', verbose=False):
+        """
+        List the names of all tables in a schema.
+
+        :param schema_name: name of a schema, defaults to ``'public'``
+        :type schema_name: str
+        :param verbose: whether to print relevant information in console as the function runs,
+            defaults to ``False``
+        :type verbose: bool
+        :return: a list of table names
+        :rtype: list or None
+
+        **Examples**::
+
+            >>> from pyhelpers.sql import PostgreSQL
+
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> lst_tbl_names = testdb.list_table_names()
+            >>> print(lst_tbl_names)
+            []
+
+            >>> lst_tbl_names = testdb.list_table_names(schema_name='testdb', verbose=True)
+            The schema "testdb" does not exist.
+
+            >>> # Create a new table named "test_table" in the schema "testdb"
+            >>> new_table_name = 'test_table'
+            >>> column_specs = 'col_name_1 INT, col_name_2 TEXT'
+            >>> testdb.create_table(new_table_name, column_specs, verbose=True)
+            Creating a table: "public"."test_table" ... Done.
+
+            >>> lst_tbl_names = testdb.list_table_names(schema_name='public')
+            >>> print(lst_tbl_names)
+            ['test_table']
+
+            >>> # Delete the database "testdb"
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+        """
+
+        if not self.schema_exists(schema_name=schema_name):
+            if verbose:
+                print("The schema \"{}\" does not exist.".format(schema_name))
+
+        else:
+            res = self.engine.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema='{}' AND table_type='BASE TABLE';".format(schema_name))
+
+            temp_list = res.fetchall()
+
+            table_list = [x[0] for x in temp_list]
+
+            return table_list
+
+    def alter_table_schema(self, table_name, schema_name, new_schema_name, confirmation_required=True,
+                           verbose=False):
+        """
+        Move a table from one schema to another within the database being connected.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema
+        :type schema_name: str
+        :param new_schema_name: name of a new schema
+        :param confirmation_required: whether to prompt a message for confirmation to proceed,
+            defaults to ``True``
+        :type confirmation_required: bool
+        :param verbose: whether to print relevant information in console as the function runs,
+            defaults to ``False``
+        :type verbose: bool
+
+        **Examples**::
+
+            >>> from pyhelpers.sql import PostgreSQL
+
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> # Create a new table named "test_table" in the schema "testdb"
+            >>> new_table_name = 'test_table'
+            >>> column_specs = 'col_name_1 INT, col_name_2 TEXT'
+            >>> testdb.create_table(new_table_name, column_specs, verbose=True)
+            Creating a table: "public"."test_table" ... Done.
+
+            >>> # Create a new schema "test_schema"
+            >>> testdb.create_schema(schema_name='test_schema', verbose=True)
+            Creating a schema: "test_schema" ... Done.
+
+            >>> # Move the table "public"."test_table" to the schema "test_schema"
+            >>> testdb.alter_table_schema('test_table', 'public', 'test_schema', verbose=True)
+            To move the table "test_table" from the schema "public" to "test_schema"
+            ? [No]|Yes: yes
+            Moving "public"."test_table" to "test_schema" ... Done.
+
+            >>> lst_tbl_names = testdb.list_table_names(schema_name='test_schema')
+            >>> print(lst_tbl_names)
+            ['test_table']
+
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+        """
+
+        table_name_ = '"{}"."{}"'.format(schema_name, table_name)
+
+        if confirmed("To move the table \"{}\" from the schema \"{}\" to \"{}\"\n?".format(
+                table_name, schema_name, new_schema_name),
+                confirmation_required=confirmation_required):
+
+            if not self.schema_exists(schema_name=new_schema_name):
+                self.create_schema(schema_name=new_schema_name, verbose=verbose)
+
+            if verbose:
+                if confirmation_required:
+                    log_msg = "Moving {} to \"{}\"".format(table_name_, new_schema_name)
+                else:
+                    log_msg = "Moving the table \"{}\" from \"{}\" to \"{}\"".format(
+                        table_name, schema_name, new_schema_name)
+                print(log_msg, end=" ... ")
+
+            try:
+                self.engine.execute(
+                    'ALTER TABLE {} SET SCHEMA "{}";'.format(table_name_, new_schema_name))
+
+                print("Done.") if verbose else ""
+
+            except Exception as e:
+                print("Failed. {}".format(e))
 
     @staticmethod
     def psql_insert_copy(sql_table, sql_db_engine, column_name_list, data_iter):
@@ -1008,7 +1128,7 @@ class PostgreSQL:
         :param chunk_size: the number of rows in each batch to be written at a time, defaults to ``None``
         :type chunk_size: int or None
         :param col_type: data types for columns, defaults to ``None``
-        :type col_type: dict, None
+        :type col_type: dict or None
         :param method: method for SQL insertion clause, defaults to ``'multi'``
 
             * ``None``: uses standard SQL ``INSERT`` clause (one per row);
@@ -1156,12 +1276,12 @@ class PostgreSQL:
         :type tempfile_mode: str
         :param max_size_spooled: ``max_size`` of `tempfile.SpooledTemporaryFile`_,
             defaults to ``1`` (in gigabyte)
-        :type max_size_spooled: int, float
+        :type max_size_spooled: int or float
         :param delimiter: delimiter used in data, defaults to ``','``
         :type delimiter: str
         :param dtype: data type for specified data columns, `dtype` used by `pandas.read_csv`_,
             defaults to ``None``
-        :type dtype: dict, None
+        :type dtype: dict or None
         :param tempfile_kwargs: optional parameters of `tempfile.TemporaryFile`_
             or `tempfile.SpooledTemporaryFile`_
         :param stringio_kwargs: optional parameters of `io.StringIO`_,
@@ -1188,8 +1308,7 @@ class PostgreSQL:
             >>> import pandas
             >>> from pyhelpers.sql import PostgreSQL
 
-            >>> testdb = PostgreSQL(host='localhost', port=5432, username='postgres',
-            ...                     database_name='testdb')
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
