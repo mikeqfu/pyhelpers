@@ -32,7 +32,9 @@ def test_cdd():
 
     path = cdd("test_dir", data_dir="tests", mkdir=mkdir)
     print(".  ".join([path, "(This directory will be created if it does not exists.)"]))
-    # <cwd>\\data\\test_dir. (This directory will be created if it does not exists.)
+    # <cwd>\\tests\\test_dir. (This directory will be created if it does not exists.)
+
+    delete_dir(os.path.dirname(path), confirmation_required=False)
 
 
 def test_cd_dat():
@@ -87,7 +89,7 @@ def test_delete_dir():
     dir_path = cd("test_dir", "folder", mkdir=True)
     rel_dir_path = os.path.relpath(dir_path)
 
-    print('The directory "{}" exists? '.format(rel_dir_path, os.path.exists(dir_path)))
+    print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
     # The directory "test_dir\\folder" exists? True
     delete_dir(cd("test_dir"), verbose=True)
     # The directory "test_dir" is not empty.
@@ -120,5 +122,5 @@ if __name__ == '__main__':
 
     # Delete directories ---------------------------------------------------------------
 
-    print("\nTesting 'rm_dir()':")
+    print("\nTesting 'delete_dir()':")
     test_delete_dir()
