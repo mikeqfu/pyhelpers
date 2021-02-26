@@ -525,7 +525,7 @@ def find_closest_point(pt, ref_pts, as_geom=False):
     Find the closest point of the given point to a list of points.
 
     :param pt: (longitude, latitude)
-    :type pt: tuple or list
+    :type pt: tuple or list or shapely.geometry.Point
     :param ref_pts: a sequence of reference (tuple/list of length 2) points
     :type ref_pts: tuple or list or iterable
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
