@@ -10,5 +10,5 @@ Shapely
 SQLAlchemy
 SQLAlchemy-Utils
 tqdm
-Sphinx>=3.4.3
-
+Sphinx>=3.5.1
+sphinx-rtd-theme>=0.5.1
