@@ -152,7 +152,7 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     :param str_x: a string-type variable
     :type str_x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: list or tuple or iter
+    :type lookup_list: list or tuple or typing.Iterable
 
     :param processor: either ``'fuzzywuzzy'`` (default) or ``'nltk'``
 
