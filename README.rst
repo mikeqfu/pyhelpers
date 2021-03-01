@@ -17,7 +17,7 @@ PyHelpers
 
 **Author**: Qian Fu
 
-PyHelpers is an open-source toolkit designed as a miscellaneous collection of simple but useful Python tools for facilitating data manipulation tasks.
+PyHelpers is an open-source toolkit designed as a miscellaneous collection of simple and useful Python tools for facilitating data manipulation tasks.
 
 Resources
 =========
