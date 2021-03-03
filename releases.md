@@ -2,6 +2,20 @@
 
 
 
+#### [1.2.11](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.11)
+
+*3 March 2021*
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.10...1.2.11) since [v1.2.10](https://github.com/mikeqfu/pyhelpers/tree/6798fe4a08d4cb43f7631c46846db19da5f9c07e):
+
+- fixed [a bug](https://github.com/mikeqfu/pyhelpers/commit/e6b0a13481bb53a63a5b3884830889ce5adb611c) in the method [PostgreSQL.import_data()](https://github.com/mikeqfu/pyhelpers/blob/e6b0a13481bb53a63a5b3884830889ce5adb611c/pyhelpers/sql.py#L1106) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/e6b0a13481bb53a63a5b3884830889ce5adb611c/pyhelpers/sql.py)
+- rectified docstrings in the following two function: 
+  - [find_closest_point()](https://github.com/mikeqfu/pyhelpers/commit/f6486366c8f0791fe6c92fb45684b8a7e87a3594) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/f6486366c8f0791fe6c92fb45684b8a7e87a3594/pyhelpers/geom.py)
+  - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/b38273fa3d991646f5a4dc0d951bed05bfee7f9d) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/b38273fa3d991646f5a4dc0d951bed05bfee7f9d/pyhelpers/text.py)
+- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+
+
 #### [1.2.10](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.10)
 
 *1 February 2021*
