@@ -149,6 +149,32 @@ def eval_dtype(str_val):
     return val
 
 
+def gps_to_utc(gps_time):
+    """
+    Convert standard GPS time to UTC time.
+
+    :param gps_time: standard GPS time
+    :type gps_time: float
+    :return: UTC time
+    :rtype: datetime.datetime
+
+    **Test**::
+
+        >>> from pyhelpers.ops import gps_to_utc
+
+        >>> utc_dt = gps_to_utc(gps_time=1271398985.7822514)
+
+        >>> utc_dt
+        datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
+    """
+
+    gps_from_utc = (datetime.datetime(1980, 1, 6) - datetime.datetime(1970, 1, 1)).total_seconds()
+
+    utc_time = datetime.datetime.utcfromtimestamp(gps_time + gps_from_utc)
+
+    return utc_time
+
+
 """ Basic data manipulation ------------------------------------------------------------------ """
 
 
