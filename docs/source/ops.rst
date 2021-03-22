@@ -18,6 +18,7 @@ General use
     confirmed
     get_obj_attr
     eval_dtype
+    gps_to_utc
 
 Basic data manipulation
 -----------------------

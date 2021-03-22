@@ -158,7 +158,7 @@ def gps_to_utc(gps_time):
     :return: UTC time
     :rtype: datetime.datetime
 
-    **Test**::
+    **Example**::
 
         >>> from pyhelpers.ops import gps_to_utc
 
