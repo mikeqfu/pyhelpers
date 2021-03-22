@@ -2,6 +2,18 @@
 
 
 
+#### [1.2.12](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.12)
+
+*22 March 2021*
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.11...1.2.12) since [v1.2.11](https://github.com/mikeqfu/pyhelpers/tree/b4bbdf0edb0dc9e03934a925c86a9b9e576d92ff):
+
+- resolved [an issue](https://github.com/mikeqfu/pyhelpers/commit/b426b761297117aeb599836f88bde0c08a5a50cf) that caused importing modules (after updating or reinstalling the package) to fail
+- added a new function [gps_to_utc()](https://github.com/mikeqfu/pyhelpers/commit/b0338189cf16d5aac8c6a2d1785e37f7f3ae9f05) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/294fdb7d9817a58a6dd4cad909f23a9f75416e49/pyhelpers/ops.py)
+- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+
+
 #### [1.2.11](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.11)
 
 *3 March 2021*
@@ -12,7 +24,7 @@
 - rectified docstrings in the following two function: 
   - [find_closest_point()](https://github.com/mikeqfu/pyhelpers/commit/f6486366c8f0791fe6c92fb45684b8a7e87a3594) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/f6486366c8f0791fe6c92fb45684b8a7e87a3594/pyhelpers/geom.py)
   - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/b38273fa3d991646f5a4dc0d951bed05bfee7f9d) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/b38273fa3d991646f5a4dc0d951bed05bfee7f9d/pyhelpers/text.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/1.2.11/)
 
 
 
@@ -34,7 +46,7 @@
   - [np_preferences()](https://github.com/mikeqfu/pyhelpers/commit/ca9ba36da9671593adb752f2301debcf03beb99c#diff-8e1ccefca5009c849b1e96129b63e9dc483acfa1049605b6872c49e549d71793R15) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/settings.py)
   - [save_multiple_spreadsheets](https://github.com/mikeqfu/pyhelpers/commit/b96306545986a1c2763afb1aadcaf867695537b9#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R311) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/store.py)
   - [PostgreSQL.read_sql_query()](https://github.com/mikeqfu/pyhelpers/commit/5a8f251b570f0877d117251ec3e3408dba648398) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/sql.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/1.2.10/)
 
 
 
