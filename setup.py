@@ -67,7 +67,7 @@ setuptools.setup(
         'requests',
         'scipy',
         'shapely',
-        'sqlalchemy',
+        'sqlalchemy~=1.3.23',
         'sqlalchemy-utils',
         'tqdm',
         'xlrd',
