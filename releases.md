@@ -10,7 +10,8 @@
 
 - resolved [an issue](https://github.com/mikeqfu/pyhelpers/commit/b426b761297117aeb599836f88bde0c08a5a50cf) that caused importing modules (after updating or reinstalling the package) to fail
 - added a new function [gps_to_utc()](https://github.com/mikeqfu/pyhelpers/commit/b0338189cf16d5aac8c6a2d1785e37f7f3ae9f05) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/294fdb7d9817a58a6dd4cad909f23a9f75416e49/pyhelpers/ops.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.12 documentation](https://pyhelpers.readthedocs.io/en/1.2.12/).** 
 
 
 
@@ -24,7 +25,8 @@
 - rectified docstrings in the following two function: 
   - [find_closest_point()](https://github.com/mikeqfu/pyhelpers/commit/f6486366c8f0791fe6c92fb45684b8a7e87a3594) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/f6486366c8f0791fe6c92fb45684b8a7e87a3594/pyhelpers/geom.py)
   - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/b38273fa3d991646f5a4dc0d951bed05bfee7f9d) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/b38273fa3d991646f5a4dc0d951bed05bfee7f9d/pyhelpers/text.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/1.2.11/)
+
+**For more details, check out [PyHelpers 1.2.11 documentation](https://pyhelpers.readthedocs.io/en/1.2.11/).** 
 
 
 
@@ -46,7 +48,8 @@
   - [np_preferences()](https://github.com/mikeqfu/pyhelpers/commit/ca9ba36da9671593adb752f2301debcf03beb99c#diff-8e1ccefca5009c849b1e96129b63e9dc483acfa1049605b6872c49e549d71793R15) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/settings.py)
   - [save_multiple_spreadsheets](https://github.com/mikeqfu/pyhelpers/commit/b96306545986a1c2763afb1aadcaf867695537b9#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R311) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/store.py)
   - [PostgreSQL.read_sql_query()](https://github.com/mikeqfu/pyhelpers/commit/5a8f251b570f0877d117251ec3e3408dba648398) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/sql.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/1.2.10/)
+
+**For more details, check out [PyHelpers 1.2.10 documentation](https://pyhelpers.readthedocs.io/en/1.2.10/).** 
 
 
 
@@ -64,7 +67,8 @@
   - [validate_input_data_dir()](https://github.com/mikeqfu/pyhelpers/commit/f81c92d613a44272b61ee0d8fee085628e2e0880) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/dir.py)
   - [confirmed()](https://github.com/mikeqfu/pyhelpers/commit/eb1fa9b79a3c696c29fb0b5457fbc135cb49503e#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR23) and [fake_requests_headers()](https://github.com/mikeqfu/pyhelpers/commit/ce1caaef6bf306a5a0e4014f38ed1c0a159ff529#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR887) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/ops.py)
   - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/f43192408c548ad3d60df196d36dd970f022f954/pyhelpers/sql.py#L54) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/sql.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.9 documentation](https://pyhelpers.readthedocs.io/en/1.2.9/).** 
 
 
 
@@ -82,7 +86,8 @@
 - added two new functions to the module [text](https://github.com/mikeqfu/pyhelpers/blob/cd74ab1de677a40fb903947ff79aa99457a69f0b/pyhelpers/text.py):
   - [get_acronym()](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R61)
   - [extract_words1upper()](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R107)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.7 documentation](https://pyhelpers.readthedocs.io/en/1.2.7/).** 
 
 
 
@@ -99,7 +104,8 @@
   - [~~find_closest_point_from()~~](https://github.com/mikeqfu/pyhelpers/commit/ba2370b8511a06763076033546a24dd60ec23927#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L730) to [find_closest_point()](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py#L550)
   - [~~find_closest_points_between()~~](https://github.com/mikeqfu/pyhelpers/commit/ba2370b8511a06763076033546a24dd60ec23927#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L793) to [find_closest_points()](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py#L613)
 - minimised the requirements for the installation of the package (as some import statements have been put into the functions that use them, see also the [note](https://pyhelpers.readthedocs.io/en/latest/installation.html) for installation)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.6 documentation](https://pyhelpers.readthedocs.io/en/1.2.6/).** 
 
 
 
@@ -114,7 +120,8 @@
 - added a new function [save()](https://github.com/mikeqfu/pyhelpers/commit/b33f1df08991264622dd20876d572851a8b7e5ec#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R102) to the module [store](https://github.com/mikeqfu/pyhelpers/blob/b33f1df08991264622dd20876d572851a8b7e5ec/pyhelpers/store.py)
 - removed the functions [~~get_variable_name()~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL165) and [~~get_variable_names()~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL203) from the module [ops](https://github.com/mikeqfu/pyhelpers/blob/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0/pyhelpers/ops.py)
 - modified the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py#L21) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py) with [bug fixes](https://github.com/mikeqfu/pyhelpers/commit/116c7c1872fc8916856ae067e1edc89f8f8580bd)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.5 documentation](https://pyhelpers.readthedocs.io/en/1.2.5/).** 
 
 
 
@@ -126,6 +133,8 @@
 
 - modified the function [fake_requests_headers()](https://github.com/mikeqfu/pyhelpers/commit/0462c6bb3e3d32d6266ce2a713d99c90f8b5a0c6) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/ef9caca1e696f699633a4ee619e57c9f27ae6ce2/pyhelpers/ops.py)
 - made [a minor change](https://github.com/mikeqfu/pyhelpers/commit/ef4149590136a9e665e66f38f5decf64d6ccdb2c) to the installation requirements
+
+**For more details, check out [PyHelpers 1.2.4 documentation](https://pyhelpers.readthedocs.io/en/1.2.4/).** 
 
 
 
@@ -140,7 +149,8 @@
   - [get_specific_filepath_info()](https://github.com/mikeqfu/pyhelpers/blob/e24a68f2ec80ef6316e1b0af4c68f779225ab2d8/pyhelpers/store.py#L16) (with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/e24a68f2ec80ef6316e1b0af4c68f779225ab2d8#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L62)) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/e3f8ba9ffb775d030bde7aa18df131cf6e45b5b2/pyhelpers/store.py)
   - [download_file_from_url()](https://github.com/mikeqfu/pyhelpers/blob/d3e84b9af834d118d555ae0e41fb32ffa7355b9f/pyhelpers/ops.py#L36) (with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/76f2f097cf2bad365f84bf9fa9ba8c97454fe7ee)) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/d3e84b9af834d118d555ae0e41fb32ffa7355b9f/pyhelpers/ops.py)
   - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaR19) with [bug fixes](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/e3f8ba9ffb775d030bde7aa18df131cf6e45b5b2/pyhelpers/sql.py)
-- updated [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html)
+
+**For more details, check out [PyHelpers 1.2.3 documentation](https://pyhelpers.readthedocs.io/en/1.2.3/).** 
 
 
 
@@ -154,6 +164,8 @@
 - modified the following functions in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/33002edab79a3fc976b7ae7ded2f33547dc0e5f5/pyhelpers/ops.py):
   - [split_list()](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL222)
   - [get_all_values_from_nested_dict()](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL341)
+
+**For more details, check out [PyHelpers 1.2.2 documentation](https://pyhelpers.readthedocs.io/en/1.2.2/).** 
 
 
 
@@ -182,7 +194,7 @@
   - [seven_zip()](https://github.com/mikeqfu/pyhelpers/commit/fc4f4b4e00237fbb7648f96015af5c0ad34d490a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L626)
   - [load_csr_matrix()](https://github.com/mikeqfu/pyhelpers/commit/fc4f4b4e00237fbb7648f96015af5c0ad34d490a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L626) 
 - modified the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/4598e3e16d706f1cc4472d774ecd4dbf53d4eb28#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL20) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/4a3a0c9ac83440007136f504e44562ec75b973df/pyhelpers/sql.py)
-- created [PyHelpers Documentation](https://pyhelpers.readthedocs.io/en/latest/index.html) being hosted at [Read the Docs](https://readthedocs.org/)
+- created [PyHelpers documentation](https://readthedocs.org/projects/pyhelpers/) hosted at [Read the Docs](https://readthedocs.org/)
 
 
 
