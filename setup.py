@@ -51,6 +51,8 @@ setuptools.setup(
 
     install_requires=[
         'XlsxWriter',
+        'Shapely',
+        'SQLAlchemy',
         'fake-useragent',
         'fuzzywuzzy',
         # 'gdal',
@@ -67,8 +69,6 @@ setuptools.setup(
         'pyxlsb',
         'requests',
         'scipy',
-        # 'shapely',
-        'sqlalchemy',
         'tqdm',
         'xlrd',
     ],
