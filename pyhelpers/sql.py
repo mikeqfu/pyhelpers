@@ -17,7 +17,6 @@ import pandas.io.parsers
 import sqlalchemy
 import sqlalchemy.engine.reflection
 import sqlalchemy.engine.url
-import sqlalchemy_utils
 
 from .ops import confirmed
 
@@ -154,8 +153,7 @@ class PostgreSQL:
         if password:
             password_ = str(password)
         else:
-            pwd_msg = "Password ({}@{}:{}): ".format(username_, host_, port_)
-            password_ = getpass.getpass(pwd_msg)
+            password_ = getpass.getpass("Password ({}@{}:{}): ".format(username_, host_, port_))
 
         self.database_info = {'drivername': 'postgresql+psycopg2',
                               'host': host_,
@@ -164,9 +162,8 @@ class PostgreSQL:
                               'password': password_,
                               'database': database_name_}
 
-        # The typical form of a database URL is:
-        # url = backend+driver://username:password@host:port/database
-        self.url = sqlalchemy.engine.url.URL(**self.database_info)
+        # The typical form of the URL: backend+driver://username:password@host:port/database
+        self.url = sqlalchemy.engine.url.URL.create(**self.database_info)
 
         self.dialect = self.url.get_dialect()
         self.backend = self.url.get_backend_name()
@@ -174,25 +171,35 @@ class PostgreSQL:
         self.user, self.host, self.port = self.url.username, self.url.host, self.url.port
         self.database_name = self.database_info['database']
 
+        if self.database_name != 'postgres':
+            db_info = self.database_info.copy()
+            db_info['database'] = 'postgres'
+            url = sqlalchemy.engine.url.URL.create(**db_info)
+            self.engine = sqlalchemy.create_engine(url, isolation_level='AUTOCOMMIT')
+            db_exists = self.engine.execute(
+                "SELECT EXISTS("
+                "SELECT datname FROM pg_catalog.pg_database "
+                "WHERE datname='{}');".format(database_name_)).fetchone()[0]
+        else:
+            db_exists = True
+
         self.address = "{}:***@{}:{}/{}".format(self.user, self.host, self.port, self.database_name)
 
-        if not sqlalchemy_utils.database_exists(self.url):
+        if not db_exists:
             if confirmed("The database \"{}\" does not exist. "
                          "Proceed by creating it?".format(self.database_name),
                          confirmation_required=confirm_new_db):
                 print("Connecting {}".format(self.address), end=" ... ") if verbose else ""
 
-                sqlalchemy_utils.create_database(self.url)
+                self.engine.execute('CREATE DATABASE "{}";'.format(self.database_name))
+                self.engine.dispose()
 
         else:
             if verbose:
                 print("Connecting {}".format(self.address), end=" ... ")
 
-        try:
-            # Create a SQLAlchemy connectable
+        try:  # Create a SQLAlchemy connectable
             self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
-            self.connection = self.engine.raw_connection()
-
             print("Successfully.") if verbose else ""
 
         except Exception as e:
@@ -229,11 +236,56 @@ class PostgreSQL:
 
         database_name_ = str(database_name) if database_name is not None else self.database_name
 
-        result = self.engine.execute("SELECT EXISTS("
-                                     "SELECT datname FROM pg_catalog.pg_database "
-                                     "WHERE datname='{}');".format(database_name_))
+        result = self.engine.execute(
+            "SELECT EXISTS("
+            "SELECT datname FROM pg_catalog.pg_database WHERE datname='{}');".format(database_name_))
 
         return result.fetchone()[0]
+
+    def create_database(self, database_name, verbose=False):
+        """
+        An alternative to `sqlalchemy_utils.create_database
+        <https://sqlalchemy-utils.readthedocs.io/en/latest/database_helpers.html#create-database>`_.
+
+        :param database_name: name of a database
+        :type database_name: str
+        :param verbose: whether to print relevant information in console as the function runs,
+            defaults to ``False``
+        :type verbose: bool
+
+        **Example**::
+
+            >>> from pyhelpers.sql import PostgreSQL
+
+            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> testdb.create_database('testdb1', verbose=True)
+            Creating a database: "testdb1" ... Done.
+
+            >>> print(testdb.database_name)
+            testdb1
+
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb1" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb1" ... Done.
+        """
+
+        if not self.database_exists(database_name):
+            if verbose:
+                print("Creating a database: \"{}\" ... ".format(database_name), end="")
+
+            self.disconnect_database()
+            self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
+
+            print("Done.") if verbose else ""
+
+        else:
+            print("The database already exists.") if verbose else ""
+
+        self.connect_database(database_name)
 
     def connect_database(self, database_name=None, verbose=False):
         """
@@ -276,61 +328,16 @@ class PostgreSQL:
                 self.database_info['database'] = self.database_name
                 self.url = sqlalchemy.engine.url.URL(**self.database_info)
 
-                if not sqlalchemy_utils.database_exists(self.url):
-                    sqlalchemy_utils.create_database(self.url)
+                if not self.database_exists(self.database_name):
+                    self.create_database(database_name=self.database_name)
 
                 self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
-                self.connection = self.engine.raw_connection()
+                # self.connection = self.engine.raw_connection()
 
                 print("Successfully.") if verbose else ""
 
             except Exception as e:
                 print("Failed. {}.".format(e))
-
-    def create_database(self, database_name, verbose=False):
-        """
-        An alternative to `sqlalchemy_utils.create_database
-        <https://sqlalchemy-utils.readthedocs.io/en/latest/database_helpers.html#create-database>`_.
-
-        :param database_name: name of a database
-        :type database_name: str
-        :param verbose: whether to print relevant information in console as the function runs, 
-            defaults to ``False``
-        :type verbose: bool
-
-        **Example**::
-
-            >>> from pyhelpers.sql import PostgreSQL
-
-            >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
-            Password (postgres@localhost:5432): ***
-            Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
-            >>> testdb.create_database('testdb1', verbose=True)
-            Creating a database: "testdb1" ... Done.
-
-            >>> print(testdb.database_name)
-            testdb1
-
-            >>> testdb.drop_database(verbose=True)
-            To drop the database "testdb1" from postgres:***@localhost:5432
-            ? [No]|Yes: yes
-            Dropping "testdb1" ... Done.
-        """
-
-        if not self.database_exists(database_name):
-            if verbose:
-                print("Creating a database: \"{}\" ... ".format(database_name), end="")
-
-            self.disconnect_database()
-            self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
-
-            print("Done.") if verbose else ""
-
-        else:
-            print("The database already exists.") if verbose else ""
-
-        self.connect_database(database_name)
 
     def get_database_size(self, database_name=None):
         """
@@ -521,8 +528,7 @@ class PostgreSQL:
             >>> testdb.schema_exists('public')
             True
 
-            >>> testdb.schema_exists('test_schema')
-            >>> # (if the schema 'test_schema' does not exist)
+            >>> testdb.schema_exists('test_schema')  # (if the schema 'test_schema' does not exist)
             False
         """
 
@@ -739,18 +745,15 @@ class PostgreSQL:
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
-            >>> table_name_ = 'England'
-            >>> schema_name_ = 'points'
-
-            >>> testdb.table_exists(table_name_, schema_name_)
+            >>> testdb.table_exists(table_name='England', schema_name='points')
             >>> # (if 'points.England' does not exist)
             False
         """
 
-        res = self.engine.execute("SELECT EXISTS("
-                                  "SELECT * FROM information_schema.tables "
-                                  "WHERE table_schema='{}' "
-                                  "AND table_name='{}');".format(schema_name, table_name))
+        res = self.engine.execute(
+            "SELECT EXISTS("
+            "SELECT * FROM information_schema.tables "
+            "WHERE table_schema='{}' AND table_name='{}');".format(schema_name, table_name))
 
         return res.fetchone()[0]
 
@@ -788,7 +791,8 @@ class PostgreSQL:
             True
 
             >>> test_tbl_col_info = testdb.get_column_info(tbl_name, as_dict=False)
-            >>> print(test_tbl_col_info)
+
+            >>> test_tbl_col_info
                                         column_0      column_1
             table_catalog                 testdb        testdb
             table_schema                  public        public
@@ -1420,7 +1424,8 @@ class PostgreSQL:
             query=sql_query, delimiter=delimiter)
 
         # Get a cursor
-        cur = self.connection.cursor()
+        connection = self.engine.raw_connection()
+        cur = connection.cursor()
         cur.copy_expert(copy_sql, csv_temp)
         # Rewind the file handle using seek() in order to read the data back from it
         csv_temp.seek(0)
@@ -1431,5 +1436,7 @@ class PostgreSQL:
 
         # Close the cursor
         cur.close()
+
+        connection.close()
 
         return table_data
