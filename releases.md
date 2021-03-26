@@ -2,13 +2,25 @@
 
 
 
+#### [1.2.14](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.14)
+
+*26 March 2021*
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.13...1.2.14) since [v1.2.13](https://pypi.org/project/pyhelpers/1.2.13/):
+
+- rectified [an error](https://github.com/mikeqfu/pyhelpers/commit/bad3ff51a90a0da9ce9ebb2b4e20b3517204e05c) in the specification of dependencies for installing the package
+
+**For more details, check out [PyHelpers 1.2.14 documentation](https://pyhelpers.readthedocs.io/en/1.2.14/).** 
+
+
+
 #### [1.2.13](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.13)
 
 *26 March 2021*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.12...1.2.13) since [v1.2.12](https://pypi.org/project/pyhelpers/1.2.12/):
 
-- Modified the module [sql](https://github.com/mikeqfu/pyhelpers/blob/c96c6acd31d7d94a99bb4591a741c656982868c9/pyhelpers/sql.py) with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/c96c6acd31d7d94a99bb4591a741c656982868c9) for errors raised when importing SQLAlchemy 1.4.0+
+- modified the module [sql](https://github.com/mikeqfu/pyhelpers/blob/c96c6acd31d7d94a99bb4591a741c656982868c9/pyhelpers/sql.py) with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/c96c6acd31d7d94a99bb4591a741c656982868c9) for errors raised when importing SQLAlchemy 1.4.0+
 
 **For more details, check out [PyHelpers 1.2.13 documentation](https://pyhelpers.readthedocs.io/en/1.2.13/).** 
 
