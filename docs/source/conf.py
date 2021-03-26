@@ -12,9 +12,9 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 # A list of modules to be mocked up.
 autodoc_mock_imports = [
-    'numpy', 'pyproj', 'shapely', 'scipy',
+    'numpy', 'pyproj', 'Shapely', 'scipy',
     'fake-useragent', 'pandas', 'requests', 'tqdm',
-    'python-rapidjson',
+    'SQLAlchemy', 'python-rapidjson',
     'fuzzywuzzy',
 ]
 
