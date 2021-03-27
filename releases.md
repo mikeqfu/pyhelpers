@@ -4,7 +4,7 @@
 
 #### [1.2.14](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.14)
 
-*26 March 2021*
+*27 March 2021*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.13...1.2.14) since [v1.2.13](https://pypi.org/project/pyhelpers/1.2.13/):
 
