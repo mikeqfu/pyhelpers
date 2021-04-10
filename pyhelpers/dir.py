@@ -9,7 +9,7 @@ import pkg_resources
 
 from .ops import confirmed
 
-""" Change directories ----------------------------------------------------------------------- """
+""" == Change directories ==================================================================== """
 
 
 def cd(*sub_dir, mkdir=False, **kwargs):
@@ -75,6 +75,7 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     **Examples**::
 
         >>> import os
+        >>> import shutil
         >>> from pyhelpers.dir import cdd
 
         >>> path_to_dat_dir = cdd()
@@ -82,14 +83,21 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
         >>> print(os.path.relpath(path_to_dat_dir))
         data
 
-        >>> path_to_dat_dir = cdd(mkdir=True)
+        >>> path_to_dat_dir = cdd(data_dir="test_cdd", mkdir=True)
         >>> # As `mkdir=True`, `path_to_dat_dir` will be created if it doesn't exist
         >>> print(os.path.relpath(path_to_dat_dir))
-        data
+        test_cdd
 
-        >>> path_to_dat_dir = cdd("data", data_dir="tests", mkdir=True)
+        >>> # Delete the "test_cdd" folder
+        >>> os.rmdir(path_to_dat_dir)
+
+        >>> # Set `data_dir` to be `"tests"`
+        >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
         >>> print(os.path.relpath(path_to_dat_dir))
-        tests\\data
+        test_cdd\\data
+
+        >>> # Delete the "test_cdd" folder and the sub-folder "data"
+        >>> shutil.rmtree(os.path.dirname(path_to_dat_dir))
     """
 
     path = cd(data_dir, *sub_dir, mkdir=mkdir, **kwargs)
@@ -139,7 +147,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     return path
 
 
-""" Validate directories --------------------------------------------------------------------- """
+""" == Validate directories ================================================================== """
 
 
 def is_dirname(dir_name):
@@ -221,7 +229,7 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
     return data_dir_
 
 
-""" Delete directories ----------------------------------------------------------------------- """
+""" == Delete directories ==================================================================== """
 
 
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
@@ -259,7 +267,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         >>> dir_path = cd("test_dir", "folder", mkdir=True)
         >>> rel_dir_path = os.path.relpath(dir_path)
 
-        >>> print('The directory "{}" exists? '.format(rel_dir_path, os.path.exists(dir_path)))
+        >>> print('The directory "{}" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
         The directory "test_dir\\folder" exists? True
         >>> delete_dir(cd("test_dir"), verbose=True)
         The directory "test_dir" is not empty.
@@ -277,9 +285,8 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
     try:
         if os.listdir(path_to_dir):
-            if confirmed("The directory \"{}\" is not empty.\n"
-                         "Confirmed to delete it?".format(rel_path_to_dir),
-                         confirmation_required=confirmation_required):
+            if confirmed("The directory \"{}\" is not empty.\nConfirmed to delete it?".format(
+                    rel_path_to_dir), confirmation_required=confirmation_required):
                 print_msg()
                 shutil.rmtree(path_to_dir, **kwargs)
 
