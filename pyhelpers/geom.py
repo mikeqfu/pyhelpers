@@ -7,12 +7,12 @@ import functools
 
 import numpy as np
 import pyproj
+import scipy.spatial.ckdtree
 import shapely.geometry
-from scipy.spatial.ckdtree import cKDTree
 
 from .ops import create_rotation_matrix
 
-""" Geometric transformation ----------------------------------------------------------------- """
+""" == Geometric transformation ============================================================== """
 
 
 # Geometric type
@@ -74,6 +74,7 @@ def transform_geom_point_type(*pts, as_geom=True):
             else:
                 pt_ = None
             yield pt_
+
     else:
         for pt in pts:
             if isinstance(pt, shapely.geometry.Point):
@@ -414,7 +415,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     return lon, lat
 
 
-""" Geometry calculation --------------------------------------------------------------------- """
+""" == Geometry calculation ================================================================== """
 
 
 # Distance
@@ -433,7 +434,7 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     .. note::
 
         This function is modified from the original code available at
-        [`GEOM-CDOUS-1 <http://www.johndcook.com/blog/python_longitude_latitude/>`_].
+        [`GEOM-CDOUS-1 <https://www.johndcook.com/blog/python_longitude_latitude/>`_].
         It assumes the earth is perfectly spherical and returns the distance based on each
         point's longitude and latitude.
 
@@ -636,11 +637,12 @@ def find_closest_points(pts, ref_pts, k=1, as_geom=False, **kwargs):
     else:
         ref_pts_ = np.concatenate([np.array(geom.coords) for geom in ref_pts])
 
-    ref_ckd_tree = cKDTree(ref_pts_, **kwargs)
+    # noinspection PyArgumentList
+    ref_ckd_tree = scipy.spatial.ckdtree.cKDTree(ref_pts_, **kwargs)
+    # noinspection PyUnresolvedReferences
     distances, indices = ref_ckd_tree.query(pts, k=k)  # returns (distance, index)
 
     if as_geom:
-
         closest_points = [shapely.geometry.Point(ref_pts_[i]) for i in indices]
     else:
         closest_points = np.array([ref_pts_[i] for i in indices])
@@ -706,8 +708,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
 
         if all(isinstance(x, np.ndarray) for x in mid_pts):
             midpoint = [
-                shapely.geometry.Point(x_, y_) for x_, y_ in zip(list(mid_pts[0]), list(mid_pts[1]))
-            ]
+                shapely.geometry.Point(x_, y_) for x_, y_ in zip(list(mid_pts[0]), list(mid_pts[1]))]
         else:
             midpoint = shapely.geometry.Point(mid_pts)
 
@@ -764,9 +765,9 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     Get the midpoint between two points by pure calculation.
 
     See also
-    [`GEOM-GGMC-1 <http://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/>`_]
+    [`GEOM-GGMC-1 <https://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/>`_]
     and
-    [`GEOM-GGMC-2 <http://www.movable-type.co.uk/scripts/latlong.html>`_].
+    [`GEOM-GGMC-2 <https://www.movable-type.co.uk/scripts/latlong.html>`_].
 
     :param pt_x: a point
     :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
@@ -964,7 +965,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-""" Geometric data visualisation ------------------------------------------------------------- """
+""" == Geometric data visualisation ========================================================== """
 
 
 # Sketch
