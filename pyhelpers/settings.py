@@ -9,7 +9,7 @@ import numpy as np
 import numpy.core.arrayprint
 import pandas as pd
 
-""" NumPy ------------------------------------------------------------------------------------ """
+""" == NumPy ================================================================================= """
 
 
 def np_preferences(reset=False, line_width=120, edge_items=5, decimal_digits=4):
@@ -70,12 +70,13 @@ def np_preferences(reset=False, line_width=120, edge_items=5, decimal_digits=4):
         numpy.core.arrayprint._line_width = line_width
         np.set_printoptions(linewidth=line_width, edgeitems=edge_items,
                             formatter=dict(float=lambda x: "%.{}f".format(decimal_digits) % x))
+
     else:
         numpy.core.arrayprint._line_width = 80  # 75
         np.set_printoptions(edgeitems=3, linewidth=80)
 
 
-""" Pandas ----------------------------------------------------------------------------------- """
+""" == Pandas ================================================================================ """
 
 
 def pd_preferences(reset=False, ignore_future_warning=True):
@@ -105,13 +106,14 @@ def pd_preferences(reset=False, ignore_future_warning=True):
         pd.set_option('io.excel.xlsx.writer', 'openpyxl')
         pd.set_option('mode.chained_assignment', None)
         # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
+
     else:
         if ignore_future_warning:
             warnings.simplefilter(action='ignore', category=FutureWarning)
         pd.reset_option('all')
 
 
-""" Matplotlib ------------------------------------------------------------------------------- """
+""" == Matplotlib ============================================================================ """
 
 
 def mpl_preferences(reset=False, font_name=None):
@@ -150,14 +152,13 @@ def mpl_preferences(reset=False, font_name=None):
                 else:
                     serif_fonts.insert(0, serif_fonts.pop(serif_fonts.index(font_name)))
                     plt.rcParams['font.serif'] = serif_fonts
-            else:
-                pass
+
     else:
         plt.rcParams = plt.rcParamsDefault
         plt.style.use('default')
 
 
-""" GDAL ------------------------------------------------------------------------------------- """
+""" == GDAL ================================================================================== """
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000):
@@ -176,20 +177,21 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000):
         >>> gdal_configurations()
     """
 
-    import gdal
+    import osgeo.gdal
 
     if not reset:
         # Whether to enable interleaved reading. Defaults to NO.
-        gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
+        osgeo.gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'YES')
         # Whether to enable custom indexing. Defaults to YES.
-        gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
+        osgeo.gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
         # Whether to compress nodes in temporary DB. Defaults to NO.
-        gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
+        osgeo.gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
         # Maximum size in MB of in-memory temporary file.
         #   If it exceeds that value, it will go to disk. Defaults to 100.
-        gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
+        osgeo.gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
+
     else:
-        gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
-        gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
-        gdal.SetConfigOption('OSM_COMPRESS_NODES', 'NO')
-        gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '100')
+        osgeo.gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
+        osgeo.gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
+        osgeo.gdal.SetConfigOption('OSM_COMPRESS_NODES', 'NO')
+        osgeo.gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '100')
