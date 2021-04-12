@@ -174,7 +174,7 @@ def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
 
         >>> from pyhelpers.text import find_similar_str
 
-        >>> x = 'apple'
+        >>> x = 'Apple'
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
 
         >>> str_similar = find_similar_str(x, lookup_lst)
@@ -200,12 +200,14 @@ def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
     if processor == 'difflib':
-        sim_str_ = difflib.get_close_matches(str_x, lookup_list, n=1, **kwargs)
+        str_x_ = str_x.lower()
+        lookup_list_ = {x_.lower(): x_ for x_ in lookup_list}
+        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=1, **kwargs)
 
         if not sim_str_:
             sim_str = None
         else:
-            sim_str = sim_str_[0]
+            sim_str = lookup_list_[sim_str_[0]]
 
     elif processor == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
