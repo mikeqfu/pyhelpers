@@ -59,7 +59,7 @@ The module :py:mod:`dir<pyhelpers.dir>` can be used to assist in manipulating fo
     >>> print(rel_path_cwd)
     .
 
-To direct to a temporary folder, named ``"pyhelpers_quick_start"``, for this tutorial:
+To direct to a temporary folder, named *"pyhelpers_quick_start"*, for this tutorial:
 
 .. code-block:: python
 
@@ -71,36 +71,36 @@ To direct to a temporary folder, named ``"pyhelpers_quick_start"``, for this tut
     >>> print(rel_path_qs)
     pyhelpers_quick_start
 
-Check whether the directory "pyhelpers_quick_start" exists:
+Check whether the directory *"pyhelpers_quick_start\\"* exists:
 
 .. code-block:: python
 
-    >>> print("The directory \"{}\" exists? {}".format(rel_path_qs, os.path.exists(path_to_qs)))
-    The directory "pyhelpers_quick_start" exists? False
+    >>> print("The directory \"{}\\\" exists? {}".format(rel_path_qs, os.path.exists(path_to_qs)))
+    The directory "pyhelpers_quick_start\" exists? False
 
-In the case that the folder ``'pyhelpers_quick_start'`` does not exist, you could set the parameter ``mkdir`` (which defaults to ``False``) to be ``True``, and the folder will be created as the path is specified:
+In the case that the directory *"pyhelpers_quick_start\\"* does not exist, you could set the parameter ``mkdir`` (which defaults to ``False``) to be ``True``, and the folder will be created as the path is specified:
 
 .. code-block:: python
 
     >>> # Set `mkdir` to be `True` to create a folder named "pyhelpers_quick_start"
     >>> path_to_qs = cd(qs_dirname, mkdir=True)
 
-    >>> # Whether the directory "pyhelpers_quick_start" exists now
-    >>> print("The directory \"{}\" exists? {}".format(rel_path_qs, os.path.exists(path_to_qs)))
-    The directory "pyhelpers_quick_start" exists? True
+    >>> # Whether the directory "pyhelpers_quick_start\" exists now
+    >>> print("The directory \"{}\\\" exists? {}".format(rel_path_qs, os.path.exists(path_to_qs)))
+    The directory "pyhelpers_quick_start\" exists? True
 
 If you provide a filename (with a file extension), you can then get an absolute path to the file. For example:
 
 .. code-block:: python
 
-    >>> dat_filename = "data.dat"  # Specify a filename
+    >>> dat_filename = "quick_start.dat"  # Specify a filename
 
-    >>> dat_file_path = cd(qs_dirname, dat_filename)  # Path to the file named "dat.dat"
+    >>> dat_file_path = cd(qs_dirname, dat_filename)  # Path to the file named "quick_start.dat"
     >>> # equivalent to: dat_file_path = cd(path_to_qs, dat_filename)
 
-    >>> dat_rel_path = os.path.relpath(dat_file_path)  # Relative path of the file "dat.dat"
+    >>> dat_rel_path = os.path.relpath(dat_file_path)  # Relative path of the file "quick_start.dat"
     >>> print(dat_rel_path)
-    pyhelpers_quick_start\data.dat
+    pyhelpers_quick_start\quick_start.dat
 
 When only one filename (with a file extension) is provided and ``mkdir=True``, the function will only create the folder (if it does not exist) for the file, rather than taking the filename as a folder name.
 
@@ -112,20 +112,20 @@ See the following example:
 
     >>> from pyhelpers.dir import is_dirname
 
-    >>> path_to_data = cd(path_to_qs, "data")  # A data directory "pyhelpers_quick_start\data"
-    >>> rel_path_data = os.path.relpath(path_to_data)  # Relative path of the data directory
+    >>> data_dir = cd(path_to_qs, "data")  # A data directory "pyhelpers_quick_start\data"
+    >>> rel_path_data = os.path.relpath(data_dir)  # Relative path of the data directory
 
     >>> # Whether `rel_path_data` is a directory
-    >>> print("\"{}\" is a directory? {}".format(rel_path_data, is_dirname(rel_path_data)))
-    "pyhelpers_quick_start\data" is a directory? True
+    >>> print("\"{}\\\" is a directory? {}".format(rel_path_data, is_dirname(rel_path_data)))
+    "pyhelpers_quick_start\data\" is a directory? True
 
     >>> # Whether the data directory exists
-    >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
-    The directory "pyhelpers_quick_start\data" exists? False
+    >>> print("The directory \"{}\\\" exists? {}".format(rel_path_data, os.path.exists(data_dir)))
+    The directory "pyhelpers_quick_start\data\" exists? False
 
     >>> pickle_filename = "dat.pickle"  # Name of a Pickle data file
 
-    >>> pickle_file_path = cd(path_to_data, pickle_filename)  # Path to the pickle file "dat.pickle"
+    >>> pickle_file_path = cd(data_dir, pickle_filename)  # Path to the pickle file "dat.pickle"
     >>> print(os.path.relpath(pickle_file_path))  # Relative path of the pickle file
     pyhelpers_quick_start\data\dat.pickle
 
@@ -138,26 +138,26 @@ See the following example:
     The file "dat.pickle" exists? False
 
     >>> # Set `mkdir` to be `True` to create the data folder
-    >>> pickle_file_path = cd(path_to_data, pickle_filename, mkdir=True)
+    >>> pickle_file_path = cd(data_dir, pickle_filename, mkdir=True)
 
     >>> # Whether the data directory exists now
-    >>> print("The directory \"{}\" exists? {}".format(rel_path_data, os.path.exists(path_to_data)))
-    The directory "pyhelpers_quick_start\data" exists? True
+    >>> print("The directory \"{}\\\" exists? {}".format(rel_path_data, os.path.exists(data_dir)))
+    The directory "pyhelpers_quick_start\data\" exists? True
 
     >>> # Check again whether the file "dat.pickle" exists
     >>> print("The file \"{}\" exists? {}".format(pickle_filename, os.path.exists(pickle_file_path)))
     The file "dat.pickle" exists? False
 
-To delete the directory ``"pyhelpers_quick_start"``, you can use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
+To delete the directory *"pyhelpers_quick_start\\"*, you can use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
 
 .. code-block:: python
 
     >>> from pyhelpers.dir import delete_dir  # from pyhelpers import delete_dir
 
-    >>> delete_dir(path_to_qs, verbose=True)  # Delete the directory "pyhelpers_quick_start"
-    The directory "pyhelpers_quick_start" is not empty.
+    >>> delete_dir(path_to_qs, verbose=True)  # Delete the directory "pyhelpers_quick_start\"
+    The directory "pyhelpers_quick_start\" is not empty.
     Confirmed to delete it? [No]|Yes: yes
-    Deleting "pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start\" ... Done.
 
 
 Download an image file
@@ -174,7 +174,7 @@ For example, you can use the function :py:func:`download_file_from_url()<pyhelpe
 
 .. note::
 
-    The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ and `tqdm`_.
+    The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ (and, if ``verbose=True``, `tqdm`_).
 
 Suppose you would like to download a Python logo from the homepage of `Python`_, firstly, specify the URL:
 
@@ -182,7 +182,7 @@ Suppose you would like to download a Python logo from the homepage of `Python`_,
 
     >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-Then specify where you would like to save the .png file and what the filename it would be. For example, to name the file as ``"python-logo.png"`` and save it to the directory ``"pyhelpers_quick_start\images"``:
+Then specify where you would like to save the .png file and what the filename it would be. For example, to name the file as *"python-logo.png"* and save it to the directory *"pyhelpers_quick_start\\images\\"*:
 
 .. code-block:: python
 
@@ -202,19 +202,19 @@ You may view the downloaded picture by using `Pillow`_:
 
 If you are using Jupyter Notebook, you can also view the picture using `IPython.display.Image`_:
 
-.. figure:: _images/python-logo.*
+.. figure:: _images/python-logo-qs.*
     :name: python-logo-qs
     :align: center
     :width: 65%
 
     The Python Logo.
 
-Again, if you would like to delete the download directory, ``"pyhelpers_quick_start\images\"``, use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
+Again, if you would like to delete the download directory, *"pyhelpers_quick_start\\images\\"* as well as *"pyhelpers_quick_start\\"*, use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
 
 .. code-block:: python
 
     >>> delete_dir(path_to_qs, confirmation_required=False, verbose=True)
-    Deleting "pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start\" ... Done.
 
 From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()<pyhelpers.ops.confirmed>` may be quite helpful especially when you would like to request a confirmation before proceeding with some processes. For example:
 
@@ -225,9 +225,9 @@ From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()
 .. code-block:: python
 
     >>> if confirmed(prompt="Continue? ...", confirmation_required=True):
-    ...     print("Yes and go ahead.")
+    ...     print("Go ahead.")
     Continue? ... [No]|Yes: yes
-    Yes and go ahead.
+    Go ahead.
 
 .. note::
 
@@ -243,7 +243,7 @@ From the module :py:mod:`ops<pyhelpers.ops>`, the function :py:func:`confirmed()
 Save and load data with Pickle
 ==============================
 
-The module :py:mod:`store<pyhelpers.store>` can be used to help save and load data. Some functions from this module require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which have been installed along with the installation of PyHelpers.
+The module :py:mod:`store<pyhelpers.store>` can be used to help save and load data. Some functions from this module require `openpyxl`_, `XlsxWriter`_ and/or `xlrd`_, which have been installed along with the installation of PyHelpers.
 
 Before proceeding to the examples for this module, let’s create a `pandas.DataFrame`_ first:
 
@@ -261,14 +261,16 @@ Before proceeding to the examples for this module, let’s create a `pandas.Data
     ...                      (383819, 398052),   # Manchester
     ...                      (582044, 152953)],  # Leeds
     ...                     dtype=np.int64)
-    >>> dat = pd.DataFrame(xy_array, columns=['Easting', 'Northing'])
+    >>> idx_names = ['London', 'Birmingham', 'Manchester', 'Leeds']
+    >>> col_names = ['Easting', 'Northing']
+    >>> dat = pd.DataFrame(xy_array, index=idx_names, columns=col_names)
 
     >>> print(dat)
-       Easting  Northing
-    0   530034    180381
-    1   406689    286822
-    2   383819    398052
-    3   582044    152953
+                Easting  Northing
+    London       530034    180381
+    Birmingham   406689    286822
+    Manchester   383819    398052
+    Leeds        582044    152953
 
 If you would like to save ``dat`` as a `pickle`_ file and retrieve it later, use the functions :py:func:`save_pickle()<pyhelpers.store.save_pickle>` and :py:func:`load_pickle()<pyhelpers.store.load_pickle>`:
 
@@ -295,17 +297,18 @@ To retrieve ``dat`` from ``pickle_file_path``:
 
 .. code-block:: python
 
+    >>> # Check whether `dat_retrieved` is equal to `dat`
     >>> print("`dat_retrieved` is equal to `dat`? {}".format(dat_retrieved.equals(dat)))
     `dat_retrieved` is equal to `dat`? True
 
 The :ref:`pyhelpers.store<store>` module also have functions for saving/loading data of some other formats, such as ``.csv``, ``.txt``, ``.json``, ``.xlsx`` (or ``.xls``) and ``.feather``.
 
-Now, before you move on, you can delete the directory *'pyhelpers_quick_start'* (i.e. ``path_to_qs``) to clear up the mess that have been produced so far:
+Now, before you move on, you can delete the directory *"pyhelpers_quick_start\\"* (i.e. ``path_to_qs``) to clear up the mess that have been produced so far:
 
 .. code-block:: python
 
     >>> delete_dir(path_to_qs, confirmation_required=False, verbose=True)
-    Deleting "pyhelpers_quick_start" ... Done.
+    Deleting "pyhelpers_quick_start\" ... Done.
 
 
 .. _geom-examples:
@@ -384,18 +387,18 @@ For example, if you have a `str`_ type variable named ``string`` and would like 
     >>> print(result_1)
     Anglia
 
-The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, meaning that it would use the Python package `FuzzyWuzzy`_ to perform the task.
+The parameter ``processor`` for the function is by default ``'difflib'``, meaning that it would use the Python package `difflib`_ to perform the task.
 
-Alternatively, you could also turn to `NLTK`_ by setting ``processor`` to be ``'nltk'``:
+Alternatively, you could also turn to `FuzzyWuzzy`_ by setting ``processor`` to be ``'fuzzywuzzy'``:
 
 .. note::
 
-    `NLTK`_ is not required for the installation of PyHelpers. If it is not yet available on your system, you have to install it before you can proceed with ``processor='nltk'``.
+    `FuzzyWuzzy`_ is not required for the installation of PyHelpers (>=1.2.15). If it is not yet available on your system, you have to install it before you can proceed with setting ``processor='fuzzywuzzy'``.
 
 .. code-block:: python
 
     >>> # Find the most similar word to 'ang' by using NLTK
-    >>> result_2 = find_similar_str(string, lookup_list, processor='nltk')
+    >>> result_2 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
 
     >>> print(result_2)
     Anglia
@@ -416,7 +419,7 @@ The current release of PyHelpers contains only :py:class:`PostgreSQL<pyhelpers.s
 
 .. note::
 
-    The constructor method of the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` relies on `SQLAlchemy`_, `SQLAlchemy-Utils`_ and `psycopg2`_ to successfully create an instance of the class.
+    The constructor method of the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` relies on `SQLAlchemy`_ and `psycopg2`_ to successfully create an instance of the class.
 
 Connect to a database
 ---------------------
@@ -427,88 +430,89 @@ After the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` is successfully
 
     ``password`` is by default ``None``. If you do not wish to specify the password explicitly in your script, then you will be asked to type in the password manually when you create an instance of the class.
 
-For example, to create an instance named ``pgdb`` and connect to a database named *'test_db'*:
+For example, to create an instance named ``pgdb`` and connect to a database named *"pyhelpers_quick_start"*:
 
 .. code-block:: python
 
-    >>> pgdb = PostgreSQL(host='localhost', port=5432, username='postgres', database_name='test_db',
-    ...                   password=None)
+    >>> pgdb = PostgreSQL(host='localhost', port=5432, username='postgres',
+    ...                   database_name="pyhelpers_quick_start", password=None)
     Password (postgres@localhost:5432): ***
-    Connecting postgres:***@localhost:5432/test_db ... Successfully.
+    Connecting postgres:***@localhost:5432/pyhelpers_quick_start ... Successfully.
 
-.. figure:: _images/qs-sql-test-db.png
-    :name: qs-sql-test-db
+.. figure:: _images/qs-sql-test-db-1.png
+    :name: qs-sql-test-db-1
     :align: center
-    :width: 50%
+    :width: 60%
 
-    The database *'test_db'*.
+    The database *"pyhelpers_quick_start"*.
 
 .. note::
 
     - Similar to ``password``, if any of the other parameters is ``None``, you will also be asked to type in the information.
 
-    - If the database *'test_db'* does not exist, it will be created as you create the instance ``pgdb``.
+    - If the database *"pyhelpers_quick_start"* does not exist, it will be created as you create the instance ``pgdb``.
 
-To create another database named *'test_database'*:
+To create another database named *"pyhelpers_quick_start_alt"*:
 
 .. code-block:: python
 
-    >>> pgdb.create_database('test_database', verbose=True)
-    Creating a database: "test_database" ... Done.
+    >>> pgdb.create_database("pyhelpers_quick_start_alt", verbose=True)
+    Creating a database: "pyhelpers_quick_start_alt" ... Done.
 
 To check if the database has been successfully created:
 
 .. code-block:: python
 
-    >>> res = pgdb.database_exists('test_database')
-    >>> print("The database 'test_database' has been successfully created? {}".format(res))
-    The database 'test_database' has been successfully created? True
+    >>> print("The database being currently connected is \"{}\".".format(pgdb.database_name))
+    The database being currently connected is "pyhelpers_quick_start_alt".
 
-    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
-    The database being currently connected is 'test_database'.
+    >>> res = pgdb.database_exists("pyhelpers_quick_start_alt")
+    >>> print("The database \"{}\" is successfully created? {}".format(pgdb.database_name, res))
+    The database "pyhelpers_quick_start_alt" is successfully created? True
 
-.. figure:: _images/qs-sql-test-database.png
-    :name: qs-sql-test-database
+.. figure:: _images/qs-sql-test-db-2.png
+    :name: qs-sql-test-db-2
     :align: center
-    :width: 50%
+    :width: 60%
 
-    The database *'test_database'*.
+    The database *"pyhelpers_quick_start_alt"*.
 
 .. note::
 
-    Once a new database is created, the instance ``pgdb`` is by default connected with the new database *'test_database'*.
+    Once a new database is created, the instance ``pgdb`` is by default connected with the new database *"pyhelpers_quick_start_alt"*.
 
-If you would like to connect back to *'test_db'*:
+If you would like to connect back to *"pyhelpers_quick_start"*:
 
 .. code-block:: python
 
-    >>> pgdb.connect_database('test_db', verbose=True)
-    Connecting postgres:***@localhost:5432/test_db ... Successfully.
+    >>> pgdb.connect_database("pyhelpers_quick_start", verbose=True)
+    Connecting postgres:***@localhost:5432/pyhelpers_quick_start ... Successfully.
 
-    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
-    The database being currently connected is 'test_db'.
+    >>> print("The database being currently connected is \"{}\".".format(pgdb.database_name))
+    The database being currently connected is "pyhelpers_quick_start".
 
 
 Import data into the database
 -----------------------------
 
-After the database connection has been established, you can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the :ref:`example<store-dat>` above) into a table named *'pyhelpers_qs1'*:
+After the database connection has been established, you can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``dat`` (see the :ref:`example<store-dat>` above) into a table named *"dat_tbl"*:
 
 .. code-block:: python
 
-    >>> pgdb.import_data(dat, table_name='pyhelpers_qs1', verbose=True)
-    To import the data into table "public"."pyhelpers_qs1" at postgres:***@localhost:5432/test_db
+    >>> pgdb.import_data(dat, table_name="dat_tbl", index=True, verbose=2)
+    To import data into "public"."dat_tbl" at postgres:***@localhost:5432/pyhelpers_quick_start
     ? [No]|Yes: yes
-    Importing data into "public"."pyhelpers_qs1" ... Done.
+    Importing the data into the table "public"."dat_tbl" ... Done.
 
-The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an alternative ``'method'`` to significantly speed up importing data into the database. Try to import the same data into a table named *'pyhelpers_qs2'* by setting ``method=pgdb.psql_insert_copy``:
+The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take a callable :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an alternative ``'method'`` to significantly speed up importing data into the database. Try to import the same data into a table named *"dat_tbl_alt"* by setting ``method=pgdb.psql_insert_copy``:
 
 .. code-block:: python
 
-    >>> pgdb.import_data(dat, table_name='pyhelpers_qs2', method=pgdb.psql_insert_copy, verbose=True)
-    To import the data into table "public"."pyhelpers_qs2" at postgres:***@localhost:5432/test_db
+    >>> pgdb.import_data(dat, table_name="dat_tbl_alt", index=True, method=pgdb.psql_insert_copy,
+    ...                  verbose=2)
+    To import data into "public"."dat_tbl_alt" at postgres:***@localhost:5432/pyhelpers_quick_start
     ? [No]|Yes: yes
-    Importing data into "public"."pyhelpers_qs2" ... Done.
+    Importing the data into the table "public"."dat_tbl_alt" ... Done.
 
 
 Fetch data from the database
@@ -518,23 +522,25 @@ To retrieve the imported data, you can use the method :py:meth:`.read_table()<py
 
 .. code-block:: python
 
-    >>> dat_retrieval1 = pgdb.read_table('pyhelpers_qs1')
+    >>> dat_retrieval_1 = pgdb.read_table("dat_tbl", index_col='index')
+    >>> dat_retrieval_1.index.name = None
 
-    >>> res = dat_retrieval1.equals(dat)
-    >>> print("`dat_retrieval1` and `dat` have the same shape and elements? {}".format(res))
-    `dat_retrieval1` and `dat` have the same shape and elements? True
+    >>> res = dat_retrieval_1.equals(dat)
+    >>> print("`dat_retrieval_1` and `dat` have the same shape and elements? {}".format(res))
+    `dat_retrieval_1` and `dat` have the same shape and elements? True
 
 Alternatively, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here you can use this method to fetch the same data from the table *'pyhelpers_qs2'*:
 
 .. code-block:: python
 
-    >>> sql_query = 'SELECT * FROM public.pyhelpers_qs2'
+    >>> sql_query = 'SELECT * FROM public.dat_tbl_alt'
 
-    >>> dat_retrieval2 = pgdb.read_sql_query(sql_query)
+    >>> dat_retrieval_2 = pgdb.read_sql_query(sql_query, index_col='index')
+    >>> dat_retrieval_2.index.name = None
 
-    >>> res = dat_retrieval2.equals(dat_retrieval1)
-    >>> print(f"`dat_retrieval2` and `dat_retrieval1` have the same shape and elements? {res}")
-    `dat_retrieval2` and `dat_retrieval1` have the same shape and elements? True
+    >>> res = dat_retrieval_2.equals(dat_retrieval_1)
+    >>> print(f"`dat_retrieval_2` and `dat_retrieval_1` have the same shape and elements? {res}")
+    `dat_retrieval_2` and `dat_retrieval_1` have the same shape and elements? True
 
 .. note::
 
@@ -548,30 +554,30 @@ To drop the table *'pyhelpers_qs1'*, you can use the method :py:meth:`.drop_tabl
 
 .. code-block:: python
 
-    >>> pgdb.drop_table('pyhelpers_qs1', verbose=True)
-    To drop the table "public"."pyhelpers_qs1" from postgres:***@localhost:5432/test_db
+    >>> pgdb.drop_table(table_name="dat_tbl", verbose=True)
+    To drop the table "public"."dat_tbl" from postgres:***@localhost:5432/pyhelpers_quick_start
     ? [No]|Yes: yes
-    Dropping "public"."pyhelpers_qs1" ... Done.
+    Dropping "public"."dat_tbl" ... Done.
 
-Note that you have created two databases: *'test_db'* (being currently connected) and *'test_database'*. To remove both of them from the database, you can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
+Note that you have created two databases: *"pyhelpers_quick_start"* (being currently connected) and *"pyhelpers_quick_start_alt"*. To remove both of them from the database, you can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`.
 
 .. code-block:: python
 
-    >>> # Drop 'test_db' (i.e. the currently connected database)
+    >>> # Drop "pyhelpers_quick_start" (i.e. the currently connected database)
     >>> pgdb.drop_database(verbose=True)
-    To drop the database "test_db" from postgres:***@localhost:5432
+    To drop the database "pyhelpers_quick_start" from postgres:***@localhost:5432
     ? [No]|Yes: yes
-    Dropping "test_db" ... Done.
+    Dropping "pyhelpers_quick_start" ... Done.
 
-    >>> # Drop 'test_database'
-    >>> pgdb.drop_database('test_database', verbose=True)
-    To drop the database "test_database" from postgres:***@localhost:5432/postgres
+    >>> # Drop "pyhelpers_quick_start_alt"
+    >>> pgdb.drop_database(database_name="pyhelpers_quick_start_alt", verbose=True)
+    To drop the database "pyhelpers_quick_start_alt" from postgres:***@localhost:5432/postgres
     ? [No]|Yes: yes
-    Dropping "test_database" ... Done.
+    Dropping "pyhelpers_quick_start_alt" ... Done.
 
     >>> # Check the currently connected database
-    >>> print("The database being currently connected is '{}'.".format(pgdb.database_name))
-    The database being currently connected is 'postgres'.
+    >>> print("The database being currently connected is \"{}\".".format(pgdb.database_name))
+    The database being currently connected is "postgres".
 
 
 .. _`Python`: https://www.python.org/
@@ -593,11 +599,10 @@ Note that you have created two databases: *'test_db'* (being currently connected
 .. _`OSGB36`: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
 .. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
 .. _`str`: https://docs.python.org/3/library/stdtypes.html#textseq
+.. _`difflib`: https://docs.python.org/3/library/difflib.html
 .. _`FuzzyWuzzy`: https://github.com/seatgeek/fuzzywuzzy/
-.. _`NLTK`: https://www.nltk.org/
 .. _`PostgreSQL`: https://www.postgresql.org/
 .. _`SQLAlchemy`: https://www.sqlalchemy.org/
-.. _`SQLAlchemy-Utils`: https://github.com/kvesteri/sqlalchemy-utils
 .. _`psycopg2`: https://www.psycopg.org/
 .. _`pandas.DataFrame.to_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
