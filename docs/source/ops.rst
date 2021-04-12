@@ -79,4 +79,5 @@ Web scraping
     is_network_connected
     is_url_connectable
     fake_requests_headers
+    is_downloadable
     download_file_from_url
