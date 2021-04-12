@@ -261,9 +261,9 @@ Before proceeding to the examples for this module, let’s create a `pandas.Data
     ...                      (383819, 398052),   # Manchester
     ...                      (582044, 152953)],  # Leeds
     ...                     dtype=np.int64)
-    >>> idx_names = ['London', 'Birmingham', 'Manchester', 'Leeds']
+    >>> idx_labels = ['London', 'Birmingham', 'Manchester', 'Leeds']
     >>> col_names = ['Easting', 'Northing']
-    >>> dat = pd.DataFrame(xy_array, index=idx_names, columns=col_names)
+    >>> dat = pd.DataFrame(xy_array, index=idx_labels, columns=col_names)
 
     >>> print(dat)
                 Easting  Northing
@@ -382,7 +382,7 @@ For example, if you have a `str`_ type variable named ``string`` and would like 
     ...                'Western']
 
     >>> # Find the most similar word to 'ang'
-    >>> result_1 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
+    >>> result_1 = find_similar_str(string, lookup_list, processor='difflib')
 
     >>> print(result_1)
     Anglia
