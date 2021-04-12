@@ -15,8 +15,8 @@ from .text import *
 
 __package_name__ = 'pyhelpers'
 __package_name_alt__ = 'PyHelpers'
-__author__ = u'Qian Fu'
-__version__ = '1.2.14'
+__author__ = 'Qian Fu'
+__version__ = '1.2.15rc1'
 __email__ = 'qian.fu@outlook.com'
 __description__ = \
     "PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks."
