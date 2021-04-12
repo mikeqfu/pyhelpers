@@ -61,7 +61,7 @@ def _get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... "
     filename = pathlib.Path(abs_path_to_file).name if abs_path_to_file.suffix else ""
 
     try:
-        rel_path = abs_path_to_file.parent.relative_to(abs_path_to_file.cwd())
+        rel_path = pathlib.Path(os.path.relpath(abs_path_to_file.parent))
 
         if rel_path == rel_path.parent:
             rel_path = abs_path_to_file.parent
@@ -591,10 +591,10 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         if verbose:
             if abs_emf_path.exists():
                 print("Updating \"{}\" at \"{}\\\"".format(
-                    abs_emf_path.name, abs_emf_path.parent.relative_to(os.getcwd())),
+                    abs_emf_path.name, os.path.relpath(abs_emf_path.parent)),
                     end=" ... ")
             else:
-                print("Saving the .svg file as \"{}\"".format(abs_emf_path.relative_to(os.getcwd())),
+                print("Saving the .svg file as \"{}\"".format(os.path.relpath(abs_emf_path)),
                       end=" ... ")
 
         try:
