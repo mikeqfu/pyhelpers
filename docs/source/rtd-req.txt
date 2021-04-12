@@ -5,9 +5,8 @@ scipy
 fake-useragent
 pandas
 requests
-tqdm
+psycopg2
 SQLAlchemy
 python-rapidjson
-fuzzywuzzy
-Sphinx==3.5.3
-sphinx-rtd-theme==0.5.1
+Sphinx==3.5.4
+sphinx-rtd-theme==0.5.2
