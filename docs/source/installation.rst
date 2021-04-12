@@ -34,11 +34,11 @@ To test if PyHelpers is correctly installed, try to import the package via an in
 
     - Not all dependencies of PyHelpers are required (so as to optimise the requirements) for the installation of the package. If a ``ModuleNotFoundError`` or an ``ImportError`` pops out when importing a function, just install the 'missing' module/package and then try to import the function again. See, for example, the use of the functions :ref:`pyhelpers.text.find_similar_str<text-examples>`.
 
-    - For *Windows* users, The ``pip`` method **might** fail to install some dependencies (e.g. `GDAL`_, `Shapely`_ and `python-Levenshtein`_). If errors occur when you try to install any of those dependencies, try instead to ``pip install`` their *.whl* files, which can be downloaded from the `Unofficial Windows Binaries for Python Extension Packages`_.
+    - For *Windows* users, The ``pip`` method **might** fail to install some dependencies (e.g. `GDAL`_ and `Shapely`_). If errors occur when you try to install any of those dependencies, try instead to ``pip install`` their *.whl* files, which can be downloaded from the `Unofficial Windows Binaries for Python Extension Packages`_.
 
     - For more general instructions on the installation of Python packages, check the "`Installing Packages`_".
 
-    - PyHelpers has not yet been tested with `Python 2`_. For users who have installed both `Python 2`_ and `Python 3`_, it would be recommended to replace ``pip`` with ``pip3``. But you are more than welcome to volunteer testing the package with `Python 2`_ and any issues should be logged/reported onto the `Issues`_ page.
+    - PyHelpers has not yet been tested with `Python 2`_. For users who have installed both `Python 2`_ and `Python 3`_, it would be recommended to replace ``pip`` with ``pip3``. But you are more than welcome to volunteer testing the package with `Python 2`_ and any issues should be logged/reported onto `Issue Tracker`_.
 
 .. _`PyPI`: https://pypi.org/project/pyhelpers/
 .. _`pip`: https://packaging.python.org/key_projects/#pip
@@ -49,11 +49,10 @@ To test if PyHelpers is correctly installed, try to import the package via an in
 
 .. _`GDAL`: https://pypi.org/project/GDAL/
 .. _`Shapely`: https://pypi.org/project/Shapely/
-.. _`python-Levenshtein`: https://pypi.org/project/python-Levenshtein/
 .. _`Unofficial Windows Binaries for Python Extension Packages`: https://www.lfd.uci.edu/~gohlke/pythonlibs/
 
 .. _`Installing Packages`: https://packaging.python.org/tutorials/installing-packages
 
 .. _`Python 2`: https://docs.python.org/2/
 .. _`Python 3`: https://docs.python.org/3/
-.. _`Issues`: https://github.com/mikeqfu/pyhelpers/issues
+.. _`Issue Tracker`: https://github.com/mikeqfu/pyhelpers/issues
