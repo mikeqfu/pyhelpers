@@ -586,8 +586,8 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
     # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
 
     if verbose:
-        rel_md_path = abs_md_path.relative_to(abs_md_path.cwd())
-        rel_rst_path = abs_rst_path.relative_to(abs_rst_path.cwd())
+        rel_md_path = pathlib.Path(os.path.relpath(abs_md_path))
+        rel_rst_path = pathlib.Path(os.path.relpath(abs_rst_path))
         if not os.path.exists(abs_rst_path):
             print("Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path), end=" ... ")
         else:
