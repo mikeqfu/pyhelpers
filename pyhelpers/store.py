@@ -14,12 +14,12 @@ import rapidjson
 from .ops import confirmed
 
 
-def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
+def _get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
     """
     Get information about the path of a file.
 
     :param path_to_file: path where a file is saved
-    :type path_to_file: str
+    :type path_to_file: str or pathlib.Path
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
@@ -32,25 +32,25 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import get_specific_filepath_info
+        from pyhelpers.dir import cd
+        from pyhelpers.store import _get_specific_filepath_info
 
-        >>> file_path = cd()
-        >>> try:
-        ...     get_specific_filepath_info(file_path, verbose=True)
-        ... except AssertionError as e:
-        ...     print(e)
-        The input for `path_to_file` may not be a file path.
+        file_path = cd()
+        try:
+            _get_specific_filepath_info(file_path, verbose=True)
+        except AssertionError as e:
+            print(e)
+        # The input for `path_to_file` may not be a file path.
 
-        >>> file_path = cd("test_store.py")
-        >>> get_specific_filepath_info(file_path, verbose=True)
-        >>> print("Pass.")
-        Saving "test_store.py" ... Pass.
+        file_path = cd("test_store.py")
+        _get_specific_filepath_info(file_path, verbose=True)
+        print("Pass.")
+        # Saving "test_store.py" ... Pass.
 
-        >>> file_path = cd("tests", "test_store.py")
-        >>> get_specific_filepath_info(file_path, verbose=True)
-        >>> print("Pass.")
-        Updating "test_store.py" at "\\tests" ... Pass.
+        file_path = cd("tests", "test_store.py")
+        _get_specific_filepath_info(file_path, verbose=True)
+        print("Pass.")
+        # Updating "test_store.py" at "tests\\" ... Pass.
 
     :meta private:
     """
@@ -65,34 +65,42 @@ def get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... ",
 
         if rel_path == rel_path.parent:
             rel_path = abs_path_to_file.parent
-            msg_fmt = "{} \"{}\""  # "{} \"{}\" {} \"{}\""
+            msg_fmt = "{} \"{}\""
         else:
-            msg_fmt = "{} \"{}\" {} \"{}\""
+            msg_fmt = "{} \"{}\" {} \"{}\\\""
             # The specified path exists?
             os.makedirs(abs_path_to_file.parent, exist_ok=True)
 
     except ValueError:
         if verbose == 2:
-            print("Warning: \"{}\" is outside the current working directory".format(
-                str(abs_path_to_file.parent)))
+            warn_msg = "Warning: \"{}\" is outside the current working directory".format(
+                str(abs_path_to_file.parent))
+            print(warn_msg)
 
         rel_path = abs_path_to_file.parent
-        msg_fmt = "{} \"{}\""  # "{} \"{}\" {} \"{}\""
+        msg_fmt = "{} \"{}\""
 
     if verbose:
-        status, prep = ("Updating", "at") if os.path.isfile(abs_path_to_file) else ("Saving", "to")
-        verbose_end_ = verbose_end if verbose_end else "\n"
+        if os.path.isfile(abs_path_to_file):
+            status_msg, prep = "Updating", "at"
+        else:
+            status_msg, prep = "Saving", "to"
+
+        if verbose_end:
+            verbose_end_ = verbose_end
+        else:
+            verbose_end_ = "\n"
 
         if rel_path == rel_path.parent:
-            print(msg_fmt.format(status, filename), end=verbose_end_)
+            print(msg_fmt.format(status_msg, filename), end=verbose_end_)
         else:
-            print(msg_fmt.format(status, filename, prep, rel_path), end=verbose_end_)
+            print(msg_fmt.format(status_msg, filename, prep, rel_path), end=verbose_end_)
 
     if ret_info:
         return rel_path, filename
 
 
-""" Save data -------------------------------------------------------------------------------- """
+""" == Save data ============================================================================= """
 
 
 def save(data, path_to_file, warning=False, **kwargs):
@@ -129,27 +137,27 @@ def save(data, path_to_file, warning=False, **kwargs):
         >>> col = ['Easting', 'Northing']
 
         >>> dat = pandas.DataFrame(dat_list, idx, col)
-        >>> dat_file_path = cd(data_dir, "dat.txt")
 
+        >>> dat_file_path = cd(data_dir, "dat.txt")
         >>> save(dat, dat_file_path, verbose=True)
-        Updating "dat.txt" at "tests\\data" ... Done.
+        Saving "dat.txt" to "tests\\data\\" ... Done.
 
         >>> dat_file_path = cd(data_dir, "dat.csv")
         >>> save(dat, dat_file_path, verbose=True)
-        Updating "dat.csv" at "tests\\data" ... Done.
+        Saving "dat.csv" to "tests\\data\\" ... Done.
 
         >>> dat_file_path = cd(data_dir, "dat.xlsx")
         >>> save(dat, dat_file_path, verbose=True)
-        Updating "dat.xlsx" at "tests\\data" ... Done.
+        Saving "dat.xlsx" to "tests\\data\\" ... Done.
 
         >>> dat_file_path = cd(data_dir, "dat.pickle")
         >>> save(dat, dat_file_path, verbose=True)
-        Updating "dat.pickle" at "tests\\data" ... Done.
+        Saving "dat.pickle" to "tests\\data\\" ... Done.
 
         >>> dat_file_path = cd(data_dir, "dat.feather")
         >>> # `save(data_[, ...])` may produce an error due to the index of `dat`
         >>> save(dat.reset_index(), dat_file_path, verbose=True)
-        Updating "dat.feather" at "tests\\data" ... Done.
+        Saving "dat.feather" to "tests\\data\\" ... Done.
     """
 
     # Make a copy the original data
@@ -207,10 +215,10 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
         >>> pickle_path = cd("tests\\data", "dat.pickle")
 
         >>> save_pickle(pickle_dat, pickle_path, verbose=True)
-        Saving "dat.pickle" to "tests\\data" ... Done.
+        Saving "dat.pickle" to "tests\\data\\" ... Done.
     """
 
-    get_specific_filepath_info(path_to_pickle, verbose=verbose, ret_info=False)
+    _get_specific_filepath_info(path_to_pickle, verbose=verbose, ret_info=False)
 
     try:
         pickle_out = open(path_to_pickle, mode=mode, **kwargs)
@@ -224,8 +232,8 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
 
 # Spreadsheets
 
-def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None,
-                     delimiter=',', verbose=False, **kwargs):
+def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None, delimiter=',',
+                     verbose=False, **kwargs):
     """
     Save data as a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_
     or an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
@@ -270,19 +278,19 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
 
         >>> spreadsheet_path = cd("tests\\data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.csv" to "tests\\data" ... Done.
+        Saving "dat.csv" to "tests\\data\\" ... Done.
 
         >>> spreadsheet_path = cd("tests\\data", "dat.xls")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.xls" to "tests\\data" ... Done.
+        Saving "dat.xls" to "tests\\data\\" ... Done.
 
         >>> spreadsheet_path = cd("tests\\data", "dat.xlsx")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
-        Saving "dat.xlsx" to "tests\\data" ... Done.
+        Saving "dat.xlsx" to "tests\\data\\" ... Done.
     """
 
-    _, spreadsheet_filename = get_specific_filepath_info(path_to_file=path_to_spreadsheet,
-                                                         verbose=verbose, ret_info=True)
+    _, spreadsheet_filename = _get_specific_filepath_info(path_to_file=path_to_spreadsheet,
+                                                          verbose=verbose, ret_info=True)
 
     try:  # to save the data
         if spreadsheet_filename.endswith(".xlsx"):  # a .xlsx file
@@ -353,22 +361,22 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         >>> ss_path = cd("tests\\data", "dat.xlsx")  # path_to_spreadsheet = ss_path
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, index=True, verbose=True)
-        Saving "dat.xlsx" to "tests\\data" ...
+        Saving "dat.xlsx" to "tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True, verbose=True)
-        Updating "dat.xlsx" at "tests\\data" ...
+        Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ... This sheet already exists;
-                Add a suffix to the sheet name? [No]|Yes: yes
-                'TestSheet11' ... Done.
+                add a suffix to the sheet name? [No]|Yes: yes
+                saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists;
-                Add a suffix to the sheet name? [No]|Yes: yes
-                'TestSheet21' ... Done.
+                add a suffix to the sheet name? [No]|Yes: yes
+                saved as 'TestSheet21' ... Done.
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True,
         ...                            confirmation_required=False, verbose=True)
-        Updating "dat.xlsx" at "tests\\data" ...
+        Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ...
                 saved as 'TestSheet12' ... Done.
             'TestSheet2' ...
@@ -377,7 +385,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
     assert path_to_spreadsheet.endswith(".xlsx") or path_to_spreadsheet.endswith(".xls")
 
-    get_specific_filepath_info(path_to_spreadsheet, verbose=verbose, ret_info=False)
+    _get_specific_filepath_info(path_to_spreadsheet, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_spreadsheet) and mode == 'a':
         excel_file = pd.ExcelFile(path_to_spreadsheet)
@@ -462,10 +470,10 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
         >>> json_path = cd("tests\\data", "dat.json")
 
         >>> save_json(json_dat, json_path, verbose=True)
-        Saving "dat.json" to "tests\\data" ... Done.
+        Saving "dat.json" to "tests\\data\\" ... Done.
     """
 
-    get_specific_filepath_info(path_to_json, verbose=verbose, ret_info=False)
+    _get_specific_filepath_info(path_to_json, verbose=verbose, ret_info=False)
 
     try:
         json_out = open(path_to_json, mode=mode, **kwargs)
@@ -501,12 +509,12 @@ def save_feather(feather_data, path_to_feather, verbose=False):
         >>> feather_path = cd("tests\\data", "dat.feather")
 
         >>> save_feather(feather_dat, feather_path, verbose=True)
-        Saving "dat.feather" to "tests\\data" ... Done.
+        Saving "dat.feather" to "tests\\data\\" ... Done.
     """
 
     assert isinstance(feather_data, pd.DataFrame)
 
-    get_specific_filepath_info(path_to_feather, verbose=verbose, ret_info=False)
+    _get_specific_filepath_info(path_to_feather, verbose=verbose, ret_info=False)
 
     try:
         feather_data.to_feather(path_to_feather)
@@ -517,6 +525,90 @@ def save_feather(feather_data, path_to_feather, verbose=False):
 
 
 # Images
+
+def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
+    """
+    Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
+    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
+
+    :param path_to_svg: path where a .svg file is saved
+    :type path_to_svg: str
+    :param path_to_emf: path where a .emf file is saved
+    :type path_to_emf: str
+    :param verbose: whether to print relevant information in console as the function runs,
+        defaults to ``False``
+    :type verbose: bool or int
+    :param inkscape_exe: absolute path to 'inkscape.exe', defaults to ``None``
+        (on Windows, use the default installation path -
+        ``"C:\\Program Files\\Inkscape\\inkscape.exe"``)
+    :type inkscape_exe: str or None
+    :param kwargs: optional parameters of `subprocess.call`_
+
+    .. _`subprocess.call`:
+        https://docs.python.org/3/library/subprocess.html#subprocess.call
+
+    **Example**::
+
+        >>> import matplotlib.pyplot as plt
+        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.store import save_svg_as_emf
+
+        >>> x, y = (1, 1), (2, 2)
+
+        >>> plt.figure()
+        >>> plt.plot([x[0], y[0]], [x[1], y[1]])
+        >>> plt.show()
+
+    The above exmaple is illustrated in :numref:`fig-2`:
+
+    .. figure:: ../_images/fig.*
+        :name: fig-2
+        :align: center
+        :width: 76%
+
+        An example figure created for :py:func:`save_svg_as_emf()<pyhelpers.store.save_svg_as_emf>`.
+
+    .. code-block:: python
+
+        >>> img_dir = cd("tests\\images")
+        >>> svg_file_path = cd(img_dir, "fig.svg")
+
+        >>> plt.savefig(svg_file_path)
+
+        >>> emf_file_path = cd(img_dir, "fig.emf")
+
+        >>> save_svg_as_emf(svg_file_path, emf_file_path, verbose=True)
+        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
+    """
+
+    abs_svg_path, abs_emf_path = pathlib.Path(path_to_svg), pathlib.Path(path_to_emf)
+    assert abs_svg_path.suffix == ".svg"
+
+    if inkscape_exe is None:
+        inkscape_exe = "C:\\Program Files\\Inkscape\\inkscape.exe"
+
+    if os.path.isfile(inkscape_exe):
+        if verbose:
+            if abs_emf_path.exists():
+                print("Updating \"{}\" at \"{}\\\"".format(
+                    abs_emf_path.name, abs_emf_path.parent.relative_to(os.getcwd())),
+                    end=" ... ")
+            else:
+                print("Saving the .svg file as \"{}\"".format(abs_emf_path.relative_to(os.getcwd())),
+                      end=" ... ")
+
+        try:
+            abs_emf_path.parent.mkdir(exist_ok=True)
+            subprocess.call([inkscape_exe, '-z', path_to_svg, '-M', path_to_emf], **kwargs)
+            print("Done.") if verbose else ""
+
+        except Exception as e:
+            print("Failed. {}".format(e)) if verbose else ""
+
+    else:
+        print("\"Inkscape\" (https://inkscape.org) is required to convert a .svg file to a .emf. file "
+              "It is not found on this device.") if verbose else ""
+
 
 def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
@@ -545,6 +637,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         >>> from pyhelpers.store import save_fig
 
         >>> x, y = (1, 1), (2, 2)
+
         >>> plt.figure()
         >>> plt.plot([x[0], y[0]], [x[1], y[1]])
         >>> plt.show()
@@ -562,23 +655,22 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
         >>> img_dir = cd("tests\\images")
 
-        >>> path_to_fig = cd(img_dir, "fig.png")
-        >>> save_fig(path_to_fig, dpi, verbose=True)
-        Saving "fig.png" to "tests\\images" ... Done.
+        >>> png_file_path = cd(img_dir, "fig.png")
+        >>> save_fig(png_file_path, dpi=300, verbose=True)
+        Saving "fig.png" to "tests\\images\\" ... Done.
 
-        >>> path_to_fig = cd(img_dir, "fig.svg")
-        >>> save_fig(path_to_fig, dpi=300, verbose=True, conv_svg_to_emf=True)
-        Saving "fig.svg" to "tests\\images" ... Done.
-        Saving the "fig.svg" as "tests\\images\\fig.emf" ... Done.
+        >>> svg_file_path = cd(img_dir, "fig.svg")
+        >>> save_fig(svg_file_path, dpi=300, verbose=True, conv_svg_to_emf=True)
+        Saving "fig.svg" to "tests\\images\\" ... Done.
+        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
     """
 
-    get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
+    _get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
 
     file_ext = pathlib.Path(path_to_fig_file).suffix
 
     try:
         import matplotlib.pyplot
-        # assert file_ext.strip(".") in plt.gcf().canvas.get_supported_filetypes().keys()
 
         matplotlib.pyplot.savefig(path_to_fig_file, dpi=dpi, **kwargs)
         print("Done.") if verbose else ""
@@ -587,92 +679,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         print("Failed. {}.".format(e)) if verbose else ""
 
     if file_ext == ".svg" and conv_svg_to_emf:
-        # inkscape_exe = "C:\\Program Files\\Inkscape\\inkscape.exe"
-        # if os.path.isfile(inkscape_exe):
-        #     path_to_emf = path_to_fig_file.replace(file_ext, ".emf")
-        #     get_specific_filepath_info(path_to_emf, verbose=verbose, ret_info=False)
-        #     subprocess.call([inkscape_exe, '-z', path_to_fig_file, '-M', path_to_emf])
-        #     print("Conversion from .svg to .emf successfully.") if verbose else ""
-        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"),
-                        verbose=verbose)
-
-
-def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
-    """
-    Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
-    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
-
-    :param path_to_svg: path where a .svg file is saved
-    :type path_to_svg: str
-    :param path_to_emf: path where a .emf file is saved
-    :type path_to_emf: str
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
-    :type verbose: bool or int
-    :param inkscape_exe: absolute path to 'inkscape.exe', defaults to ``None``
-        (on Windows, use the default installation path -
-        ``"C:\\Program Files\\Inkscape\\inkscape.exe"``)
-    :type inkscape_exe: str or None
-    :param kwargs: optional parameters of `subprocess.call`_
-
-    .. _`subprocess.call`:
-        https://docs.python.org/3/library/subprocess.html#subprocess.call
-
-    **Example**::
-
-        >>> import matplotlib.pyplot as plt_
-        >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_svg_as_emf
-
-        >>> x, y = (1, 1), (2, 2)
-        >>> plt_.figure()
-        >>> plt_.plot([x[0], y[0]], [x[1], y[1]])
-        >>> plt_.show()
-
-    The above exmaple is illustrated in :numref:`fig-2`:
-
-    .. figure:: ../_images/fig.*
-        :name: fig-2
-        :align: center
-        :width: 76%
-
-        An example figure created for :py:func:`save_svg_as_emf()<pyhelpers.store.save_svg_as_emf>`.
-
-    .. code-block:: python
-
-        >>> img_dir = cd("tests\\images")
-
-        >>> path_to_svg_ = cd(img_dir, "fig.svg")
-        >>> path_to_emf_ = cd(img_dir, "fig.emf")
-
-        >>> save_svg_as_emf(path_to_svg_, path_to_emf_, verbose=True)
-        Saving the "fig.svg" as "tests\\images\\fig.emf" ... Done.
-    """
-
-    abs_svg_path, abs_emf_path = pathlib.Path(path_to_svg), pathlib.Path(path_to_emf)
-    assert abs_svg_path.suffix == ".svg"
-
-    if inkscape_exe is None:
-        inkscape_exe = "C:\\Program Files\\Inkscape\\inkscape.exe"
-
-    if os.path.isfile(inkscape_exe):
-        if verbose:
-            print("Saving the \"{}\" as \"{}\"".format(
-                abs_svg_path.name, abs_emf_path.relative_to(os.getcwd())),
-                end=" ... ")
-
-        try:
-            abs_emf_path.parent.mkdir(exist_ok=True)
-            subprocess.call([inkscape_exe, '-z', path_to_svg, '-M', path_to_emf], **kwargs)
-            print("Done.") if verbose else ""
-
-        except Exception as e:
-            print("Failed. {}".format(e)) if verbose else ""
-
-    else:
-        print("\"Inkscape\" (https://inkscape.org) is required "
-              "to convert a .svg file to a .emf. file "
-              "It is not found on this device.") if verbose else ""
+        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
 
 
 # Web page
@@ -711,7 +718,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         >>> path_to_pdf_file = cd("tests\\data", "pyhelpers.pdf")
 
         >>> save_web_page_as_pdf(url_to_a_web_page, path_to_pdf_file, verbose=True)
-        Saving "pyhelpers.pdf" to "tests\\data" ...
+        Saving "pyhelpers.pdf" to "tests\\data\\" ...
         Loading pages (1/6)
         Counting pages (2/6)
         Resolving links (4/6)
@@ -730,8 +737,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
     else:
         config = pdfkit.configuration(wkhtmltopdf="wkhtmltopdf.exe")
 
-    get_specific_filepath_info(path_to_pdf, verbose=verbose, verbose_end=" ... \n",
-                               ret_info=False)
+    _get_specific_filepath_info(path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
 
     try:
         # print("Saving the web page \"{}\" as PDF".format(url_to_web_page)) if verbose else ""
@@ -748,8 +754,8 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         if os.path.isfile(path_to_pdf):
             os.remove(path_to_pdf)
 
-        status = pdfkit.from_url(url_to_web_page, path_to_pdf, configuration=config,
-                                 options=pdf_options, **kwargs)
+        status = pdfkit.from_url(
+            url_to_web_page, path_to_pdf, configuration=config, options=pdf_options, **kwargs)
 
         if verbose and not status:
             print("Failed. Check if the URL is available.")
@@ -760,7 +766,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
               "It is not found on this device.") if verbose else ""
 
 
-""" Load data -------------------------------------------------------------------------------- """
+""" == Load data ============================================================================= """
 
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
@@ -856,6 +862,12 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
 
         >>> type(wb_data)
         list
+        >>> wb_data[0]
+                    Easting  Northing
+        London       530034    180381
+        Birmingham   406689    286822
+        Manchester   383819    398052
+        Leeds        582044    152953
     """
 
     excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
@@ -964,7 +976,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         >>> feather_dat = load_feather(feather_path, verbose=True)
         Loading "tests\\data\\dat.feather" ... Done.
 
-        >>> print(feather_dat)
+        >>> feather_dat
            Col1  Col2
         0     1     2
     """
@@ -981,18 +993,18 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         print("Failed. {}".format(e)) if verbose else ""
 
 
-""" Uncompress data files -------------------------------------------------------------------- """
+""" == Uncompress data files ================================================================= """
 
 
-def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
+def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
     """
     Extract data from a `zipped (compressed)
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_ file.
 
     :param path_to_zip_file: path where a Zip file is saved
     :type path_to_zip_file: str
-    :param out_dir: path to a directory where the extracted data is saved
-    :type out_dir: str
+    :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
+    :type out_dir: str or None
     :param mode: defaults to ``'r'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs,
@@ -1005,44 +1017,57 @@ def unzip(path_to_zip_file, out_dir, mode='r', verbose=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dir import cd, delete_dir
         >>> from pyhelpers.store import unzip
 
         >>> output_dir = cd("tests\\data")
         >>> zip_file_path = cd(output_dir, "zipped.zip")
 
         >>> unzip(zip_file_path, output_dir, verbose=True)
-        Unzipping "tests\\data\\zipped.zip" ... Done.
+        Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.
+
+        >>> # Delete the extracted directory "zipped"
+        >>> delete_dir(cd(output_dir, "zipped"), verbose=True)
+        The directory "tests\\data\\zipped\\" is not empty.
+        Confirmed to delete it? [No]|Yes: >? yes
+        Deleting "tests\\data\\zipped\\" ... Done.
     """
 
+    if out_dir is not None:
+        out_dir = os.path.splitext(path_to_zip_file)[0]
+
     if verbose:
-        print("Unzipping \"{}\"".format(os.path.relpath(path_to_zip_file)), end=" ... ")
+        rel_path = os.path.relpath(path_to_zip_file)
+        out_dir_ = os.path.relpath(out_dir) + ("\\" if not out_dir.endswith("\\") else "")
+        print("Extracting \"{}\" to \"{}\"".format(rel_path, out_dir_), end=" ... ")
 
     try:
         with zipfile.ZipFile(path_to_zip_file, mode) as zf:
             zf.extractall(out_dir, **kwargs)
-        print("Done.") if verbose else ""
         zf.close()
+
+        print("Done.") if verbose else ""
 
     except Exception as e:
         print("Failed. {}".format(e))
 
 
-def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_exe=None, **kwargs):
+def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
+              **kwargs):
     """
     Use `7-Zip <https://www.7-zip.org/>`_ to extract data from a compressed file.
 
     :param path_to_zip_file: path where a compressed file is saved
     :type path_to_zip_file: str
-    :param out_dir: path to a directory where the extracted data is saved
-    :type out_dir: str
+    :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
+    :type out_dir: str or None
     :param mode: defaults to ``'aoa'``
     :type mode: str
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
     :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``
-        (on Windows, use the default installation path - ``"C:\\Program Files\\7-Zip\\7z.exe"``)
+        (on Windows, the default installation path - ``"C:\\Program Files\\7-Zip\\7z.exe"``)
     :type seven_zip_exe: str or None
     :param kwargs: optional parameters of `subprocess.call`_
 
@@ -1050,21 +1075,21 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dir import cd, delete_dir
         >>> from pyhelpers.store import seven_zip
 
         >>> output_dir = cd("tests\\data")
-
         >>> zip_file_path = cd(output_dir, "zipped.zip")
+
         >>> seven_zip(zip_file_path, output_dir, verbose=True)
         7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
 
         Scanning the drive for archives:
         1 file, 158 bytes (1 KiB)
 
-        Extracting archive: ..\\tests\\data\\zipped.zip
+        Extracting archive: .\\tests\\data\\zipped.zip
         --
-        Path = ..\\tests\\data\\zipped.zip
+        Path = .\\tests\\data\\zipped.zip
         Type = zip
         Physical Size = 158
 
@@ -1075,6 +1100,7 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
 
         File extracted successfully.
 
+        >>> # Extract a .7z file
         >>> zip_file_path = cd(output_dir, "zipped.7z")
         >>> seven_zip(zip_file_path, output_dir, verbose=True)
         7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
@@ -1097,23 +1123,31 @@ def seven_zip(path_to_zip_file, out_dir, mode='aoa', verbose=False, seven_zip_ex
         Size:       4
 
         Compressed: 138
+
         File extracted successfully.
+
+        >>> # Delete the extracted file
+        >>> delete_dir(cd(output_dir, "zipped"), verbose=True)
+        The directory "tests\\data\\zipped" is not empty.
+        Confirmed to delete it? [No]|Yes: yes
+        Deleting "tests\\data\\zipped" ... Done.
     """
 
     if seven_zip_exe is None:
         seven_zip_exe = "C:\\Program Files\\7-Zip\\7z.exe"
+        if not os.path.isfile(seven_zip_exe):
+            seven_zip_exe = "7z.exe"
+
+    if out_dir is not None:
+        out_dir = os.path.splitext(path_to_zip_file)[0]
 
     try:
-        subprocess.call('"{}" x "{}" -o"{}" -{}'.format(
-            seven_zip_exe, path_to_zip_file, out_dir, mode), **kwargs)
+        subprocess.call(
+            '"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe, path_to_zip_file, out_dir, mode), **kwargs)
         print("\nFile extracted successfully.")
-
-    except FileNotFoundError:
-        seven_zip_exe = "7z.exe"
-        subprocess.call('"{}" x "{}" -o"{}" -{}'.format(
-            seven_zip_exe, path_to_zip_file, out_dir, mode), **kwargs)
 
     except Exception as e:
         print("\nFailed to extract \"{}\". {}.".format(path_to_zip_file, e))
-        print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function. "
-              "It is not found on this device.") if verbose else ""
+        if verbose:
+            print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function. "
+                  "It may not be available on this device.")
