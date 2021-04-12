@@ -3,20 +3,19 @@ Manipulation of textual data.
 """
 
 import collections.abc
+import difflib
 import os
 import pathlib
 import re
 import string
 import subprocess
 
-import fuzzywuzzy.fuzz
 import numpy as np
 import pandas as pd
 
 from .ops import dict_to_dataframe
-from .store import get_specific_filepath_info
 
-""" Basic processing of textual data --------------------------------------------------------- """
+""" == Basic processing of textual data ====================================================== """
 
 
 def remove_punctuation(raw_txt, rm_whitespace=False):
@@ -142,10 +141,10 @@ def extract_words1upper(x, join_with=None):
     return extracted_words
 
 
-""" Comparison of textual data --------------------------------------------------------------- """
+""" == Comparison of textual data ============================================================ """
 
 
-def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
+def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
     """
     Find similar string from a list of strings.
 
@@ -154,22 +153,22 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: list or tuple or typing.Iterable
 
-    :param processor: either ``'fuzzywuzzy'`` (default) or ``'nltk'``
+    :param processor: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
 
+        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
-        - if ``processor='nltk'``, the function relies on `nltk.metrics.distance.edit_distance`_
 
     :type processor: str
 
     :param kwargs: optional parameters of
-        `fuzzywuzzy.fuzz.token_set_ratio`_ or `nltk.metrics.distance.edit_distance`_
+        `difflib.get_close_matches`_ or `fuzzywuzzy.fuzz.token_set_ratio`_
     :return: a string-type variable that should be similar to (or the same as) ``str_x``
-    :rtype: str
+    :rtype: str or None
 
     .. _`fuzzywuzzy.fuzz.token_set_ratio`:
         https://github.com/seatgeek/fuzzywuzzy
-    .. _`nltk.metrics.distance.edit_distance`:
-        https://www.nltk.org/api/nltk.metrics.html#nltk.metrics.distance.edit_distance
+    .. _`difflib.get_close_matches`:
+        https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
 
     **Examples**::
 
@@ -178,39 +177,45 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', **kwargs):
         >>> x = 'apple'
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
 
+        >>> str_similar = find_similar_str(x, lookup_lst)
+        >>> print(str_similar)
+        app
+
+        >>> str_similar = find_similar_str('x', lookup_lst)
+        >>> print(str_similar is None)
+        True
+
         >>> str_similar = find_similar_str(x, lookup_lst, processor='fuzzywuzzy')
         >>> print(str_similar)
         app
 
-        >>> str_similar = find_similar_str(x, lookup_lst, processor='nltk', substitution_cost=1)
+        >>> str_similar = find_similar_str('x', lookup_lst, processor='fuzzywuzzy')
+        >>> print(str_similar is None)
+        False
         >>> print(str_similar)
-        aapl
-
-        >>> str_similar = find_similar_str(x, lookup_lst, 'nltk', substitution_cost=100)
-        >>> print(str_similar)
-        app
+        apex
     """
 
-    assert processor in ('fuzzywuzzy', 'nltk'), "`processor` must be either \"fuzzywuzzy\" or \"nltk\"."
+    assert processor in ('difflib', 'fuzzywuzzy'), \
+        "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
-    if processor == 'fuzzywuzzy':
+    if processor == 'difflib':
+        sim_str_ = difflib.get_close_matches(str_x, lookup_list, n=1, **kwargs)
+
+        if not sim_str_:
+            sim_str = None
+        else:
+            sim_str = sim_str_[0]
+
+    elif processor == 'fuzzywuzzy':
+        import fuzzywuzzy.fuzz
 
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
 
-        if l_distances:
+        if sum(l_distances) == 0:
+            sim_str = None
+        else:
             sim_str = lookup_list[l_distances.index(max(l_distances))]
-        else:
-            sim_str = None
-
-    elif processor == 'nltk':
-        import nltk
-
-        l_distances = [nltk.edit_distance(str_x, a, **kwargs) for a in lookup_list]
-
-        if l_distances:
-            sim_str = lookup_list[l_distances.index(min(l_distances))]
-        else:
-            sim_str = None
 
     else:
         sim_str = None
@@ -227,7 +232,7 @@ def find_matched_str(str_x, lookup_list):
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: list or tuple or iter
     :return: a string-type variable that is case-insensitively the same as ``str_x``
-    :rtype: types.GeneratorType
+    :rtype: types.GeneratorType or None
 
     **Examples**::
 
@@ -258,7 +263,7 @@ def find_matched_str(str_x, lookup_list):
                 yield y
 
 
-""" Basic computation of textual data -------------------------------------------------------- """
+""" == Basic computation of textual data ===================================================== """
 
 
 def count_words(raw_txt):
@@ -537,7 +542,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-""" Transformation of textual data ----------------------------------------------------------- """
+""" == Transformation of textual data ======================================================== """
 
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
@@ -572,27 +577,29 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
         >>> path_to_rst_file = cd(dat_dir, "markdown.rst")
 
         >>> convert_md_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-        Converting "markdown.md" to RST (.rst) file ...
-        Saving "markdown.rst" to "\\tests\\data" ... Done.
+        Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
     """
 
     abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
     # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
 
     if verbose:
-        print("Converting \"{}\" to RST (.rst) file ... ".format(abs_md_path.name))
-        get_specific_filepath_info(abs_rst_path, verbose=verbose, verbose_end=" ... ")
+        rel_md_path = abs_md_path.relative_to(abs_md_path.cwd())
+        rel_rst_path = abs_rst_path.relative_to(abs_rst_path.cwd())
+        if not os.path.exists(abs_rst_path):
+            print("Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path), end=" ... ")
+        else:
+            print("Updating \"{}\" at \"{}\\\"".format(rel_rst_path.name, rel_rst_path.parent),
+                  end=" ... ")
 
     if pandoc_exe is None:
-        pandoc_exe = "C:\\Program Files\\Pandoc\\pandoc.exe"
+        pandoc_exe = '"{}"'.format("C:\\Program Files\\Pandoc\\pandoc.exe")
+        if not os.path.isfile(pandoc_exe):
+            pandoc_exe = "pandoc"
 
     try:
-        if os.path.isfile(pandoc_exe):
-            subprocess.call(
-                '"{}" "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
-        else:
-            subprocess.call(
-                'pandoc "{}" -f markdown -t rst -s -o "{}"'.format(abs_md_path, abs_rst_path))
+        subprocess.call(
+            '{} "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
 
         print("Done.") if verbose else ""
 
