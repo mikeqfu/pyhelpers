@@ -529,7 +529,7 @@ To retrieve the imported data, you can use the method :py:meth:`.read_table()<py
     >>> print("`dat_retrieval_1` and `dat` have the same shape and elements? {}".format(res))
     `dat_retrieval_1` and `dat` have the same shape and elements? True
 
-Alternatively, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here you can use this method to fetch the same data from the table *'pyhelpers_qs2'*:
+Alternatively, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` could be more flexible in reading/querying data by PostgreSQL statement (and could be much faster especially when the tabular data is fairly large). Here you can use this method to fetch the same data from the table *"dat_tbl_alt"*:
 
 .. code-block:: python
 
@@ -550,7 +550,7 @@ Alternatively, the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.r
 Drop data
 ---------
 
-To drop the table *'pyhelpers_qs1'*, you can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
+To drop the table *"dat_tbl"*, you can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
 
 .. code-block:: python
 
