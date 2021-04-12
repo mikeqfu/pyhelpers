@@ -11,6 +11,7 @@ import math
 import os
 import random
 import re
+import shutil
 import socket
 import time
 import types
@@ -20,9 +21,8 @@ import fake_useragent
 import numpy as np
 import pandas as pd
 import requests
-import tqdm
 
-""" General use ------------------------------------------------------------------------------ """
+""" == General use =========================================================================== """
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -175,7 +175,7 @@ def gps_to_utc(gps_time):
     return utc_time
 
 
-""" Basic data manipulation ------------------------------------------------------------------ """
+""" == Basic data manipulation =============================================================== """
 
 
 # Iterable
@@ -704,7 +704,7 @@ def swap_rows(array, r1, r2, as_list=False):
     return array
 
 
-""" Basic computation ------------------------------------------------------------------------ """
+""" == Basic computation ===================================================================== """
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
@@ -815,7 +815,7 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-""" Graph plotting --------------------------------------------------------------------------- """
+""" == Graph plotting ======================================================================== """
 
 
 def cmap_discretisation(cmap, n_colours):
@@ -823,7 +823,7 @@ def cmap_discretisation(cmap, n_colours):
     Create a discrete colour ramp.
 
     See also [`OPS-CD-1
-    <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
@@ -892,7 +892,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     then draws a colour bar with correctly aligned labels.
 
     See also [`OPS-CBI-1
-    <http://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
     :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
@@ -981,7 +981,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" Web scraping ----------------------------------------------------------------------------- """
+""" == Web scraping ========================================================================== """
 
 
 def is_network_connected():
@@ -1081,28 +1081,63 @@ def fake_requests_headers(randomized=False):
     return fake_headers
 
 
-def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False, **kwargs):
+def is_downloadable(url):
     """
-    Download an object available at a given URL.
+    Check whether the url contain a downloadable resource (e.g. a file).
+
+    :param url: a valid URL
+    :type url: str
+
+    **Example**::
+
+        >>> from pyhelpers.ops import is_downloadable
+
+        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> is_downloadable(logo_url)
+        True
+
+        >>> google_url = 'https://www.google.co.uk/'
+        >>> is_downloadable(google_url)
+        False
+    """
+
+    h = requests.head(url, allow_redirects=True)
+
+    content_type = h.headers.get('content-type').lower()
+
+    if content_type.startswith('text/html'):
+        downloadable = False
+    else:
+        downloadable = True
+
+    return downloadable
+
+
+def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False, verbose=False,
+                           **kwargs):
+    """
+    Download an object available at a valid URL.
 
     See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
 
-    :param url: a URL
+    :param url: a valid URL
     :type url: str
-    :param path_to_file: a full path to which the downloaded object is saved as
+    :param path_to_file: a path where the downloaded object is saved as, or a filename
     :type path_to_file: str
     :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
     :type wait_to_retry: int or float
     :param random_header: whether to go for a random agent, defaults to ``False``
     :type random_header: bool
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
     :param kwargs: optional parameters of `open`_
 
     .. _`open`: https://docs.python.org/3/library/functions.html#open
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from PIL import Image
+        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.ops import download_file_from_url
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
@@ -1128,28 +1163,39 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     if resp.status_code == 429:
         time.sleep(wait_to_retry)
 
-    total_size = int(resp.headers.get('content-length'))  # Total size in bytes
-    block_size = 1024 * 1024
-    wrote = 0
-
-    directory = os.path.dirname(path_to_file)
-    if directory == "":
+    path_to_dir = os.path.dirname(path_to_file)
+    if path_to_dir == "":
         path_to_file = os.path.join(os.getcwd(), path_to_file)
     else:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not os.path.exists(path_to_dir):
+            os.makedirs(path_to_dir)
 
-    with open(path_to_file, mode='wb', **kwargs) as f:
-        temp = resp.iter_content(block_size, decode_unicode=True)
-        for data in tqdm.tqdm(temp, total=total_size // block_size, unit='MB'):
-            wrote = wrote + len(data)
-            try:
-                f.write(data)
-            except TypeError:
-                f.write(data.encode())
-        f.close()
+    if verbose:
+        import tqdm
+
+        total_size = int(resp.headers.get('content-length'))  # Total size in bytes
+        block_size = 1024 * 1024
+        wrote = 0
+
+        with open(path_to_file, mode='wb', **kwargs) as f:
+            temp = resp.iter_content(block_size, decode_unicode=True)
+            for data in tqdm.tqdm(temp, total=total_size // block_size, unit='MB'):
+                wrote = wrote + len(data)
+                try:
+                    f.write(data)
+                except TypeError:
+                    f.write(data.encode())
+            f.close()
+
+        if total_size != 0 and wrote != total_size:
+            print("ERROR, something went wrong!")
+
+    else:
+        with open(path_to_file, 'wb') as f:
+            shutil.copyfileobj(resp.raw, f)
+            f.close()
+
+        if os.stat(path_to_file).st_size == 0:
+            print("ERROR, something went wrong! Check if the URL is downloadable.")
 
     resp.close()
-
-    if total_size != 0 and wrote != total_size:
-        print("ERROR, something went wrong!")
