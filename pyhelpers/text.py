@@ -145,7 +145,7 @@ def extract_words1upper(x, join_with=None):
 """ == Comparison of textual data ============================================================ """
 
 
-def find_similar_str(str_x, lookup_list, processor='difflib', ignore_punctuation=True, **kwargs):
+def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuation=True, **kwargs):
     """
     Find similar string from a list of strings.
 
