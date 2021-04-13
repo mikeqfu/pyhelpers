@@ -10,6 +10,7 @@ import re
 import string
 import subprocess
 
+import fuzzywuzzy.fuzz
 import numpy as np
 import pandas as pd
 
@@ -144,7 +145,7 @@ def extract_words1upper(x, join_with=None):
 """ == Comparison of textual data ============================================================ """
 
 
-def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
+def find_similar_str(str_x, lookup_list, processor='difflib', ignore_punctuation=True, **kwargs):
     """
     Find similar string from a list of strings.
 
@@ -153,13 +154,15 @@ def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: list or tuple or typing.Iterable
 
-    :param processor: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
+    :param processor: options include ``'fuzzywuzzy'`` (default) and ``'difflib'``
 
-        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
 
     :type processor: str
 
+    :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
+    :type ignore_punctuation: bool
     :param kwargs: optional parameters of
         `difflib.get_close_matches`_ or `fuzzywuzzy.fuzz.token_set_ratio`_
     :return: a string-type variable that should be similar to (or the same as) ``str_x``
@@ -185,32 +188,19 @@ def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
         >>> print(str_similar is None)
         True
 
-        >>> str_similar = find_similar_str(x, lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar = find_similar_str(x, lookup_lst, processor='difflib')
         >>> print(str_similar)
         app
 
-        >>> str_similar = find_similar_str('x', lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar = find_similar_str('x', lookup_lst, processor='difflib')
         >>> print(str_similar is None)
-        False
-        >>> print(str_similar)
-        apex
+        True
     """
 
     assert processor in ('difflib', 'fuzzywuzzy'), \
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
-    if processor == 'difflib':
-        str_x_ = str_x.lower()
-        lookup_list_ = {x_.lower(): x_ for x_ in lookup_list}
-        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=1, **kwargs)
-
-        if not sim_str_:
-            sim_str = None
-        else:
-            sim_str = lookup_list_[sim_str_[0]]
-
-    elif processor == 'fuzzywuzzy':
-        import fuzzywuzzy.fuzz
+    if processor == 'fuzzywuzzy':
 
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
 
@@ -218,6 +208,20 @@ def find_similar_str(str_x, lookup_list, processor='difflib', **kwargs):
             sim_str = None
         else:
             sim_str = lookup_list[l_distances.index(max(l_distances))]
+
+    elif processor == 'difflib':
+        if not ignore_punctuation:
+            str_x_ = str_x.lower()
+            lookup_list_ = {x_.lower(): x_ for x_ in lookup_list}
+        else:
+            str_x_ = remove_punctuation(str_x.lower())
+            lookup_list_ = {remove_punctuation(x_.lower()): x_ for x_ in lookup_list}
+        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=1, **kwargs)
+
+        if not sim_str_:
+            sim_str = None
+        else:
+            sim_str = lookup_list_[sim_str_[0]]
 
     else:
         sim_str = None
