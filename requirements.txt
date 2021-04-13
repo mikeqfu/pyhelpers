@@ -19,9 +19,10 @@ et-xmlfile==1.0.1
 fake-useragent==0.1.11
 fuzzywuzzy==0.18.0
 GDAL==3.2.2
+greenlet==1.0.0
 idna==2.10
 imagesize==1.2.0
-importlib-metadata==3.10.0
+importlib-metadata==3.10.1
 ipykernel==5.5.3
 ipython==7.22.0
 ipython-genutils==0.2.0
