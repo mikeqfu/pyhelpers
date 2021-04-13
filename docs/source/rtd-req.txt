@@ -8,5 +8,6 @@ requests
 psycopg2
 SQLAlchemy
 python-rapidjson
+fuzzywuzzy
 Sphinx==3.5.4
 sphinx-rtd-theme==0.5.2
