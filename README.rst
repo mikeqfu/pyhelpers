@@ -10,8 +10,8 @@ PyHelpers
     :target: https://www.python.org/downloads/windows/
 .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers?color=green&label=License
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-.. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
-    :target: https://pypistats.org/packages/pyhelpers
+.. |Downloads| image:: https://static.pepy.tech/personalized-badge/pyhelpers?period=total&units=international_system&left_color=grey&right_color=yellow&left_text=Downloads
+    :target: https://pepy.tech/project/pyhelpers
 .. |DOI| image:: https://zenodo.org/badge/173177909.svg
     :target: https://zenodo.org/badge/latestdoi/173177909
 
