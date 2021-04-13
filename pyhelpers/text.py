@@ -186,7 +186,10 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
 
         >>> str_similar = find_similar_str('x', lookup_lst)
         >>> print(str_similar is None)
-        True
+        False
+
+        >>> print(str_similar)
+        apex
 
         >>> str_similar = find_similar_str(x, lookup_lst, processor='difflib')
         >>> print(str_similar)
