@@ -159,6 +159,7 @@ To delete the directory *"pyhelpers_quick_start\\"*, you can use the function :p
     Confirmed to delete it? [No]|Yes: yes
     Deleting "pyhelpers_quick_start\" ... Done.
 
+.. _ops-examples:
 
 Download an image file
 ======================
@@ -174,7 +175,8 @@ For example, you can use the function :py:func:`download_file_from_url()<pyhelpe
 
 .. note::
 
-    The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ (and, if ``verbose=True``, `tqdm`_).
+    - The function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` requires `requests`_ (and, if ``verbose=True``, `tqdm`_).
+    - `tqdm`_ is not required for the installation of PyHelpers (>=1.2.15). If it is not yet available on your system, you have to install it before you can proceed with setting ``verbose=True``.
 
 Suppose you would like to download a Python logo from the homepage of `Python`_, firstly, specify the URL:
 
@@ -190,6 +192,13 @@ Then specify where you would like to save the .png file and what the filename it
     >>> python_logo_file_path = cd(path_to_qs, "images", python_logo_filename)
 
     >>> download_file_from_url(url, python_logo_file_path)
+
+Try also with ``verbose=True``:
+
+.. code-block:: python
+
+    >>> download_file_from_url(url, python_logo_file_path, verbose=True)
+    1MB [00:00, 10.00MB/s]
 
 You may view the downloaded picture by using `Pillow`_:
 
@@ -382,23 +391,23 @@ For example, if you have a `str`_ type variable named ``string`` and would like 
     ...                'Western']
 
     >>> # Find the most similar word to 'ang'
-    >>> result_1 = find_similar_str(string, lookup_list, processor='difflib')
+    >>> result_1 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
 
     >>> print(result_1)
     Anglia
 
-The parameter ``processor`` for the function is by default ``'difflib'``, meaning that it would use the Python package `difflib`_ to perform the task.
+The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, meaning that it would use the Python package `FuzzyWuzzy`_ to perform the task.
 
-Alternatively, you could also turn to `FuzzyWuzzy`_ by setting ``processor`` to be ``'fuzzywuzzy'``:
+Alternatively, you could also turn to `difflib`_ by setting ``processor`` to be ``'difflib'``:
 
 .. note::
 
-    `FuzzyWuzzy`_ is not required for the installation of PyHelpers (>=1.2.15). If it is not yet available on your system, you have to install it before you can proceed with setting ``processor='fuzzywuzzy'``.
+    Options for the ``processor`` in older versions of PyHelpers (<=1.2.14) were ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been deprecated and replaced with ``'difflib'`` since v1.2.15.
 
 .. code-block:: python
 
     >>> # Find the most similar word to 'ang' by using NLTK
-    >>> result_2 = find_similar_str(string, lookup_list, processor='fuzzywuzzy')
+    >>> result_2 = find_similar_str(string, lookup_list, processor='difflib')
 
     >>> print(result_2)
     Anglia
