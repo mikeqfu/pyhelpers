@@ -152,7 +152,7 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
     :param str_x: a string-type variable
     :type str_x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: list or tuple or typing.Iterable
+    :type lookup_list: list or tuple
 
     :param processor: options include ``'fuzzywuzzy'`` (default) and ``'difflib'``
 
@@ -239,9 +239,9 @@ def find_matched_str(str_x, lookup_list):
     :param str_x: a string-type variable; if ``None``, the function will return ``None``
     :type str_x: str or None
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: list or tuple or iter
+    :type lookup_list: typing.Iterable
     :return: a string-type variable that is case-insensitively the same as ``str_x``
-    :rtype: types.GeneratorType or None
+    :rtype: typing.Generator[typing.Iterable] or None
 
     **Examples**::
 

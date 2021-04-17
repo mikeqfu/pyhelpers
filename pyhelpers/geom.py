@@ -28,7 +28,7 @@ def transform_geom_point_type(*pts, as_geom=True):
     :param as_geom: whether to return point(s) as `shapely.geometry.Point`_, defaults to ``True``
     :type as_geom: bool
     :return: a sequence of points (incl. None, if errors occur)
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[shapely.geometry.Point, tuple]
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
 
@@ -528,7 +528,7 @@ def find_closest_point(pt, ref_pts, as_geom=False):
     :param pt: (longitude, latitude)
     :type pt: tuple or list or shapely.geometry.Point
     :param ref_pts: a sequence of reference (tuple/list of length 2) points
-    :type ref_pts: tuple or list or iterable
+    :type ref_pts: typing.Iterable
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
     :return: the point closest to ``pt``

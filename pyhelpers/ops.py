@@ -14,7 +14,6 @@ import re
 import shutil
 import socket
 import time
-import types
 import urllib.parse
 
 import fake_useragent
@@ -191,7 +190,7 @@ def split_list_by_size(lst, sub_len):
     :param sub_len: length of a sub-list
     :type sub_len: int
     :return: a sequence of ``sub_len``-sized sub-lists from ``lst``
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[list]
 
     **Example**::
 
@@ -220,7 +219,7 @@ def split_list(lst, num_of_sub):
     :param num_of_sub: number of sub-lists
     :type num_of_sub: int
     :return: a total of ``num_of_sub`` sub-lists from ``lst``
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[list]
 
     **Example**::
 
@@ -246,11 +245,11 @@ def split_iterable(iterable, chunk_size):
     See also [`OPS-SI-1 <https://stackoverflow.com/questions/24527006/>`_].
 
     :param iterable: iterable object
-    :type iterable: list or tuple or collections.abc.Iterable
+    :type iterable: typing.Iterable
     :param chunk_size: length of a chunk
     :type chunk_size: int
     :return: a sequence of equally-sized chunks from ``iterable``
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[typing.Iterable]
 
     **Examples**::
 
@@ -354,7 +353,7 @@ def get_all_values_from_nested_dict(key, target_dict):
     :param target_dict: a (nested) dictionary
     :type target_dict: dict
     :return: all values of the ``key`` within the given ``target_dict``
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[typing.Iterable]
 
     **Examples**::
 
@@ -465,7 +464,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
     :param column_names: a sequence of column names, if ``None`` (default), all columns
     :type column_names: None or collections.abc.Iterable
     :return: position index of the column that contains ``NaN``
-    :rtype: types.GeneratorType
+    :rtype: typing.Generator[typing.Iterable]
 
     **Example**::
 
@@ -776,7 +775,7 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     :param date: a date
     :type date: str or datetime.datetime
     :param lookup_dates: an array of dates
-    :type lookup_dates: list or tuple or collections.abc.Iterable
+    :type lookup_dates: typing.Iterable
     :param as_datetime: whether to return a datetime.datetime-formatted date, defaults to ``False``
     :type as_datetime: bool
     :param fmt: datetime format, defaults to ``'%Y-%m-%d %H:%M:%S.%f'``

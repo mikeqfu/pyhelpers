@@ -1171,7 +1171,7 @@ class PostgreSQL:
             * callable (e.g. ``PostgreSQL.psql_insert_copy``)
               with signature ``(pd_table, conn, keys, data_iter)``.
 
-        :type method: str or None or types.FunctionType
+        :type method: str or None or typing.Callable
         :param index: whether to dump the index as a column
         :type index: bool
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
