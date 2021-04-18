@@ -4,7 +4,6 @@ Basic data manipulation with SQL.
 *(The current release includes* `PostgreSQL <https://www.postgresql.org/>`_ *only.)*
 """
 
-import copy
 import csv
 import gc
 import getpass
@@ -187,7 +186,8 @@ class PostgreSQL:
             if confirmed("The database \"{}\" does not exist. "
                          "Proceed by creating it?".format(self.database_name),
                          confirmation_required=confirm_new_db):
-                print("Connecting {}".format(self.address), end=" ... ") if verbose else ""
+                if verbose:
+                    print("Connecting {}".format(self.address), end=" ... ")
 
                 self.engine.execute('CREATE DATABASE "{}";'.format(self.database_name))
                 self.engine.dispose()
@@ -198,7 +198,9 @@ class PostgreSQL:
 
         try:  # Create a SQLAlchemy connectable
             self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
-            print("Successfully.") if verbose else ""
+
+            if verbose:
+                print("Successfully.")
 
         except Exception as e:
             print("Failed. {}.".format(e))
@@ -280,10 +282,12 @@ class PostgreSQL:
             self.disconnect_database()
             self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
 
-            print("Done.") if verbose else ""
+            if verbose:
+                print("Done.")
 
         else:
-            print("The database already exists.") if verbose else ""
+            if verbose:
+                print("The database already exists.")
 
         self.connect_database(database_name)
 
@@ -322,7 +326,8 @@ class PostgreSQL:
 
             self.address = "{}:***@{}:{}/{}".format(self.user, self.host, self.port, self.database_name)
 
-            print("Connecting {}".format(self.address), end=" ... ") if verbose else ""
+            if verbose:
+                print("Connecting {}".format(self.address), end=" ... ")
 
             try:
                 self.database_info['database'] = self.database_name
@@ -334,7 +339,8 @@ class PostgreSQL:
                 self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
                 # self.connection = self.engine.raw_connection()
 
-                print("Successfully.") if verbose else ""
+                if verbose:
+                    print("Successfully.")
 
             except Exception as e:
                 print("Failed. {}.".format(e))
@@ -413,7 +419,8 @@ class PostgreSQL:
                 'FROM pg_stat_activity '
                 'WHERE datname = \'{}\' AND pid <> pg_backend_pid();'.format(db_name))
 
-            print("Done.") if verbose else ""
+            if verbose:
+                print("Done.")
 
         except Exception as e:
             print("Failed. {}".format(e))
@@ -504,7 +511,8 @@ class PostgreSQL:
                 try:
                     self.engine.execute('DROP DATABASE "{}"'.format(db_name))
 
-                    print("Done.") if verbose else ""
+                    if verbose:
+                        print("Done.")
 
                 except Exception as e:
                     print("Failed. {}".format(e))
@@ -586,7 +594,8 @@ class PostgreSQL:
             try:
                 self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name))
 
-                print("Done.") if verbose else ""
+                if verbose:
+                    print("Done.")
 
             except Exception as e:
                 print("Failed. {}".format(e))
@@ -594,13 +603,13 @@ class PostgreSQL:
         else:
             print("The schema \"{}\" already exists.".format(schema_name))
 
-    def _msg_for_multi_schemas(self, item_names, desc='schema'):
+    def _msg_for_multi_items(self, item_names, desc):
         """
-        Formulate printing message for multiple schemas.
+        Formulate printing message for multiple items.
 
         :param item_names: name of one table/schema, or names of several tables/schemas
-        :type item_names: str or collections.abc.Iterable
-        :param desc: for additional description, defaults to ``'schema'``
+        :type item_names: str or typing.Iterable
+        :param desc: for additional description
         :type desc: str
         :return: printing message
         :rtype: tuple
@@ -614,49 +623,52 @@ class PostgreSQL:
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> schema_name = 'points'
-            >>> schemas, msg = testdb._msg_for_multi_schemas(schema_name, desc='schema')
+            >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_name, desc='schema')
 
             >>> print(schemas)
             ['points']
-            >>> print(msg)
+            >>> print(prt_pl, prt_name)
             schema "points"
 
             >>> schema_names = ['points', 'lines', 'polygons']
-            >>> schemas, msg = testdb._msg_for_multi_schemas(schema_names, desc='schema')
+            >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_names, desc='schema')
 
             >>> print(schemas)
             ['points', 'lines', 'polygons']
-            >>> print(msg)
-            schemas:
-                "points",
-                "lines" and
+            >>> print(prt_pl, prt_name)
+            schemas
+                "points"
+                "lines"
                 "polygons"
 
         :meta private:
         """
 
         if item_names is None:
-            inspector = sqlalchemy.inspect(self.engine)
-            items = [x for x in inspector.get_schema_names()
-                     if x != 'public' and x != 'information_schema']
+            item_names_ = [
+                x for x in sqlalchemy.inspect(self.engine).get_schema_names()
+                if x != 'public' and x != 'information_schema']
         else:
-            items = [item_names] if isinstance(item_names, str) else copy.copy(item_names)
+            item_names_ = [item_names] if isinstance(item_names, str) else item_names
 
-        if len(items) == 1:
-            print_plural = "{} ".format(desc)
-            print_schema = "\"{}\"".format(items[0])
+        if len(item_names_) == 1:
+            print_plural = "{}".format(desc)
+            try:
+                print_items = "\"{}\"".format(item_names_[0])
+            except TypeError:
+                print_items = "\"{}\"".format(list(item_names_)[0])
         else:
-            print_plural = "{}s: ".format(desc)
-            print_schema = ("\n\t\"{}\"" * len(items)).format(*items)
+            print_plural = "{}s".format(desc)
+            print_items = ("\n\t\"{}\"" * len(item_names_)).format(*item_names_)
 
-        return items, print_plural + print_schema
+        return item_names_, print_plural, print_items
 
     def drop_schema(self, schema_names, confirmation_required=True, verbose=False):
         """
         Drop a schema in the database being connected.
 
         :param schema_names: name of one schema, or names of multiple schemas
-        :type schema_names: str or collections.abc.Iterable
+        :type schema_names: str or typing.Iterable
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
@@ -682,12 +694,11 @@ class PostgreSQL:
             Creating a schema: "polygons" ... Done.
 
             >>> testdb.drop_schema(new_schema_names + new_schema_names_, verbose=True)
-            To drop the following schemas:
+            To drop the following schemas from postgres:***@localhost:5432/testdb:
                 "points"
                 "lines"
                 "polygons"
                 "test_schema"
-             from postgres:***@localhost:5432/testdb
             ? [No]|Yes: yes
             Dropping ...
                 "points" ... Done.
@@ -702,45 +713,49 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        schemas, schemas_msg = self._msg_for_multi_schemas(schema_names)
+        schemas, print_plural, print_schema = self._msg_for_multi_items(schema_names, desc='schema')
 
         if len(schemas) == 1:
-            cfm_msg_ = "To drop the {} from {}\n?"
+            cfm_msg = "To drop the {} \"{}\" from {}\n?".format(print_plural, print_schema, self.address)
         else:
-            cfm_msg_ = "To drop the following {}\n from {}\n?"
+            cfm_msg = "To drop the following {} from {}: {}\n?".format(
+                print_plural, self.address, print_schema)
 
-        if confirmed(cfm_msg_.format(schemas_msg, self.address), confirmation_required):
+        if confirmed(cfm_msg, confirmation_required=confirmation_required):
 
             if verbose:
                 if len(schemas) == 1:
                     if confirmation_required:
-                        log_msg = "Dropping {}".format(schemas_msg.split(" ")[1])
+                        log_msg = "Dropping {}".format(print_schema)
                     else:
-                        log_msg = "Dropping the {} from {}".format(schemas_msg, self.address)
+                        log_msg = "Dropping the {}: ".format(print_plural, print_schema)
                     print(log_msg, end=" ... ")
-
-                else:
+                else:  # len(schemas) > 1
                     if confirmation_required:
                         print("Dropping ... ")
                     else:
-                        print("Dropping the following schemas from {}:".format(self.address))
+                        print("Dropping the following {} from {}:".format(print_plural, self.address))
 
             for schema in schemas:
                 if not self.schema_exists(schema):
                     # `schema` does not exist
-                    if len(schemas) == 1:
-                        print("Such a schema does not exist.") if verbose else ""
-                    else:
-                        print("\t\"{}\" (   does not exist.)".format(schema)) if verbose else ""
+                    if verbose:
+                        if len(schemas) == 1:
+                            print("The schema \"{}\" does not exist.".format(schemas[0]))
+                        else:
+                            print("\t\"{}\" (does not exist.)".format(schema))
 
                 else:
-                    if len(schemas) > 1:
-                        print("\t\"{}\"".format(schema), end=" ... ") if verbose else ""
+                    if len(schemas) > 1 and verbose:
+                        print("\t\"{}\"".format(schema), end=" ... ")
 
                     try:
                         # schema_ = ('%s, ' * (len(schemas) - 1) + '%s') % tuple(schemas)
                         self.engine.execute('DROP SCHEMA "{}" CASCADE;'.format(schema))
-                        print("Done.") if verbose else ""
+
+                        if verbose:
+                            print("Done.")
+
                     except Exception as e:
                         print("Failed. {}".format(e))
 
@@ -879,7 +894,8 @@ class PostgreSQL:
         table_name_ = '"{schema}"."{table}"'.format(schema=schema_name, table=table_name)
 
         if self.table_exists(table_name=table_name, schema_name=schema_name):
-            print("The table {} already exists.".format(table_name_)) if verbose else ""
+            if verbose:
+                print("The table {} already exists.".format(table_name_))
 
         else:
             if not self.schema_exists(schema_name):
@@ -891,7 +907,8 @@ class PostgreSQL:
 
                 self.engine.execute('CREATE TABLE {} ({});'.format(table_name_, column_specs))
 
-                print("Done.") if verbose else ""
+                if verbose:
+                    print("Done.")
 
             except Exception as e:
                 print("Failed. {}".format(e))
@@ -963,7 +980,10 @@ class PostgreSQL:
 
                 try:
                     self.engine.execute('DROP TABLE "{}"."{}" CASCADE;'.format(schema_name, table_name))
-                    print("Done.") if verbose else ""
+
+                    if verbose:
+                        print("Done.")
+
                 except Exception as e:
                     print("Failed. {}".format(e))
 
@@ -1099,7 +1119,8 @@ class PostgreSQL:
                 self.engine.execute(
                     'ALTER TABLE {} SET SCHEMA "{}";'.format(table_name_, new_schema_name))
 
-                print("Done.") if verbose else ""
+                if verbose:
+                    print("Done.")
 
             except Exception as e:
                 print("Failed. {}".format(e))
