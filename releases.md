@@ -2,6 +2,28 @@
 
 
 
+#### [1.2.15](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.15)
+
+*19 April 2021*
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.14...1.2.15) since [v1.2.14](https://github.com/mikeqfu/pyhelpers/tree/ba06e05fe87e3acbbf05c2f7b31d94775b08664a):
+
+- in the module [text](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/text.py):
+  - modified the function [find_similar_str()](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/text.py#L148-L232)
+  - fixed [a minor bug](https://github.com/mikeqfu/pyhelpers/commit/a8dc317e359c61195509b23a96fed06e807653a6) in the function [convert_md_to_rst()](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/text.py#L557-L622) 
+- in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/ops.py):
+  - modified the function [download_file_from_url()](https://github.com/mikeqfu/pyhelpers/commit/b731d329eca2fa39dc6ae934030223b22abb5ff3#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR1116-R1201)
+  - added a new function [is_downloadable()](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/ops.py#L1084-L1113)
+- in the module [store](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/store.py): 
+  - fixed [a minor bug](https://github.com/mikeqfu/pyhelpers/commit/82aefd81d07c2f5d1043d74a92522e34a79b456b) in the function [save_svg_as_emf()](https://github.com/mikeqfu/pyhelpers/blob/8b5d25875264a5cc0b397296ce12e9ff53300215/pyhelpers/store.py#L529-L610)
+- in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/66c9199c409499cab8b3c4e2ef7cabc3d826af6b/pyhelpers/sql.py):
+  - modified the method [.import_data()](https://github.com/mikeqfu/pyhelpers/commit/57df1b9a91f6ff87542f8ce4045ef3e7b036885f#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL1163-R1233) and [import statements](https://github.com/mikeqfu/pyhelpers/commit/57df1b9a91f6ff87542f8ce4045ef3e7b036885f#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL18-R18)
+  - fixed [a bug](https://github.com/mikeqfu/pyhelpers/commit/66c9199c409499cab8b3c4e2ef7cabc3d826af6b) in the method [.drop_schema()](https://github.com/mikeqfu/pyhelpers/blob/66c9199c409499cab8b3c4e2ef7cabc3d826af6b/pyhelpers/sql.py#L666-L760)
+
+**For more details, check out [PyHelpers 1.2.15 documentation](https://pyhelpers.readthedocs.io/en/1.2.15/).**
+
+
+
 #### [1.2.14](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.14)
 
 *27 March 2021*
