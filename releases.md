@@ -103,7 +103,7 @@
 
 *5 January 2021*
 
-*(Note that v1.2.8 has been deprecated and permanently removed.)*
+*(Note that v1.2.8 was deprecated and permanently removed.)*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.7...1.2.9) since [v1.2.7](https://github.com/mikeqfu/pyhelpers/tree/cd74ab1de677a40fb903947ff79aa99457a69f0b):
 
@@ -113,8 +113,6 @@
   - [validate_input_data_dir()](https://github.com/mikeqfu/pyhelpers/commit/f81c92d613a44272b61ee0d8fee085628e2e0880) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/dir.py)
   - [confirmed()](https://github.com/mikeqfu/pyhelpers/commit/eb1fa9b79a3c696c29fb0b5457fbc135cb49503e#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR23) and [fake_requests_headers()](https://github.com/mikeqfu/pyhelpers/commit/ce1caaef6bf306a5a0e4014f38ed1c0a159ff529#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR887) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/ops.py)
   - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/f43192408c548ad3d60df196d36dd970f022f954/pyhelpers/sql.py#L54) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/sql.py)
-
-**For more details, check out [PyHelpers 1.2.9 documentation](https://pyhelpers.readthedocs.io/en/1.2.9/).** 
 
 
 
@@ -133,8 +131,6 @@
   - [get_acronym()](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R61)
   - [extract_words1upper()](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R107)
 
-**For more details, check out [PyHelpers 1.2.7 documentation](https://pyhelpers.readthedocs.io/en/1.2.7/).** 
-
 
 
 #### [1.2.6](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.6)
@@ -149,9 +145,7 @@
 - renamed the following functions in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py):
   - [~~find_closest_point_from()~~](https://github.com/mikeqfu/pyhelpers/commit/ba2370b8511a06763076033546a24dd60ec23927#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L730) to [find_closest_point()](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py#L550)
   - [~~find_closest_points_between()~~](https://github.com/mikeqfu/pyhelpers/commit/ba2370b8511a06763076033546a24dd60ec23927#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L793) to [find_closest_points()](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py#L613)
-- minimised the requirements for the installation of the package (as some import statements have been put into the functions that use them, see also the [note](https://pyhelpers.readthedocs.io/en/latest/installation.html) for installation)
-
-**For more details, check out [PyHelpers 1.2.6 documentation](https://pyhelpers.readthedocs.io/en/1.2.6/).** 
+- minimised the requirements for the installation of the package (as some import statements were put into the functions that use them, see also the [note](https://pyhelpers.readthedocs.io/en/latest/installation.html) for installation)
 
 
 
@@ -167,8 +161,6 @@
 - removed the functions [~~get_variable_name()~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL165) and [~~get_variable_names()~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL203) from the module [ops](https://github.com/mikeqfu/pyhelpers/blob/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0/pyhelpers/ops.py)
 - modified the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py#L21) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py) with [bug fixes](https://github.com/mikeqfu/pyhelpers/commit/116c7c1872fc8916856ae067e1edc89f8f8580bd)
 
-**For more details, check out [PyHelpers 1.2.5 documentation](https://pyhelpers.readthedocs.io/en/1.2.5/).** 
-
 
 
 #### [1.2.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.4)
@@ -179,8 +171,6 @@
 
 - modified the function [fake_requests_headers()](https://github.com/mikeqfu/pyhelpers/commit/0462c6bb3e3d32d6266ce2a713d99c90f8b5a0c6) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/ef9caca1e696f699633a4ee619e57c9f27ae6ce2/pyhelpers/ops.py)
 - made [a minor change](https://github.com/mikeqfu/pyhelpers/commit/ef4149590136a9e665e66f38f5decf64d6ccdb2c) to the installation requirements
-
-**For more details, check out [PyHelpers 1.2.4 documentation](https://pyhelpers.readthedocs.io/en/1.2.4/).** 
 
 
 
@@ -196,8 +186,6 @@
   - [download_file_from_url()](https://github.com/mikeqfu/pyhelpers/blob/d3e84b9af834d118d555ae0e41fb32ffa7355b9f/pyhelpers/ops.py#L36) (with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/76f2f097cf2bad365f84bf9fa9ba8c97454fe7ee)) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/d3e84b9af834d118d555ae0e41fb32ffa7355b9f/pyhelpers/ops.py)
   - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaR19) with [bug fixes](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/e3f8ba9ffb775d030bde7aa18df131cf6e45b5b2/pyhelpers/sql.py)
 
-**For more details, check out [PyHelpers 1.2.3 documentation](https://pyhelpers.readthedocs.io/en/1.2.3/).** 
-
 
 
 #### [1.2.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.2)
@@ -211,15 +199,13 @@
   - [split_list()](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL222)
   - [get_all_values_from_nested_dict()](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL341)
 
-**For more details, check out [PyHelpers 1.2.2 documentation](https://pyhelpers.readthedocs.io/en/1.2.2/).** 
-
 
 
 #### [1.2.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.1)
 
 *1 July 2020*
 
-*(Note that the v1.2.0 has been deprecated and permanently removed.)*
+*(Note that the v1.2.0 was deprecated and permanently removed.)*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.1.2...1.2.1) since [v1.1.2](https://github.com/mikeqfu/pyhelpers/tree/7b6a647bc7d672c604306bb335b783663b6d0b9d):
 
@@ -248,7 +234,7 @@
 
 *30 May 2020*
 
-*(Note that v1.1.1 has been deprecated and permanently removed.)*
+*(Note that v1.1.1 was deprecated and permanently removed.)*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.1.0...1.1.2) since [v1.1.0](https://github.com/mikeqfu/pyhelpers/tree/2326cd2e11e8264bc96a71386755206123b554d1):
 
@@ -319,7 +305,7 @@
 
 *28 January 2020*
 
-*(Note that v1.0.23 has been deprecated and permanently removed.)*
+*(Note that v1.0.23 was deprecated and permanently removed.)*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.22...1.0.24) since [v1.0.22](https://github.com/mikeqfu/pyhelpers/tree/9826ef52afc1018c9e17b518de6ea5ebec7edc88):
 
@@ -368,7 +354,7 @@
 
 *28 November 2019*
 
-*(Note that v1.0.18 has been deprecated and permanently removed.)*
+*(Note that **v1.0.18** was deprecated and permanently removed.)*
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.17...1.0.19) since [v1.0.17](https://github.com/mikeqfu/pyhelpers/tree/3961ec9a2a2c15d60454551d758b20875cd02570):
 
@@ -411,6 +397,8 @@
 
 **A brand-new release.**
 
-*Note that the initial release and later versions up to v1.0.14 have been deprecated and permanently removed.*
+
+
+The initial release and all the early versions up to v1.0.14 were deprecated and permanently removed.
 
 
