@@ -2,6 +2,7 @@
 Manipulation of directories.
 """
 
+import copy
 import os
 import shutil
 
@@ -12,7 +13,7 @@ from .ops import confirmed
 """ == Change directories ==================================================================== """
 
 
-def cd(*sub_dir, mkdir=False, **kwargs):
+def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
     """
     Change directory and get path to sub-directories / files.
 
@@ -20,6 +21,10 @@ def cd(*sub_dir, mkdir=False, **kwargs):
     :type sub_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
+    :param cwd: current working directory, defaults to ``None``
+    :type cwd: str or None
+    :param back_check:
+    :type back_check: bool
     :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return: an absolute path to a directory (or a file)
     :rtype: str
@@ -31,8 +36,8 @@ def cd(*sub_dir, mkdir=False, **kwargs):
         >>> import os
         >>> from pyhelpers.dir import cd
 
-        >>> cwd = cd()  # Current working directory
-        >>> print(os.path.relpath(cwd))
+        >>> current_wd = cd()  # Current working directory
+        >>> print(os.path.relpath(current_wd))
         .
 
         # (The directory will be created if it does not exists.)
@@ -41,9 +46,15 @@ def cd(*sub_dir, mkdir=False, **kwargs):
         tests
     """
 
-    path = os.getcwd()  # Current working directory
+    # Current working directory
+    path = os.getcwd() if cwd is None else copy.copy(cwd)
+
+    if back_check:
+        while not os.path.exists(path):
+            path = os.path.dirname(path)
+
     for x in sub_dir:
-        path = os.path.join(path, x)
+        path = os.path.dirname(path) if x == ".." else os.path.join(path, x)
 
     if mkdir:
         path_to_file, ext = os.path.splitext(path)
@@ -66,11 +77,11 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
+    :param kwargs: optional parameters of `pyhelpers.dir.cd`_
     :return path: an absolute path to a directory (or a file) under ``data_dir``
     :rtype: str
 
-    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
+    .. _`pyhelpers.dir.cd`: https://pyhelpers.readthedocs.io/en/latest/_generated/pyhelpers.dir.cd.html
 
     **Examples**::
 
