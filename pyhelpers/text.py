@@ -145,7 +145,8 @@ def extract_words1upper(x, join_with=None):
 """ == Comparison of textual data ============================================================ """
 
 
-def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuation=True, **kwargs):
+def find_similar_str(str_x, lookup_list, n=1, processor='fuzzywuzzy', ignore_punctuation=True,
+                     **kwargs):
     """
     Find similar string from a list of strings.
 
@@ -153,7 +154,9 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
     :type str_x: str
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: list or tuple
-
+    :param n: number of similar strings to return, defaults to ``1``;
+        if ``None``, to sort the ``lookup_list`` in descending order of similarity
+    :type n: int or None
     :param processor: options include ``'fuzzywuzzy'`` (default) and ``'difflib'``
 
         - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
@@ -166,7 +169,7 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
     :param kwargs: optional parameters of
         `difflib.get_close_matches`_ or `fuzzywuzzy.fuzz.token_set_ratio`_
     :return: a string-type variable that should be similar to (or the same as) ``str_x``
-    :rtype: str or None
+    :rtype: str or list or None
 
     .. _`fuzzywuzzy.fuzz.token_set_ratio`:
         https://github.com/seatgeek/fuzzywuzzy
@@ -203,6 +206,8 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
     assert processor in ('difflib', 'fuzzywuzzy'), \
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
+    n_ = len(lookup_list) if n is None else n
+
     if processor == 'fuzzywuzzy':
 
         l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
@@ -210,7 +215,10 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
         if sum(l_distances) == 0:
             sim_str = None
         else:
-            sim_str = lookup_list[l_distances.index(max(l_distances))]
+            if n_ == 1:
+                sim_str = lookup_list[l_distances.index(max(l_distances))]
+            else:
+                sim_str = [lookup_list[i] for i in np.argsort(l_distances)[::-1]][:n_]
 
     elif processor == 'difflib':
         if not ignore_punctuation:
@@ -219,7 +227,8 @@ def find_similar_str(str_x, lookup_list, processor='fuzzywuzzy', ignore_punctuat
         else:
             str_x_ = remove_punctuation(str_x.lower())
             lookup_list_ = {remove_punctuation(x_.lower()): x_ for x_ in lookup_list}
-        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=1, **kwargs)
+
+        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=n_, **kwargs)
 
         if not sim_str_:
             sim_str = None
