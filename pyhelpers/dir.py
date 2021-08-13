@@ -67,6 +67,54 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
     return path
 
 
+def go_from_altered_cwd(folder_name):
+    """
+    Get the path to the ``folder_name`` from the altered working directory.
+
+    :param folder_name: a target folder
+    :type folder_name: str
+    :return: path to altered working directory
+    :rtype: str
+
+    **Example**::
+
+        >>> import os
+        >>> from pyhelpers.dir import go_from_altered_cwd
+
+        >>> cwd = os.getcwd()
+        >>> print(cwd)
+        <cwd>
+
+        >>> # If the current working directory has been altered to "<cwd>\\test", and
+        >>> # we'd like to set it to be "<cwd>\\target"
+        >>> fdn = "target"
+        >>> a_cwd = go_from_altered_cwd(fdn)
+        "<cwd>\\target"
+    """
+
+    target = cd(folder_name)
+
+    if os.path.isdir(target):
+        altered_cwd = target
+
+    else:
+        original_cwd = os.path.dirname(target)
+        altered_cwd = os.path.join(original_cwd, folder_name)
+
+        if altered_cwd == target:
+            pass
+
+        else:
+            while not os.path.isdir(altered_cwd):
+                original_cwd = os.path.dirname(original_cwd)
+                if original_cwd == cd():
+                    break
+                else:
+                    altered_cwd = os.path.join(original_cwd, folder_name)
+
+    return altered_cwd
+
+
 def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
     Get path to ``data_dir`` and/or sub-directories / files.
