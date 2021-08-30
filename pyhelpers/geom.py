@@ -3,12 +3,15 @@ Manipulation of geometric/geographical data.
 """
 
 import collections.abc
+import copy
 import functools
+import typing
 
 import numpy as np
 import pyproj
 import scipy.spatial.ckdtree
 import shapely.geometry
+import shapely.ops
 
 from .ops import create_rotation_matrix
 
@@ -35,56 +38,47 @@ def transform_geom_point_type(*pts, as_geom=True):
     **Examples**::
 
         >>> from pyhelpers.geom import transform_geom_point_type
+        >>> from shapely.geometry import Point
 
-        >>> pt_x = 1.5429, 52.6347
-        >>> pt_y = 1.4909, 52.6271
+        >>> pt1 = 1.5429, 52.6347
+        >>> pt2 = 1.4909, 52.6271
 
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points: print(x)
+        >>> geom_points = transform_geom_point_type(pt1, pt2)
+        >>> for x in geom_points:
+        ...     print(x)
         POINT (1.5429 52.6347)
         POINT (1.4909 52.6271)
 
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points: print(x)
+        >>> geom_points = transform_geom_point_type(pt1, pt2, as_geom=False)
+        >>> for x in geom_points:
+        ...     print(x)
         (1.5429, 52.6347)
         (1.4909, 52.6271)
 
-        >>> from shapely.geometry import Point
+        >>> pt1, pt2 = Point(pt1), Point(pt2)
 
-        >>> pt_x, pt_y = Point(pt_x), Point(pt_y)
-
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y)
-        >>> for x in geom_points: print(x)
+        >>> geom_points = transform_geom_point_type(pt1, pt2)
+        >>> for x in geom_points:
+        ...     print(x)
         POINT (1.5429 52.6347)
         POINT (1.4909 52.6271)
 
-        >>> geom_points = transform_geom_point_type(pt_x, pt_y, as_geom=False)
-        >>> for x in geom_points: print(x)
+        >>> geom_points = transform_geom_point_type(pt1, pt2, as_geom=False)
+        >>> for x in geom_points:
+        ...     print(x)
         (1.5429, 52.6347)
         (1.4909, 52.6271)
     """
 
-    if as_geom:
-        for pt in pts:
-            if isinstance(pt, shapely.geometry.Point):
-                pt_ = pt
-            elif isinstance(pt, collections.abc.Iterable):
-                assert len(list(pt)) == 2
-                pt_ = shapely.geometry.Point(pt)
-            else:
-                pt_ = None
-            yield pt_
-
-    else:
-        for pt in pts:
-            if isinstance(pt, shapely.geometry.Point):
-                pt_ = pt.x, pt.y
-            elif isinstance(pt, collections.abc.Iterable):
-                assert len(list(pt)) == 2
-                pt_ = pt
-            else:
-                pt_ = None
-            yield pt_
+    for pt in pts:
+        if isinstance(pt, shapely.geometry.Point):
+            pt_ = copy.copy(pt) if as_geom else ((pt.x, pt.y, pt.z) if pt.has_z else (pt.x, pt.y))
+        elif isinstance(pt, collections.abc.Iterable):
+            assert len(list(pt)) <= 3
+            pt_ = shapely.geometry.Point(pt) if as_geom else copy.copy(pt)
+        else:
+            pt_ = None
+        yield pt_
 
 
 # Coordinate system
@@ -415,20 +409,114 @@ def osgb36_to_wgs84_calc(easting, northing):
     return lon, lat
 
 
+# Dimension / Shape
+
+def _drop_z(x, y, _):
+    return x, y
+
+
+def _drop_y(x, _, z):
+    return x, z
+
+
+def _drop_x(_, y, z):
+    return y, z
+
+
+def drop_axis(geom, axis='z', as_array=False):
+    """
+    Drop an axis from a given 3D geometry object.
+
+    :param geom: geometry object that has x, y and z coordinates
+    :type geom: shapely.geometry object
+    :param axis: options include 'x', 'y' and 'z', defaults to ``'z'``
+    :type axis: str
+    :param as_array: whether to return an array, defaults to ``False``
+    :type as_array: bool
+    :return: geometry object (or an array) without the specified ``axis``
+    :rtype: shapely.geometry object or numpy.ndarray
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import drop_axis
+        >>> from shapely.geometry import Point, LineString, Polygon, MultiLineString
+
+        >>> geom_1 = Point([1, 2, 3])
+        >>> geom_1_ = drop_axis(geom_1, 'x')
+        >>> geom_1_.wkt
+        'POINT (2 3)'
+        >>> geom_1_ = drop_axis(geom_1, 'x', as_array=True)
+        >>> geom_1_
+        array([2., 3.])
+
+        >>> geom_2 = LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+        >>> geom_2_ = drop_axis(geom_2, 'y')
+        >>> geom_2_.wkt
+        'LINESTRING (1 3, 2 4, 3 5)'
+        >>> geom_2_ = drop_axis(geom_2, 'y', as_array=True)
+        >>> geom_2_
+        array([[1., 3.],
+               [2., 4.],
+               [3., 5.]])
+
+        >>> geom_3 = Polygon([[6, 3, 5], [6, 3, 0], [6, 1, 0], [6, 1, 5], [6, 3, 5]])
+        >>> geom_3_ = drop_axis(geom_3, 'z')
+        >>> geom_3_.wkt
+        'POLYGON ((6 3, 6 3, 6 1, 6 1, 6 3))'
+        >>> geom_3_ = drop_axis(geom_3, 'z', as_array=True)
+        >>> geom_3_
+        array([[6., 3.],
+               [6., 3.],
+               [6., 1.],
+               [6., 1.],
+               [6., 3.]])
+
+        >>> geom_4 = MultiLineString(
+        ...     [LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]]),
+        ...      LineString([[2, 3, 4], [1, 2, 3], [3, 4, 5]])])
+        >>> geom_4_ = drop_axis(geom_4, 'z')
+        >>> geom_4_.wkt
+        'MULTILINESTRING ((1 2, 2 3, 3 4), (2 3, 1 2, 3 4))'
+        >>> geom_4_ = drop_axis(geom_4, 'z', as_array=True)
+        >>> geom_4_
+        array([[[1., 2.],
+                [2., 3.],
+                [3., 4.]],
+               [[2., 3.],
+                [1., 2.],
+                [3., 4.]]])
+    """
+
+    drop_func = eval(f'_drop_{axis}')
+    geom_ = shapely.ops.transform(drop_func, geom)
+
+    if as_array:
+        sim_typ = ('Point', 'LineString')
+        if geom_.type in sim_typ:
+            geom_ = np.asarray(geom_)
+        elif 'Multi' in geom_.type:
+            geom_ = np.array(
+                [np.asarray(g) if g.type in sim_typ else np.asarray(g.exterior) for g in geom_])
+        else:
+            geom_ = np.asarray(geom_.exterior)
+
+    return geom_
+
+
 """ == Geometry calculation ================================================================== """
 
 
 # Distance
 
-def calc_distance_on_unit_sphere(pt_x, pt_y):
+def calc_distance_on_unit_sphere(pt1, pt2):
     """
     Calculate distance between two points.
 
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :return: distance (in miles) between ``pt_x`` and ``pt_y`` (relative to the earth's radius)
+    :param pt1: a point
+    :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt2: another point
+    :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :return: distance (in miles) between ``pt1`` and ``pt2`` (relative to the earth's radius)
     :rtype: float
 
     .. note::
@@ -445,31 +533,31 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
         >>> pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
 
         >>> arc_len = calc_distance_on_unit_sphere(pt_1, pt_2)
-        >>> print(arc_len)
+        >>> arc_len
         2.243709962588554
     """
 
     # Convert latitude and longitude to spherical coordinates in radians.
     degrees_to_radians = np.pi / 180.0
 
-    if not all(isinstance(x, shapely.geometry.Point) for x in (pt_x, pt_y)):
+    if not all(isinstance(x, shapely.geometry.Point) for x in (pt1, pt2)):
         try:
-            pt_x = shapely.geometry.Point(pt_x)
-            pt_y = shapely.geometry.Point(pt_y)
+            pt1_, pt2_ = map(shapely.geometry.Point, (pt1, pt2))
         except Exception as e:
             print(e)
             return None
+    else:
+        pt1_, pt2_ = map(copy.copy, (pt1, pt2))
 
     # phi = 90 - latitude
-    phi1 = (90.0 - pt_x.y) * degrees_to_radians
-    phi2 = (90.0 - pt_y.y) * degrees_to_radians
+    phi1 = (90.0 - pt1_.y) * degrees_to_radians
+    phi2 = (90.0 - pt2_.y) * degrees_to_radians
 
     # theta = longitude
-    theta1 = pt_x.x * degrees_to_radians
-    theta2 = pt_y.x * degrees_to_radians
+    theta1 = pt1_.x * degrees_to_radians
+    theta2 = pt2_.x * degrees_to_radians
 
     # Compute spherical distance from spherical coordinates.
-
     # For two locations in spherical coordinates
     # (1, theta, phi) and (1, theta', phi')
     # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
@@ -482,14 +570,14 @@ def calc_distance_on_unit_sphere(pt_x, pt_y):
     return arc_length
 
 
-def calc_hypotenuse_distance(pt_x, pt_y):
+def calc_hypotenuse_distance(pt1, pt2):
     """
     Calculate hypotenuse given two points (the right angled triangle, given its side and perpendicular).
 
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt1: a point
+    :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt2: another point
+    :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
     :return: hypotenuse
     :rtype: float
 
@@ -501,105 +589,128 @@ def calc_hypotenuse_distance(pt_x, pt_y):
 
         See also [`GEOM-CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.geom import calc_hypotenuse_distance
+        >>> from shapely.geometry import Point
 
         >>> pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
 
         >>> hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
-        >>> print(hypot_distance)
+        >>> hypot_distance
+        0.05255244999046248
+
+        >>> pt_1 = Point(1.5429, 52.6347)
+        >>> pt_2 = Point(1.4909, 52.6271)
+
+        >>> hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
+        >>> hypot_distance
         0.05255244999046248
     """
 
-    pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=False)
+    pt1_, pt2_ = transform_geom_point_type(pt1, pt2, as_geom=False)
 
-    x_diff, y_diff = pt_x_[0] - pt_y_[0], pt_x_[1] - pt_y_[1]
+    x_diff, y_diff = pt1_[0] - pt2_[0], pt1_[1] - pt2_[1]
 
     hypot_dist = np.hypot(x_diff, y_diff)
 
     return hypot_dist
 
 
-def find_closest_point(pt, ref_pts, as_geom=False):
+def find_closest_point(pt, ref_pts, as_geom=True):
     """
     Find the closest point of the given point to a list of points.
 
     :param pt: (longitude, latitude)
     :type pt: tuple or list or shapely.geometry.Point
     :param ref_pts: a sequence of reference (tuple/list of length 2) points
-    :type ref_pts: typing.Iterable
-    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
+    :type ref_pts: typing.Iterable or shapely.geometry.base.BaseGeometry
+    :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``True``
     :type as_geom: bool
     :return: the point closest to ``pt``
-    :rtype: tuple or list or shapely.geometry.Point
+    :rtype: shapely.geometry.Point or numpy.ndarray
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
 
     **Examples**::
 
         >>> from pyhelpers.geom import find_closest_point
-
-        >>> pt_x = (2.5429, 53.6347)
-
-        >>> pt_reference = [(1.5429, 52.6347),
-        ...                 (1.4909, 52.6271),
-        ...                 (1.4248, 52.63075)]
-
-        >>> pt_closest = find_closest_point(pt_x, pt_reference)
-        >>> print(pt_closest)
-        (1.5429, 52.6347)
-
         >>> from shapely.geometry import Point
 
-        >>> pt_x = Point((2.5429, 53.6347))
+        >>> pt_1 = (2.5429, 53.6347)
 
-        >>> pt_reference = [Point((1.5429, 52.6347)),
-        ...                 Point((1.4909, 52.6271)),
-        ...                 Point((1.4248, 52.63075))]
+        >>> pt_reference_1 = [(1.5429, 52.6347),
+        ...                   (1.4909, 52.6271),
+        ...                   (1.4248, 52.63075)]
 
-        >>> pt_closest = find_closest_point(pt_x, pt_reference)
-        >>> print(pt_closest)
-        (1.5429, 52.6347)
+        >>> pt_closest_1 = find_closest_point(pt_1, pt_reference_1)
+        >>> pt_closest_1.wkt
+        'POINT (1.5429 52.6347)'
 
-        >>> pt_closest = find_closest_point(pt_x, pt_reference, as_geom=True)
-        >>> print(pt_closest)
-        POINT (1.5429 52.6347)
+        >>> pt_2 = Point((2.5429, 53.6347))
+
+        >>> pt_reference_2 = [Point((1.5429, 52.6347)),
+        ...                   Point((1.4909, 52.6271)),
+        ...                   Point((1.4248, 52.63075))]
+
+        >>> pt_closest_2 = find_closest_point(pt_2, pt_reference_2)
+        >>> pt_closest_2.wkt
+        'POINT (1.5429 52.6347)'
+
+        >>> pt_closest_3 = find_closest_point(pt_2, pt_reference_2, as_geom=False)
+        >>> pt_closest_3
+        array([ 1.5429, 52.6347])
     """
 
-    pt_ = (pt.x, pt.y) if isinstance(pt, shapely.geometry.Point) else pt
-
-    if any(isinstance(x, shapely.geometry.Point) for x in ref_pts):
-        ref_pts_ = ((pt.x, pt.y) for pt in ref_pts)
+    if not isinstance(pt, shapely.geometry.Point):
+        assert len(pt) <= 3
+        pt_ = shapely.geometry.Point(pt)
     else:
-        ref_pts_ = ref_pts
+        pt_ = pt
+
+    if not isinstance(ref_pts, typing.Iterable):
+        ref_pts_ = shapely.geometry.MultiPoint(ref_pts.coords)
+    else:
+        ref_pts_ = (
+            shapely.geometry.Point(x) if not isinstance(x, shapely.geometry.Point) else x
+            for x in ref_pts
+        )
 
     # Find the min value using the distance function with coord parameter
-    closest_point = min(ref_pts_, key=functools.partial(calc_hypotenuse_distance, pt_))
+    closest_point = min(ref_pts_, key=functools.partial(shapely.geometry.Point.distance, pt_))
 
-    if as_geom:
-        closest_point = shapely.geometry.Point(closest_point)
+    if not as_geom:
+        closest_point = np.asarray(closest_point)
 
     return closest_point
 
 
-def find_closest_points(pts, ref_pts, k=1, as_geom=False, **kwargs):
+def find_closest_points(pts, ref_pts, k=1, unique_pts=True, as_geom=False, ret_idx=False,
+                        ret_dist=False, **kwargs):
     """
     Find the closest points from a list of reference points (applicable for vectorized computation).
 
     See also [`GEOM-FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
 
     :param pts: an array (of size (n, 2)) of points
-    :type pts: numpy.ndarray
+    :type pts: numpy.ndarray or shapely.geometry.Point or shapely.geometry.MultiPoint or
+        shapely.geometry.LineString
     :param ref_pts: an array (of size (n, 2)) of reference points
-    :type ref_pts: numpy.ndarray
+    :type ref_pts: numpy.ndarray or shapely.geometry.MultiPoint or list or tuple
     :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
     :type k: int or list
+    :param unique_pts: whether to remove duplicated points
+    :type unique_pts: bool
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
+    :param ret_idx: whether to return indices of the closest points in ``ref_pts``, defaults to ``False``
+    :type ret_idx: bool
+    :param ret_dist: whether to return distances between ``pts`` and the closest points in ``ref_pts``,
+        defaults to ``False``
+    :type ret_dist: bool
     :param kwargs: optional parameters of `scipy.spatial.cKDTree`_
-    :return: the closest point(s)
-    :rtype: numpy.ndarray or list
+    :return: ``pts``'s closest point(s) in ``ref_pts``
+    :rtype: numpy.ndarray or shapely.geometry.MultiPoint
 
     .. _`shapely.geometry.Point`:
         https://shapely.readthedocs.io/en/latest/manual.html#points
@@ -608,44 +719,87 @@ def find_closest_points(pts, ref_pts, k=1, as_geom=False, **kwargs):
 
     **Examples**::
 
-        >>> import numpy
         >>> from pyhelpers.geom import find_closest_points
+        >>> import numpy
+        >>> from shapely.geometry import LineString, MultiPoint
 
-        >>> pt_x = numpy.array([[1.5429, 52.6347],
-        ...                     [1.4909, 52.6271],
-        ...                     [1.4248, 52.63075]])
+        >>> pts_1 = numpy.array([[1.5429, 52.6347],
+        ...                      [1.4909, 52.6271],
+        ...                      [1.4248, 52.63075]])
 
-        >>> pt_reference = numpy.array([[2.5429, 53.6347],
-        ...                             [2.4909, 53.6271],
-        ...                             [2.4248, 53.63075]])
+        >>> pts_reference = numpy.array([[2.5429, 53.6347],
+        ...                              [2.4909, 53.6271],
+        ...                              [2.4248, 53.63075]])
 
-        >>> pts_closest = find_closest_points(pt_x, pt_reference, k=1)
-        >>> print(pts_closest)
-        [[ 2.4248  53.63075]
-         [ 2.4248  53.63075]
-         [ 2.4248  53.63075]]
+        >>> pts_closest = find_closest_points(pts_1, pts_reference, k=1)
+        >>> pts_closest
+        array([[ 2.4248 , 53.63075],
+               [ 2.4248 , 53.63075],
+               [ 2.4248 , 53.63075]])
 
-        >>> pts_closest = find_closest_points(pt_x, pt_reference, k=1, as_geom=True)
-        >>> for x in pts_closest: print(x)
-        POINT (2.4248 53.63075)
-        POINT (2.4248 53.63075)
-        POINT (2.4248 53.63075)
+        >>> pts_closest = find_closest_points(pts_1, pts_reference, k=1, as_geom=True)
+        >>> pts_closest.wkt
+        'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
+
+        >>> _, idx = find_closest_points(pts_1, pts_reference, k=1, ret_idx=True)
+        >>> idx
+        array([2, 2, 2], dtype=int64)
+
+        >>> _, _, dist = find_closest_points(pts_1, pts_reference, k=1, ret_idx=True, ret_dist=True)
+        >>> dist
+        array([1.33036206, 1.37094221, 1.41421356])
+
+        >>> pts_2 = LineString(pts_1)
+        >>> pts_closest = find_closest_points(pts_2, pts_reference, k=1)
+        array([[ 2.4248 , 53.63075],
+               [ 2.4248 , 53.63075],
+               [ 2.4248 , 53.63075]])
+
+        >>> pts_3 = MultiPoint(pts_1)
+        >>> pts_closest = find_closest_points(pts_3, pts_reference, k=1, as_geom=True)
+        >>> pts_closest.wkt
+        'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
     """
 
     if isinstance(ref_pts, np.ndarray):
-        ref_pts_ = ref_pts
+        ref_pts_ = copy.copy(ref_pts)
     else:
         ref_pts_ = np.concatenate([np.array(geom.coords) for geom in ref_pts])
 
     # noinspection PyArgumentList
     ref_ckd_tree = scipy.spatial.ckdtree.cKDTree(ref_pts_, **kwargs)
-    # noinspection PyUnresolvedReferences
-    distances, indices = ref_ckd_tree.query(pts, k=k)  # returns (distance, index)
 
-    if as_geom:
-        closest_points = [shapely.geometry.Point(ref_pts_[i]) for i in indices]
+    if isinstance(pts, np.ndarray):
+        pts_ = pts.copy()
     else:
-        closest_points = np.array([ref_pts_[i] for i in indices])
+        geom_type = pts.__getattribute__('type')
+        if geom_type.startswith('Multi'):
+            if geom_type.endswith('Point'):
+                pts_ = np.vstack([np.array(x) for x in list(pts)])
+            else:
+                pts_ = np.concatenate([np.array(x) for x in list(pts)])
+        else:
+            pts_ = np.asarray(pts)
+
+    if unique_pts:
+        pts_ = np.unique(pts_, axis=0)
+
+    # noinspection PyUnresolvedReferences
+    distances, indices = ref_ckd_tree.query(x=pts_, k=k)  # returns (distance, index)
+
+    closest_points_ = [ref_pts_[i] for i in indices]
+    if as_geom:
+        closest_points = shapely.geometry.MultiPoint(closest_points_)
+    else:
+        closest_points = np.array(closest_points_)
+
+    if ret_idx and ret_dist:
+        closest_points = closest_points, indices, distances
+    else:
+        if ret_idx:
+            closest_points = closest_points, indices
+        elif ret_dist:
+            closest_points = closest_points, distances
 
     return closest_points
 
@@ -668,7 +822,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
     :type as_geom: bool
     :return: the midpoint between ``(x1, y1)`` and ``(x2, y2)``
         (or midpoints between two sequences of points)
-    :rtype: numpy.ndarray or shapely.geometry.Point or list
+    :rtype: numpy.ndarray or shapely.geometry.Point or shapely.geometry.MultiPoint
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
 
@@ -681,34 +835,32 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
         >>> x_2, y_2 = 1.4909, 52.6271
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2)
-        >>> print(midpt)
-        [ 1.5169 52.6309]
+        >>> midpt
+        array([ 1.5169, 52.6309])
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2, as_geom=True)
-        >>> print(midpt)
-        POINT (1.5169 52.6309)
+        >>> midpt.wkt
+        'POINT (1.5169 52.6309)'
 
         >>> x_1, y_1 = numpy.array([1.5429, 1.4909]), numpy.array([52.6347, 52.6271])
         >>> x_2, y_2 = numpy.array([2.5429, 2.4909]), numpy.array([53.6347, 53.6271])
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2)
-        >>> print(midpt)
-        [[ 2.0429 53.1347]
-         [ 1.9909 53.1271]]
+        >>> midpt
+        array([[ 2.0429, 53.1347],
+               [ 1.9909, 53.1271]])
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2, as_geom=True)
-        >>> for pt in midpt: print(pt)
-        POINT (2.0429 53.1347)
-        POINT (1.9909 53.1271)
+        >>> midpt.wkt
+        'MULTIPOINT (2.0429 53.1347, 1.9909 53.1271)'
     """
 
     mid_pts = (x1 + x2) / 2, (y1 + y2) / 2
 
     if as_geom:
-
         if all(isinstance(x, np.ndarray) for x in mid_pts):
-            midpoint = [
-                shapely.geometry.Point(x_, y_) for x_, y_ in zip(list(mid_pts[0]), list(mid_pts[1]))]
+            midpoint = shapely.geometry.MultiPoint(
+                [shapely.geometry.Point(x_, y_) for x_, y_ in zip(list(mid_pts[0]), list(mid_pts[1]))])
         else:
             midpoint = shapely.geometry.Point(mid_pts)
 
@@ -718,17 +870,17 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
     return midpoint
 
 
-def get_geometric_midpoint(pt_x, pt_y, as_geom=False):
+def get_geometric_midpoint(pt1, pt2, as_geom=False):
     """
     Get the midpoint between two points.
 
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt1: a point
+    :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt2: another point
+    :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
-    :return: the midpoint between ``pt_x`` and ``pt_y``
+    :return: the midpoint between ``pt1`` and ``pt2``
     :rtype: tuple or shapely.geometry.Point or None
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
@@ -742,15 +894,15 @@ def get_geometric_midpoint(pt_x, pt_y, as_geom=False):
         >>> pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
 
         >>> geometric_midpoint = get_geometric_midpoint(pt_1, pt_2)
-        >>> print(geometric_midpoint)
+        >>> geometric_midpoint
         (1.5169, 52.6309)
 
         >>> geometric_midpoint = get_geometric_midpoint(pt_1, pt_2, as_geom=True)
-        >>> print(geometric_midpoint)
-        POINT (1.5169 52.6309)
+        >>> geometric_midpoint.wkt
+        'POINT (1.5169 52.6309)'
     """
 
-    pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
+    pt_x_, pt_y_ = transform_geom_point_type(pt1, pt2, as_geom=True)
 
     midpoint = (pt_x_.x + pt_y_.x) / 2, (pt_x_.y + pt_y_.y) / 2
 
@@ -760,7 +912,7 @@ def get_geometric_midpoint(pt_x, pt_y, as_geom=False):
     return midpoint
 
 
-def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
+def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
     """
     Get the midpoint between two points by pure calculation.
 
@@ -769,13 +921,13 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     and
     [`GEOM-GGMC-2 <https://www.movable-type.co.uk/scripts/latlong.html>`_].
 
-    :param pt_x: a point
-    :type pt_x: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt_y: a point
-    :type pt_y: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt1: a point
+    :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param pt2: a point
+    :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
     :param as_geom: whether to return `shapely.geometry.Point`_. defaults to ``False``
     :type as_geom: bool
-    :return: the midpoint between ``pt_x`` and ``pt_y``
+    :return: the midpoint between ``pt1`` and ``pt2``
     :rtype: tuple or shapely.geometry.Point or None
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
@@ -787,19 +939,19 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
         >>> pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
 
         >>> geometric_midpoint = get_geometric_midpoint_calc(pt_1, pt_2)
-        >>> print(geometric_midpoint)
+        >>> geometric_midpoint
         (1.5168977420748175, 52.630902845583094)
 
         >>> geometric_midpoint = get_geometric_midpoint_calc(pt_1, pt_2, as_geom=True)
-        >>> print(geometric_midpoint)
-        POINT (1.516897742074818 52.63090284558309)
+        >>> geometric_midpoint.wkt
+        'POINT (1.516897742074818 52.6309028455831)'
 
     .. note::
 
         Compare also :ref:`get_geometric_midpoint(pt_1, pt_2)<get_geometric_midpoint-example>`
     """
 
-    pt_x_, pt_y_ = transform_geom_point_type(pt_x, pt_y, as_geom=True)
+    pt_x_, pt_y_ = transform_geom_point_type(pt1, pt2, as_geom=True)
 
     # Input values as degrees, convert them to radians
     lon_1, lat_1 = np.radians(pt_x_.x), np.radians(pt_x_.y)
@@ -818,33 +970,48 @@ def get_geometric_midpoint_calc(pt_x, pt_y, as_geom=False):
     return midpoint
 
 
-def get_rectangle_centroid(rectangle_geom):
+def get_rectangle_centroid(rectangle, as_geom=False):
     """
     Get coordinates of the centroid of a rectangle
 
-    :param rectangle_geom: polygon or multipolygon geometry object
-    :type rectangle_geom: shapely.geometry.Polygon or shapely.geometry.MultiPolygon
-    :return: coordinates [Longitude, Latitude] or [Easting, Northing]
-    :rtype: list
+    :param rectangle: polygon or multipolygon geometry object
+    :type rectangle: numpy.ndarray or shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+    :param as_geom: whether to return a shapely.geometry object
+    :type as_geom: bool
+    :return: coordinate of the rectangle
+    :rtype: numpy.ndarray or shapely.geometry.Point
 
     **Test**::
 
-        >>> import shapely.geometry
         >>> from pyhelpers.geom import get_rectangle_centroid
+        >>> from shapely.geometry import Polygon
 
-        >>> rectangle = shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
+        >>> rect_cen = get_rectangle_centroid(rectangle=Polygon([[0, 0], [0, 1], [1, 1], [1, 0]]))
 
-        >>> rec_cen = get_rectangle_centroid(rectangle)
-
-        >>> print(rec_cen)
-        [0.5, 0.5]
+        >>> rect_cen
+        array([0.5, 0.5])
     """
 
-    ll_lon, ll_lat, ur_lon, ur_lat = rectangle_geom.bounds
+    if isinstance(rectangle, np.ndarray):
+        try:
+            rectangle_geom = shapely.geometry.Polygon(rectangle)
+        except (ValueError, AttributeError):
+            rectangle_geom = shapely.geometry.MultiPolygon(rectangle)
 
-    rec_centre = [np.round((ur_lon + ll_lon) / 2, 4), np.round((ll_lat + ur_lat) / 2, 4)]
+        ll_lon, ll_lat, ur_lon, ur_lat = rectangle_geom.bounds
 
-    return rec_centre
+        rec_centroid = np.array([np.round((ur_lon + ll_lon) / 2, 4), np.round((ll_lat + ur_lat) / 2, 4)])
+
+        if as_geom:
+            rec_centroid = shapely.geometry.Point(rec_centroid)
+
+    else:
+        rec_centroid = rectangle.centroid
+
+        if not as_geom:
+            rec_centroid = np.array(rec_centroid)
+
+    return rec_centroid
 
 
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
@@ -875,19 +1042,19 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
         >>> side_len = 0.125
 
         >>> vts = get_square_vertices(ctr_1, ctr_2, side_len, rotation_theta=0)
-        >>> print(vts)
-        [[-6.    56.75 ]
-         [-6.    56.875]
-         [-5.875 56.875]
-         [-5.875 56.75 ]]
+        >>> vts
+        array([[-6.   , 56.75 ],
+               [-6.   , 56.875],
+               [-5.875, 56.875],
+               [-5.875, 56.75 ]])
 
         >>> # Rotate the square by 30° (anticlockwise)
         >>> vts = get_square_vertices(ctr_1, ctr_2, side_len, rotation_theta=30)
-        >>> print(vts)
-        [[-5.96037659 56.72712341]
-         [-6.02287659 56.83537659]
-         [-5.91462341 56.89787659]
-         [-5.85212341 56.78962341]]
+        >>> vts
+        array([[-5.96037659, 56.72712341],
+               [-6.02287659, 56.83537659],
+               [-5.91462341, 56.89787659],
+               [-5.85212341, 56.78962341]])
     """
 
     sides = np.ones(2) * side_length
@@ -930,19 +1097,19 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
         >>> side_len = 0.125
 
         >>> vts = get_square_vertices_calc(ctr_1, ctr_2, side_len, rotation_theta=0)
-        >>> print(vts)
-        [[-6.    56.75 ]
-         [-6.    56.875]
-         [-5.875 56.875]
-         [-5.875 56.75 ]]
+        >>> vts
+        array([[-6.   , 56.75 ],
+               [-6.   , 56.875],
+               [-5.875, 56.875],
+               [-5.875, 56.75 ]])
 
         >>> # Rotate the square by 30° (anticlockwise)
         >>> vts = get_square_vertices_calc(ctr_1, ctr_2, side_len, rotation_theta=30)
-        >>> print(vts)
-        [[-5.96037659 56.72712341]
-         [-6.02287659 56.83537659]
-         [-5.91462341 56.89787659]
-         [-5.85212341 56.78962341]]
+        >>> vts
+        array([[-5.96037659, 56.72712341],
+               [-6.02287659, 56.83537659],
+               [-5.91462341, 56.89787659],
+               [-5.85212341, 56.78962341]])
 
     .. note::
 
