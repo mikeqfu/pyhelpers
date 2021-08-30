@@ -96,7 +96,6 @@ def pd_preferences(reset=False, ignore_future_warning=True):
     """
 
     if not reset:
-        # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
         pd.set_option('display.precision', 2)
         pd.set_option('expand_frame_repr', False)  # Set the representation of DataFrame NOT to wrap
         pd.set_option('display.width', 600)  # Set the display width
@@ -105,7 +104,7 @@ def pd_preferences(reset=False, ignore_future_warning=True):
         pd.set_option('display.max_rows', 20)
         pd.set_option('io.excel.xlsx.writer', 'openpyxl')
         pd.set_option('mode.chained_assignment', None)
-        # pandas.set_option('display.float_format', lambda x: '%.4f' % x)
+        pd.set_option('display.float_format', lambda x: '%.4f' % x)
 
     else:
         if ignore_future_warning:
