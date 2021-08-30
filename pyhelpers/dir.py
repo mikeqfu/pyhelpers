@@ -37,13 +37,13 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
         >>> from pyhelpers.dir import cd
 
         >>> current_wd = cd()  # Current working directory
-        >>> print(os.path.relpath(current_wd))
-        .
+        >>> os.path.relpath(current_wd)
+        '.'
 
         # (The directory will be created if it does not exists.)
         >>> path_to_tests_dir = cd("tests", mkdir=True)
-        >>> print(os.path.relpath(path_to_tests_dir))
-        tests
+        >>> os.path.relpath(path_to_tests_dir)
+        'tests'
     """
 
     # Current working directory
@@ -82,14 +82,15 @@ def go_from_altered_cwd(folder_name):
         >>> from pyhelpers.dir import go_from_altered_cwd
 
         >>> cwd = os.getcwd()
-        >>> print(cwd)
-        <cwd>
+        >>> cwd
+        '<cwd>'
 
         >>> # If the current working directory has been altered to "<cwd>\\test", and
         >>> # we'd like to set it to be "<cwd>\\target"
         >>> fdn = "target"
         >>> a_cwd = go_from_altered_cwd(fdn)
-        "<cwd>\\target"
+        >>> a_cwd
+        '<cwd>\\target'
     """
 
     target = cd(folder_name)
@@ -139,21 +140,21 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
 
         >>> path_to_dat_dir = cdd()
         >>> # As `mkdir=False`, `path_to_dat_dir` will NOT be created if it doesn't exist
-        >>> print(os.path.relpath(path_to_dat_dir))
-        data
+        >>> os.path.relpath(path_to_dat_dir)
+        'data'
 
         >>> path_to_dat_dir = cdd(data_dir="test_cdd", mkdir=True)
         >>> # As `mkdir=True`, `path_to_dat_dir` will be created if it doesn't exist
-        >>> print(os.path.relpath(path_to_dat_dir))
-        test_cdd
+        >>> os.path.relpath(path_to_dat_dir)
+        'test_cdd'
 
         >>> # Delete the "test_cdd" folder
         >>> os.rmdir(path_to_dat_dir)
 
         >>> # Set `data_dir` to be `"tests"`
         >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
-        >>> print(os.path.relpath(path_to_dat_dir))
-        test_cdd\\data
+        >>> os.path.relpath(path_to_dat_dir)
+        'test_cdd\\data'
 
         >>> # Delete the "test_cdd" folder and the sub-folder "data"
         >>> shutil.rmtree(os.path.dirname(path_to_dat_dir))
@@ -187,8 +188,8 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 
         >>> path_to_dat_dir = cd_dat("tests", dat_dir="dat", mkdir=False)
 
-        >>> print(os.path.relpath(path_to_dat_dir))
-        pyhelpers\\dat\\tests
+        >>> os.path.relpath(path_to_dat_dir)
+        'pyhelpers\\dat\\tests'
     """
 
     path = pkg_resources.resource_filename(__name__, dat_dir)
@@ -223,15 +224,15 @@ def is_dirname(dir_name):
         >>> from pyhelpers.dir import cd, is_dirname
 
         >>> x = "tests"
-        >>> print(is_dirname(x))
+        >>> is_dirname(x)
         False
 
         >>> x = "\\tests"
-        >>> print(is_dirname(x))
+        >>> is_dirname(x)
         True
 
         >>> x = cd("tests")
-        >>> print(is_dirname(x))
+        >>> is_dirname(x)
         True
     """
 
@@ -260,16 +261,16 @@ def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir="
         >>> from pyhelpers.dir import validate_input_data_dir
 
         >>> dat_dir = validate_input_data_dir()
-        >>> print(os.path.relpath(dat_dir))
-        .
+        >>> os.path.relpath(dat_dir)
+        '.'
 
         >>> dat_dir = validate_input_data_dir("tests")
-        >>> print(os.path.relpath(dat_dir))
-        tests
+        >>> os.path.relpath(dat_dir)
+        'tests'
 
         >>> dat_dir = validate_input_data_dir(sub_dir="data")
-        >>> print(os.path.relpath(dat_dir))
-        data
+        >>> os.path.relpath(dat_dir)
+        'data'
     """
 
     if input_data_dir:
