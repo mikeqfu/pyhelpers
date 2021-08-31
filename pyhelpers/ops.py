@@ -760,10 +760,19 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
         >>> import pandas
 
         >>> data = pandas.DataFrame(range(100), columns=['col'])
+        >>> data.describe()
+                      col
+        count  100.000000
+        mean    49.500000
+        std     29.011492
+        min      0.000000
+        25%     24.750000
+        50%     49.500000
+        75%     74.250000
+        max     99.000000
 
         >>> lo_bound, up_bound = get_extreme_outlier_bounds(data, k=1.5)
-
-        >>> print((lo_bound, up_bound))
+        >>> lo_bound, up_bound
         (0.0, 148.5)
     """
 
@@ -790,13 +799,23 @@ def interquartile_range(num_dat):
 
     **Example**::
 
-        >>> import pandas
         >>> from pyhelpers.ops import interquartile_range
+        >>> import pandas
 
         >>> data = pandas.DataFrame(range(100), columns=['col'])
+        >>> data.describe()
+                      col
+        count  100.000000
+        mean    49.500000
+        std     29.011492
+        min      0.000000
+        25%     24.750000
+        50%     49.500000
+        75%     74.250000
+        max     99.000000
 
         >>> iqr_ = interquartile_range(data)
-        >>> print(iqr_)
+        >>> iqr_
         49.5
     """
 
@@ -822,10 +841,19 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 
     **Examples**::
 
-        >>> import pandas
         >>> from pyhelpers.ops import find_closest_date
+        >>> import pandas
 
         >>> date_list = pandas.date_range('2019-01-02', '2019-12-31')
+        >>> date_list
+        DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
+                       '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09',
+                       '2019-01-10', '2019-01-11',
+                       ...
+                       '2019-12-22', '2019-12-23', '2019-12-24', '2019-12-25',
+                       '2019-12-26', '2019-12-27', '2019-12-28', '2019-12-29',
+                       '2019-12-30', '2019-12-31'],
+                      dtype='datetime64[ns]', length=364, freq='D')
 
         >>> date_ = '2019-01-01'
         >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=True)
@@ -873,12 +901,14 @@ def cmap_discretisation(cmap, n_colours):
 
     **Example**::
 
+        >>> from pyhelpers.ops import cmap_discretisation
         >>> import matplotlib.cm
         >>> import matplotlib.pyplot as plt
         >>> import numpy
-        >>> from pyhelpers.ops import cmap_discretisation
 
         >>> cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
+        >>> cm_accent.name
+        'Accent_5'
 
         >>> fig, ax = plt.subplots(figsize=(10, 2))
 
@@ -946,9 +976,9 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 
     **Examples**::
 
-        >>> import matplotlib.cm
-        >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.ops import colour_bar_index
+        >>> import matplotlib.pyplot as plt
+        >>> import matplotlib.cm
 
         >>> plt.figure(figsize=(2, 6))
 
@@ -1088,11 +1118,11 @@ def fake_requests_headers(randomized=False):
         >>> from pyhelpers.ops import fake_requests_headers
 
         >>> fake_headers_ = fake_requests_headers()
-        >>> print(fake_headers_)
+        >>> fake_headers_
         {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
 
         >>> fake_headers_ = fake_requests_headers(randomized=True)
-        >>> print(fake_headers_)
+        >>> fake_headers_  # a random one
         {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML ...
 
     .. note::
@@ -1172,9 +1202,9 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
 
     **Example**::
 
-        >>> from PIL import Image
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.ops import download_file_from_url
+        >>> from pyhelpers.dir import cd
+        >>> from PIL import Image
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests", "images", "python-logo.png")
