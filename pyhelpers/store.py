@@ -568,6 +568,78 @@ def save_feather(feather_data, path_to_feather, verbose=False):
 
 # Images
 
+def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
+    """
+    Save a figure object as a supported file format.
+
+    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape <https://inkscape.org>`_).
+
+    :param path_to_fig_file: path where a figure file is saved
+    :type path_to_fig_file: str
+    :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
+    :type dpi: int, None
+    :param verbose: whether to print relevant information in console as the function runs,
+        defaults to ``False``
+    :type verbose: bool or int
+    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
+    :type conv_svg_to_emf: bool
+    :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
+
+    .. _`matplotlib.pyplot.savefig`:
+        https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_fig
+        >>> import matplotlib.pyplot as plt
+        >>> from pyhelpers.dir import cd
+
+        >>> x, y = (1, 1), (2, 2)
+
+        >>> plt.figure()
+        >>> plt.plot([x[0], y[0]], [x[1], y[1]])
+        >>> plt.show()
+
+    The above exmaple is illustrated in :numref:`fig-1`:
+
+    .. figure:: ../_images/fig.*
+        :name: fig-1
+        :align: center
+        :width: 76%
+
+        An example figure created for :py:func:`save_fig()<pyhelpers.store.save_fig>`.
+
+    .. code-block:: python
+
+        >>> img_dir = cd("tests\\images")
+
+        >>> png_file_path = cd(img_dir, "fig.png")
+        >>> save_fig(png_file_path, dpi=300, verbose=True)
+        Saving "fig.png" to "tests\\images\\" ... Done.
+
+        >>> svg_file_path = cd(img_dir, "fig.svg")
+        >>> save_fig(svg_file_path, dpi=300, verbose=True, conv_svg_to_emf=True)
+        Saving "fig.svg" to "tests\\images\\" ... Done.
+        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
+    """
+
+    _get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
+
+    file_ext = pathlib.Path(path_to_fig_file).suffix
+
+    try:
+        import matplotlib.pyplot
+
+        matplotlib.pyplot.savefig(path_to_fig_file, dpi=dpi, **kwargs)
+        print("Done.") if verbose else ""
+
+    except Exception as e:
+        print("Failed. {}.".format(e)) if verbose else ""
+
+    if file_ext == ".svg" and conv_svg_to_emf:
+        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
+
+
 def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -650,78 +722,6 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     else:
         print("\"Inkscape\" (https://inkscape.org) is required to convert a .svg file to a .emf. file "
               "It is not found on this device.") if verbose else ""
-
-
-def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
-    """
-    Save a figure object as a supported file format.
-
-    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape <https://inkscape.org>`_).
-
-    :param path_to_fig_file: path where a figure file is saved
-    :type path_to_fig_file: str
-    :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
-    :type dpi: int, None
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
-    :type verbose: bool or int
-    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
-    :type conv_svg_to_emf: bool
-    :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
-
-    .. _`matplotlib.pyplot.savefig`:
-        https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html
-
-    **Examples**::
-
-        >>> from pyhelpers.store import save_fig
-        >>> import matplotlib.pyplot as plt
-        >>> from pyhelpers.dir import cd
-
-        >>> x, y = (1, 1), (2, 2)
-
-        >>> plt.figure()
-        >>> plt.plot([x[0], y[0]], [x[1], y[1]])
-        >>> plt.show()
-
-    The above exmaple is illustrated in :numref:`fig-1`:
-
-    .. figure:: ../_images/fig.*
-        :name: fig-1
-        :align: center
-        :width: 76%
-
-        An example figure created for :py:func:`save_fig()<pyhelpers.store.save_fig>`.
-
-    .. code-block:: python
-
-        >>> img_dir = cd("tests\\images")
-
-        >>> png_file_path = cd(img_dir, "fig.png")
-        >>> save_fig(png_file_path, dpi=300, verbose=True)
-        Saving "fig.png" to "tests\\images\\" ... Done.
-
-        >>> svg_file_path = cd(img_dir, "fig.svg")
-        >>> save_fig(svg_file_path, dpi=300, verbose=True, conv_svg_to_emf=True)
-        Saving "fig.svg" to "tests\\images\\" ... Done.
-        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
-    """
-
-    _get_specific_filepath_info(path_to_fig_file, verbose=verbose, ret_info=False)
-
-    file_ext = pathlib.Path(path_to_fig_file).suffix
-
-    try:
-        import matplotlib.pyplot
-
-        matplotlib.pyplot.savefig(path_to_fig_file, dpi=dpi, **kwargs)
-        print("Done.") if verbose else ""
-
-    except Exception as e:
-        print("Failed. {}.".format(e)) if verbose else ""
-
-    if file_ext == ".svg" and conv_svg_to_emf:
-        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
 
 
 # Web page
