@@ -4,6 +4,7 @@ Miscellaneous operations.
 
 import ast
 import collections.abc
+import copy
 import datetime
 import inspect
 import itertools
@@ -44,22 +45,24 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
         >>> from pyhelpers.ops import confirmed
 
-        >>> if confirmed(prompt="Create Directory?", resp=True):
+        >>> if confirmed(prompt="Testing if the function works?", resp=True):
         ...     print("Passed.")
-        Create Directory? [No]|Yes: yes
+        Testing if the function works? [Yes]|No: yes
         Passed.
     """
 
     if confirmation_required:
         if prompt is None:
-            prompt = "Confirmed? "
+            prompt_ = "Confirmed? "
+        else:
+            prompt_ = copy.copy(prompt)
 
         if resp is True:  # meaning that default response is True
-            prompt = "{} [{}]|{}: ".format(prompt, "Yes", "No")
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "Yes", "No")
         else:
-            prompt = "{} [{}]|{}: ".format(prompt, "No", "Yes")
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "No", "Yes")
 
-        ans = input(prompt)
+        ans = input(prompt_)
         if not ans:
             return resp
 
