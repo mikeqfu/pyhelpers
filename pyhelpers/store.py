@@ -1,15 +1,16 @@
 """
-Saving and loading data.
+Reading from / writing to file-like objects.
 """
 
+import json
 import os
 import pathlib
 import pickle
 import subprocess
 import zipfile
 
+import orjson
 import pandas as pd
-import rapidjson
 
 from .ops import confirmed
 
@@ -122,9 +123,9 @@ def save(data, path_to_file, warning=False, **kwargs):
 
     **Examples**::
 
-        >>> import pandas
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save
+        >>> from pyhelpers.dir import cd
+        >>> import pandas
 
         >>> data_dir = cd("tests\\data")
 
@@ -137,6 +138,12 @@ def save(data, path_to_file, warning=False, **kwargs):
         >>> col = ['Easting', 'Northing']
 
         >>> dat = pandas.DataFrame(dat_list, idx, col)
+        >>> dat
+                    Easting  Northing
+        London       530034    180381
+        Birmingham   406689    286822
+        Manchester   383819    398052
+        Leeds        582044    152953
 
         >>> dat_file_path = cd(data_dir, "dat.txt")
         >>> save(dat, dat_file_path, verbose=True)
@@ -190,9 +197,9 @@ def save(data, path_to_file, warning=False, **kwargs):
 
 def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs):
     """
-    Save data as a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Save data as a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
-    :param pickle_data: data that could be dumped by `pickle`_
+    :param pickle_data: data that could be dumped by the built-in module `pickle`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
@@ -201,15 +208,16 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `open`_
+    :param kwargs: optional parameters used by `pickle.dump()`_
 
     .. _`pickle`: https://docs.python.org/3/library/pickle.html
     .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`pickle.dump()`: https://docs.python.org/3/library/pickle.html#pickle.dump
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save_pickle
+        >>> from pyhelpers.dir import cd
 
         >>> pickle_dat = 1
         >>> pickle_path = cd("tests\\data", "dat.pickle")
@@ -221,8 +229,8 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     _get_specific_filepath_info(path_to_pickle, verbose=verbose, ret_info=False)
 
     try:
-        pickle_out = open(path_to_pickle, mode=mode, **kwargs)
-        pickle.dump(pickle_data, pickle_out)
+        pickle_out = open(path_to_pickle, mode=mode)
+        pickle.dump(pickle_data, pickle_out, **kwargs)
         pickle_out.close()
         print("Done.") if verbose else ""
 
@@ -248,7 +256,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
     :param spreadsheet_data: data that could be saved as a spreadsheet, e.g. .xlsx, .csv
     :type spreadsheet_data: pandas.DataFrame
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str
+    :type path_to_spreadsheet: str or None
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param engine: options include ``'openpyxl'`` for latest Excel file formats,
@@ -264,17 +272,20 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
     :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
     .. _`pandas.DataFrame.to_excel`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
 
     **Examples**::
 
+        >>> from pyhelpers.store import save_spreadsheet
         >>> import pandas
         >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_spreadsheet
 
         >>> spreadsheet_dat = pandas.DataFrame({'Col1': 1, 'Col2': 2}, index=['data'])
+        >>> spreadsheet_dat
+              Col1  Col2
+        data     1     2
 
         >>> spreadsheet_path = cd("tests\\data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_path, verbose=True)
@@ -289,20 +300,23 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         Saving "dat.xlsx" to "tests\\data\\" ... Done.
     """
 
-    _, spreadsheet_filename = _get_specific_filepath_info(path_to_file=path_to_spreadsheet,
-                                                          verbose=verbose, ret_info=True)
+    _, spreadsheet_filename = _get_specific_filepath_info(
+        path_to_file=path_to_spreadsheet, verbose=verbose, ret_info=True)
 
     try:  # to save the data
         if spreadsheet_filename.endswith(".xlsx"):  # a .xlsx file
-            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine=engine, **kwargs)
+            spreadsheet_data.to_excel(
+                excel_writer=path_to_spreadsheet, index=index, engine=engine, **kwargs)
 
         elif spreadsheet_filename.endswith(".xls"):  # a .xls file
             if engine is None or engine == 'xlwt':
                 engine = 'openpyxl'
-            spreadsheet_data.to_excel(path_to_spreadsheet, index=index, engine=engine, **kwargs)
+            spreadsheet_data.to_excel(
+                excel_writer=path_to_spreadsheet, index=index, engine=engine, **kwargs)
 
         elif spreadsheet_filename.endswith((".csv", ".txt")):  # a .csv file
-            spreadsheet_data.to_csv(path_to_spreadsheet, index=index, sep=delimiter, **kwargs)
+            spreadsheet_data.to_csv(
+                path_or_buf=path_to_spreadsheet, index=index, sep=delimiter, **kwargs)
 
         else:
             raise AssertionError('File extension must be ".txt", ".csv", ".xlsx" or ".xls"')
@@ -341,10 +355,10 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
     **Examples**::
 
+        >>> from pyhelpers.store import save_multiple_spreadsheets
         >>> import numpy
         >>> import pandas
         >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_multiple_spreadsheets
 
         >>> xy_array = numpy.array([(530034, 180381),   # London
         ...                         (406689, 286822),   # Birmingham
@@ -354,7 +368,18 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         >>> col = ['Easting', 'Northing']
 
         >>> dat1 = pandas.DataFrame(xy_array, idx, col)
+        >>> dat1
+                    Easting  Northing
+        London       530034    180381
+        Birmingham   406689    286822
+        Manchester   383819    398052
+        Leeds        582044    152953
+
         >>> dat2 = dat1.T
+        >>> dat2
+                  London  Birmingham  Manchester   Leeds
+        Easting   530034      406689      383819  582044
+        Northing  180381      286822      398052  152953
 
         >>> ss_dat = [dat1, dat2]  # spreadsheets_data = ss_dat
         >>> s_names = ['TestSheet1', 'TestSheet2']  # sheet_names = s_names
@@ -367,20 +392,23 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True, verbose=True)
         Updating "dat.xlsx" at "tests\\data\\" ...
-            'TestSheet1' ... This sheet already exists;
-                add a suffix to the sheet name? [No]|Yes: yes
+            'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet11' ... Done.
-            'TestSheet2' ... This sheet already exists;
-                add a suffix to the sheet name? [No]|Yes: yes
+            'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
 
         >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True,
         ...                            confirmation_required=False, verbose=True)
+        Updating "dat.xlsx" at "tests\\dataz\" ...
+            'TestSheet1' ... Failed. Sheet 'TestSheet1' already exists and if_sheet_exists is ...
+            'TestSheet2' ... Failed. Sheet 'TestSheet2' already exists and if_sheet_exists is ...
+
+        >>> save_multiple_spreadsheets(ss_dat, s_names, ss_path, mode='a', index=True,
+        ...                            confirmation_required=False, verbose=True,
+        ...                            if_sheet_exists='replace')
         Updating "dat.xlsx" at "tests\\data\\" ...
-            'TestSheet1' ...
-                saved as 'TestSheet12' ... Done.
-            'TestSheet2' ...
-                saved as 'TestSheet22' ... Done.
+            'TestSheet1' ... Done.
+            'TestSheet2' ... Done.
     """
 
     assert path_to_spreadsheet.endswith(".xlsx") or path_to_spreadsheet.endswith(".xls")
@@ -388,18 +416,16 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     _get_specific_filepath_info(path_to_spreadsheet, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_spreadsheet) and mode == 'a':
-        excel_file = pd.ExcelFile(path_to_spreadsheet)
+        excel_file = pd.ExcelFile(path_or_buffer=path_to_spreadsheet)
         cur_sheet_names = excel_file.sheet_names
         excel_file.close()
     else:
         cur_sheet_names = []
 
-    excel_writer = pd.ExcelWriter(path_to_spreadsheet, mode=mode, **kwargs)
+    engine = 'openpyxl' if mode == 'a' else None
+    excel_writer = pd.ExcelWriter(path=path_to_spreadsheet, engine=engine, mode=mode, **kwargs)
 
-    def _write_excel(_suffix_msg=None):
-        """
-        :meta private:
-        """
+    def _write_excel():
         try:
             sheet_data.to_excel(excel_writer, sheet_name=sheet_name, index=index)
 
@@ -413,28 +439,23 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
             else:
                 msg_ = "saved as '{}' ... Done. ".format(sheet_name_)
 
-            if _suffix_msg:
-                print(f"{msg_} {_suffix_msg}") if verbose == 2 else print(msg_) if verbose else ""
-            else:
-                print(msg_) if verbose else ""
+            print(msg_) if verbose else ""
 
         except Exception as e:
-            print("Failed. {}.".format(e))
+            print("Failed. {}".format(e))
 
     print("") if verbose else ""
     for sheet_data, sheet_name in zip(spreadsheets_data, sheet_names):
         # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
         print("\t'{}'".format(sheet_name), end=" ... ") if verbose else ""
 
-        if sheet_name in cur_sheet_names:
-            if confirmed("This sheet already exists;\n\t\tadd a suffix to the sheet name?",
-                         confirmation_required=confirmation_required):
-                suffix_msg = "(Note that a suffix has been added to the sheet name.)"
-
-                print("\t\t" if confirmation_required else "\n\t\t", end="")
-
-                _write_excel(suffix_msg)
-
+        if (sheet_name in cur_sheet_names) and confirmation_required:
+            if_sheet_exists = input(f"This sheet already exists; [pass]|new|replace: ")
+            if if_sheet_exists != 'pass':
+                excel_writer.if_sheet_exists = if_sheet_exists
+                print("\t\t", end="")
+                # suffix_msg = "(Note that a suffix has been added to the sheet name.)"
+                _write_excel()
         else:
             _write_excel()
 
@@ -443,28 +464,35 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
 # JSON files
 
-def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
+def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs):
     """
     Save data as a `JSON <https://www.json.org/json-en.html>`_ file.
 
-    :param json_data: data that could be dumped by `python-rapidjson`_
+    :param json_data: data that could be dumped by as a JSON file
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
-    :param mode: mode to `open`_ file, defaults to ``'w'``
-    :type mode: str
+    :param method: an open-source Python package for JSON serialization, options include
+        ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
+        if ``None``, use the built-in module `json`_
+    :type method: str or None
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `open`_
+    :param kwargs: optional parameters of `orjson.dumps()`_ (if ``method='orjson'``),
+        `rapidjson.dump()`_ (if ``method='rapidjson'``), or `json.dump()`_ otherwise
 
+    .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`json`: https://docs.python.org/3/library/json.html
+    .. _`orjson.dumps()`: https://github.com/ijl/orjson#serialize
+    .. _`rapidjson.dump()`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
+    .. _`json.dump()`: https://docs.python.org/3/library/json.html#json.dump
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save_json
+        >>> from pyhelpers.dir import cd
 
         >>> json_dat = {'a': 1, 'b': 2, 'c': 3}
         >>> json_path = cd("tests\\data", "dat.json")
@@ -476,8 +504,18 @@ def save_json(json_data, path_to_json, mode='w', verbose=False, **kwargs):
     _get_specific_filepath_info(path_to_json, verbose=verbose, ret_info=False)
 
     try:
-        json_out = open(path_to_json, mode=mode, **kwargs)
-        rapidjson.dump(json_data, json_out)
+        if method == 'orjson':
+            json_out = open(path_to_json, mode='wb')
+            json_out.write(orjson.dumps(json_data, **kwargs))
+
+        else:
+            json_out = open(path_to_json, mode='w')
+            if method == 'rapidjson':
+                import rapidjson
+                rapidjson.dump(json_data, json_out, **kwargs)
+            else:
+                json.dump(json_data, json_out, **kwargs)
+
         json_out.close()
         print("Done.") if verbose else ""
 
@@ -501,11 +539,15 @@ def save_feather(feather_data, path_to_feather, verbose=False):
 
     **Example**::
 
+        >>> from pyhelpers.store import save_feather
         >>> import pandas
         >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_feather
 
         >>> feather_dat = pandas.DataFrame({'Col1': 1, 'Col2': 2}, index=[0])
+        >>> feather_dat
+           Col1  Col2
+        0     1     2
+
         >>> feather_path = cd("tests\\data", "dat.feather")
 
         >>> save_feather(feather_dat, feather_path, verbose=True)
@@ -549,9 +591,9 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
 
     **Example**::
 
+        >>> from pyhelpers.store import save_svg_as_emf
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_svg_as_emf
 
         >>> x, y = (1, 1), (2, 2)
 
@@ -632,9 +674,9 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
     **Examples**::
 
+        >>> from pyhelpers.store import save_fig
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.store import save_fig
 
         >>> x, y = (1, 1), (2, 2)
 
@@ -711,8 +753,8 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import save_web_page_as_pdf
+        >>> from pyhelpers.dir import cd
 
         >>> url_to_a_web_page = 'https://github.com/mikeqfu/pyhelpers'
         >>> path_to_pdf_file = cd("tests\\data", "pyhelpers.pdf")
@@ -735,11 +777,17 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
     if os.path.isfile(wkhtmltopdf_exe):
         config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_exe)
     else:
-        config = pdfkit.configuration(wkhtmltopdf="wkhtmltopdf.exe")
-
-    _get_specific_filepath_info(path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
+        try:
+            config = pdfkit.configuration(wkhtmltopdf="wkhtmltopdf.exe")
+        except (FileNotFoundError, OSError):
+            print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function. "
+                  "It is not found on this device.")
+            return None
 
     try:
+        _get_specific_filepath_info(
+            path_to_file=path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
+
         # print("Saving the web page \"{}\" as PDF".format(url_to_web_page)) if verbose else ""
         pdf_options = {'page-size': page_size,
                        # 'margin-top': '0',
@@ -761,9 +809,8 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
             print("Failed. Check if the URL is available.")
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
-        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function. "
-              "It is not found on this device.") if verbose else ""
+        if verbose:
+            print("Failed. {}".format(e), end="")
 
 
 """ == Load data ============================================================================= """
@@ -771,7 +818,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     """
-    Load data from a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Load data from a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
@@ -780,16 +827,17 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `open`_
+    :param kwargs: optional parameters used by `pickle.load()`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
 
     .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`pickle.load()`: https://docs.python.org/3/library/pickle.html#pickle.load
 
     Example::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import load_pickle
+        >>> from pyhelpers.dir import cd
 
         >>> pickle_path = cd("tests\\data", "dat.pickle")
 
@@ -804,8 +852,8 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
         print("Loading \"{}\"".format(os.path.relpath(path_to_pickle)), end=" ... ")
 
     try:
-        pickle_in = open(path_to_pickle, mode=mode, **kwargs)
-        pickle_data = pickle.load(pickle_in)
+        pickle_in = open(path_to_pickle, mode=mode)
+        pickle_data = pickle.load(pickle_in, **kwargs)
         pickle_in.close()
         print("Done.") if verbose else ""
         return pickle_data
@@ -834,11 +882,10 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import load_multiple_spreadsheets
+        >>> from pyhelpers.dir import cd
 
         >>> dat_dir = cd("tests\\data")
-
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
         >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
@@ -847,21 +894,14 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
             'TestSheet2'. ... Done.
             'TestSheet11'. ... Done.
             'TestSheet21'. ... Done.
-            'TestSheet12'. ... Done.
-            'TestSheet22'. ... Done.
-
         >>> list(wb_data.keys())
-        ['TestSheet1',
-         'TestSheet2',
-         'TestSheet11',
-         'TestSheet21',
-         'TestSheet12',
-         'TestSheet22']
+        ['TestSheet1', 'TestSheet2', 'TestSheet11', 'TestSheet21']
 
         >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
-
         >>> type(wb_data)
         list
+        >>> len(wb_data)
+        4
         >>> wb_data[0]
                     Easting  Northing
         London       530034    180381
@@ -901,27 +941,35 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     return workbook_data
 
 
-def load_json(path_to_json, mode='r', verbose=False, **kwargs):
+def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
     """
     Load data from a `JSON <https://www.json.org/json-en.html>`_ file.
 
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
-    :param mode: mode to `open`_ file, defaults to ``'r'``
-    :type mode: str
+    :param method: an open-source Python package for JSON serialization, options include
+        ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
+        otherwise, use the built-in module `json`_
+    :type method: str or None
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `open`_
+    :param kwargs: optional parameters used by `open`_ (if ``method='orjson'``),
+        `rapidjson.load()`_ (if ``method='rapidjson'``) or `json.load()`_ (if ``method=None``)
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: dict
 
+    .. _`orjson`: https://pypi.org/project/orjson/
+    .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
+    .. _`json`: https://docs.python.org/3/library/json.html
     .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`rapidjson.load()`: https://docs.python.org/3/library/functions.html#open
+    .. _`json.load()`: https://docs.python.org/3/library/json.html#json.load
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import load_json
+        >>> from pyhelpers.dir import cd
 
         >>> json_path = cd("tests\\data", "dat.json")
 
@@ -936,10 +984,23 @@ def load_json(path_to_json, mode='r', verbose=False, **kwargs):
         print("Loading \"{}\"".format(os.path.relpath(path_to_json)), end=" ... ")
 
     try:
-        json_in = open(path_to_json, mode=mode, **kwargs)
-        json_data = rapidjson.load(json_in)
+        if method == 'orjson':
+            json_in = open(path_to_json, mode='rb', **kwargs)
+            json_data = orjson.loads(json_in.read())
+
+        else:
+            json_in = open(path_to_json, mode='r')
+
+            if method == 'rapidjson':
+                import rapidjson
+                json_data = rapidjson.load(json_in, **kwargs)
+            else:
+                json_data = json.load(json_in, **kwargs)
+
         json_in.close()
+
         print("Done.") if verbose else ""
+
         return json_data
 
     except Exception as e:
@@ -968,14 +1029,13 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import load_feather
+        >>> from pyhelpers.dir import cd
 
         >>> feather_path = cd("tests\\data", "dat.feather")
 
         >>> feather_dat = load_feather(feather_path, verbose=True)
         Loading "tests\\data\\dat.feather" ... Done.
-
         >>> feather_dat
            Col1  Col2
         0     1     2
@@ -1017,8 +1077,8 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd, delete_dir
         >>> from pyhelpers.store import unzip
+        >>> from pyhelpers.dir import cd, delete_dir
 
         >>> output_dir = cd("tests\\data")
         >>> zip_file_path = cd(output_dir, "zipped.zip")
@@ -1029,7 +1089,7 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
         >>> # Delete the extracted directory "zipped"
         >>> delete_dir(cd(output_dir, "zipped"), verbose=True)
         The directory "tests\\data\\zipped\\" is not empty.
-        Confirmed to delete it? [No]|Yes: >? yes
+        Confirmed to delete it? [No]|Yes: yes
         Deleting "tests\\data\\zipped\\" ... Done.
     """
 
@@ -1075,8 +1135,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd, delete_dir
         >>> from pyhelpers.store import seven_zip
+        >>> from pyhelpers.dir import cd, delete_dir
 
         >>> output_dir = cd("tests\\data")
         >>> zip_file_path = cd(output_dir, "zipped.zip")
@@ -1108,9 +1168,9 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         Scanning the drive for archives:
         1 file, 138 bytes (1 KiB)
 
-        Extracting archive: ..\\tests\\data\\zipped.7z
+        Extracting archive: .\\tests\\data\\zipped.7z
         --
-        Path = ..\\tests\\data\\zipped.7z
+        Path = .\\tests\\data\\zipped.7z
         Type = 7z
         Physical Size = 138
         Headers Size = 130
