@@ -44,7 +44,8 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
         >>> from pyhelpers.ops import confirmed
 
-        >>> if confirmed(prompt="Create Directory?", resp=True): print("Passed.")
+        >>> if confirmed(prompt="Create Directory?", resp=True):
+        ...     print("Passed.")
         Create Directory? [No]|Yes: yes
         Passed.
     """
@@ -91,13 +92,27 @@ def get_obj_attr(obj, col_names=None):
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
         >>> obj_attr = get_obj_attr(postgres)
-        >>> print(obj_attr.head())
+
+        >>> obj_attr.head()
                Attribute                                              Value
         0        address               postgres:***@localhost:5432/postgres
         1        backend                                         postgresql
         2     connection  <sqlalchemy.pool.base._ConnectionFairy object ...
         3  database_info  {'drivername': 'postgresql+psycopg2', 'host': ...
         4  database_name                                           postgres
+
+        >>> obj_attr.Attribute.to_list()
+        ['address',
+         'backend',
+         'database_info',
+         'database_name',
+         'dialect',
+         'driver',
+         'engine',
+         'host',
+         'port',
+         'url',
+         'user']
     """
 
     if col_names is None:
@@ -127,17 +142,13 @@ def eval_dtype(str_val):
 
         >>> val_1 = '1'
         >>> origin_val = eval_dtype(val_1)
-        >>> type(origin_val)
-        int
-        >>> print(origin_val)
+        >>> origin_val
         1
 
         >>> val_2 = '1.1.1'
         >>> origin_val = eval_dtype(val_2)
-        >>> type(origin_val)
-        str
-        >>> print(origin_val)
-        1.1.1
+        >>> origin_val
+        '1.1.1'
     """
 
     try:
@@ -253,8 +264,8 @@ def split_iterable(iterable, chunk_size):
 
     **Examples**::
 
-        >>> import pandas
         >>> from pyhelpers.ops import split_iterable
+        >>> import pandas
 
         >>> lst = list(range(0, 10))
         >>> size_of_chunk = 3
@@ -299,31 +310,31 @@ def update_nested_dict(source_dict, updates):
         >>> source_dict_ = {'key_1': 1}
         >>> updates_ = {'key_2': 2}
         >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> print(source_dict_)
+        >>> source_dict_
         {'key_1': 1, 'key_2': 2}
 
         >>> source_dict_ = {'key': 'val_old'}
         >>> updates_ = {'key': 'val_new'}
         >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> print(source_dict_)
+        >>> source_dict_
         {'key': 'val_new'}
 
         >>> source_dict_ = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
         >>> updates_ = {'key': {'k1': 'v1_new'}}
         >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> print(source_dict_)
+        >>> source_dict_
         {'key': {'k1': 'v1_new', 'k2': 'v2'}}
 
         >>> source_dict_ = {'key': {'k1': {}, 'k2': 'v2'}}
         >>> updates_ = {'key': {'k1': 'v1'}}
         >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> print(source_dict_)
+        >>> source_dict_
         {'key': {'k1': 'v1', 'k2': 'v2'}}
 
         >>> source_dict_ = {'key': {'k1': 'v1', 'k2': 'v2'}}
         >>> updates_ = {'key': {'k1': {}}}
         >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> print(source_dict_)
+        >>> source_dict_
         {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
@@ -387,9 +398,11 @@ def get_all_values_from_nested_dict(key, target_dict):
     for k, v in target_dict.items():
         if key == k:
             yield [v] if isinstance(v, str) else v
+
         elif isinstance(v, dict):
             for x in get_all_values_from_nested_dict(key, v):
                 yield x
+
         elif isinstance(v, collections.abc.Iterable):
             for d in v:
                 if isinstance(d, dict):
@@ -414,7 +427,7 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
 
         >>> remove_multiple_keys_from_dict(target_dict_, 'k1', 'k3', 'k4')
 
-        >>> print(target_dict_)
+        >>> target_dict_
         {'k2': 'v2', 'k5': 'v5'}
     """
 
@@ -442,7 +455,7 @@ def merge_dicts(*dicts):
         >>> dict_c = {'c': 3}
 
         >>> merged_dict = merge_dicts(dict_a, dict_b, dict_c)
-        >>> print(merged_dict)
+        >>> merged_dict
         {'a': 1, 'b': 2, 'c': 3}
     """
 
@@ -468,12 +481,37 @@ def detect_nan_for_str_column(data_frame, column_names=None):
 
     **Example**::
 
+        >>> from pyhelpers.ops import detect_nan_for_str_column
         >>> import numpy
         >>> import pandas
-        >>> from pyhelpers.ops import detect_nan_for_str_column
 
         >>> df = pandas.DataFrame(numpy.resize(range(10), (10, 2)), columns=['a', 'b'])
+        >>> df
+           a  b
+        0  0  1
+        1  2  3
+        2  4  5
+        3  6  7
+        4  8  9
+        5  0  1
+        6  2  3
+        7  4  5
+        8  6  7
+        9  8  9
+
         >>> df.iloc[3, 1] = numpy.nan
+        >>> df
+           a    b
+        0  0  1.0
+        1  2  3.0
+        2  4  5.0
+        3  6  NaN
+        4  8  9.0
+        5  0  1.0
+        6  2  3.0
+        7  4  5.0
+        8  6  7.0
+        9  8  9.0
 
         >>> nan_col_pos = detect_nan_for_str_column(df, column_names=None)
         >>> list(nan_col_pos)
@@ -504,9 +542,9 @@ def create_rotation_matrix(theta):
 
         >>> rot_mat = create_rotation_matrix(theta=30)
 
-        >>> print(rot_mat)
-        [[-0.98803162  0.15425145]
-         [-0.15425145 -0.98803162]]
+        >>> rot_mat
+        array([[-0.98803162,  0.15425145],
+               [-0.15425145, -0.98803162]])
     """
 
     sin_theta, cos_theta = np.sin(theta), np.cos(theta)
@@ -536,8 +574,7 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
         >>> input_dict_ = {'a': 1, 'b': 2}
 
         >>> df = dict_to_dataframe(input_dict_)
-
-        >>> print(df)
+        >>> df
           key  value
         0   a      1
         1   b      2
@@ -568,15 +605,19 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
 
     **Example**::
 
+        >>> from pyhelpers.ops import parse_csr_matrix
+        >>> from pyhelpers.dir import cd
         >>> import numpy
         >>> import scipy.sparse
-        >>> from pyhelpers.dir import cd
-        >>> from pyhelpers.ops import parse_csr_matrix
 
         >>> data_ = numpy.array([1, 2, 3, 4, 5, 6])
         >>> indices_ = numpy.array([0, 2, 2, 0, 1, 2])
         >>> indptr_ = numpy.array([0, 2, 3, 6])
+
         >>> csr_m = scipy.sparse.csr_matrix((data_, indices_, indptr_), shape=(3, 3))
+        >>> csr_m
+        <3x3 sparse matrix of type '<class 'numpy.int32'>'
+            with 6 stored elements in Compressed Sparse Row format>
 
         >>> path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
         >>> numpy.savez_compressed(path_to_csr_npz, indptr=csr_m.indptr,
@@ -587,10 +628,10 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         Loading "\\tests\\data\\csr_mat.npz" ... Done.
 
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
-        >>> print((csr_mat_ != csr_m).count_nonzero() == 0)
+        >>> (csr_mat_ != csr_m).count_nonzero() == 0
         True
 
-        >>> print((csr_mat_ != csr_m).nnz == 0)
+        >>> (csr_mat_ != csr_m).nnz == 0
         True
     """
 
@@ -632,31 +673,29 @@ def swap_cols(array, c1, c2, as_list=False):
 
     **Test**::
 
-        >>> import numpy
         >>> from pyhelpers.ops import swap_cols
+        >>> import numpy
 
         >>> arr = numpy.array([[55.95615851, -2.96251228],
         ...                    [55.95705685, -2.96253458],
         ...                    [55.95706935, -2.96093324],
         ...                    [55.956171  , -2.96091098]])
 
-        >>> new_arr = swap_cols(arr, 0, 1)
-
-        >>> type(new_arr)
-        numpy.ndarray
-        >>> print(new_arr)
-        [[-2.96251228 55.95615851]
-         [-2.96253458 55.95705685]
-         [-2.96093324 55.95706935]
-         [-2.96091098 55.956171  ]]
+        >>> new_arr = swap_cols(arr, c1=0, c2=1)
+        >>> new_arr
+        array([[-2.96251228, 55.95615851],
+               [-2.96253458, 55.95705685],
+               [-2.96093324, 55.95706935],
+               [-2.96091098, 55.956171  ]])
     """
 
-    array[:, c1], array[:, c2] = array[:, c2], array[:, c1].copy()
+    array_ = array.copy()
+    array_[:, c1], array_[:, c2] = array[:, c2], array[:, c1]
 
     if as_list:
-        array = list(array)
+        array_ = list(array_)
 
-    return array
+    return array_
 
 
 def swap_rows(array, r1, r2, as_list=False):
@@ -676,31 +715,29 @@ def swap_rows(array, r1, r2, as_list=False):
 
     **Test**::
 
-        >>> import numpy
         >>> from pyhelpers.ops import swap_rows
+        >>> import numpy
 
         >>> arr = numpy.array([[55.95615851, -2.96251228],
         ...                    [55.95705685, -2.96253458],
         ...                    [55.95706935, -2.96093324],
         ...                    [55.956171  , -2.96091098]])
 
-        >>> new_arr = swap_rows(arr, 0, 1)
-
-        >>> type(new_arr)
-        numpy.ndarray
-        >>> print(new_arr)
-        [[-2.96253458 55.95705685]
-         [-2.96251228 55.95615851]
-         [-2.96093324 55.95706935]
-         [-2.96091098 55.956171  ]]
+        >>> new_arr = swap_rows(arr, r1=0, r2=1)
+        >>> new_arr
+        array([[55.95705685, -2.96253458],
+               [55.95615851, -2.96251228],
+               [55.95706935, -2.96093324],
+               [55.956171  , -2.96091098]])
     """
 
-    array[r1, :], array[r2, :] = array[r2, :], array[r1, :].copy()
+    array_ = array.copy()
+    array_[r1, :], array_[r2, :] = array[r2, :], array[r1, :]
 
     if as_list:
-        array = list(array)
+        array_ = list(array_)
 
-    return array
+    return array_
 
 
 """ == Basic computation ===================================================================== """
@@ -719,8 +756,8 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
     **Example**::
 
-        >>> import pandas
         >>> from pyhelpers.ops import get_extreme_outlier_bounds
+        >>> import pandas
 
         >>> data = pandas.DataFrame(range(100), columns=['col'])
 
