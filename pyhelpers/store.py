@@ -474,7 +474,7 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
     :type path_to_json: str
     :param method: an open-source Python package for JSON serialization, options include
         ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
-        if ``None``, use the built-in module `json`_
+        if ``None``, use the built-in `json module <https://docs.python.org/3/library/json.html>`_
     :type method: str or None
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
@@ -484,7 +484,6 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
 
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`json`: https://docs.python.org/3/library/json.html
     .. _`orjson.dumps()`: https://github.com/ijl/orjson#serialize
     .. _`rapidjson.dump()`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
     .. _`json.dump()`: https://docs.python.org/3/library/json.html#json.dump
@@ -949,7 +948,7 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
     :type path_to_json: str
     :param method: an open-source Python package for JSON serialization, options include
         ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
-        otherwise, use the built-in module `json`_
+        otherwise, use the built-in `json module <https://docs.python.org/3/library/json.html>`_
     :type method: str or None
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
@@ -961,7 +960,6 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
 
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`json`: https://docs.python.org/3/library/json.html
     .. _`open`: https://docs.python.org/3/library/functions.html#open
     .. _`rapidjson.load()`: https://docs.python.org/3/library/functions.html#open
     .. _`json.load()`: https://docs.python.org/3/library/json.html#json.load
