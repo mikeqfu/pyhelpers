@@ -37,12 +37,12 @@ def remove_punctuation(raw_txt, rm_whitespace=False):
         >>> raw_text = 'Hello\tworld! :-)'
 
         >>> text = remove_punctuation(raw_text)
-        >>> print(text)
-        Hello	world
+        >>> text
+        'Hello\tworld '
 
         >>> text = remove_punctuation(raw_text, rm_whitespace=True)
-        >>> print(text)
-        Hello world
+        >>> text
+        'Hello world'
     """
 
     try:
@@ -78,18 +78,18 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False):
 
         >>> text_a = 'This is an apple.'
         >>> acron = get_acronym(text_a)
-        >>> print(acron)
-        TIAA
+        >>> acron
+        'TIAA'
 
         >>> text_b = "I'm at the University of Birmingham."
-        >>> acron =get_acronym(text_b, only_capitals=True)
-        >>> print(acron)
-        IUB
+        >>> acron = get_acronym(text_b, only_capitals=True)
+        >>> acron
+        'IUB'
 
         >>> text_c = 'There is a "ConnectionError"!'
         >>> acron = get_acronym(text_c, capitals_in_words=True)
-        >>> print(acron)
-        TCE
+        >>> acron
+        'TCE'
     """
 
     txt = remove_punctuation(text)
@@ -122,13 +122,13 @@ def extract_words1upper(x, join_with=None):
 
         >>> x1 = 'NetworkWaymarks'
         >>> res = extract_words1upper(x1, join_with=' ')
-        >>> print(res)
-        Network Waymarks
+        >>> res
+        'Network Waymarks'
 
         >>> x2 = 'Retaining_Wall'
         >>> res = extract_words1upper(x2, join_with=' ')
-        >>> print(res)
-        Retaining Wall
+        >>> res
+        'Retaining Wall'
     """
 
     x_ = remove_punctuation(x)
@@ -184,22 +184,19 @@ def find_similar_str(str_x, lookup_list, n=1, processor='fuzzywuzzy', ignore_pun
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
 
         >>> str_similar = find_similar_str(x, lookup_lst)
-        >>> print(str_similar)
-        app
+        >>> str_similar
+        'app'
 
         >>> str_similar = find_similar_str('x', lookup_lst)
-        >>> print(str_similar is None)
-        False
-
-        >>> print(str_similar)
-        apex
+        >>> str_similar
+        'apex'
 
         >>> str_similar = find_similar_str(x, lookup_lst, processor='difflib')
-        >>> print(str_similar)
-        app
+        >>> str_similar
+        'app'
 
         >>> str_similar = find_similar_str('x', lookup_lst, processor='difflib')
-        >>> print(str_similar is None)
+        >>> str_similar is None
         True
     """
 
@@ -260,12 +257,12 @@ def find_matched_str(str_x, lookup_list):
 
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
         >>> res = find_matched_str(x, lookup_lst)
-        >>> print(list(res))
+        >>> list(res)
         []
 
         >>> lookup_lst = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
         >>> res = find_matched_str(x, lookup_lst)
-        >>> print(list(res))
+        >>> list(res)
         ['apple']
     """
 
@@ -340,16 +337,15 @@ def calculate_idf(raw_documents, rm_punc=False):
 
     :param raw_documents: a series of documents
     :type raw_documents: pandas.Series
-    :param rm_punc: whether to remove punctuation from ``raw_documents``,
-        defaults to ``False``
+    :param rm_punc: whether to remove punctuation from ``raw_documents``, defaults to ``False``
     :type rm_punc: bool
     :return: term frequency (TF) of ``raw_documents``, and inverse document frequency
     :rtype: tuple
 
     **Examples**::
 
-        >>> import pandas
         >>> from pyhelpers.text import calculate_idf
+        >>> import pandas
 
         >>> raw_doc = pandas.Series(['This is an apple.',
         ...                          'That is a pear.',
@@ -357,14 +353,14 @@ def calculate_idf(raw_documents, rm_punc=False):
         ...                          'Hello world!'])
 
         >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=False)
-        >>> print(docs_tf_)
+        >>> docs_tf_
         0    {'This': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1}
         1      {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1}
         2    {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.'...
         3                     {'Hello': 1, 'world': 1, '!': 1}
         dtype: object
 
-        >>> print(corpus_idf_)
+        >>> corpus_idf_
         {'This': 0.6931471805599453,
          'is': 0.0,
          'an': 0.6931471805599453,
@@ -381,14 +377,14 @@ def calculate_idf(raw_documents, rm_punc=False):
          '!': 0.6931471805599453}
 
         >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=True)
-        >>> print(docs_tf_)
+        >>> docs_tf_
         0     {'This': 1, 'is': 1, 'an': 1, 'apple': 1}
         1       {'That': 1, 'is': 1, 'a': 1, 'pear': 1}
         2    {'It': 1, 'is': 1, 'human': 1, 'being': 1}
         3                      {'Hello': 1, 'world': 1}
         dtype: object
 
-        >>> print(corpus_idf_)
+        >>> corpus_idf_
         {'This': 0.6931471805599453,
          'is': 0.0,
          'an': 0.6931471805599453,
@@ -435,8 +431,8 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
 
     **Examples**::
 
-        >>> import pandas
         >>> from pyhelpers.text import calculate_tf_idf
+        >>> import pandas
 
         >>> raw_doc = pandas.Series(['This is an apple.',
         ...                          'That is a pear.',
@@ -444,7 +440,7 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
         ...                          'Hello world!'])
 
         >>> docs_tf_idf_ = calculate_tf_idf(raw_doc, rm_punc=False)
-        >>> print(docs_tf_idf_)
+        >>> docs_tf_idf_
         0    {'This': 0.6931471805599453, 'is': 0.0, 'an': ...
         1    {'That': 0.6931471805599453, 'is': 0.0, 'a': 0...
         2    {'It': 0.6931471805599453, 'is': 0.0, 'human':...
@@ -452,7 +448,7 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
         dtype: object
 
         >>> docs_tf_idf_ = calculate_tf_idf(raw_doc, rm_punc=True)
-        >>> print(docs_tf_idf_)
+        >>> docs_tf_idf_
         0    {'This': 0.6931471805599453, 'is': 0.0, 'an': ...
         1    {'That': 0.6931471805599453, 'is': 0.0, 'a': 0...
         2    {'It': 0.6931471805599453, 'is': 0.0, 'human':...
@@ -486,7 +482,7 @@ def euclidean_distance_between_texts(txt1, txt2):
         >>> txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
 
         >>> e_dist = euclidean_distance_between_texts(txt_1, txt_2)
-        >>> print(e_dist)
+        >>> e_dist
         2.6457513110645907
     """
 
@@ -529,11 +525,11 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
         >>> txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
 
         >>> cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
-        >>> print(cos_sim)
+        >>> cos_sim
         0.6963106238227914
 
         >>> cos_dist = cosine_similarity_between_texts(txt_1, txt_2, cosine_distance=True)
-        >>> print(cos_dist)  # 1 - cos_sim
+        >>> cos_dist  # 1 - cos_sim
         0.3036893761772086
     """
 
@@ -586,8 +582,8 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.text import convert_md_to_rst
+        >>> from pyhelpers.dir import cd
 
         >>> dat_dir = cd("tests\\data")
 
