@@ -34,7 +34,7 @@ def get_db_address(db_cls):
 
         >>> db_addr = get_db_address(db_cls=PostgreSQL)
 
-        >>> print(db_addr)
+        >>> db_addr
         None:***@None:None/None
     """
 
@@ -109,16 +109,16 @@ class PostgreSQL:
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
-        >>> print(postgres.address)
-        postgres:***@localhost:5432/postgres
+        >>> postgres.address
+        'postgres:***@localhost:5432/postgres'
 
         >>> # Connect a database 'testdb' (which will be created if it does not exist)
         >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
-        >>> print(testdb.address)
-        postgres:***@localhost:5432/testdb
+        >>> testdb.address
+        'postgres:***@localhost:5432/testdb'
 
         >>> # Define a proxy object that inherits from pyhelpers.sql.PostgreSQL
         >>> class ExampleProxyObj(PostgreSQL):
@@ -133,8 +133,8 @@ class PostgreSQL:
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
-        >>> print(example_proxy_obj.address)
-        postgres:***@localhost:5432/testdb
+        >>> example_proxy_obj.address
+        'postgres:***@localhost:5432/testdb'
     """
 
     def __init__(self, host=None, port=None, username=None, database_name=None, password=None,
@@ -224,6 +224,8 @@ class PostgreSQL:
 
             >>> testdb.database_exists('testdb')
             True
+            >>> testdb.database_name
+            'testdb'
 
             >>> # Delete the database "testdb"
             >>> testdb.drop_database(verbose=True)
@@ -233,6 +235,8 @@ class PostgreSQL:
 
             >>> testdb.database_exists('testdb')
             False
+            >>> testdb.database_name
+            'postgres'
         """
 
         database_name_ = str(database_name) if database_name is not None else self.database_name
