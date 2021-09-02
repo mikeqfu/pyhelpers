@@ -685,7 +685,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     return closest_point
 
 
-def find_closest_points(pts, ref_pts, k=1, unique_pts=True, as_geom=False, ret_idx=False,
+def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_idx=False,
                         ret_dist=False, **kwargs):
     """
     Find the closest points from a list of reference points (applicable for vectorized computation).
@@ -699,7 +699,7 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=True, as_geom=False, ret_i
     :type ref_pts: numpy.ndarray or shapely.geometry.MultiPoint or list or tuple
     :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
     :type k: int or list
-    :param unique_pts: whether to remove duplicated points
+    :param unique_pts: whether to remove duplicated points, defaults to ``False``
     :type unique_pts: bool
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
@@ -770,7 +770,7 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=True, as_geom=False, ret_i
     ref_ckd_tree = scipy.spatial.ckdtree.cKDTree(ref_pts_, **kwargs)
 
     if isinstance(pts, np.ndarray):
-        pts_ = pts.copy()
+        pts_ = copy.copy(pts)
     else:
         geom_type = pts.__getattribute__('type')
         if geom_type.startswith('Multi'):
@@ -782,7 +782,8 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=True, as_geom=False, ret_i
             pts_ = np.asarray(pts)
 
     if unique_pts:
-        pts_ = np.unique(pts_, axis=0)
+        _, tmp_idx = np.unique(pts_, axis=0, return_index=True)
+        pts_ = pts_[np.sort(tmp_idx)]
 
     # noinspection PyUnresolvedReferences
     distances, indices = ref_ckd_tree.query(x=pts_, k=k)  # returns (distance, index)
