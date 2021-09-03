@@ -16,6 +16,7 @@ Change directories
     :template: function.rst
 
     cd
+    go_from_altered_cwd
     cdd
     cd_dat
 
