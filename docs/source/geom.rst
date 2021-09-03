@@ -28,6 +28,13 @@ Geometric transformation
     wgs84_to_osgb36_calc
     osgb36_to_wgs84_calc
 
+.. rubric:: Dimension / Shape
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    drop_axis
+
 Geometry calculation
 --------------------
 
