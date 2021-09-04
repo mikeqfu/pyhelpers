@@ -2,21 +2,53 @@
 Installation
 ============
 
-To install the latest release of PyHelpers from `PyPI`_ by using `pip`_:
+.. note::
 
-.. code-block:: bash
+    - If using a `virtual environment`_, make sure it is activated.
+
+.. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
+
+
+To install the latest release of pyhelpers from `PyPI`_:
+
+.. _`PyPi`: https://pypi.org/project/pyhelpers/
+
+.. code-block:: console
 
     pip install --upgrade pyhelpers
 
-To install a more recent version of PyHelpers hosted on `GitHub repository`_:
 
-.. code-block:: bash
+To install the most recent version of pyhelpers hosted on `GitHub`_:
+
+.. _`GitHub`: https://github.com/mikeqfu/pyhelpers
+
+.. code-block:: console
 
     pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
-To test if PyHelpers is correctly installed, try to import the package via an interpreter shell:
+
+.. note::
+
+    - It is recommended to add `pip install`_ the option ``--upgrade`` (or simply ``-U``), which is to ensure you are getting the latest stable release of the package.
+    - Not all dependencies of pyhelpers are enforced to be installed along with the installation of the package. This is intended to optimise the requirements for installing pyhelpers. If a `ModuleNotFoundError`_ or an `ImportError`_ pops out when importing a function, try to install the module(s)/package(s) mentioned in the error message first, and then try importing the function again.
+    - For Windows users, `pip`_ may possibly fail to install some dependencies, such as `GDAL`_ and `Shapely`_. If errors occur while installing any of the required packages, try instead to `install their .whl files`_, which can be downloaded from the web page of the `unofficial Windows binaries for Python extension packages`_.
+    - For more general instructions on the installation of Python packages, please refer to the official guide of `Installing Packages`_.
+
+.. _`pip install`: https://pip.pypa.io/en/stable/cli/pip_install/
+.. _`ModuleNotFoundError`: https://docs.python.org/3/library/exceptions.html#ModuleNotFoundError
+.. _`ImportError`: https://docs.python.org/3/library/exceptions.html#ImportError
+.. _`pip`: https://pip.pypa.io/en/stable/cli/pip/
+.. _`GDAL`: https://pypi.org/project/GDAL/
+.. _`Shapely`: https://pypi.org/project/Shapely/
+.. _`install their .whl files`: https://stackoverflow.com/a/27909082/4981844
+.. _`unofficial Windows binaries for Python extension packages`: https://www.lfd.uci.edu/~gohlke/pythonlibs/
+.. _`Installing Packages`: https://packaging.python.org/tutorials/installing-packages/
+
+
+To check whether **pyhelpers** has been correctly installed, try to import the package via an interpreter shell:
 
 .. code-block:: python
+    :name: cmd current release
 
     >>> import pyhelpers
 
@@ -24,35 +56,3 @@ To test if PyHelpers is correctly installed, try to import the package via an in
 
 .. parsed-literal::
     The current release version is: |version|
-
-
-.. note::
-
-    - If you are using a `virtual environment`_, ensure that it is activated.
-
-    - It is recommended to add ``--upgrade`` (or ``-U``) when you use ``pip install`` (see the instruction above) so as to get the latest stable release of the package.
-
-    - Not all dependencies of PyHelpers are required (so as to optimise the requirements) for the installation of the package. If a ``ModuleNotFoundError`` or an ``ImportError`` pops out when importing a function, just install the 'missing' module/package and then try to import the function again. See, for example, the use of the functions :ref:`pyhelpers.ops.download_file_from_url<ops-examples>`.
-
-    - For *Windows* users, The ``pip`` method **might** fail to install some dependencies (e.g. `GDAL`_ and `Shapely`_). If errors occur when you try to install any of those dependencies, try instead to ``pip install`` their *.whl* files, which can be downloaded from the `Unofficial Windows Binaries for Python Extension Packages`_.
-
-    - For more general instructions on the installation of Python packages, check the "`Installing Packages`_".
-
-    - PyHelpers has not yet been tested with `Python 2`_. For users who have installed both `Python 2`_ and `Python 3`_, it would be recommended to replace ``pip`` with ``pip3``. But you are more than welcome to volunteer testing the package with `Python 2`_ and any issues should be logged/reported onto `Issue Tracker`_.
-
-.. _`PyPI`: https://pypi.org/project/pyhelpers/
-.. _`pip`: https://packaging.python.org/key_projects/#pip
-
-.. _`GitHub repository`: https://github.com/mikeqfu/pyhelpers
-
-.. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
-
-.. _`GDAL`: https://pypi.org/project/GDAL/
-.. _`Shapely`: https://pypi.org/project/Shapely/
-.. _`Unofficial Windows Binaries for Python Extension Packages`: https://www.lfd.uci.edu/~gohlke/pythonlibs/
-
-.. _`Installing Packages`: https://packaging.python.org/tutorials/installing-packages
-
-.. _`Python 2`: https://docs.python.org/2/
-.. _`Python 3`: https://docs.python.org/3/
-.. _`Issue Tracker`: https://github.com/mikeqfu/pyhelpers/issues
