@@ -8,36 +8,28 @@ settings
     :no-members:
     :no-inherited-members:
 
-NumPy
------
-
+.. rubric:: NumPy
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
     np_preferences
 
-Pandas
-------
-
+.. rubric:: Pandas
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
     pd_preferences
 
-Matplotlib
-----------
-
+.. rubric:: Matplotlib
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
     mpl_preferences
 
-GDAL
-----
-
+.. rubric:: GDAL/OGR
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
