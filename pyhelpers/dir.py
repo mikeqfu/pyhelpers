@@ -1,5 +1,5 @@
 """
-Manipulation of directories.
+Manipulation of directories and/or file paths.
 """
 
 import copy
@@ -210,7 +210,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 """ == Validate directories ================================================================== """
 
 
-def is_dirname(dir_name):
+def is_dir(dir_name):
     """
     Check if a string is a path or just a string.
 
@@ -221,18 +221,18 @@ def is_dirname(dir_name):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd, is_dirname
+        >>> from pyhelpers.dir import cd, is_dir
 
         >>> x = "tests"
-        >>> is_dirname(x)
+        >>> is_dir(x)
         False
 
         >>> x = "\\tests"
-        >>> is_dirname(x)
+        >>> is_dir(x)
         True
 
         >>> x = cd("tests")
-        >>> is_dirname(x)
+        >>> is_dir(x)
         True
     """
 
