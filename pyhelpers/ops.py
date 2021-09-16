@@ -14,13 +14,15 @@ import random
 import re
 import shutil
 import socket
-import time
 import urllib.parse
 
 import fake_useragent
+import fake_useragent.errors
 import numpy as np
 import pandas as pd
 import requests
+import requests.adapters
+import urllib3.util.retry
 
 """ == General use =========================================================================== """
 
@@ -1106,15 +1108,19 @@ def is_url_connectable(url):
         return False
 
 
-def fake_requests_headers(randomized=False):
+def fake_requests_headers(randomized=False, **kwargs):
     """
     Make a fake HTTP headers for `requests.get
     <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
 
     :param randomized: whether to go for a random agent, defaults to ``False``
     :type randomized: bool
+    :param kwargs: [optional] parameters used by `fake_useragent.UserAgent()`_
     :return: fake HTTP headers
     :rtype: dict
+
+    .. _fake_useragent.UserAgent():
+        https://github.com/hellysmile/fake-useragent/blob/master/fake_useragent/fake.py#L13
 
     **Examples**::
 
@@ -1134,11 +1140,11 @@ def fake_requests_headers(randomized=False):
     """
 
     try:
-        fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+        fake_user_agent = fake_useragent.UserAgent(**kwargs)
         ua = fake_user_agent.random if randomized else fake_user_agent['google chrome']
 
     except fake_useragent.FakeUserAgentError:
-        fake_user_agent = fake_useragent.UserAgent(verify_ssl=False)
+        fake_user_agent = fake_useragent.UserAgent(**kwargs)
 
         if randomized:
             ua = random.choice(fake_user_agent.data_browsers['internetexplorer'])
@@ -1182,26 +1188,33 @@ def is_downloadable(url):
     return downloadable
 
 
-def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=False, verbose=False,
-                           **kwargs):
+def download_file_from_url(url, path_to_file, max_retries=5, random_header=True, verbose=False,
+                           fh_args=None, **kwargs):
     """
     Download an object available at a valid URL.
 
-    See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_].
+    See also [`OPS-DFFU-1`_] and [`OPS-DFFU-2`_].
+
+    .. _OPS-DFFU-1: https://stackoverflow.com/questions/37573483/
+    .. _OPS-DFFU-2: https://stackoverflow.com/questions/15431044/
 
     :param url: a valid URL
     :type url: str
     :param path_to_file: a path where the downloaded object is saved as, or a filename
     :type path_to_file: str
-    :param wait_to_retry: a wait time to retry downloading, defaults to ``3600`` (in second)
-    :type wait_to_retry: int or float
-    :param random_header: whether to go for a random agent, defaults to ``False``
+    :param max_retries: maximum number of retries
+    :type max_retries: int
+    :param random_header: whether to go for a random agent, defaults to ``True``
     :type random_header: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `open`_
+    :param fh_args: optional parameters used by
+        :py:func:`fake_requests_headers()<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
+    :type fh_args: dict or None
+    :param kwargs: optional parameters of `requests.Session.get()`_
 
-    .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _requests.Session.get():
+        https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
 
     **Example**::
 
@@ -1223,14 +1236,50 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
         :width: 65%
 
         The Python Logo.
+
+    .. only:: html
+
+        |
+
+    .. note::
+
+        - When setting ``verbose`` to be ``True`` (or ``1``), the function relies on `tqdm`_,
+          which is not an essential dependency for installing `pyhelpers`_>=1.2.15.
+          You may need to install `tqdm`_ before proceeding with ``verbose=True`` (or ``verbose=1``).
+
+        .. _tqdm: https://pypi.org/project/tqdm/
+        .. _pyhelpers: https://pypi.org/project/pyhelpers/
     """
 
-    headers = fake_requests_headers(randomized=random_header)
-    # Streaming, so we can iterate over the response
-    resp = requests.get(url, stream=True, headers=headers)
+    # url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+    # path_to_file = cd("tests", "images", "python-logo.png")
+    # max_retries = 5
+    # random_header = True
+    # verbose = True
+    # fh_args = None
 
-    if resp.status_code == 429:
-        time.sleep(wait_to_retry)
+    retries = urllib3.util.retry.Retry(
+        total=max_retries, backoff_factor=0.1, status_forcelist=[429, 500, 502, 503, 504])
+
+    session = requests.Session()
+    session.mount(
+        'https://' if url.startswith('https:') else 'http://',
+        requests.adapters.HTTPAdapter(max_retries=retries))
+
+    if fh_args is None:
+        fh_args = {}
+    try:
+        headers = fake_requests_headers(randomized=random_header, **fh_args)
+    except IndexError:
+        # Try again
+        headers = fake_requests_headers(randomized=random_header, **fh_args)
+    except fake_useragent.errors.FakeUserAgentError:
+        if len(fh_args) > 1:
+            fh_args.update({'use_cache_server': False, 'verify_ssl': False})
+        headers = fake_requests_headers(randomized=random_header, **fh_args)
+
+    # Streaming, so we can iterate over the response
+    response = session.get(url, stream=True, headers=headers, **kwargs)
 
     path_to_dir = os.path.dirname(path_to_file)
     if path_to_dir == "":
@@ -1242,29 +1291,43 @@ def download_file_from_url(url, path_to_file, wait_to_retry=3600, random_header=
     if verbose:
         import tqdm
 
-        total_size = int(resp.headers.get('content-length'))  # Total size in bytes
+        file_size = int(response.headers.get('content-length'))  # Total size in bytes
+
         block_size = 1024 * 1024
-        wrote = 0
+        if file_size >= block_size:
+            chunk_size, unit = block_size, 'MB'
+        else:
+            chunk_size, unit = 1024, 'KB'
+        total_iter = file_size // chunk_size
 
-        with open(path_to_file, mode='wb', **kwargs) as f:
-            temp = resp.iter_content(block_size, decode_unicode=True)
-            for data in tqdm.tqdm(temp, total=total_size // block_size, unit='MB'):
-                wrote = wrote + len(data)
+        iterable = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
+        progress = tqdm.tqdm(iterable=iterable, total=total_iter, unit=unit, unit_scale=True)
+
+        f = open(path_to_file, mode='wb')
+        written = 0
+        for dat in progress:
+            if dat:
                 try:
-                    f.write(data)
+                    f.write(dat)
                 except TypeError:
-                    f.write(data.encode())
-            f.close()
+                    f.write(dat.encode())
+                f.flush()
+                progress.update(len(dat))
+                progress.refresh()
+                written = written + len(dat)
 
-        if total_size != 0 and wrote != total_size:
-            print("ERROR, something went wrong!")
+        progress.close()
+        f.close()
+
+        if file_size != 0 and written != file_size:
+            print("ERROR! Something went wrong!")
 
     else:
-        with open(path_to_file, 'wb') as f:
-            shutil.copyfileobj(resp.raw, f)
-            f.close()
+        f = open(path_to_file, mode='wb')
+        shutil.copyfileobj(response.raw, f)
+        f.close()
 
         if os.stat(path_to_file).st_size == 0:
-            print("ERROR, something went wrong! Check if the URL is downloadable.")
+            print("ERROR! Something went wrong! Check if the URL is downloadable.")
 
-    resp.close()
+    response.close()
