@@ -7,7 +7,6 @@ import os
 import warnings
 
 import numpy as np
-import numpy.core.arrayprint
 import pandas as pd
 
 """ == GDAL ================================================================================== """
@@ -299,7 +298,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
 
     elif reset is True:
         # true default linewidth = 75
-        numpy.set_printoptions(
+        np.set_printoptions(
             precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np.nan,
             infstr=np.inf, formatter=None, sign='-', floatmode='maxprec_equal', legacy=False)
 
@@ -430,7 +429,7 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, ignor
             pd.reset_option('all')
 
         elif reset is True:
-            pd.set_option('display.max_columns', 0)
+            pd.set_option('display.max_columns', 20)
             pd.set_option('display.max_rows', 60)
             pd.set_option('display.precision', 6)
             pd.set_option('display.width', 80)  # Set the display width
