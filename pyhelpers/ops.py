@@ -1279,8 +1279,8 @@ def _download_with_tqdm(response, path_to_file):
         print("ERROR! Something went wrong!")
 
 
-def download_file_from_url(url, path_to_file, max_retries=5, random_header=True, verbose=False,
-                           rsr_args=None, frh_args=None, **kwargs):
+def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5, random_header=True,
+                           verbose=False, rsr_args=None, frh_args=None, **kwargs):
     """
     Download an object available at a valid URL.
 
@@ -1289,10 +1289,14 @@ def download_file_from_url(url, path_to_file, max_retries=5, random_header=True,
     .. _OPS-DFFU-1: https://stackoverflow.com/questions/37573483/
     .. _OPS-DFFU-2: https://stackoverflow.com/questions/15431044/
 
-    :param url: a valid URL
+    :param url: valid URL to a web resource
     :type url: str
     :param path_to_file: a path where the downloaded object is saved as, or a filename
     :type path_to_file: str
+    :param if_exists: given that the specified file already exists, options include
+        ``'replace'`` (default, continuing to download the requested file and replace the existing one
+        at the specified path) and ``'pass'`` (cancelling the download)
+    :type if_exists: str
     :param max_retries: maximum number of retries, defaults to ``5``
     :type max_retries: int
     :param random_header: whether to go for a random agent, defaults to ``True``
@@ -1353,20 +1357,6 @@ def download_file_from_url(url, path_to_file, max_retries=5, random_header=True,
     # verbose = True
     # fh_args = None
 
-    if rsr_args is None:
-        rsr_args = {}
-    session = instantiate_requests_session(url=url, max_retries=max_retries, **rsr_args)
-
-    if frh_args is None:
-        frh_args = {}
-    try:
-        fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
-    except IndexError:  # Try again
-        fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
-
-    # Streaming, so we can iterate over the response
-    response = session.get(url, stream=True, headers=fake_headers, **kwargs)
-
     path_to_dir = os.path.dirname(path_to_file)
     if path_to_dir == "":
         path_to_file_ = os.path.join(os.getcwd(), path_to_file)
@@ -1374,18 +1364,38 @@ def download_file_from_url(url, path_to_file, max_retries=5, random_header=True,
     else:
         path_to_file_ = copy.copy(path_to_file)
 
-    if not os.path.exists(path_to_dir):
-        os.makedirs(path_to_dir)
-
-    if verbose:
-        _download_with_tqdm(response=response, path_to_file=path_to_file_)
+    if os.path.exists(path_to_file_) and if_exists != 'replace':
+        if verbose:
+            print(f"The destination already has a file named \"{os.path.basename(path_to_file_)}\". "
+                  f"The download is cancelled.")
 
     else:
-        f = open(file=path_to_file_, mode='wb')
-        shutil.copyfileobj(response.raw, f)
-        f.close()
+        if rsr_args is None:
+            rsr_args = {}
+        session = instantiate_requests_session(url=url, max_retries=max_retries, **rsr_args)
 
-        if os.stat(path=path_to_file_).st_size == 0:
-            print("ERROR! Something went wrong! Check if the URL is downloadable.")
+        if frh_args is None:
+            frh_args = {}
+        try:
+            fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
+        except IndexError:  # Try again
+            fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
 
-    response.close()
+        # Streaming, so we can iterate over the response
+        response = session.get(url, stream=True, headers=fake_headers, **kwargs)
+
+        if not os.path.exists(path_to_dir):
+            os.makedirs(path_to_dir)
+
+        if verbose:
+            _download_with_tqdm(response=response, path_to_file=path_to_file_)
+
+        else:
+            f = open(file=path_to_file_, mode='wb')
+            shutil.copyfileobj(response.raw, f)
+            f.close()
+
+            if os.stat(path=path_to_file_).st_size == 0:
+                print("ERROR! Something went wrong! Check if the URL is downloadable.")
+
+        response.close()
