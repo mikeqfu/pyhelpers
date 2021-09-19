@@ -88,8 +88,8 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
     :type font_size: int or float
     :param legend_spacing: spacing between labels in plot legend, defaults to ``0.7``
     :type legend_spacing: float or int
-    :param fig_style:
-    :type fig_style:
+    :param fig_style: style of the figure, defaults to ``None``
+    :type fig_style: str or None
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
 
