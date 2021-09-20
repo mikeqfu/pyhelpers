@@ -23,6 +23,7 @@ PyHelpers
 | **Author**: Qian Fu
 | **Email**: q.fu@bham.ac.uk
 |
+
 `PyHelpers <https://pypi.org/project/pyhelpers/>`_ is an open-source `Python <https://www.python.org/>`_ package designed as a lite tool kit for facilitating data (pre)processing tasks. It provides a miscellaneous collection of easy-to-use Python functions/classes that can help with day-to-day reading/writing of file-like objects, manipulation of various types of data (e.g. geographical data and textual data) and communication with a SQL database.
 
 Resources
