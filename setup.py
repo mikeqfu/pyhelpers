@@ -1,24 +1,24 @@
 import setuptools
 
-import pyhelpers
+from pyhelpers import __author__, __description__, __email__, __package_name__, __version__
 
 with open("README.rst", 'r', encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(
 
-    name=pyhelpers.__package_name__,
+    name=__package_name__,
 
-    version=pyhelpers.__version__,
+    version=__version__,
 
-    description=pyhelpers.__description__,
+    description=__description__,
     long_description=long_description,
     long_description_content_type="text/x-rst",
 
     url='https://github.com/mikeqfu/pyhelpers',
 
-    author=pyhelpers.__author__,
-    author_email=pyhelpers.__email__,
+    author=__author__,
+    author_email=__email__,
 
     license='GPLv2',
 
@@ -55,15 +55,18 @@ setuptools.setup(
         'SQLAlchemy',
         'fake-useragent',
         'fuzzywuzzy',
+        'joblib',
         'numpy',
         'openpyxl',
         'pandas',
         'psycopg2',
         'pyproj',
-        'python-rapidjson',
+        'orjson',
         'requests',
         'scipy',
         'xlrd',
+        # 'python-rapidjson',
+        # 'python-Levenshtein'
         # 'gdal',
         # 'matplotlib',
         # 'nltk',
