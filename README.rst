@@ -20,7 +20,6 @@ PyHelpers
     :alt: Zenodo - DOI
     :target: https://zenodo.org/badge/latestdoi/173177909
 
-|
 | **Author**: Qian Fu
 | **Email**: q.fu@bham.ac.uk
 |
