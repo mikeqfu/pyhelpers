@@ -439,7 +439,7 @@ Now we may view the downloaded image file by using `Pillow`_:
     :align: center
     :width: 65%
 
-    The Python Logo.
+    The Python Logo (for illustration in the brief tutorial).
 
 .. note::
 
@@ -765,7 +765,7 @@ After the connection to the database has been established, we can use the method
 .. figure:: _images/tutorial-sql-examples-df_table.png
     :name: tutorial-sql-examples-df_table
     :align: center
-    :width: 55%
+    :width: 52%
 
     The table *"public"."df_table"*.
 
@@ -786,7 +786,7 @@ Let's now try to import the same data into a table named *"df_table_alt"* by set
 .. figure:: _images/tutorial-sql-examples-df_table_alt.png
     :name: tutorial-sql-examples-df_table_alt
     :align: center
-    :width: 55%
+    :width: 52%
 
     The table *"public"."df_table_alt"*.
 

@@ -17,6 +17,7 @@ Save data
 
     save
     save_pickle
+    save_joblib
     save_spreadsheet
     save_multiple_spreadsheets
     save_json
@@ -33,12 +34,13 @@ Load data
     :template: function.rst
 
     load_pickle
+    load_joblib
     load_multiple_spreadsheets
     load_json
     load_feather
 
-Uncompress data files
----------------------
+Uncompress data
+---------------
 
 .. autosummary::
     :toctree: _generated/

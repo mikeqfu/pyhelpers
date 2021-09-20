@@ -27,7 +27,7 @@ Validate directories
     :toctree: _generated/
     :template: function.rst
 
-    is_dirname
+    is_dir
     validate_input_data_dir
 
 Delete directories

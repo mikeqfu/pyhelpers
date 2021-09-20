@@ -69,8 +69,8 @@ Graph plotting
     cmap_discretisation
     colour_bar_index
 
-Web scraping
-------------
+Web data extraction
+-------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -78,6 +78,7 @@ Web scraping
 
     is_network_connected
     is_url_connectable
-    fake_requests_headers
     is_downloadable
+    instantiate_requests_session
+    fake_requests_headers
     download_file_from_url

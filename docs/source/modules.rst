@@ -2,6 +2,8 @@
 Modules
 =======
 
+The current release includes the following modules, with each containing a number of helper functions:
+
 .. py:module:: pyhelpers
 
 .. autosummary::

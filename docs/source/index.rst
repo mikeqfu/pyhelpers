@@ -6,45 +6,57 @@ PyHelpers
 
     |PyPI| |Python| |License| |Downloads| |DOI|
 
-    .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=important&label=PyPI
+    .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=yellow&label=PyPI
         :alt: PyPI
         :target: https://pypi.org/project/pyhelpers/
     .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers?label=Python
         :alt: PyPI - Python Version
         :target: https://www.python.org/downloads/windows/
-    .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers?color=green&label=License
+    .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers?label=License
         :alt: PyPI - License
         :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?color=yellow&label=Downloads
+    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?label=Downloads
         :alt: PyPI - Downloads
         :target: https://pypistats.org/packages/pyhelpers
     .. |DOI| image:: https://zenodo.org/badge/173177909.svg
+        :alt: Zenodo - DOI
         :target: https://zenodo.org/badge/latestdoi/173177909
 
 | **Author**: Qian Fu
-| **Email**: qian.fu@outlook.com
+| **Email**: q.fu@bham.ac.uk
 
-PyHelpers is an open-source toolkit designed as a miscellaneous collection of simple but useful `Python <https://www.python.org/>`_ tools for facilitating data manipulation tasks.
+`PyHelpers`_ is an open-source `Python`_ package designed as a lite tool kit for facilitating data (pre)processing tasks. It provides a miscellaneous collection of easy-to-use Python functions/classes that can help with day-to-day reading/writing of file-like objects, manipulation of various types of data (e.g. geographical data and textual data) and communication with a SQL database.
 
-######################
-Documentation contents
-######################
+.. _PyHelpers: https://pypi.org/project/pyhelpers/
+.. _Python: https://www.python.org/
+
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :includehidden:
+    :caption: Documentation
 
     installation
-    quick-start
     modules
+
+.. toctree::
+    :maxdepth: 1
+    :includehidden:
+    :caption: Quick start
+
+    quick-start
+
+.. toctree::
+    :maxdepth: 1
+    :includehidden:
+    :caption: License
+
     license
 
-.. only:: html
 
-    ##################
-    Indices and tables
-    ##################
+Indices
+#######
 
-    * :ref:`genindex`
-    * :ref:`modindex`
-    * :ref:`search`
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
