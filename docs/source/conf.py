@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 autodoc_mock_imports = [
     'numpy', 'pyproj', 'Shapely', 'scipy',
     'fake-useragent', 'pandas', 'requests', 'tqdm',
-    'psycopg2', 'SQLAlchemy', 'orjson',
+    'psycopg2', 'SQLAlchemy', 'joblib', 'orjson',
     'fuzzywuzzy',
 ]
 
