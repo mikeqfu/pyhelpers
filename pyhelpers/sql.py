@@ -50,7 +50,7 @@ def get_db_address(db_cls):
 
 class PostgreSQL:
     """
-    A class for a basic `PostgreSQL <https://www.postgresql.org/>`_ instance.
+    A class for basic communication with a `PostgreSQL <https://www.postgresql.org/>`_ server.
 
     :param host: host address, e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation),
         defaults to ``None``
