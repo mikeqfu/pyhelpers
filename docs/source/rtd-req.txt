@@ -8,6 +8,7 @@ requests
 tqdm
 psycopg2
 SQLAlchemy
+joblib
 orjson
 fuzzywuzzy
 Sphinx==4.2.0
