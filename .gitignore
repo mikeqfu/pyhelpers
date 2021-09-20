@@ -154,4 +154,4 @@ ipython_config.py
 
 # Customised
 tests/cmd
-tests/quick-start.py
+tests/quick-start.*
