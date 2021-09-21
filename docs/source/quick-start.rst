@@ -1,8 +1,8 @@
 .. _a-brief-tutorial:
 
-================
-A brief tutorial
-================
+========
+Tutorial
+========
 
 This brief tutorial provides a few examples for each module of `pyhelpers`_, and demonstrates what the package could offer to assist with data manipulation in practical work.
 
