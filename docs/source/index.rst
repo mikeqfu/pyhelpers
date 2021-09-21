@@ -38,20 +38,14 @@ PyHelpers
 
     installation
     modules
+    license
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :includehidden:
     :caption: Quick start
 
     quick-start
-
-.. toctree::
-    :maxdepth: 1
-    :includehidden:
-    :caption: License
-
-    license
 
 
 Indices
