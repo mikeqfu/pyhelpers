@@ -22,8 +22,8 @@ autodoc_mock_imports = [
 from pyhelpers import __author__, __package_name__, __project_name__, __version__, __copyright__
 
 # General information about the project:
-project = f'{__project_name__}'
-copyright = f'{__copyright__}'
+project = __project_name__
+copyright = __copyright__
 
 # The version info for the project:
 version = __version__  # The short X.Y.Z version
@@ -120,9 +120,9 @@ latex_engine = 'pdflatex'
 # Grouping the document tree into LaTeX files:
 latex_documents = [
     ('index',  # source start file
-     f'{__package_name__}.tex',  # target name
-     f'{__project_name__} Documentation',  # title
-     f'{__author__}',  # author
+     __package_name__ + '.tex',  # target name
+     __project_name__ + ' Documentation',  # title
+     __author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]
      1  # toctree only
      ),
@@ -132,6 +132,8 @@ latex_documents = [
 latex_maketitle = r'''
     \pagenumbering{roman}
 
+    \makeatletter
+    \hypertarget{titlepage}{}
     \begin{titlepage}
         \flushleft
 
@@ -141,10 +143,6 @@ latex_maketitle = r'''
         \vspace{5mm}
         \LARGE A lite toolkit for facilitating data manipulations \par
         \textit{\Large {{Release %s}}}
-
-        \makeatletter
-        \bookmark[named=FirstPage]{Title}
-        \makeatother
 
         \vspace{60mm}
         \Large \textbf{{%s}}
@@ -158,6 +156,8 @@ latex_maketitle = r'''
         \small Last updated: \MonthYearFormat\today
 
     \end{titlepage}
+    \bookmark[dest=titlepage]{Title}
+    \makeatother
 
     \clearpage
     \pagenumbering{roman}
@@ -207,7 +207,7 @@ latex_preamble = r'''
     \usepackage[open]{bookmark}
     \bookmarksetup{numbered}
 
-    \addto\captionsenglish{\renewcommand{\contentsname}{Table of contents}}
+    \addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
     '''
 
 # LaTeX customization:
