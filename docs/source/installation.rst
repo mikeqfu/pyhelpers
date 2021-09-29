@@ -43,11 +43,11 @@ To install the most recent version of pyhelpers hosted on `GitHub`_:
 To check whether **pyhelpers** has been correctly installed, try to import the package via an interpreter shell:
 
 .. code-block:: python
-    :name: cmd current release
+    :name: cmd current version
 
     >>> import pyhelpers
 
-    >>> pyhelpers.__version__  # Check the current release
+    >>> pyhelpers.__version__  # Check the current version
 
 .. parsed-literal::
-    The current release version is: |version|
+    The current version is: |version|
