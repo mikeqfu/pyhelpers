@@ -19,7 +19,7 @@ et-xmlfile==1.1.0
 fake-useragent==0.1.11
 fuzzywuzzy==0.18.0
 GDAL==3.3.2
-greenlet==1.1.1
+greenlet==1.1.2
 idna==3.2
 imagesize==1.2.0
 importlib-metadata==4.8.1
@@ -32,7 +32,7 @@ Jinja2==3.0.1
 joblib==1.0.1
 jsonschema==3.2.0
 jupyter==1.0.0
-jupyter-client==7.0.3
+jupyter-client==6.1.12
 jupyter-console==6.4.0
 jupyter-core==4.8.1
 jupyterlab-pygments==0.1.2
@@ -114,4 +114,4 @@ webencodings==0.5.1
 widgetsnbextension==3.5.1
 xlrd==2.0.1
 XlsxWriter==3.0.1
-zipp==3.5.0
+zipp==3.5.1
