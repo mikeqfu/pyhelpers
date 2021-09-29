@@ -40,7 +40,7 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
         >>> os.path.relpath(current_wd)
         '.'
 
-        # (The directory will be created if it does not exists.)
+        >>> # (The directory will be created if it does not exists.)
         >>> path_to_tests_dir = cd("tests", mkdir=True)
         >>> os.path.relpath(path_to_tests_dir)
         'tests'
@@ -73,13 +73,13 @@ def go_from_altered_cwd(folder_name):
 
     :param folder_name: a target folder
     :type folder_name: str
-    :return: path to altered working directory
+    :return: path to the altered working directory
     :rtype: str
 
     **Example**::
 
-        >>> import os
         >>> from pyhelpers.dir import go_from_altered_cwd
+        >>> import os
 
         >>> cwd = os.getcwd()
         >>> cwd

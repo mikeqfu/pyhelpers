@@ -30,7 +30,7 @@ def transform_geom_point_type(*pts, as_geom=True):
     :type pts: list or tuple or shapely.geometry.Point
     :param as_geom: whether to return point(s) as `shapely.geometry.Point`_, defaults to ``True``
     :type as_geom: bool
-    :return: a sequence of points (incl. None, if errors occur)
+    :return: a sequence of points (incl. ``None`` if errors occur)
     :rtype: typing.Generator[shapely.geometry.Point, tuple]
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
