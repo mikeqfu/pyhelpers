@@ -1,10 +1,10 @@
-.. _a-brief-tutorial:
+.. _brief-tutorial:
 
 ========
 Tutorial
 ========
 
-This brief tutorial provides a few examples for each module of `pyhelpers`_, and demonstrates what the package could offer to assist with data manipulation in practical work.
+This brief tutorial provides a few examples for each of the :ref:`modules<modules>`, and demonstrates what `pyhelpers`_ could offer to assist us in performing data manipulation tasks in our practical work.
 
 .. _pyhelpers: https://pypi.org/project/pyhelpers/
 
@@ -765,7 +765,7 @@ After the connection to the database has been established, we can use the method
 .. figure:: _images/tutorial-sql-examples-df_table.png
     :name: tutorial-sql-examples-df_table
     :align: center
-    :width: 52%
+    :width: 60%
 
     The table *"public"."df_table"*.
 
@@ -786,7 +786,7 @@ Let's now try to import the same data into a table named *"df_table_alt"* by set
 .. figure:: _images/tutorial-sql-examples-df_table_alt.png
     :name: tutorial-sql-examples-df_table_alt
     :align: center
-    :width: 52%
+    :width: 60%
 
     The table *"public"."df_table_alt"*.
 
@@ -860,7 +860,11 @@ Check the currently connected database:
 
 Now we have removed all the databases and tables created above, and restored the PostgreSQL server to its original status.
 
-**This is the end of the** :ref:`tutorial<a-brief-tutorial>`.
+.. _tutorial-the-end:
+
+**This is the end of the** :ref:`brief tutorial<brief-tutorial>`.
+
+-----------------------------------------------------------------
 
 Any issues regarding the use of the package are all welcome and should be logged/reported onto the `Issue Tracker`_.
 
