@@ -42,7 +42,7 @@ PyHelpers
     license
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :includehidden:
     :caption: Quick start
 
