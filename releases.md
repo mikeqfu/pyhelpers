@@ -1,10 +1,10 @@
 ### Release history
 
-
+<br/>
 
 #### [1.2.16](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.16)
 
-*20 September 2021*
+(*20 September 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.15...1.2.16) since [1.2.15](https://pypi.org/project/pyhelpers/1.2.15/):
 
@@ -36,11 +36,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.16 documentation](https://pyhelpers.readthedocs.io/en/1.2.16/).**
 
-
+<br/>
 
 #### [1.2.15](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.15)
 
-*19 April 2021*
+(*19 April 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.14...1.2.15) since [1.2.14](https://pypi.org/project/pyhelpers/1.2.14/):
 
@@ -58,11 +58,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.15 documentation](https://pyhelpers.readthedocs.io/en/1.2.15/).**
 
-
+<br/>
 
 #### [1.2.14](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.14)
 
-*27 March 2021*
+(*27 March 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.13...1.2.14) since [1.2.13](https://pypi.org/project/pyhelpers/1.2.13/):
 
@@ -70,11 +70,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.14 documentation](https://pyhelpers.readthedocs.io/en/1.2.14/).**
 
-
+<br/>
 
 #### [1.2.13](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.13)
 
-*26 March 2021*
+(*26 March 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.12...1.2.13) since [1.2.12](https://pypi.org/project/pyhelpers/1.2.12/):
 
@@ -82,11 +82,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.13 documentation](https://pyhelpers.readthedocs.io/en/1.2.13/).** 
 
-
+<br/>
 
 #### [1.2.12](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.12)
 
-*22 March 2021*
+(*22 March 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.11...1.2.12) since [1.2.11](https://pypi.org/project/pyhelpers/1.2.11/):
 
@@ -95,11 +95,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.12 documentation](https://pyhelpers.readthedocs.io/en/1.2.12/).** 
 
-
+<br/>
 
 #### [1.2.11](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.11)
 
-*3 March 2021*
+(*3 March 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.10...1.2.11) since [1.2.10](https://pypi.org/project/pyhelpers/1.2.10/):
 
@@ -110,11 +110,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.11 documentation](https://pyhelpers.readthedocs.io/en/1.2.11/).** 
 
-
+<br/>
 
 #### [1.2.10](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.10)
 
-*1 February 2021*
+(*1 February 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.9...1.2.10) since [1.2.9](https://pypi.org/project/pyhelpers/1.2.9/):
 
@@ -133,11 +133,11 @@
 
 **For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.10 documentation](https://pyhelpers.readthedocs.io/en/1.2.10/).** 
 
-
+<br/>
 
 #### [1.2.9](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.9)
 
-*5 January 2021*
+(*5 January 2021*)
 
 *(Note that **~~1.2.8~~** had been permanently deleted.)*
 
@@ -150,11 +150,11 @@
   - the functions [confirmed](https://github.com/mikeqfu/pyhelpers/commit/eb1fa9b79a3c696c29fb0b5457fbc135cb49503e#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR23) and [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/ce1caaef6bf306a5a0e4014f38ed1c0a159ff529#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR887) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/ops.py)
   - the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/f43192408c548ad3d60df196d36dd970f022f954/pyhelpers/sql.py#L54) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/6dd51bfd46e08852ff38446ef0aab97351db2420/pyhelpers/sql.py)
 
-
+<br/>
 
 #### [1.2.7](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.7)
 
-*17 November 2020*
+(*17 November 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.6...1.2.7) since [1.2.6](https://pypi.org/project/pyhelpers/1.2.6/):
 
@@ -167,11 +167,11 @@
   - [get_acronym](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R61)
   - [extract_words1upper](https://github.com/mikeqfu/pyhelpers/commit/246e6a1e73c8d072f9f6c2120e92e11406263b40#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R107)
 
-
+<br/>
 
 #### [1.2.6](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.6)
 
-*6 November 2020*
+(*6 November 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.5...1.2.6) since [1.2.5](https://pypi.org/project/pyhelpers/1.2.5/):
 
@@ -183,11 +183,11 @@
   - [~~find_closest_points_between~~](https://github.com/mikeqfu/pyhelpers/commit/ba2370b8511a06763076033546a24dd60ec23927#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L793) to [find_closest_points](https://github.com/mikeqfu/pyhelpers/blob/ba2370b8511a06763076033546a24dd60ec23927/pyhelpers/geom.py#L613)
 - reduced the number of essential dependencies for installing the package as some import statements were put into the functions that use them (see also the [note](https://pyhelpers.readthedocs.io/en/latest/installation.html) for installation)
 
-
+<br/>
 
 #### [1.2.5](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.5)
 
-*12 October 2020*
+(*12 October 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.4...1.2.5) since [1.2.4](https://pypi.org/project/pyhelpers/1.2.4/):
 
@@ -197,22 +197,22 @@
 - removed the functions [~~get_variable_name~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL165) and [~~get_variable_names~~](https://github.com/mikeqfu/pyhelpers/commit/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL203) from the module [ops](https://github.com/mikeqfu/pyhelpers/blob/c7e22ae0d2e20c9ab84e5224b300e0a660ccb2e0/pyhelpers/ops.py)
 - modified the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py#L21) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/116c7c1872fc8916856ae067e1edc89f8f8580bd/pyhelpers/sql.py) with [bug fixes](https://github.com/mikeqfu/pyhelpers/commit/116c7c1872fc8916856ae067e1edc89f8f8580bd)
 
-
+<br/>
 
 #### [1.2.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.4)
 
-*7 September 2020*
+(*7 September 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.3...1.2.4) since [1.2.3](https://pypi.org/project/pyhelpers/1.2.3/):
 
 - modified the function [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/0462c6bb3e3d32d6266ce2a713d99c90f8b5a0c6) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/ef9caca1e696f699633a4ee619e57c9f27ae6ce2/pyhelpers/ops.py)
 - made [a minor change](https://github.com/mikeqfu/pyhelpers/commit/ef4149590136a9e665e66f38f5decf64d6ccdb2c) to the installation requirements
 
-
+<br/>
 
 #### [1.2.3](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.3)
 
-*7 September 2020*
+(*7 September 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.2...1.2.3) since [1.2.2](https://pypi.org/project/pyhelpers/1.2.2/):
 
@@ -221,11 +221,11 @@
 - fixed [a bug](https://github.com/mikeqfu/pyhelpers/commit/e24a68f2ec80ef6316e1b0af4c68f779225ab2d8#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L62) in the function [get_specific_filepath_info](https://github.com/mikeqfu/pyhelpers/blob/e24a68f2ec80ef6316e1b0af4c68f779225ab2d8/pyhelpers/store.py#L16) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/e3f8ba9ffb775d030bde7aa18df131cf6e45b5b2/pyhelpers/store.py)
 - fixed [a few bugs](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe) in the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/319fe94aac4f215b58620b23a7556489716b59fe#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaR19) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/e3f8ba9ffb775d030bde7aa18df131cf6e45b5b2/pyhelpers/sql.py)
 
-
+<br/>
 
 #### [1.2.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.2)
 
-*18 July 2020*
+(*18 July 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.1...1.2.2) since [1.2.1](https://pypi.org/project/pyhelpers/1.2.1/):
 
@@ -234,11 +234,11 @@
   - [split_list](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL222)
   - [get_all_values_from_nested_dict](https://github.com/mikeqfu/pyhelpers/commit/aa387606d2bc02834933e94a7cbccbc1e545dafe#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL341)
 
-
+<br/>
 
 #### [1.2.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.1)
 
-*1 July 2020*
+(*1 July 2020*)
 
 *(Note that **~~1.2.0~~** had been permanently deleted.)*
 
@@ -264,11 +264,11 @@
 - modified the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/4598e3e16d706f1cc4472d774ecd4dbf53d4eb28#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL20) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/4a3a0c9ac83440007136f504e44562ec75b973df/pyhelpers/sql.py)
 - created [PyHelpers documentation](https://readthedocs.org/projects/pyhelpers/) hosted at [Read the Docs](https://readthedocs.org/)
 
-
+<br/>
 
 #### [1.1.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.1.2)
 
-*30 May 2020*
+(*30 May 2020*)
 
 *(Note that **~~1.1.1~~** had been permanently deleted.)*
 
@@ -301,11 +301,11 @@
   - [download](https://github.com/mikeqfu/pyhelpers/commit/860cfd69ddf26480af722f59018550c83763b091#diff-6f8fcaf7c0adfbc7a2f9590aa4d76d65bbe0f8f0b383509db21cf9f01a579155R10) in the module [download](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/download.py):
   - [save_svg_as_emf](https://github.com/mikeqfu/pyhelpers/commit/646bcccdd2b01f70ecbac939d00c37c855fde92a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R467) and [save_web_page_as_pdf](https://github.com/mikeqfu/pyhelpers/commit/646bcccdd2b01f70ecbac939d00c37c855fde92a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R501-R502) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/store.py)
 
-
+<br/>
 
 #### [1.1.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.1.0)
 
-*22 April 2020*
+(*22 April 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.26...1.1.0) since [1.0.26](https://pypi.org/project/pyhelpers/1.0.26/):
 
@@ -313,31 +313,31 @@
 - modified the two modules [store](https://github.com/mikeqfu/pyhelpers/commit/79a2a01ce07c813a170643e2ba19c51a8e5c66e6) and [text](https://github.com/mikeqfu/pyhelpers/commit/de0cd35ead0224a7decda8527edb8bea816dd2a1)
 - fixed [a minor bug](https://github.com/mikeqfu/pyhelpers/commit/de0cd35ead0224a7decda8527edb8bea816dd2a1#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127L42) in the function [find_matched_str](https://github.com/mikeqfu/pyhelpers/blob/2326cd2e11e8264bc96a71386755206123b554d1/pyhelpers/text.py#L34) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/2326cd2e11e8264bc96a71386755206123b554d1/pyhelpers/text.py)
 
-
+<br/>
 
 #### [1.0.26](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.26)
 
-*12 March 2020*
+(*12 March 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.25...1.0.26) since [1.0.25](https://pypi.org/project/pyhelpers/1.0.25/):
 
 - fixed [a few bugs](https://github.com/mikeqfu/pyhelpers/commit/96ffbafcdd27f245c3462c009f3cb66111f61ffa) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/6fe6c272bdb6042ec6040c6164d0d9b9554faf11/pyhelpers/store.py)
 
-
+<br/>
 
 #### [1.0.25](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.25)
 
-*6 March 2020*
+(*6 March 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.24...1.0.25) since [1.0.24](https://pypi.org/project/pyhelpers/1.0.24/):
 
 - upgraded from *pyproj 1* to *pyproj 2* for two functions: [osgb36_to_wgs84](https://github.com/mikeqfu/pyhelpers/commit/d8f6a36b2a6e1ec54ec0ec4faa637337f7542bd1#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R21-R25) and [wgs84_to_osgb36](https://github.com/mikeqfu/pyhelpers/commit/d8f6a36b2a6e1ec54ec0ec4faa637337f7542bd1#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R42-R46), in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/3f0baeae6c63f3afb8ea8cf1cdff35c9647c92f0/pyhelpers/geom.py) 
 
-
+<br/>
 
 #### [1.0.24](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.24)
 
-*28 January 2020*
+(*28 January 2020*)
 
 *(Note that **~~1.0.23~~** had been permanently deleted.)*
 
@@ -345,11 +345,11 @@
 
 - fixed [a bug](https://github.com/mikeqfu/pyhelpers/commit/039c09ebaa879d5251ba967824bd12c317ed9206) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/383b226e0e27fb6622f405a62a016601bc844666/pyhelpers/sql.py)
 
-
+<br/>
 
 #### [1.0.22](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.22)
 
-*27 January 2020*
+(*27 January 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.21...1.0.22) since [1.0.21](https://pypi.org/project/pyhelpers/1.0.21/):
 
@@ -361,32 +361,32 @@
   - the function [gdal_configurations](https://github.com/mikeqfu/pyhelpers/commit/0d8a461b89f0d8a917e52a491c17e8f6d0cbf3cf) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/9826ef52afc1018c9e17b518de6ea5ebec7edc88/pyhelpers/settings.py)
   - the class [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/dfeaf212bbaa3ee05dd60d7fe9f6f33cc58e0ced) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/9826ef52afc1018c9e17b518de6ea5ebec7edc88/pyhelpers/sql.py)
 
-
+<br/>
 
 #### [1.0.21](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.21)
 
-*20 January 2020*
+(*20 January 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.20...1.0.21) since [1.0.20](https://pypi.org/project/pyhelpers/1.0.20/):
 
 - added a new module [sql](https://github.com/mikeqfu/pyhelpers/blob/8f86efcee944b172eb9c525077b3b2425e5730ae/pyhelpers/sql.py)
 - added a new function [detect_nan_for_str_column](https://github.com/mikeqfu/pyhelpers/commit/0c02a011193e36619c4ee1828fd15bd501b58025#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aR320-R328) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/8f86efcee944b172eb9c525077b3b2425e5730ae/pyhelpers/ops.py)
 
-
+<br/>
 
 #### [1.0.20](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.20)
 
-*7 January 2020*
+(*7 January 2020*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.19...1.0.20) since [1.0.19](https://pypi.org/project/pyhelpers/1.0.19/):
 
 - fixed [a few minor bugs](https://github.com/mikeqfu/pyhelpers/commit/8ce0aa9bd7c285b1b936ae54fe6d51d386bdbf77) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/425184670493a3f5e4bf65fac1aac5232071f18b/pyhelpers/store.py)
 
-
+<br/>
 
 #### [1.0.19](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.19)
 
-*28 November 2019*
+(*28 November 2019*)
 
 *(Note that **~~1.0.18~~** had been permanently deleted.)*
 
@@ -409,11 +409,11 @@
   - [download](https://github.com/mikeqfu/pyhelpers/commit/937908d2953cbed4848a400d5f2530d4dfb02456) in the module [download](https://github.com/mikeqfu/pyhelpers/blob/1bf9df9a354ee14d8c112afdd08805eae5de5e1b/pyhelpers/download.py)
   - [mpl_preferences](https://github.com/mikeqfu/pyhelpers/commit/73c7b66685a64147c998c03bd003d1f8d8c42eb3) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/1bf9df9a354ee14d8c112afdd08805eae5de5e1b/pyhelpers/settings.py)
 
-
+<br/>
 
 #### [1.0.17](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.17)
 
-*10 September 2019*
+(*10 September 2019*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.16...1.0.17) since [1.0.16](https://pypi.org/project/pyhelpers/1.0.16/):
 
@@ -423,11 +423,11 @@
   - [geom](https://github.com/mikeqfu/pyhelpers/commit/d8a9b0defd7a4539a89b150250e26a2967924f9b)
   - [store](https://github.com/mikeqfu/pyhelpers/commit/36809752328e1bfe9a30bf67fd2e36c6f332009d)
 
-
+<br/>
 
 #### [1.0.16](https://github.com/mikeqfu/pyhelpers/releases/tag/1.0.16)
 
-*3 September 2019*
+(*3 September 2019*)
 
 **A brand-new release.**
 
