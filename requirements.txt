@@ -30,7 +30,7 @@ ipywidgets==7.6.5
 jedi==0.18.0
 Jinja2==3.0.1
 joblib==1.0.1
-jsonschema==3.2.0
+jsonschema==4.0.1
 jupyter==1.0.0
 jupyter-client==6.1.12
 jupyter-console==6.4.0
@@ -81,7 +81,7 @@ pyxlsb==1.0.8
 pyzmq==22.3.0
 qtconsole==5.1.1
 QtPy==1.11.2
-readme-renderer==29.0
+readme-renderer==30.0
 regex==2021.9.24
 requests==2.26.0
 requests-toolbelt==0.9.1
