@@ -1194,6 +1194,57 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
     return session
 
 
+def _fake_requests_headers(randomized=False, **kwargs):
+    """
+    Make a fake HTTP headers for `requests.get
+    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
+
+    :param randomized: whether to go for a random agent, defaults to ``False``
+    :type randomized: bool
+    :param kwargs: [optional] parameters used by `fake_useragent.UserAgent()`_
+    :return: fake HTTP headers
+    :rtype: dict
+
+    .. _fake_useragent.UserAgent():
+        https://github.com/hellysmile/fake-useragent/blob/master/fake_useragent/fake.py#L13
+
+    **Examples**::
+
+        >>> # noinspection PyProtectedMember
+        >>> from pyhelpers.ops import _fake_requests_headers
+
+        >>> fake_headers_1 = _fake_requests_headers()
+        >>> fake_headers_1
+        {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
+
+        >>> fake_headers_2 = _fake_requests_headers(randomized=True)
+        >>> fake_headers_2  # a random one
+        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML ...
+
+    .. note::
+
+        ``fake_headers_1`` may also be different every time we run the examples.
+    """
+
+    try:
+        fake_user_agent = fake_useragent.UserAgent(**kwargs)
+        ua = fake_user_agent.random if randomized else fake_user_agent['google chrome']
+
+    except fake_useragent.FakeUserAgentError:
+        if len(kwargs) > 1:
+            kwargs.update({'use_cache_server': False, 'verify_ssl': False})
+        fake_user_agent = fake_useragent.UserAgent(**kwargs)
+
+        if randomized:
+            ua = random.choice(fake_user_agent.data_browsers['internetexplorer'])
+        else:
+            ua = fake_user_agent['Internet Explorer']
+
+    fake_headers = {'User-Agent': ua}
+
+    return fake_headers
+
+
 def fake_requests_headers(randomized=False, **kwargs):
     """
     Make a fake HTTP headers for `requests.get
@@ -1212,34 +1263,26 @@ def fake_requests_headers(randomized=False, **kwargs):
 
         >>> from pyhelpers.ops import fake_requests_headers
 
-        >>> fake_headers_ = fake_requests_headers()
-        >>> fake_headers_
+        >>> fake_headers_1 = fake_requests_headers()
+        >>> fake_headers_1
         {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
 
-        >>> fake_headers_ = fake_requests_headers(randomized=True)
-        >>> fake_headers_  # a random one
-        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML ...
+        >>> fake_headers_2 = fake_requests_headers(randomized=True)
+        >>> fake_headers_2  # a random one
+
+        >>> fake_headers_2 == fake_headers_1
+        False
 
     .. note::
 
-        The above ``fake_headers_`` may be different every time we run the examples.
+        ``fake_headers_1`` may also be different every time we run the examples.
     """
 
     try:
-        fake_user_agent = fake_useragent.UserAgent(**kwargs)
-        ua = fake_user_agent.random if randomized else fake_user_agent['google chrome']
-
-    except fake_useragent.FakeUserAgentError:
-        if len(kwargs) > 1:
-            kwargs.update({'use_cache_server': False, 'verify_ssl': False})
-        fake_user_agent = fake_useragent.UserAgent(**kwargs)
-
-        if randomized:
-            ua = random.choice(fake_user_agent.data_browsers['internetexplorer'])
-        else:
-            ua = fake_user_agent['Internet Explorer']
-
-    fake_headers = {'User-Agent': ua}
+        fake_headers = _fake_requests_headers(randomized=randomized, **kwargs)
+    except IndexError:
+        # Try again
+        fake_headers = _fake_requests_headers(randomized=randomized, **kwargs)
 
     return fake_headers
 
