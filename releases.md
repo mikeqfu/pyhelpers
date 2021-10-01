@@ -2,6 +2,18 @@
 
 <br/>
 
+#### [1.2.17](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.17)
+
+(*1 October 2021*)
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.16...1.2.17) since [1.2.16](https://pypi.org/project/pyhelpers/1.2.16/):
+
+- modified the function [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/39bf5c3bac09333f5ba043113dcbcc2706259ac6) to avoid raising `IndexError`
+
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.17 documentation](https://pyhelpers.readthedocs.io/en/1.2.17/).**
+
+<br/>
+
 #### [1.2.16](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.16)
 
 (*20 September 2021*)
@@ -34,7 +46,7 @@
 - made [modifications](https://github.com/mikeqfu/pyhelpers/commit/e997ab9c6ff17201795b376ffafd4e0357c0fe41) to all the functions in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/4cdf763ba7cecb46d66fbf3ea4eb684e04500d0e/pyhelpers/settings.py)
 - modified the function [find_similar_str](https://github.com/mikeqfu/pyhelpers/commit/c4dd51fdec5b910d4ec6d800875dba5504aead0e#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127L148-R241) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/4cdf763ba7cecb46d66fbf3ea4eb684e04500d0e/pyhelpers/text.py)
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.16 documentation](https://pyhelpers.readthedocs.io/en/1.2.16/).**
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.16 documentation](https://pyhelpers.readthedocs.io/en/1.2.16/).**
 
 <br/>
 
@@ -56,7 +68,7 @@
   - modified the method [PostgreSQL.import_data](https://github.com/mikeqfu/pyhelpers/commit/57df1b9a91f6ff87542f8ce4045ef3e7b036885f#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL1163-R1233) and [import statements](https://github.com/mikeqfu/pyhelpers/commit/57df1b9a91f6ff87542f8ce4045ef3e7b036885f#diff-c615ea7745f60e95fd1c84af5ceaa8453c550332f69ad7fa84a50053bdb91dbaL18-R18)
   - fixed [a bug](https://github.com/mikeqfu/pyhelpers/commit/66c9199c409499cab8b3c4e2ef7cabc3d826af6b) in the method [PostgreSQL.drop_schema](https://github.com/mikeqfu/pyhelpers/blob/66c9199c409499cab8b3c4e2ef7cabc3d826af6b/pyhelpers/sql.py#L666-L760)
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.15 documentation](https://pyhelpers.readthedocs.io/en/1.2.15/).**
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.15 documentation](https://pyhelpers.readthedocs.io/en/1.2.15/).**
 
 <br/>
 
@@ -68,7 +80,7 @@
 
 - rectified [an error](https://github.com/mikeqfu/pyhelpers/commit/bad3ff51a90a0da9ce9ebb2b4e20b3517204e05c) in the specification of dependencies for package installation
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.14 documentation](https://pyhelpers.readthedocs.io/en/1.2.14/).**
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.14 documentation](https://pyhelpers.readthedocs.io/en/1.2.14/).**
 
 <br/>
 
@@ -80,7 +92,7 @@
 
 - modified the module [sql](https://github.com/mikeqfu/pyhelpers/blob/c96c6acd31d7d94a99bb4591a741c656982868c9/pyhelpers/sql.py) with [a bug fix](https://github.com/mikeqfu/pyhelpers/commit/c96c6acd31d7d94a99bb4591a741c656982868c9) for errors raised when importing SQLAlchemy 1.4.0+
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.13 documentation](https://pyhelpers.readthedocs.io/en/1.2.13/).** 
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.13 documentation](https://pyhelpers.readthedocs.io/en/1.2.13/).** 
 
 <br/>
 
@@ -93,7 +105,7 @@
 - resolved [an issue](https://github.com/mikeqfu/pyhelpers/commit/b426b761297117aeb599836f88bde0c08a5a50cf) that failed importing modules (after updating or reinstalling the package)
 - added a new function [gps_to_utc](https://github.com/mikeqfu/pyhelpers/commit/b0338189cf16d5aac8c6a2d1785e37f7f3ae9f05) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/294fdb7d9817a58a6dd4cad909f23a9f75416e49/pyhelpers/ops.py)
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.12 documentation](https://pyhelpers.readthedocs.io/en/1.2.12/).** 
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.12 documentation](https://pyhelpers.readthedocs.io/en/1.2.12/).** 
 
 <br/>
 
@@ -108,7 +120,7 @@
   - [find_closest_point](https://github.com/mikeqfu/pyhelpers/commit/f6486366c8f0791fe6c92fb45684b8a7e87a3594) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/f6486366c8f0791fe6c92fb45684b8a7e87a3594/pyhelpers/geom.py)
   - [find_similar_str](https://github.com/mikeqfu/pyhelpers/commit/b38273fa3d991646f5a4dc0d951bed05bfee7f9d) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/b38273fa3d991646f5a4dc0d951bed05bfee7f9d/pyhelpers/text.py)
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.11 documentation](https://pyhelpers.readthedocs.io/en/1.2.11/).** 
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.11 documentation](https://pyhelpers.readthedocs.io/en/1.2.11/).** 
 
 <br/>
 
@@ -131,7 +143,7 @@
   - the function [save_multiple_spreadsheets](https://github.com/mikeqfu/pyhelpers/commit/b96306545986a1c2763afb1aadcaf867695537b9#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R311) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/store.py)
   - the class method [PostgreSQL.read_sql_query](https://github.com/mikeqfu/pyhelpers/commit/5a8f251b570f0877d117251ec3e3408dba648398) in the module [sql](https://github.com/mikeqfu/pyhelpers/blob/9b858f42e2fca0770589ad6fb93a981b432d20a5/pyhelpers/sql.py)
 
-**For more information about the update and/or a full walk-through of this release, check out [PyHelpers 1.2.10 documentation](https://pyhelpers.readthedocs.io/en/1.2.10/).** 
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.10 documentation](https://pyhelpers.readthedocs.io/en/1.2.10/).** 
 
 <br/>
 
