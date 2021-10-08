@@ -19,10 +19,10 @@ autodoc_mock_imports = [
 ]
 
 # Project information ============================================================================
-from pyhelpers import __author__, __package_name__, __project_name__, __version__, __copyright__
+from pyhelpers import __author__, __package__, __project__, __version__, __copyright__
 
 # General information about the project:
-project = __project_name__
+project = __project__
 copyright = __copyright__
 
 # The version info for the project:
@@ -99,7 +99,7 @@ html_css_files = ['rtd_overrides.css']
 html_js_files = ['copybutton.js']
 
 # Output file base name for HTML help builder:
-htmlhelp_basename = __project_name__ + 'doc'  # Defaults to 'pydoc'
+htmlhelp_basename = __project__ + 'doc'  # Defaults to 'pydoc'
 
 # Options for LaTeX output =======================================================================
 from pygments.formatters.latex import LatexFormatter
@@ -120,8 +120,8 @@ latex_engine = 'pdflatex'
 # Grouping the document tree into LaTeX files:
 latex_documents = [
     ('index',  # source start file
-     __package_name__ + '.tex',  # target name
-     __project_name__ + ' Documentation',  # title
+     __package__ + '.tex',  # target name
+     __project__ + ' Documentation',  # title
      __author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]
      1  # toctree only
