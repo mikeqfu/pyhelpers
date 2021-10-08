@@ -39,10 +39,10 @@ setuptools.setup(
         'Operating System :: POSIX :: Linux',
     ],
 
-    keywords=['python', 'helper functions', 'utilities'],
+    keywords=['Python', 'Helper functions', 'Utilities'],
 
     project_urls={
-        'Documentation': 'https://pyhelpers.readthedocs.io/en/latest/',
+        'Documentation': 'https://pyhelpers.readthedocs.io/en/{}/'.format(__version__),
         'Source': 'https://github.com/mikeqfu/pyhelpers',
         'Tracker': 'https://github.com/mikeqfu/pyhelpers/issues',
     },
