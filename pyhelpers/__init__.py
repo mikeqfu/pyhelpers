@@ -13,9 +13,9 @@ from .store import *
 # noinspection PyUnresolvedReferences
 from .text import *
 
-__project_name__ = 'PyHelpers'
-__package_name__ = 'pyhelpers'
-__description__ = f"{__project_name__}: " \
+__project__ = 'PyHelpers'
+__package__ = 'pyhelpers'
+__description__ = f"{__project__}: " \
                   f"an open-source toolkit for facilitating Python users' data manipulation tasks."
 
 __author__ = 'Qian Fu'
