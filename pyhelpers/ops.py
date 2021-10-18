@@ -1230,7 +1230,7 @@ def get_fake_user_agent(randomized=False, update=False):
 
     :param randomized: whether to randomize all available user agent strings, defaults to ``False``
     :type randomized: bool
-    :param update:
+    :param update: whether to update the backup data of user-agent strings, defaults to ``False``
     :type update: bool
     :return: a (fake) user agent string
     :rtype: str
