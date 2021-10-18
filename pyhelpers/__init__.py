@@ -15,8 +15,7 @@ from .text import *
 
 __project__ = 'PyHelpers'
 __package__ = 'pyhelpers'
-__description__ = f"{__project__}: " \
-                  f"an open-source toolkit for facilitating Python users' data manipulation tasks."
+__description__ = f"An open-source toolkit for facilitating Python users' data manipulation tasks."
 
 __author__ = 'Qian Fu'
 __affiliation__ = 'School of Engineering, University of Birmingham'
