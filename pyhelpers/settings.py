@@ -1,5 +1,5 @@
 """
-Altering the default settings of working environment.
+Altering settings of working environment.
 """
 
 import copy
@@ -15,8 +15,8 @@ import pandas as pd
 def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
-    Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_ of
-    `GDAL/OGR <https://gdal.org/>`_ drivers.
+    Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_
+    of `GDAL/OGR`_ drivers.
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
@@ -29,6 +29,8 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
     :param compress_nodes: whether to compress nodes in temporary DB. defaults to ``True``
     :type compress_nodes: bool
 
+    .. _`GDAL/OGR`: https://gdal.org
+
     **Example**::
 
         >>> from pyhelpers.settings import gdal_configurations
@@ -37,7 +39,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
 
     .. note::
 
-        This can be very useful when using `GDAL`_ to parse a large PBF file.
+        This can be useful when using `GDAL`_ to parse a large PBF file.
         For example, ``gdal_configurations()`` is applied by default when importing the package
         `pydriosm`_, which can be used to work with `OpenStreetMap`_ data of `PBF format`_.
 
@@ -78,9 +80,8 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
 def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, legend_spacing=0.7,
                     fig_style=None):
     """
-    Alter some `parameters
-    <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_
-    of `Matplotlib <https://matplotlib.org/stable/index.html>`_ plots.
+    Alter some `Matplotlib parameters
+    <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_.
 
     :param font_name: name of a font to be used, defaults to ``'Times New Roman'``
     :type font_name: None or str
