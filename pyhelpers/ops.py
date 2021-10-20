@@ -1258,15 +1258,14 @@ def get_fake_user_agent(randomized=False, update=False):
             browser_data = urllib.request.urlopen(resource_url).read().decode('utf-8')
             browser_data = orjson.loads(browser_data)
 
-            if randomized:
-                fake_user_agents = [dat for b in browser_data['browsers'].values() for dat in b]
+            fake_user_agents = [dat for b in browser_data['browsers'].values() for dat in b]
 
-                path_to_fua = "dat\\fake-user-agent-strings.pickle"
-                f = open(pkg_resources.resource_filename(__name__, path_to_fua), mode='wb')
-                pickle.dump(fake_user_agents, f)
-                f.close()
+            path_to_fua = "dat\\fake-user-agent-strings.pickle"
+            f = open(pkg_resources.resource_filename(__name__, path_to_fua), mode='wb')
+            pickle.dump(fake_user_agents, f)
+            f.close()
 
-            else:
+            if not randomized:
                 fake_user_agents = browser_data['browsers']['chrome']
 
         except Exception:
