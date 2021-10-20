@@ -50,7 +50,7 @@ def get_db_address(db_cls):
 
 class PostgreSQL:
     """
-    A class for basic communication with a `PostgreSQL <https://www.postgresql.org/>`_ server.
+    A class for basic communication with a `PostgreSQL`_ server.
 
     :param host: host address, e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation),
         defaults to ``None``
@@ -89,6 +89,7 @@ class PostgreSQL:
     :ivar sqlalchemy.pool.base._ConnectionFairy connection: `SQLAlchemy`_ Connection class;
         see also [`SQL-P-SP-4`_]
 
+    .. _`PostgreSQL`: https://www.postgresql.org/
     .. _`SQL-P-SP-1`:
         https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql
     .. _`SQL-P-SP-2`:
