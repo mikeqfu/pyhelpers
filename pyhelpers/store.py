@@ -106,20 +106,22 @@ def _get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... "
 
 def save(data, path_to_file, warning=False, **kwargs):
     """
-    Save data as a specified file.
+    Save data to a file of specific format.
 
-    :param data: data that could be saved as a
-        `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
-        `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ workbook,
-        `Feather <https://arrow.apache.org/docs/python/feather.html>`_,
-        `JSON <https://www.json.org/json-en.html>`_, or
-        `Pickle <https://docs.python.org/3/library/pickle.html>`_ file
+    :param data: data that could be saved to
+        a `CSV`_, `Microsoft Excel`_, `Feather`_, `JSON`_ or `pickle`_ file
     :type data: any
     :param path_to_file: path where a file is saved
     :type path_to_file: str
     :param warning: whether to show a warning messages, defaults to ``False``
     :type warning: bool
-    :param kwargs: optional parameters of those ``pyhelpers.store.save_*`` functions
+    :param kwargs: [optional] parameters of ``pyhelpers.store.save_*`` functions
+
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`JSON`: https://www.json.org/json-en.html
+    .. _`Pickle`: https://docs.python.org/3/library/pickle.html
 
     **Examples**::
 
@@ -197,9 +199,9 @@ def save(data, path_to_file, warning=False, **kwargs):
 
 def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs):
     """
-    Save data as a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Save data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
-    :param pickle_data: data that could be dumped by the built-in module `pickle.dump()`_
+    :param pickle_data: data that could be dumped by the built-in module `pickle.dump`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
@@ -207,11 +209,10 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters used by `pickle.dump()`_
+    :param kwargs: [optional] parameters of the function `pickle.dump`_
 
-    .. _pickle: https://docs.python.org/3/library/pickle.html
-    .. _open: https://docs.python.org/3/library/functions.html#open
-    .. _pickle.dump(): https://docs.python.org/3/library/pickle.html#pickle.dump
+    .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
 
     **Example**::
 
@@ -241,18 +242,17 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
 
 def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     """
-    Save data as a `joblib <https://pypi.org/project/joblib/>`_ file.
+    Save data to a `joblib <https://pypi.org/project/joblib/>`_ file.
 
-    :param joblib_data: data that could be dumped by `joblib.dump()`_
+    :param joblib_data: data that could be dumped by `joblib.dump`_
     :type joblib_data: any
     :param path_to_joblib: path where a pickle file is saved
     :type path_to_joblib: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters used by `joblib.dump()`_
+    :param kwargs: [optional] parameters of `joblib.dump`_
 
-    .. _`joblib`: https://pypi.org/project/joblib/
-    .. _`joblib.dump()`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
+    .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
 
     **Example**::
 
@@ -282,15 +282,11 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
 def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None, delimiter=',',
                      verbose=False, **kwargs):
     """
-    Save data as a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_
-    or an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Save data to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ or
+    an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
 
-    The file extension can include `".txt"`, `".csv"`, `".xlsx"` or `".xls"`.
-
-    Engines can include:
-
-        - `xlsxwriter <https://xlsxwriter.readthedocs.io/>`_ for .xlsx
-        - `openpyxl <https://openpyxl.readthedocs.io/en/stable/>`_ for .xlsx/.xlsm
+    The file extension can be `".txt"`, `".csv"`, `".xlsx"` or `".xls"`;
+    engines can include: `xlsxwriter`_ (for .xlsx) and `openpyxl`_ (for .xlsx/.xlsm).
 
     :param spreadsheet_data: data that could be saved as a spreadsheet, e.g. .xlsx, .csv
     :type spreadsheet_data: pandas.DataFrame
@@ -307,8 +303,10 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
     :type delimiter: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
+    :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
+    .. _`xlsxwriter`: https://pypi.org/project/XlsxWriter/
+    .. _`openpyxl`: https://pypi.org/project/openpyxl/
     .. _`pandas.DataFrame.to_excel`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv`:
@@ -368,7 +366,9 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
 def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w',
                                index=False, confirmation_required=True, verbose=False, **kwargs):
     """
-    Save data to a multi-sheet `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Save data to a multi-sheet `Microsoft Excel`_ file.
+
+    The file extension can be `".xlsx"` or `".xls"`.
 
     :param spreadsheets_data: a sequence of pandas.DataFrame
     :type spreadsheets_data: list or tuple or iterable
@@ -385,9 +385,10 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `pandas.ExcelWriter`_
+    :param kwargs: [optional] parameters of `pandas.ExcelWriter`_
 
-    .. _`pandas.ExcelWriter`:
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _pandas.ExcelWriter:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
 
     **Examples**::
@@ -503,7 +504,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
 def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs):
     """
-    Save data as a `JSON <https://www.json.org/json-en.html>`_ file.
+    Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
     :param json_data: data that could be dumped by as a JSON file
     :type json_data: any json data
@@ -515,14 +516,14 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `orjson.dumps()`_ (if ``method='orjson'``),
-        `rapidjson.dump()`_ (if ``method='rapidjson'``), or `json.dump()`_ otherwise
+    :param kwargs: [optional] parameters of `orjson.dumps`_ (if ``method='orjson'``),
+        `rapidjson.dump`_ (if ``method='rapidjson'``), or `json.dump`_ otherwise
 
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`orjson.dumps()`: https://github.com/ijl/orjson#serialize
-    .. _`rapidjson.dump()`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
-    .. _`json.dump()`: https://docs.python.org/3/library/json.html#json.dump
+    .. _`orjson.dumps`: https://github.com/ijl/orjson#serialize
+    .. _`rapidjson.dump`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
+    .. _`json.dump`: https://docs.python.org/3/library/json.html#json.dump
 
     **Example**::
 
@@ -562,7 +563,7 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
 
 def save_feather(feather_data, path_to_feather, verbose=False):
     """
-    Save data frame as a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Save data frame to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
     :param feather_data: a data frame to be saved as a feather-formatted file
     :type feather_data: pandas.DataFrame
@@ -604,9 +605,9 @@ def save_feather(feather_data, path_to_feather, verbose=False):
 
 def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
-    Save a figure object as a supported file format.
+    Save a figure object to a file of a supported file format.
 
-    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape <https://inkscape.org>`_).
+    This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
     :param path_to_fig_file: path where a figure file is saved
     :type path_to_fig_file: str
@@ -616,10 +617,11 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     :type verbose: bool or int
     :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
     :type conv_svg_to_emf: bool
-    :param kwargs: optional parameters of `matplotlib.pyplot.savefig`_
+    :param kwargs: [optional] parameters of `matplotlib.pyplot.savefig`_
 
     .. _`matplotlib.pyplot.savefig`:
         https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html
+    .. _`Inkscape`: https://inkscape.org
 
     **Examples**::
 
@@ -688,7 +690,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         (on Windows, use the default installation path -
         ``"C:\\Program Files\\Inkscape\\inkscape.exe"``)
     :type inkscape_exe: str or None
-    :param kwargs: optional parameters of `subprocess.call`_
+    :param kwargs: [optional] parameters of `subprocess.call`_
 
     .. _`subprocess.call`:
         https://docs.python.org/3/library/subprocess.html#subprocess.call
@@ -780,7 +782,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
         (on Windows, use the default installation path -
         ``"C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"``)
     :type wkhtmltopdf_exe: str or None
-    :param kwargs: optional parameters of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
+    :param kwargs: [optional] parameters of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
 
     **Example**::
 
@@ -849,7 +851,7 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
 
 def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     """
-    Load data from a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Load data from a `pickle`_ file.
 
     :param path_to_pickle: path where a pickle file is saved
     :type path_to_pickle: str
@@ -857,12 +859,13 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters used by `pickle.load()`_
+    :param kwargs: [optional] parameters of `pickle.load`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
 
+    .. _`pickle`: https://docs.python.org/3/library/pickle.html
     .. _`open`: https://docs.python.org/3/library/functions.html#open
-    .. _`pickle.load()`: https://docs.python.org/3/library/pickle.html#pickle.load
+    .. _`pickle.load`: https://docs.python.org/3/library/pickle.html#pickle.load
 
     Example::
 
@@ -894,17 +897,18 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
 
 def load_joblib(path_to_joblib, verbose=False, **kwargs):
     """
-    Load data from a `joblib <https://pypi.org/project/joblib/>`_ file.
+    Load data from a `joblib`_ file.
 
     :param path_to_joblib: path where a joblib file is saved
     :type path_to_joblib: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters used by `joblib.load()`_
+    :param kwargs: [optional] parameters of `joblib.load`_
     :return: data retrieved from the specified path ``path_to_joblib``
     :rtype: any
 
-    .. _`joblib.load()`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
+    .. _`joblib`: https://pypi.org/project/joblib/
+    .. _`joblib.load`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
 
     Example::
 
@@ -946,7 +950,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
 
 def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
     """
-    Load multiple sheets of an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Load multiple sheets of an `Microsoft Excel`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
@@ -954,10 +958,11 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     :type as_dict: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `pandas.ExcelFile.parse`_
+    :param kwargs: [optional] parameters of `pandas.ExcelFile.parse`_
     :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
     :rtype: list or dict
 
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`pandas.ExcelFile.parse`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
 
@@ -1024,7 +1029,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
 
 def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
     """
-    Load data from a `JSON <https://www.json.org/json-en.html>`_ file.
+    Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
@@ -1034,16 +1039,17 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters used by `open`_ (if ``method='orjson'``),
-        `rapidjson.load()`_ (if ``method='rapidjson'``) or `json.load()`_ (if ``method=None``)
+    :param kwargs: [optional] parameters of `open`_ (if ``method='orjson'``),
+        `rapidjson.load`_ (if ``method='rapidjson'``) or `json.load`_ (if ``method=None``)
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: dict
 
+    .. _`JSON`: https://www.json.org/json-en.html
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
     .. _`open`: https://docs.python.org/3/library/functions.html#open
-    .. _`rapidjson.load()`: https://docs.python.org/3/library/functions.html#open
-    .. _`json.load()`: https://docs.python.org/3/library/json.html#json.load
+    .. _`rapidjson.load`: https://docs.python.org/3/library/functions.html#open
+    .. _`json.load`: https://docs.python.org/3/library/json.html#json.load
 
     **Example**::
 
@@ -1088,13 +1094,13 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
 
 def load_feather(path_to_feather, verbose=False, **kwargs):
     """
-    Load data frame from a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Load data frame from a `Feather`_ file.
 
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `pandas.read_feather`_
+    :param kwargs: [optional] parameters of `pandas.read_feather`_
 
         * columns: (sequence, None) a sequence of column names, if ``None``, all columns
         * use_threads: (bool) whether to parallelize reading using multiple threads, defaults to ``True``
@@ -1102,6 +1108,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     :return: data retrieved from the specified path ``path_to_feather``
     :rtype: pandas.DataFrame
 
+    .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
     .. _`pandas.read_feather`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_feather.html
 
@@ -1147,7 +1154,7 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
     :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `zipfile.ZipFile.extractall`_
+    :param kwargs: [optional] parameters of `zipfile.ZipFile.extractall`_
 
     .. _`zipfile.ZipFile.extractall`:
         https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall
@@ -1205,7 +1212,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``
         (on Windows, the default installation path - ``"C:\\Program Files\\7-Zip\\7z.exe"``)
     :type seven_zip_exe: str or None
-    :param kwargs: optional parameters of `subprocess.call`_
+    :param kwargs: [optional] parameters of `subprocess.call`_
 
     .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
 
