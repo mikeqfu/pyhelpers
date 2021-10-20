@@ -2,13 +2,26 @@
 
 <br/>
 
+#### [1.2.18](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.18)
+
+(*20 October 2021*)
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.17...1.2.18) since [1.2.17](https://pypi.org/project/pyhelpers/1.2.17/):
+
+- added a new function [get_fake_user_agent](https://github.com/mikeqfu/pyhelpers/commit/b4b822f71e03ea79ba4e663f2a20b772ce5824bd#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1227-R1276) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/b4b822f71e03ea79ba4e663f2a20b772ce5824bd/pyhelpers/ops.py)
+- fixed the issue in [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/69adc0e7fdea6175c7ab6a9013470d541d96e3e2#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1248-R1376) that may occasionally raise [IndexError](https://docs.python.org/3/library/exceptions.html#IndexError)
+
+**For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.18 documentation](https://pyhelpers.readthedocs.io/en/1.2.18/).**
+
+<br/>
+
 #### [1.2.17](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.17)
 
 (*1 October 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.16...1.2.17) since [1.2.16](https://pypi.org/project/pyhelpers/1.2.16/):
 
-- modified the function [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/39bf5c3bac09333f5ba043113dcbcc2706259ac6) to avoid raising `IndexError`
+- modified the function [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/39bf5c3bac09333f5ba043113dcbcc2706259ac6) to avoid raising [IndexError](https://docs.python.org/3/library/exceptions.html#IndexError)
 
 **For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.17 documentation](https://pyhelpers.readthedocs.io/en/1.2.17/).**
 
