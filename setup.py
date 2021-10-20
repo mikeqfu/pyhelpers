@@ -1,13 +1,13 @@
 import setuptools
 
-from pyhelpers import __author__, __description__, __email__, __package_name__, __version__
+from pyhelpers import __author__, __description__, __email__, __package__, __version__
 
 with open("README.rst", 'r', encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(
 
-    name=__package_name__,
+    name=__package__,
 
     version=__version__,
 
@@ -15,7 +15,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
 
-    url='https://github.com/mikeqfu/pyhelpers',
+    url=f'https://github.com/mikeqfu/{__package__}',
 
     author=__author__,
     author_email=__email__,
@@ -23,6 +23,7 @@ setuptools.setup(
     license='GPLv2',
 
     classifiers=[
+        'Intended Audience :: Developers',
         'Intended Audience :: Education',
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Information Technology',
@@ -39,12 +40,12 @@ setuptools.setup(
         'Operating System :: POSIX :: Linux',
     ],
 
-    keywords=['Python', 'Helper functions', 'Utilities'],
+    keywords=['Python', 'Utilities', 'Helpers'],
 
     project_urls={
-        'Documentation': 'https://pyhelpers.readthedocs.io/en/{}/'.format(__version__),
-        'Source': 'https://github.com/mikeqfu/pyhelpers',
-        'Tracker': 'https://github.com/mikeqfu/pyhelpers/issues',
+        'Documentation': f'https://{__package__}.readthedocs.io/en/{__version__}/',
+        'Source': f'https://github.com/mikeqfu/{__package__}',
+        'Tracker': f'https://github.com/mikeqfu/{__package__}/issues',
     },
 
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
@@ -75,7 +76,7 @@ setuptools.setup(
         # 'tqdm',
     ],
 
-    package_data={"": ["requirements.txt", "LICENSE"]},
+    package_data={"": ["dat/*", "requirements.txt", "LICENSE"]},
     include_package_data=True,
 
 )
