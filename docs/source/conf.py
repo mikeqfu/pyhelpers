@@ -2,7 +2,7 @@
 Configuration file for the Sphinx documentation builder.
 """
 
-# Path setup =====================================================================================
+# == Path setup ====================================================================================
 import os
 import sys
 
@@ -18,7 +18,7 @@ autodoc_mock_imports = [
     'fuzzywuzzy',
 ]
 
-# Project information ============================================================================
+# == Project information ===========================================================================
 from pyhelpers import __author__, __package__, __project__, __version__, __copyright__
 
 # General information about the project:
@@ -29,7 +29,7 @@ copyright = __copyright__
 version = __version__  # The short X.Y.Z version
 release = version  # The full version, including alpha/beta/rc tags
 
-# General configuration ==========================================================================
+# == General configuration =========================================================================
 import sphinx_rtd_theme
 
 _ = sphinx_rtd_theme.get_html_theme_path()
@@ -74,7 +74,7 @@ master_doc = 'index'
 # Automatically documented members are sorted by source order ('bysource'):
 autodoc_member_order = 'bysource'
 
-# Options for HTML and HTMLHelp output ===========================================================
+# == Options for HTML and HTMLHelp output ==========================================================
 html_theme = 'sphinx_rtd_theme'  # The theme to use for HTML & HTML Help pages
 
 html_theme_options = {
@@ -101,7 +101,7 @@ html_js_files = ['copybutton.js']
 # Output file base name for HTML help builder:
 htmlhelp_basename = __project__ + 'doc'  # Defaults to 'pydoc'
 
-# Options for LaTeX output =======================================================================
+# == Options for LaTeX output ======================================================================
 from pygments.formatters.latex import LatexFormatter
 from sphinx.highlighting import PygmentsBridge
 
