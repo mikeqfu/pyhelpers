@@ -5,11 +5,11 @@ PyHelpers
 |PyPI| |Python| |License| |Downloads| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=yellow&label=PyPI
-    :alt: PyPI
+    :alt: PyPI - Version
     :target: https://pypi.org/project/pyhelpers/
 .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers?label=Python
     :alt: PyPI - Python Version
-    :target: https://www.python.org/downloads/windows/
+    :target: https://docs.python.org/3/
 .. |License| image:: https://img.shields.io/pypi/l/pyhelpers?label=License
     :alt: PyPI - License
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
