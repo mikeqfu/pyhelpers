@@ -19,6 +19,7 @@ General use
     get_obj_attr
     eval_dtype
     gps_to_utc
+    parse_size
 
 Basic data manipulation
 -----------------------
