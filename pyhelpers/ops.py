@@ -194,6 +194,65 @@ def gps_to_utc(gps_time):
     return utc_time
 
 
+def parse_size(size, binary=True, precision=1):
+    """
+    Parse size from / into readable format of bytes.
+
+    :param size: human- or machine-readable format of size
+    :type size: str or int or float
+    :param binary: whether to use binary (exponent=1024) representation, defaults to ``True``;
+        if ``binary=False``, use the metric representation with the exponent of 1000
+    :type binary: bool
+    :param precision: number of decimal places (when converting ``size`` to human-readable format),
+        defaults to ``1``
+    :type precision: int
+    :return: parsed size
+    :rtype: int or str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import parse_size
+
+        >>> parse_size(size='123.45 MB')
+        123450000
+
+        >>> parse_size(size='123.45 MiB', binary=False)
+        129446707
+
+        >>> parse_size(size=123450000, precision=1)
+        '123.5 MB'
+
+        >>> parse_size(size=129446707, binary=False, precision=2)
+        '123.45 MiB'
+    """
+
+    min_unit, units = 'B', ['K', 'M', 'G', 'T', 'P', 'E']
+    if binary is True:
+        factor, units = 10 ** 3, [x + min_unit for x in units]
+    else:
+        factor, units = 1024, [x + 'i' + min_unit for x in units]
+
+    if isinstance(size, str):
+        val, sym = [x.strip() for x in size.split()]
+        unit = [s for s in units if s[0] == sym[0].upper()][0]
+
+        unit_dict = dict(zip(units, [factor ** i for i in range(1, len(units) + 1)]))
+        parsed_size = int(float(val) * unit_dict[unit])  # in byte
+
+    else:
+        is_negative = size < 0
+        temp_size, parsed_size = map(copy.copy, (abs(size), size))
+
+        for unit in [min_unit] + units:
+            if abs(temp_size) < factor:
+                parsed_size = f"{'-' if is_negative else ''}{temp_size:.{precision}f} {unit}"
+                break
+            if unit != units[-1]:
+                temp_size /= factor
+
+    return parsed_size
+
+
 """ == Basic data manipulation =============================================================== """
 
 
