@@ -54,7 +54,6 @@ setuptools.setup(
         'XlsxWriter',
         'Shapely',
         'SQLAlchemy',
-        'fake-useragent',
         'fuzzywuzzy',
         'joblib',
         'numpy',
