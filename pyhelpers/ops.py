@@ -6,11 +6,11 @@ import ast
 import collections.abc
 import copy
 import datetime
+import html.parser
 import inspect
 import itertools
 import math
 import os
-import pickle
 import random
 import re
 import shutil
@@ -18,8 +18,6 @@ import socket
 import urllib.parse
 import urllib.request
 
-import fake_useragent
-import fake_useragent.errors
 import numpy as np
 import orjson
 import pandas as pd
@@ -1257,148 +1255,233 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
     return session
 
 
-def _fake_user_agents():
+def _user_agent_strings(browser_names=None, dump_dat=True):
     """
-    Get a list of (fake) user agent strings.
+    Get a dictionary of user-agent strings for popular browsers.
 
-    :return: user agent strings
-    :rtype: list
+    :param browser_names: names of a list of popular browsers
+    :type browser_names: list
+    :return: a dictionary of user-agent strings for popular browsers
+    :rtype: dict
 
     **Example**::
 
         >>> # noinspection PyProtectedMember
-        >>> from pyhelpers.ops import _fake_user_agents
+        >>> from pyhelpers.ops import _user_agent_strings
 
-        >>> fake_ua_str = _fake_user_agents()
-        >>> len(fake_ua_str)
-        250
+        >>> uas = _user_agent_strings()
+        >>> list(uas.keys())
+        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
     """
 
-    path_to_fua = pkg_resources.resource_filename(__name__, "dat\\fake-user-agent-strings.pickle")
+    class _FakeUserAgentParser(html.parser.HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.reset()
+            self.recording = 0
+            self.data = []
 
-    f = open(path_to_fua, mode='rb')
-    fua_strings = pickle.load(f)
-    f.close()
+        def error(self, message):
+            pass
 
-    return fua_strings
+        def handle_starttag(self, tag, attrs):
+            if tag != 'a':
+                return
+
+            if self.recording:
+                self.recording += 1
+                return
+
+            if tag == 'a':
+                for name, link in attrs:
+                    if name == 'href' and link.startswith('/index.php?id='):
+                        break
+                    else:
+                        return
+                self.recording = 1
+
+        def handle_endtag(self, tag):
+            if tag == 'a' and self.recording:
+                self.recording -= 1
+
+        def handle_data(self, data):
+            if self.recording:
+                self.data.append(data.strip())
+
+    resource_url = 'http://useragentstring.com/pages/useragentstring.php'
+
+    if browser_names is None:
+        browser_names_ = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+    else:
+        browser_names_ = browser_names.copy()
+
+    user_agent_strings = {}
+    for browser_name in browser_names_:
+        url = resource_url + f'?name={browser_name.replace(" ", "+")}'
+        response = urllib.request.urlopen(url=url)
+        text = response.read().decode('utf-8')
+
+        fua_parser = _FakeUserAgentParser()
+        fua_parser.feed(text)
+
+        user_agent_strings[browser_name] = list(set(fua_parser.data))
+
+    if dump_dat:
+        path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
+
+        json_out = open(path_to_json, mode='wb')
+        json_out.write(orjson.dumps(user_agent_strings))
+        json_out.close()
+
+    return user_agent_strings
 
 
-def get_fake_user_agent(randomized=False, update=False):
+def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
     """
-    Get a fake user agent.
+    Get user-agent strings for some popular browsers.
 
-    :param randomized: whether to randomize all available user agent strings, defaults to ``False``
-    :type randomized: bool
+    The current version collects a partially comprehensive list of user-agent strings for
+    `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_ and `Opera`_.
+
+    :param shuffled: whether to randomly shuffle the user-agent strings, defaults to ``False``
+    :type shuffled: bool
+    :param flattened: whether to make a list of all available user-agent strings, defaults to ``False``
+    :type flattened: bool
     :param update: whether to update the backup data of user-agent strings, defaults to ``False``
     :type update: bool
-    :return: a (fake) user agent string
-    :rtype: str
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :return: a dictionary of user agent strings for popular browsers
+    :rtype: dict or list
 
-    **Example**::
-
-        >>> from pyhelpers.ops import get_fake_user_agent
-
-        >>> fake_ua = get_fake_user_agent()
-        >>> fake_ua
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) ...'
-
-        >>> fake_ua = get_fake_user_agent(randomized=True)
-        >>> fake_ua
-        'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_6; ja-jp) AppleWebKit/533.20.25 ...'
-    """
-
-    if not update:
-        fake_user_agents = _fake_user_agents()
-
-    else:
-        # noinspection PyBroadException
-        try:
-            resource_url = 'https://fake-useragent.herokuapp.com/browsers/' + fake_useragent.VERSION
-            browser_data = urllib.request.urlopen(resource_url).read().decode('utf-8')
-            browser_data = orjson.loads(browser_data)
-
-            fake_user_agents = [dat for b in browser_data['browsers'].values() for dat in b]
-
-            path_to_fua = "dat\\fake-user-agent-strings.pickle"
-            f = open(pkg_resources.resource_filename(__name__, path_to_fua), mode='wb')
-            pickle.dump(fake_user_agents, f)
-            f.close()
-
-            if not randomized:
-                fake_user_agents = browser_data['browsers']['chrome']
-
-        except Exception:
-            fake_user_agents = _fake_user_agents()
-
-    user_agent = random.choice(fake_user_agents)
-
-    return user_agent
-
-
-def _fake_requests_headers(best=False, **kwargs):
-    """
-    Make a fake HTTP headers for `requests.get
-    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
-
-    :param best: whether to go for a random agent, defaults to ``False``
-    :type best: bool
-    :param kwargs: [optional] parameters used by `fake_useragent.UserAgent()`_
-    :return: fake HTTP headers
-    :rtype: dict
-
-    .. _fake_useragent.UserAgent():
-        https://github.com/hellysmile/fake-useragent/blob/master/fake_useragent/fake.py#L13
+    .. _`Chrome`: http://useragentstring.com/pages/useragentstring.php?name=Chrome
+    .. _`Firefox`: http://useragentstring.com/pages/useragentstring.php?name=Firefox
+    .. _`Safari`: http://useragentstring.com/pages/useragentstring.php?name=Safari
+    .. _`Edge`: http://useragentstring.com/pages/useragentstring.php?name=Edge
+    .. _`Internet Explorer`: http://useragentstring.com/pages/useragentstring.php?name=Internet+Explorer
+    .. _`Opera`: http://useragentstring.com/pages/useragentstring.php?name=Opera
 
     **Examples**::
 
-        >>> # noinspection PyProtectedMember
-        >>> from pyhelpers.ops import _fake_requests_headers
+        >>> from pyhelpers.ops import get_user_agent_strings
 
-        >>> fake_headers_1 = _fake_requests_headers()
-        >>> fake_headers_1
-        {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
+        >>> uas = get_user_agent_strings()
 
-        >>> fake_headers_2 = _fake_requests_headers(best=True)
-        >>> fake_headers_2
-        {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML ...
+        >>> list(uas.keys())
+        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+        >>> type(uas['Chrome'])
+        list
+        >>> uas['Chrome'][0]
+        'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 (KHTML, like Gecko) Ubuntu/10.04 Chromiu...
+
+        >>> uas_list = get_user_agent_strings(flattened=True, shuffled=True)
+        >>> type(uas_list)
+        list
+        >>> uas_list[0]
+        'Mozilla/5.0 (Windows NT) AppleWebKit/534.20 (KHTML, like Gecko) Chrome/11.0.672.2 Safari...
+
+    .. note::
+
+        The order of the elements in ``uas_list`` may be different every time we run the example
+        as ``shuffled=True``.
     """
 
-    try:
-        ua = fake_useragent.UserAgent(**kwargs)
+    if not update:
+        path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
 
-    except IndexError:
-        if len(kwargs) > 1:
-            kwargs.update({'cache': True})
-        ua = fake_useragent.UserAgent(**kwargs)
+        json_in = open(path_to_json, mode='rb')
+        user_agent_strings = orjson.loads(json_in.read())
 
-    except fake_useragent.FakeUserAgentError:
-        if len(kwargs) > 1:
-            kwargs.update({'use_cache_server': False, 'verify_ssl': False})
-        ua = fake_useragent.UserAgent(**kwargs)
-
-    if best:
-        user_agent = ua.random
     else:
-        user_agent = ua.chrome
+        if verbose:
+            print("Updating the backup data of user-agent strings", end=" ... ")
 
-    fake_headers = {'user-agent': user_agent}
+        try:
+            user_agent_strings = _user_agent_strings(dump_dat=True)
+            if verbose:
+                print("Done.")
 
-    return fake_headers
+        except Exception as e:
+            if verbose:
+                print("Failed. {}".format(e))
+            user_agent_strings = get_user_agent_strings(update=False, verbose=False)
+
+    if shuffled:
+        for browser_name, ua_str in user_agent_strings.items():
+            random.shuffle(ua_str)
+            user_agent_strings.update({browser_name: ua_str})
+
+    if flattened:
+        user_agent_strings = [x for v in user_agent_strings.values() for x in v]
+
+    return user_agent_strings
 
 
-def fake_requests_headers(randomized=False, **kwargs):
+def get_user_agent_string(fancy=None, **kwargs):
+    """
+    Get a random user-agent string of a certain browser.
+
+    :param fancy: name of a preferred browser, defaults to ``None``; options include ``'Chrome'``,
+        ``'Firefox'``, ``'Safari'``, ``'Edge'``, ``'Internet Explorer'`` and ``'Opera'``;
+        if ``fancy=None``, the function returns a user-agent string of a randomly-selected browser
+        among all the available options
+    :type: fancy: None or str
+    :param kwargs: [optional] parameters of the function
+        :py:func:`get_user_agent_strings()<pyhelpers.ops.get_user_agent_strings>`
+    :return: a user-agent string of a certain browser
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_user_agent_string
+
+        >>> # Get a random user-agent string
+        >>> uas_0 = get_user_agent_string()
+        >>> uas_0
+        'Mozilla/5.0 (Windows; U; Win98; de-DE; rv:1.7.7) Gecko/20050414 Firefox/1.0.3'
+
+        >>> # Get a random Chrome user-agent string
+        >>> uas_1 = get_user_agent_string(fancy='Chrome')
+        >>> uas_1
+        'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:22.0) Gecko/20130328 Firefox/22.0'
+
+    .. note::
+
+        In the above examples, the returned user-agent string is random and may be different
+        every time we run the function.
+    """
+
+    if fancy is not None:
+        browser_names = {'Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera'}
+        assert fancy in browser_names, f"`fancy` must be one of {browser_names}."
+
+        kwargs.update({'flattened': False})
+        user_agent_strings_ = get_user_agent_strings(**kwargs)
+
+        user_agent_strings = user_agent_strings_[fancy]
+
+    else:
+        kwargs.update({'flattened': True})
+        user_agent_strings = get_user_agent_strings(**kwargs)
+
+    user_agent_string = random.choice(user_agent_strings)
+
+    return user_agent_string
+
+
+def fake_requests_headers(randomized=True, **kwargs):
     """
     Make a fake HTTP headers for `requests.get
     <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
 
-    :param randomized: whether to go for a random agent, defaults to ``False``
+    :param randomized: whether to use a user-agent string randomly selected
+        from among all available data of several popular browsers, defaults to ``True``;
+        if ``randomized=False``, the function uses a random Chrome user-agent string
     :type randomized: bool
-    :param kwargs: [optional] parameters used by `fake_useragent.UserAgent()`_
+    :param kwargs: [optional] parameters of the function
+        :py:func:`get_user_agent_string()<pyhelpers.ops.get_user_agent_string>`
     :return: fake HTTP headers
     :rtype: dict
-
-    .. _fake_useragent.UserAgent():
-        https://github.com/hellysmile/fake-useragent/blob/master/fake_useragent/fake.py#L13
 
     **Examples**::
 
@@ -1406,12 +1489,13 @@ def fake_requests_headers(randomized=False, **kwargs):
 
         >>> fake_headers_1 = fake_requests_headers()
         >>> fake_headers_1
-        {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ch...
+        {'user-agent': 'Mozilla/5.0 (X11; U; FreeBSD i386; en-US; rv:1.7.7) Gecko/20050420 Firefo...
 
-        >>> fake_headers_2 = fake_requests_headers(randomized=True)
-        >>> # The result should be different every time we run the example
+        >>> fake_headers_2 = fake_requests_headers(randomized=False)
+        >>> # using a random Chrome user-agent string
         >>> fake_headers_2
-        {'user-agent': 'Mozilla/5.0 (Windows NT 6.4; WOW64) AppleWebKit/537.36 (KHTML, like Gecko...
+        {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_4) AppleWebKit/534.30 (KHTML,...
+
         >>> fake_headers_2 == fake_headers_1
         False
 
@@ -1421,15 +1505,15 @@ def fake_requests_headers(randomized=False, **kwargs):
           This is because the returned result is randomly chosen from a limited set of candidate
           user-agent strings, even though ``randomized`` is (by default) set to be ``False``.
         - By setting ``randomized=True``, the function returns a random result from among
-          all available user-agent strings of several browsers.
+          all available user-agent strings of several popular browsers.
     """
 
-    try:
-        fake_headers = _fake_requests_headers(best=randomized, **kwargs)
+    if not randomized:
+        kwargs.update({'fancy': 'Chrome'})
 
-    except IndexError:
-        fake_user_agent = get_fake_user_agent(randomized=randomized)
-        fake_headers = {'user-agent': fake_user_agent}
+    user_agent_string = get_user_agent_string(**kwargs)
+
+    fake_headers = {'user-agent': user_agent_string}
 
     return fake_headers
 
