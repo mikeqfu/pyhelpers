@@ -82,7 +82,7 @@ pyzmq==22.3.0
 qtconsole==5.1.1
 QtPy==1.11.2
 readme-renderer==30.0
-regex==2021.11.1
+regex==2021.11.2
 requests==2.26.0
 requests-toolbelt==0.9.1
 rfc3986==1.5.0
@@ -107,7 +107,7 @@ threadpoolctl==3.0.0
 tornado==6.1
 tqdm==4.62.3
 traitlets==5.1.1
-twine==3.4.2
+twine==3.5.0
 urllib3==1.26.7
 wcwidth==0.2.5
 webencodings==0.5.1
