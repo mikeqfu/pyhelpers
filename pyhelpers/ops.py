@@ -356,7 +356,7 @@ def split_iterable(iterable, chunk_size):
         yield itertools.chain([x], itertools.islice(iterator, chunk_size - 1))
 
 
-def update_nested_dict(source_dict, updates):
+def update_nested_dict(source_dict, updates, inplace=False):
     """
     Update a nested dictionary or similar mapping.
 
@@ -366,6 +366,8 @@ def update_nested_dict(source_dict, updates):
     :type source_dict: dict
     :param updates: a dictionary with new data
     :type updates: dict
+    :param inplace: whether to directly update the original ``source_dict``, defaults to ``False``
+    :type inplace: bool
     :return: an updated dictionary
     :rtype: dict
 
@@ -377,6 +379,11 @@ def update_nested_dict(source_dict, updates):
         >>> update_info = {'key_2': 2}
         >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
         >>> updated_d
+        {'key_1': 1, 'key_2': 2}
+        >>> source_d
+        {'key_1': 1}
+        >>> update_nested_dict(source_dict=source_d, updates=update_info, inplace=True)
+        >>> source_d
         {'key_1': 1, 'key_2': 2}
 
         >>> source_d = {'key': 'val_old'}
@@ -404,7 +411,10 @@ def update_nested_dict(source_dict, updates):
         {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
-    updated_dict = copy.copy(source_dict)
+    if inplace:
+        updated_dict = source_dict
+    else:
+        updated_dict = copy.copy(source_dict)
 
     for key, val in updates.items():
         if isinstance(val, collections.abc.Mapping) or isinstance(val, dict):
@@ -416,7 +426,8 @@ def update_nested_dict(source_dict, updates):
         else:
             updated_dict[key] = updates[key]
 
-    return updated_dict
+    if not inplace:
+        return updated_dict
 
 
 def get_all_values_from_nested_dict(key, target_dict):
