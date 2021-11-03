@@ -373,48 +373,50 @@ def update_nested_dict(source_dict, updates):
 
         >>> from pyhelpers.ops import update_nested_dict
 
-        >>> source_dict_ = {'key_1': 1}
-        >>> updates_ = {'key_2': 2}
-        >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> source_dict_
+        >>> source_d = {'key_1': 1}
+        >>> update_info = {'key_2': 2}
+        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
+        >>> updated_d
         {'key_1': 1, 'key_2': 2}
 
-        >>> source_dict_ = {'key': 'val_old'}
-        >>> updates_ = {'key': 'val_new'}
-        >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> source_dict_
+        >>> source_d = {'key': 'val_old'}
+        >>> update_info = {'key': 'val_new'}
+        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
+        >>> updated_d
         {'key': 'val_new'}
 
-        >>> source_dict_ = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
-        >>> updates_ = {'key': {'k1': 'v1_new'}}
-        >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> source_dict_
+        >>> source_d = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
+        >>> update_info = {'key': {'k1': 'v1_new'}}
+        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
+        >>> updated_d
         {'key': {'k1': 'v1_new', 'k2': 'v2'}}
 
-        >>> source_dict_ = {'key': {'k1': {}, 'k2': 'v2'}}
-        >>> updates_ = {'key': {'k1': 'v1'}}
-        >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> source_dict_
+        >>> source_d = {'key': {'k1': {}, 'k2': 'v2'}}
+        >>> update_info = {'key': {'k1': 'v1'}}
+        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
+        >>> updated_d
         {'key': {'k1': 'v1', 'k2': 'v2'}}
 
-        >>> source_dict_ = {'key': {'k1': 'v1', 'k2': 'v2'}}
-        >>> updates_ = {'key': {'k1': {}}}
-        >>> source_dict_ = update_nested_dict(source_dict_, updates_)
-        >>> source_dict_
+        >>> source_d = {'key': {'k1': 'v1', 'k2': 'v2'}}
+        >>> update_info = {'key': {'k1': {}}}
+        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
+        >>> updated_d
         {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
+    updated_dict = copy.copy(source_dict)
+
     for key, val in updates.items():
         if isinstance(val, collections.abc.Mapping) or isinstance(val, dict):
-            source_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
+            updated_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
 
         elif isinstance(val, list):
-            source_dict[key] = (source_dict.get(key, []) + val)
+            updated_dict[key] = (updated_dict.get(key, []) + val)
 
         else:
-            source_dict[key] = updates[key]
+            updated_dict[key] = updates[key]
 
-    return source_dict
+    return updated_dict
 
 
 def get_all_values_from_nested_dict(key, target_dict):
