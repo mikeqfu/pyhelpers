@@ -20,6 +20,7 @@ General use
     eval_dtype
     gps_to_utc
     parse_size
+    get_number_of_chunks
 
 Basic data manipulation
 -----------------------
