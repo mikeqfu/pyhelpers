@@ -15,6 +15,7 @@ import random
 import re
 import shutil
 import socket
+import sys
 import urllib.parse
 import urllib.request
 
@@ -258,6 +259,51 @@ def parse_size(size, binary=True, precision=1):
                 temp_size /= factor
 
     return parsed_size
+
+
+def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
+    """
+    Get total number of chunks of a data file, given a minimum limit of chunk size.
+
+    :param file_or_obj: absolute path to a file
+    :type file_or_obj: str
+    :param chunk_size_limit: the minimum limit of file size (in mebibyte i.e. MiB, or megabyte, i.e. MB)
+        above which the function counts how many chunks there could be, defaults to ``50``;
+    :type chunk_size_limit: int
+    :param binary: whether to use binary (i.e. factorised by 1024) representation, defaults to ``True``;
+        if ``binary=False``, use the decimal (or metric) representation (i.e. factorised by 10 ** 3)
+    :type binary: bool
+    :return: number of chunks
+    :rtype: int or None
+
+    **Examples**::
+
+        >>> import os
+        >>> from pyhelpers.ops import get_number_of_chunks
+
+        >>> file_path = "C:\\Python39\\python39.pdb"
+
+        >>> os.path.getsize(file_path)
+        13602816
+        >>> get_number_of_chunks(file_path, chunk_size_limit=2)
+        7
+    """
+
+    factor = 2 ** 10 if binary is True else 10 ** 3
+
+    if isinstance(file_or_obj, str) and os.path.exists(file_or_obj):
+        size = os.path.getsize(file_or_obj)
+    else:
+        size = sys.getsizeof(file_or_obj)
+
+    file_size_in_mb = round(size / (factor ** 2), 1)
+
+    if chunk_size_limit and file_size_in_mb > chunk_size_limit:
+        number_of_chunks = math.ceil(file_size_in_mb / chunk_size_limit)
+    else:
+        number_of_chunks = None
+
+    return number_of_chunks
 
 
 """ == Basic data manipulation =============================================================== """
