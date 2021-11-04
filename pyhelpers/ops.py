@@ -198,8 +198,8 @@ def parse_size(size, binary=True, precision=1):
 
     :param size: human- or machine-readable format of size
     :type size: str or int or float
-    :param binary: whether to use binary (exponent=1024) representation, defaults to ``True``;
-        if ``binary=False``, use the metric representation with the exponent of 1000
+    :param binary: whether to use binary (i.e. factorised by 1024) representation, defaults to ``True``;
+        if ``binary=False``, use the decimal (or metric) representation (i.e. factorised by 10 ** 3)
     :type binary: bool
     :param precision: number of decimal places (when converting ``size`` to human-readable format),
         defaults to ``1``
@@ -212,26 +212,35 @@ def parse_size(size, binary=True, precision=1):
         >>> from pyhelpers.ops import parse_size
 
         >>> parse_size(size='123.45 MB')
+        129446707
+
+        >>> parse_size(size='123.45 MB', binary=False)
         123450000
 
+        >>> parse_size(size='123.45 MiB', binary=True)
+        129446707
+        >>> # If a metric unit (e.g. 'MiB') is specified in the input,
+        >>> # the function returns a result accordingly, no matter whether `binary` is True or False
         >>> parse_size(size='123.45 MiB', binary=False)
         129446707
 
-        >>> parse_size(size=123450000, precision=1)
-        '123.5 MB'
+        >>> parse_size(size=129446707, precision=2)
+        '123.45 MiB'
 
         >>> parse_size(size=129446707, binary=False, precision=2)
-        '123.45 MiB'
+        '129.45 MB'
     """
 
-    min_unit, units = 'B', ['K', 'M', 'G', 'T', 'P', 'E']
-    if binary is True:
-        factor, units = 10 ** 3, [x + min_unit for x in units]
-    else:
-        factor, units = 1024, [x + 'i' + min_unit for x in units]
+    min_unit, units_prefixes = 'B', ['K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
+    if binary is True:  # Binary system
+        factor, units = 2 ** 10, [x + 'i' + min_unit for x in units_prefixes]
+    else:  # Decimal (or metric) system
+        factor, units = 10 ** 3, [x + min_unit for x in units_prefixes]
 
     if isinstance(size, str):
         val, sym = [x.strip() for x in size.split()]
+        if re.match(r'.*i[Bb]', sym):
+            factor, units = 2 ** 10, [x + 'i' + min_unit for x in units_prefixes]
         unit = [s for s in units if s[0] == sym[0].upper()][0]
 
         unit_dict = dict(zip(units, [factor ** i for i in range(1, len(units) + 1)]))
