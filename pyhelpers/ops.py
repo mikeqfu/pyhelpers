@@ -311,6 +311,34 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 
 # Iterable
 
+def loop_in_pairs(iterable):
+    """
+    A function to iterate a list as pair (current, next).
+
+    :param iterable: iterable object
+    :type iterable: typing.Iterable
+    :return: a `zip <https://docs.python.org/3.9/library/functions.html#zip>`_-type variable
+    :rtype: zip
+
+    **Tests**::
+
+        >>> from pyhelpers.ops import loop_in_pairs
+
+        >>> res = loop_in_pairs(iterable=[1])
+        >>> list(res)
+        []
+
+        >>> res = loop_in_pairs(iterable=[1, 2])
+        >>> list(res)
+        [(1, 2)]
+    """
+
+    a, b = itertools.tee(iterable)
+    next(b, None)
+
+    return zip(a, b)
+
+
 def split_list_by_size(lst, sub_len):
     """
     Split a list into (evenly sized) sub-lists.
