@@ -30,6 +30,7 @@ Basic data manipulation
     :toctree: _generated/
     :template: function.rst
 
+    loop_in_pairs
     split_list_by_size
     split_list
     split_iterable
