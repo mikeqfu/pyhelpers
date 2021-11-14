@@ -210,13 +210,13 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 """ == Validate directories ================================================================== """
 
 
-def is_dir(dir_name):
+def is_dir(path_to_dir):
     """
     Check if a string is a path or just a string.
 
-    :param dir_name: a string-type variable to be checked
-    :type dir_name: str
-    :return: whether or not ``x`` is a path-like variable
+    :param path_to_dir: a string-type variable to be checked
+    :type path_to_dir: str
+    :return: whether or not ``path_to_dir`` is a path-like variable
     :rtype: bool
 
     **Examples**::
@@ -236,52 +236,52 @@ def is_dir(dir_name):
         True
     """
 
-    if os.path.dirname(dir_name):
+    if os.path.dirname(path_to_dir):
         return True
     else:
         return False
 
 
-def validate_input_data_dir(input_data_dir=None, msg="Invalid input!", sub_dir=""):
+def validate_dir(path_to_dir=None, sub_dir="", msg="Invalid input!"):
     """
-    Validate the input data directory.
+    Examine an input and ensure it is acceptable as a data directory.
 
-    :param input_data_dir: data directory as input, defaults to ``None``
-    :type input_data_dir: str or None
+    :param path_to_dir: data directory as input, defaults to ``None``
+    :type path_to_dir: str or None
+    :param sub_dir: name of a sub-directory for when ``directory`` is ``None``, defaults to ``""``
+    :type sub_dir: str
     :param msg: error message if ``data_dir`` is not an absolute path, defaults to ``"Invalid input!"``
     :type msg: str
-    :param sub_dir: name of a sub-directory for when ``input_data_dir`` is ``None``, defaults to ``""``
-    :type sub_dir: str
     :return: an absolute path to a valid data directory
     :rtype: str
 
     **Example**::
 
         >>> import os
-        >>> from pyhelpers.dir import validate_input_data_dir
+        >>> from pyhelpers.dir import validate_dir
 
-        >>> dat_dir = validate_input_data_dir()
+        >>> dat_dir = validate_dir()
         >>> os.path.relpath(dat_dir)
         '.'
 
-        >>> dat_dir = validate_input_data_dir("tests")
+        >>> dat_dir = validate_dir("tests")
         >>> os.path.relpath(dat_dir)
         'tests'
 
-        >>> dat_dir = validate_input_data_dir(sub_dir="data")
+        >>> dat_dir = validate_dir(sub_dir="data")
         >>> os.path.relpath(dat_dir)
         'data'
     """
 
-    if input_data_dir:
-        assert isinstance(input_data_dir, str), msg
+    if path_to_dir:
+        assert isinstance(path_to_dir, str), msg
 
-        if not os.path.isabs(input_data_dir):  # Use default file directory
-            data_dir_ = cd(input_data_dir.strip('.\\.'))
+        if not os.path.isabs(path_to_dir):  # Use default file directory
+            data_dir_ = cd(path_to_dir.strip('.\\.'))
 
         else:
-            data_dir_ = os.path.realpath(input_data_dir.lstrip('.\\.'))
-            assert os.path.isabs(input_data_dir), msg
+            data_dir_ = os.path.realpath(path_to_dir.lstrip('.\\.'))
+            assert os.path.isabs(path_to_dir), msg
 
     else:
         data_dir_ = cd(sub_dir) if sub_dir else cd()
