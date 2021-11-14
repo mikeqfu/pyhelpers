@@ -28,7 +28,7 @@ Validate directories
     :template: function.rst
 
     is_dir
-    validate_input_data_dir
+    validate_dir
 
 Delete directories
 ------------------
