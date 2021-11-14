@@ -708,7 +708,7 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
     :param ret_dist: whether to return distances between ``pts`` and the closest points in ``ref_pts``,
         defaults to ``False``
     :type ret_dist: bool
-    :param kwargs: optional parameters of `scipy.spatial.cKDTree`_
+    :param kwargs: [optional] parameters of `scipy.spatial.cKDTree`_
     :return: ``pts``'s closest point(s) in ``ref_pts``
     :rtype: numpy.ndarray or shapely.geometry.MultiPoint
 
@@ -1160,7 +1160,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     :type fig_size: tuple or list
     :param ret_vertices: whether to return the vertices of the square, defaults to ``False``
     :type ret_vertices: bool
-    :param kwargs: optional parameters of `matplotlib.axes.Axes.annotate`_
+    :param kwargs: [optional] parameters of `matplotlib.axes.Axes.annotate`_
     :return: vertices of the square as an array([ll, ul, ur, lr])
     :rtype: numpy.ndarray
 
