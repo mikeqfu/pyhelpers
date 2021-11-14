@@ -80,6 +80,7 @@ Web data extraction
     :template: function.rst
 
     is_network_connected
+    is_url
     is_url_connectable
     is_downloadable
     instantiate_requests_session
