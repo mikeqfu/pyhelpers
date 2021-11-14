@@ -759,7 +759,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `numpy.load`_
+    :param kwargs: [optional] parameters of `numpy.load`_
     :return: a compressed sparse row
     :rtype: scipy.sparse.csr.csr_matrix
 
@@ -1128,7 +1128,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     :type n_colours: int
     :param labels: a list of labels for the colour bar, defaults to ``None``
     :type labels: list or None
-    :param kwargs: optional parameters of `matplotlib.pyplot.colorbar`_
+    :param kwargs: [optional] parameters of `matplotlib.pyplot.colorbar`_
     :return: a colour bar object
     :rtype: matplotlib.colorbar.Colorbar
 
@@ -1366,8 +1366,7 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
     :param retry_status: a list of HTTP status codes that force to retry downloading,
         inherited from ``status_forcelist`` of `urllib3.util.retry.Retry()`_;
         when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
-    :param kwargs: optional parameters (except ``backoff_factor`` and ``status_forcelist``)
-        of `urllib3.util.retry.Retry()`_
+    :param kwargs: [optional] parameters of `urllib3.util.retry.Retry()`_
     :return: a requests session
     :rtype: `requests.Session`_
 
@@ -1393,9 +1392,8 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
     else:
         codes_for_retries = copy.copy(retry_status)
 
-    retries = urllib3.util.retry.Retry(
-        total=max_retries, backoff_factor=backoff_factor, status_forcelist=codes_for_retries,
-        **kwargs)
+    kwargs.update({'backoff_factor': backoff_factor, 'status_forcelist': codes_for_retries})
+    retries = urllib3.util.retry.Retry(total=max_retries, **kwargs)
 
     session = requests.Session()
 
@@ -1735,7 +1733,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param frh_args: optional parameters used by
         :py:func:`fake_requests_headers()<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
     :type frh_args: dict or None
-    :param kwargs: optional parameters of `requests.Session.get()`_
+    :param kwargs: [optional] parameters of `requests.Session.get()`_
 
     .. _requests.Session.get():
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
