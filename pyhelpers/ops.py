@@ -1233,11 +1233,66 @@ def is_network_connected():
     return False if ip_address == "127.0.0.1" else True
 
 
+def is_url(url, partially=False):
+    """
+    Check if a string is a valid URL.
+
+    See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_]
+
+    :param url: a string-type data
+    :type url: str
+    :param partially: whether to consider the input as partially valid, defaults to ``False``
+    :type partially: bool
+    :return: whether the input is a valid URL
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_url
+
+        >>> is_url(url='https://github.com/mikeqfu/pyhelpers')
+        True
+
+        >>> is_url(url='github.com/mikeqfu/pyhelpers')
+        False
+
+        >>> is_url(url='github.com/mikeqfu/pyhelpers', partially=True)
+        True
+
+        >>> is_url(url='github.com')
+        False
+
+        >>> is_url(url='github.com', partially=True)
+        True
+
+        >>> is_url(url='github', partially=True)
+        False
+    """
+
+    try:
+        parsed_url = urllib.parse.urlparse(url)
+        schema_netloc = [parsed_url.scheme, parsed_url.netloc]
+
+        rslt = all(schema_netloc)
+
+        if rslt is False and not any(schema_netloc):
+            assert re.match(r'(/\w+)+|(\w+\.\w+)', parsed_url.path.lower())
+            if partially:
+                rslt = True
+        else:
+            assert re.match(r'(ht|f)tp(s)?', parsed_url.scheme.lower())
+
+    except AssertionError:
+        rslt = False
+
+    return rslt
+
+
 def is_url_connectable(url):
     """
     Check whether the current machine can connect to a given URL.
 
-    :param url: a URL
+    :param url: a (valid) URL
     :type url: str
     :return: whether the machine can currently connect to the given URL
     :rtype: bool
