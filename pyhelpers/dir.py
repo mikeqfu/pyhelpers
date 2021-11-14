@@ -25,7 +25,7 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
     :type cwd: str or None
     :param back_check:
     :type back_check: bool
-    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
+    :param kwargs: [optional] parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return: an absolute path to a directory (or a file)
     :rtype: str
 
@@ -126,7 +126,7 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional parameters of `pyhelpers.dir.cd`_
+    :param kwargs: [optional] parameters of `pyhelpers.dir.cd`_
     :return path: an absolute path to a directory (or a file) under ``data_dir``
     :rtype: str
 
@@ -175,7 +175,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     :type dat_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: optional parameters of `os.makedirs`_, e.g. ``mode=0o777``
+    :param kwargs: [optional] parameters of `os.makedirs`_, e.g. ``mode=0o777``
     :return: an absolute path to a directory (or a file) under ``data_dir``
     :rtype: str
 
@@ -304,7 +304,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: optional parameters of `shutil.rmtree`_
+    :param kwargs: [optional] parameters of `shutil.rmtree`_
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
 
