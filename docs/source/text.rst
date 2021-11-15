@@ -15,8 +15,8 @@ Basic processing of textual data
     :toctree: _generated/
     :template: function.rst
 
-    remove_punctuation
     get_acronym
+    remove_punctuation
     extract_words1upper
 
 Comparison of textual data
@@ -26,8 +26,8 @@ Comparison of textual data
     :toctree: _generated/
     :template: function.rst
 
-    find_similar_str
     find_matched_str
+    find_similar_str
 
 Basic computation of textual data
 ---------------------------------
