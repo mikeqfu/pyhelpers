@@ -3,6 +3,7 @@ Manipulation of textual data.
 """
 
 import collections.abc
+import copy
 import difflib
 import os
 import pathlib
@@ -10,52 +11,12 @@ import re
 import string
 import subprocess
 
-import fuzzywuzzy.fuzz
 import numpy as np
 import pandas as pd
 
 from .ops import dict_to_dataframe
 
 """ == Basic processing of textual data ====================================================== """
-
-
-def remove_punctuation(raw_txt, rm_whitespace=False):
-    """
-    Remove punctuation from string-type data.
-
-    :param raw_txt: string-type data
-    :type raw_txt: str
-    :param rm_whitespace: whether to remove whitespace, defaults to ``False``
-    :type rm_whitespace: bool
-    :return: text with punctuation removed
-    :rtype: str
-
-    **Examples**::
-
-        >>> from pyhelpers.text import remove_punctuation
-
-        >>> raw_text = 'Hello\tworld! :-)'
-
-        >>> text = remove_punctuation(raw_text)
-        >>> text
-        'Hello\tworld '
-
-        >>> text = remove_punctuation(raw_text, rm_whitespace=True)
-        >>> text
-        'Hello world'
-    """
-
-    try:
-        txt = raw_txt.translate(str.maketrans('', '', string.punctuation))
-
-    except Exception as e:
-        print(e)
-        txt = ''.join(x for x in raw_txt if x not in string.punctuation)
-
-    if rm_whitespace:
-        txt = ' '.join(txt.split())
-
-    return txt
 
 
 def get_acronym(text, only_capitals=False, capitals_in_words=False):
@@ -104,6 +65,44 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False):
     return acronym
 
 
+def remove_punctuation(x, rm_whitespace=False):
+    """
+    Remove punctuation from string-type data.
+
+    :param x: raw string-type data
+    :type x: str
+    :param rm_whitespace: whether to remove whitespace, defaults to ``False``
+    :type rm_whitespace: bool
+    :return: text with punctuation removed
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import remove_punctuation
+
+        >>> raw_text = 'Hello\tworld! :-)'
+
+        >>> text = remove_punctuation(raw_text)
+        >>> text
+        'Hello\tworld '
+
+        >>> text = remove_punctuation(raw_text, rm_whitespace=True)
+        >>> text
+        'Hello world'
+    """
+
+    # noinspection PyBroadException
+    try:
+        y = x.translate(str.maketrans('', '', string.punctuation))
+    except Exception:
+        y = ''.join(p for p in x if p not in string.punctuation)
+
+    if rm_whitespace:
+        y = ' '.join(y.split())
+
+    return y
+
+
 def extract_words1upper(x, join_with=None):
     """
     Extract words from a string by spliting it at occurrence of an uppercase letter.
@@ -145,105 +144,12 @@ def extract_words1upper(x, join_with=None):
 """ == Comparison of textual data ============================================================ """
 
 
-def find_similar_str(str_x, lookup_list, n=1, processor='fuzzywuzzy', ignore_punctuation=True,
-                     **kwargs):
-    """
-    Find similar string from a list of strings.
-
-    :param str_x: a string-type variable
-    :type str_x: str
-    :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: list or tuple
-    :param n: number of similar strings to return, defaults to ``1``;
-        if ``None``, to sort the ``lookup_list`` in descending order of similarity
-    :type n: int or None
-    :param processor: options include ``'fuzzywuzzy'`` (default) and ``'difflib'``
-
-        - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
-        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
-
-    :type processor: str
-
-    :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
-    :type ignore_punctuation: bool
-    :param kwargs: optional parameters of
-        `difflib.get_close_matches`_ or `fuzzywuzzy.fuzz.token_set_ratio`_
-    :return: a string-type variable that should be similar to (or the same as) ``str_x``
-    :rtype: str or list or None
-
-    .. _`fuzzywuzzy.fuzz.token_set_ratio`:
-        https://github.com/seatgeek/fuzzywuzzy
-    .. _`difflib.get_close_matches`:
-        https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
-
-    **Examples**::
-
-        >>> from pyhelpers.text import find_similar_str
-
-        >>> x = 'Apple'
-        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
-
-        >>> str_similar = find_similar_str(x, lookup_lst)
-        >>> str_similar
-        'app'
-
-        >>> str_similar = find_similar_str('x', lookup_lst)
-        >>> str_similar
-        'apex'
-
-        >>> str_similar = find_similar_str(x, lookup_lst, processor='difflib')
-        >>> str_similar
-        'app'
-
-        >>> str_similar = find_similar_str('x', lookup_lst, processor='difflib')
-        >>> str_similar is None
-        True
-    """
-
-    assert processor in ('difflib', 'fuzzywuzzy'), \
-        "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
-
-    n_ = len(lookup_list) if n is None else n
-
-    if processor == 'fuzzywuzzy':
-
-        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(str_x, a, **kwargs) for a in lookup_list]
-
-        if sum(l_distances) == 0:
-            sim_str = None
-        else:
-            if n_ == 1:
-                sim_str = lookup_list[l_distances.index(max(l_distances))]
-            else:
-                sim_str = [lookup_list[i] for i in np.argsort(l_distances)[::-1]][:n_]
-
-    elif processor == 'difflib':
-        if not ignore_punctuation:
-            str_x_ = str_x.lower()
-            lookup_list_ = {x_.lower(): x_ for x_ in lookup_list}
-        else:
-            str_x_ = remove_punctuation(str_x.lower())
-            lookup_list_ = {remove_punctuation(x_.lower()): x_ for x_ in lookup_list}
-
-        sim_str_ = difflib.get_close_matches(str_x_, lookup_list_.keys(), n=n_, **kwargs)
-
-        if not sim_str_:
-            sim_str = None
-        else:
-            sim_str = lookup_list_[sim_str_[0]]
-
-    else:
-        sim_str = None
-
-    return sim_str
-
-
-def find_matched_str(str_x, lookup_list):
+def find_matched_str(x, lookup_list):
     """
     Find from a list the closest, case-insensitive, str to the given one.
 
-    :param str_x: a string-type variable; if ``None``, the function will return ``None``
-    :type str_x: str or None
+    :param x: a string-type variable; if ``None``, the function will return ``None``
+    :type x: str or None
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: typing.Iterable
     :return: a string-type variable that is case-insensitively the same as ``str_x``
@@ -253,29 +159,117 @@ def find_matched_str(str_x, lookup_list):
 
         >>> from pyhelpers.text import find_matched_str
 
-        >>> x = 'apple'
-
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
-        >>> res = find_matched_str(x, lookup_lst)
+        >>> res = find_matched_str('apple', lookup_lst)
         >>> list(res)
         []
 
-        >>> lookup_lst = ['abc', 'aapl', 'app', 'apple', 'ape', 'apex', 'apel']
-        >>> res = find_matched_str(x, lookup_lst)
+        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
+        >>> res = find_matched_str('apple', lookup_lst)
         >>> list(res)
         ['apple']
     """
 
-    assert isinstance(str_x, str), "`x` must be a string."
+    assert isinstance(x, str), "`x` must be a string."
     assert isinstance(lookup_list, collections.abc.Iterable), "`lookup_list` must be iterable."
 
-    if str_x == '' or str_x is None:
+    if x == '' or x is None:
         return None
 
     else:
         for y in lookup_list:
-            if re.match(str_x, y, re.IGNORECASE):
+            if re.match(x, y, re.IGNORECASE):
                 yield y
+
+
+def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='difflib', **kwargs):
+    """
+    Find similar string from a list of strings.
+
+    :param x: a string-type variable
+    :type x: str
+    :param lookup_list: a sequence of strings for lookup
+    :type lookup_list: list or tuple
+    :param n: number of similar strings to return, defaults to ``1``;
+        if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
+    :type n: int or None
+    :param processor: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
+
+        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
+        - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+
+    :type processor: str
+
+    :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
+    :type ignore_punctuation: bool
+    :param kwargs: [optional] parameters of `difflib.get_close_matches`_ or
+        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``processor``
+    :return: a string-type variable that should be similar to (or the same as) ``str_x``
+    :rtype: str or list or None
+
+    .. _`difflib.get_close_matches`:
+        https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
+    .. _`fuzzywuzzy.fuzz.token_set_ratio`:
+        https://github.com/seatgeek/fuzzywuzzy
+
+    **Examples**::
+
+        >>> from pyhelpers.text import find_similar_str
+
+        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+
+        >>> str_similar = find_similar_str('Apple', lookup_lst)
+        >>> str_similar
+        'app'
+        >>> str_similar = find_similar_str('Apple', lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar
+        'app'
+
+        >>> str_similar = find_similar_str('x', lookup_lst)
+        >>> str_similar  # None
+
+        >>> str_similar = find_similar_str('x', lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar
+        'apex'
+    """
+
+    assert processor in ('difflib', 'fuzzywuzzy'), \
+        "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
+
+    m = len(lookup_list) if n is None else copy.copy(n)
+
+    if processor == 'difflib':
+        x_ = x.lower()
+        lookup_dict = {y.lower(): y for y in lookup_list}
+
+        if ignore_punctuation:
+            x_ = remove_punctuation(x_)
+            lookup_dict = {remove_punctuation(k): v for k, v in lookup_dict.items()}
+
+        sim_str_ = difflib.get_close_matches(word=x_, possibilities=lookup_dict.keys(), n=m, **kwargs)
+
+        if not sim_str_:
+            sim_str = None
+        else:
+            sim_str = lookup_dict[sim_str_[0]]
+
+    elif processor == 'fuzzywuzzy':
+        import fuzzywuzzy.fuzz
+
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list]
+
+        if sum(l_distances) == 0:
+            sim_str = None
+        else:
+            if m == 1:
+                sim_str = lookup_list[l_distances.index(max(l_distances))]
+            else:
+                sim_str = [lookup_list[i] for i in np.argsort(l_distances)[::-1]][:m]
+
+    else:
+        sim_str = None
+
+    return sim_str
 
 
 """ == Basic computation of textual data ===================================================== """
@@ -578,7 +572,7 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
     :param pandoc_exe: absolute path to 'pandoc.exe', defaults to ``None``
         (on Windows, use the default installation path - ``"C:\\Program Files\\Pandoc\\pandoc.exe"``)
     :type pandoc_exe: str or None
-    :param kwargs: optional parameters of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
+    :param kwargs: [optional] parameters of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
 
     **Example**::
 
