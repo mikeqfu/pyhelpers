@@ -52,113 +52,143 @@ class PostgreSQL:
     """
     A class for basic communication with a `PostgreSQL`_ server.
 
-    :param host: host address, e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation),
-        defaults to ``None``
-    :type host: str or None
-    :param port: port, e.g. ``5432`` (default by installation), defaults to ``None``
-    :type port: int or None
-    :param password: database password, defaults to ``None``
-    :type password: str or int or None
-    :param username: database username, e.g. ``'postgres'`` (default by installation),
-        defaults to ``None``
-    :type username: str or None
-    :param database_name: database name, e.g. ``'postgres'`` (default by installation),
-        defaults to ``None``
-    :type database_name: str
-    :param confirm_new_db: whether to impose a confirmation to create a new database,
-        defaults to ``False``
-    :type confirm_new_db: bool
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``True``
-    :type verbose: bool or int
-
-    :ivar dict database_info: basic information about the server/database being connected
-    :ivar sqlalchemy.engine.URL url: PostgreSQL database URL;
-        see also [`SQL-P-SP-1`_]
-    :ivar type dialect: system that SQLAlchemy uses to communicate with PostgreSQL;
-        see also [`SQL-P-SP-2`_]
-    :ivar str backend: name of database backend
-    :ivar str driver: name of database driver
-    :ivar str user: username
-    :ivar str host: host name
-    :ivar str port: port number
-    :ivar str database_name: name of a database
-    :ivar str address: brief description of the database address
-    :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ Engine class;
-        see also [`SQL-P-SP-3`_]
-    :ivar sqlalchemy.pool.base._ConnectionFairy connection: `SQLAlchemy`_ Connection class;
-        see also [`SQL-P-SP-4`_]
-
     .. _`PostgreSQL`: https://www.postgresql.org/
-    .. _`SQL-P-SP-1`:
-        https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql
-    .. _`SQL-P-SP-2`:
-        https://docs.sqlalchemy.org/en/13/dialects/postgresql.html
-    .. _`SQL-P-SP-3`:
-        https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine
-    .. _`SQL-P-SP-4`:
-        https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Connection
-    .. _`SQLAlchemy`:
-        https://www.sqlalchemy.org/
-
-    **Examples**::
-
-        >>> from pyhelpers.sql import PostgreSQL
-
-        >>> # Connect the default database 'postgres'
-        >>> postgres = PostgreSQL('localhost', 5432, username='postgres', database_name='postgres')
-        Password (postgres@localhost:5432): ***
-        Connecting postgres:***@localhost:5432/postgres ... Successfully.
-
-        >>> postgres.address
-        'postgres:***@localhost:5432/postgres'
-
-        >>> # Connect a database 'testdb' (which will be created if it does not exist)
-        >>> testdb = PostgreSQL('localhost', 5432, username='postgres', database_name='testdb')
-        Password (postgres@localhost:5432): ***
-        Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
-        >>> testdb.address
-        'postgres:***@localhost:5432/testdb'
-
-        >>> # Define a proxy object that inherits from pyhelpers.sql.PostgreSQL
-        >>> class ExampleProxyObj(PostgreSQL):
-        ...
-        ...     def __init__(self, host='localhost', port=5432, username='postgres',
-        ...                  password=None, database_name='testdb', **kwargs):
-        ...
-        ...         super().__init__(host=host, port=port, username=username,
-        ...                          password=password, database_name=database_name, **kwargs)
-
-        >>> example_proxy_obj = ExampleProxyObj()
-        Password (postgres@localhost:5432): ***
-        Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
-        >>> example_proxy_obj.address
-        'postgres:***@localhost:5432/testdb'
     """
 
-    def __init__(self, host=None, port=None, username=None, database_name=None, password=None,
-                 confirm_new_db=False, verbose=True):
-        """
-        Constructor method.
-        """
-        host_ = input("PostgreSQL Host: ") if host is None else str(host)
-        port_ = input("PostgreSQL Port: ") if port is None else int(port)
-        username_ = input("Username: ") if username is None else str(username)
-        database_name_ = input("Database: ") if database_name is None else str(database_name)
+    #: Default host name/address (by installation of PostgreSQL).
+    HOST = 'localhost'
+    #: Default listening port used by PostgreSQL.
+    PORT = 5432
+    #: Default username.
+    USERNAME = 'postgres'
+    #: Name of the database that is by default to connect with.
+    #: The database is created by installation of PostgreSQL
+    DATABASE_NAME = 'postgres'
 
-        if password:
-            password_ = str(password)
+    def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
+                 cfm_to_create_db=False, verbose=True):
+        """
+        :param host: host name/address of a PostgreSQL server,
+            e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation of PostgreSQL);
+            if ``host=None`` (default), it is initialized as ``'localhost'``
+        :type host: str or None
+        :param port: listening port used by PostgreSQL;
+            if ``port=None`` (default), initialized as ``5432`` (default by installation of PostgreSQL)
+        :type port: int or None
+        :param username: username of a PostgreSQL server; if ``username=None`` (default),
+            initialized as ``'postgres'`` (default by installation of PostgreSQL)
+        :type username: str or None
+        :param password: user password; if ``password=None`` (default),
+            it is required to mannually type in the correct password to connect the PostgreSQL server
+        :type password: str or int or None
+        :param database_name: name of a database; if ``database=None`` (default),
+            initialized as ``'postgres'`` (default by installation of PostgreSQL)
+        :type database_name: str or None
+        :param cfm_to_create_db: whether to impose a confirmation before creating a new database
+            (if the required database does not exist), defaults to ``False``
+        :type cfm_to_create_db: bool
+        :param verbose: whether to print relevant information in console as the function runs,
+            defaults to ``True``
+        :type verbose: bool or int
+
+        :ivar dict database_info: basic information about the server/database being connected
+        :ivar sqlalchemy.engine.URL url: PostgreSQL database URL;
+            see also [`SQL-P-SP-1`_]
+        :ivar type dialect: system that SQLAlchemy uses to communicate with PostgreSQL;
+            see also [`SQL-P-SP-2`_]
+        :ivar str backend: name of database backend
+        :ivar str driver: name of database driver
+        :ivar str user: username
+        :ivar str host: host name/address
+        :ivar str port: listening port used by PostgreSQL
+        :ivar str database: name of a database
+        :ivar str address: representation of the database address
+        :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ Engine class;
+            see also [`SQL-P-SP-3`_]
+        :ivar sqlalchemy.pool.base._ConnectionFairy connection: `SQLAlchemy`_ Connection class;
+            see also [`SQL-P-SP-4`_]
+
+        .. _`SQL-P-SP-1`:
+            https://docs.sqlalchemy.org/en/13/core/engines.html#postgresql
+        .. _`SQL-P-SP-2`:
+            https://docs.sqlalchemy.org/en/13/dialects/postgresql.html
+        .. _`SQL-P-SP-3`:
+            https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine
+        .. _`SQL-P-SP-4`:
+            https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Connection
+        .. _`SQLAlchemy`:
+            https://www.sqlalchemy.org/
+
+        **Examples**::
+
+            >>> from pyhelpers.sql import PostgreSQL
+
+            >>> # Connect the default database 'postgres'
+            >>> postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+            >>> postgres.address
+            'postgres:***@localhost:5432/postgres'
+
+            >>> # Connect a database 'testdb' (which will be created if it does not exist)
+            >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> testdb.address
+            'postgres:***@localhost:5432/testdb'
+
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+
+        **Define a proxy object that inherits from this class**::
+
+            >>> class ExampleProxyObj(PostgreSQL):
+            ...
+            ...     def __init__(self, **kwargs):
+            ...         super().__init__(**kwargs)
+
+            >>> example_proxy_obj = ExampleProxyObj(database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> example_proxy_obj.address
+            'postgres:***@localhost:5432/testdb'
+            >>> example_proxy_obj.database_name
+            'testdb'
+
+            >>> example_proxy_obj.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+
+            >>> example_proxy_obj.database_name
+            'postgres'
+        """
+
+        host_ = self.HOST if host is None else str(host)  # input("PostgreSQL Host: ")
+        port_ = self.PORT if port is None else int(port)  # input("PostgreSQL Port: ")
+        username_ = self.USERNAME if username is None else str(username)  # input("Username: ")
+
+        if password is None:
+            password_ = getpass.getpass(f'Password ({username_}@{host_}:{port_}): ')
         else:
-            password_ = getpass.getpass("Password ({}@{}:{}): ".format(username_, host_, port_))
+            password_ = str(password)
 
-        self.database_info = {'drivername': 'postgresql+psycopg2',
-                              'host': host_,
-                              'port': port_,
-                              'username': username_,
-                              'password': password_,
-                              'database': database_name_}
+        # input("Database: ")
+        database_name_ = self.DATABASE_NAME if database_name is None else str(database_name)
+
+        self.database_info = {
+            'drivername': 'postgresql+psycopg2',
+            'host': host_,
+            'port': port_,
+            'username': username_,
+            'password': password_,
+            'database': database_name_,
+        }
 
         # The typical form of the URL: backend+driver://username:password@host:port/database
         self.url = sqlalchemy.engine.URL.create(**self.database_info)
@@ -186,7 +216,7 @@ class PostgreSQL:
         if not db_exists:
             if confirmed("The database \"{}\" does not exist. "
                          "Proceed by creating it?".format(self.database_name),
-                         confirmation_required=confirm_new_db):
+                         confirmation_required=cfm_to_create_db):
                 if verbose:
                     print("Connecting {}".format(self.address), end=" ... ")
 
@@ -1192,9 +1222,9 @@ class PostgreSQL:
         :type col_type: dict or None
         :param method: method for SQL insertion clause, defaults to ``'multi'``
 
-            * ``None``: uses standard SQL ``INSERT`` clause (one per row);
-            * ``'multi'``: pass multiple values in a single ``INSERT`` clause;
-            * callable (e.g. ``PostgreSQL.psql_insert_copy``)
+            - ``None``: uses standard SQL ``INSERT`` clause (one per row);
+            - ``'multi'``: pass multiple values in a single ``INSERT`` clause;
+            - callable (e.g. ``PostgreSQL.psql_insert_copy``)
               with signature ``(pd_table, conn, keys, data_iter)``.
 
         :type method: str or None or typing.Callable
@@ -1206,7 +1236,7 @@ class PostgreSQL:
         :param verbose: whether to print relevant information in console as the function runs, 
             defaults to ``False``
         :type verbose: bool or int
-        :param kwargs: optional parameters of `pandas.DataFrame.to_sql`_
+        :param kwargs: [optional] parameters of `pandas.DataFrame.to_sql`_
 
         .. _`pandas.DataFrame.to_sql`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
@@ -1277,7 +1307,7 @@ class PostgreSQL:
         :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted,
             defaults to ``None``
         :type sorted_by: str or None
-        :param kwargs: optional parameters of `pandas.read_sql`_
+        :param kwargs: [optional] parameters of `pandas.read_sql`_
         :return: data frame from the specified table
         :rtype: pandas.DataFrame
 
@@ -1320,9 +1350,9 @@ class PostgreSQL:
 
         :param method: method to be used for buffering temporary data
 
-            * ``'tempfile'`` (default): use `tempfile.TemporaryFile`_
-            * ``'stringio'``: use `io.StringIO`_
-            * ``'spooled'``: use `tempfile.SpooledTemporaryFile`_
+            - ``'tempfile'`` (default): use `tempfile.TemporaryFile`_
+            - ``'stringio'``: use `io.StringIO`_
+            - ``'spooled'``: use `tempfile.SpooledTemporaryFile`_
 
         :type method: str
 
@@ -1340,7 +1370,7 @@ class PostgreSQL:
             or `tempfile.SpooledTemporaryFile`_
         :param stringio_kwargs: optional parameters of `io.StringIO`_,
             e.g. ``initial_value`` (default: ``''``)
-        :param kwargs: optional parameters of `pandas.read_csv`_
+        :param kwargs: [optional] parameters of `pandas.read_csv`_
         :return: data frame as queried by the statement ``sql_query``
         :rtype: pandas.DataFrame
 
