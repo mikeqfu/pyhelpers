@@ -12,9 +12,9 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 # A list of modules to be mocked up.
 autodoc_mock_imports = [
-    'numpy', 'pyproj', 'Shapely', 'scipy',
-    'fake-useragent', 'pandas', 'requests', 'tqdm',
-    'psycopg2', 'SQLAlchemy', 'joblib', 'orjson',
+    'numpy', 'pyproj', 'scipy', 'Shapely',
+    'pandas', 'requests', 'tqdm',
+    'SQLAlchemy', 'psycopg2', 'joblib', 'orjson',
     'fuzzywuzzy',
 ]
 
@@ -70,6 +70,9 @@ source_suffix = '.rst'  # e.g. source_suffix = ['.rst', '.md'])
 
 # The master toctree document:
 master_doc = 'index'
+
+# Content inserted into the main body of an `autoclass` directive
+autoclass_content = 'both'  # ['class', 'init']
 
 # Automatically documented members are sorted by source order ('bysource'):
 autodoc_member_order = 'bysource'
