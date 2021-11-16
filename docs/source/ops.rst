@@ -34,9 +34,10 @@ Basic data manipulation
     split_list_by_size
     split_list
     split_iterable
-    update_nested_dict
-    get_all_values_from_nested_dict
-    remove_multiple_keys_from_dict
+    update_dict
+    update_dict_keys
+    get_dict_values
+    remove_dict_keys
     merge_dicts
 
 .. rubric:: Tabular data
