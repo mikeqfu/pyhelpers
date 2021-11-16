@@ -23,4 +23,4 @@ __email__ = 'q.fu@bham.ac.uk'
 
 __copyright__ = f'2019-{datetime.datetime.now().year}, {__author__}'
 
-__version__ = '1.3.0a2'
+__version__ = '1.3.0a3'
