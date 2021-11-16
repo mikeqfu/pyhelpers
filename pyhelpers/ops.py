@@ -439,14 +439,14 @@ def split_iterable(iterable, chunk_size):
         yield itertools.chain([x], itertools.islice(iterator, chunk_size - 1))
 
 
-def update_nested_dict(source_dict, updates, inplace=False):
+def update_dict(dictionary, updates, inplace=False):
     """
-    Update a nested dictionary or similar mapping.
+    Update a (nested) dictionary or similar mapping.
 
-    See also [`OPS-UND-1 <https://stackoverflow.com/questions/3232943/>`_].
+    See also [`OPS-UD-1 <https://stackoverflow.com/questions/3232943/>`_].
 
-    :param source_dict: a dictionary that needs to be updated
-    :type source_dict: dict
+    :param dictionary: a (nested) dictionary that needs to be updated
+    :type dictionary: dict
     :param updates: a dictionary with new data
     :type updates: dict
     :param inplace: whether to directly update the original ``source_dict``, defaults to ``False``
@@ -456,52 +456,52 @@ def update_nested_dict(source_dict, updates, inplace=False):
 
     **Examples**::
 
-        >>> from pyhelpers.ops import update_nested_dict
+        >>> from pyhelpers.ops import update_dict
 
-        >>> source_d = {'key_1': 1}
-        >>> update_info = {'key_2': 2}
-        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
-        >>> updated_d
+        >>> source_dict = {'key_1': 1}
+        >>> update_data = {'key_2': 2}
+        >>> upd_dict = update_dict(source_dict, updates=update_data)
+        >>> upd_dict
         {'key_1': 1, 'key_2': 2}
-        >>> source_d
+        >>> source_dict
         {'key_1': 1}
-        >>> update_nested_dict(source_dict=source_d, updates=update_info, inplace=True)
-        >>> source_d
+        >>> update_dict(source_dict, updates=update_data, inplace=True)
+        >>> source_dict
         {'key_1': 1, 'key_2': 2}
 
-        >>> source_d = {'key': 'val_old'}
-        >>> update_info = {'key': 'val_new'}
-        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
-        >>> updated_d
+        >>> source_dict = {'key': 'val_old'}
+        >>> update_data = {'key': 'val_new'}
+        >>> upd_dict = update_dict(source_dict, updates=update_data)
+        >>> upd_dict
         {'key': 'val_new'}
 
-        >>> source_d = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
-        >>> update_info = {'key': {'k1': 'v1_new'}}
-        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
-        >>> updated_d
+        >>> source_dict = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
+        >>> update_data = {'key': {'k1': 'v1_new'}}
+        >>> upd_dict = update_dict(source_dict, updates=update_data)
+        >>> upd_dict
         {'key': {'k1': 'v1_new', 'k2': 'v2'}}
 
-        >>> source_d = {'key': {'k1': {}, 'k2': 'v2'}}
-        >>> update_info = {'key': {'k1': 'v1'}}
-        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
-        >>> updated_d
+        >>> source_dict = {'key': {'k1': {}, 'k2': 'v2'}}
+        >>> update_data = {'key': {'k1': 'v1'}}
+        >>> upd_dict = update_dict(source_dict, updates=update_data)
+        >>> upd_dict
         {'key': {'k1': 'v1', 'k2': 'v2'}}
 
-        >>> source_d = {'key': {'k1': 'v1', 'k2': 'v2'}}
-        >>> update_info = {'key': {'k1': {}}}
-        >>> updated_d = update_nested_dict(source_dict=source_d, updates=update_info)
-        >>> updated_d
+        >>> source_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
+        >>> update_data = {'key': {'k1': {}}}
+        >>> upd_dict = update_dict(source_dict, updates=update_data)
+        >>> upd_dict
         {'key': {'k1': 'v1', 'k2': 'v2'}}
     """
 
     if inplace:
-        updated_dict = source_dict
+        updated_dict = dictionary
     else:
-        updated_dict = copy.copy(source_dict)
+        updated_dict = copy.copy(dictionary)
 
     for key, val in updates.items():
         if isinstance(val, collections.abc.Mapping) or isinstance(val, dict):
-            updated_dict[key] = update_nested_dict(source_dict.get(key, {}), val)
+            updated_dict[key] = update_dict(dictionary.get(key, {}), val)
 
         elif isinstance(val, list):
             updated_dict[key] = (updated_dict.get(key, []) + val)
@@ -513,81 +513,144 @@ def update_nested_dict(source_dict, updates, inplace=False):
         return updated_dict
 
 
-def get_all_values_from_nested_dict(key, target_dict):
+def update_dict_keys(dictionary, replacements=None):
     """
-    Get all values in a nested dictionary.
+    Update keys in a (nested) dictionary.
 
     See also
-    [`OPS-GAVFND-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
-    [`OPS-GAVFND-2 <https://stackoverflow.com/questions/9807634/>`_].
+    [`OPS-UDK-1 <https://stackoverflow.com/questions/4406501/>`_] and
+    [`OPS-UDK-2 <https://stackoverflow.com/questions/38491318/>`_].
+
+    :param dictionary: a (nested) dictionary in which certain keys are to be updated
+    :type dictionary: dict
+    :param replacements: a replacement dictionary in the form of ``{<current_key>: <new_key>}``,
+        defaults to ``None``
+    :type replacements: dict or None
+    :return: an updated dictionary
+    :rtype: dict
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import update_dict_keys
+
+        >>> source_dict = {'a': 1, 'b': 2, 'c': 3}
+
+        >>> upd_dict = update_dict_keys(source_dict, replacements=None)
+        >>> upd_dict  # remain unchanged
+        {'a': 1, 'b': 2, 'c': 3}
+
+        >>> repl_keys = {'a': 'd', 'c': 'e'}
+        >>> upd_dict = update_dict_keys(source_dict, replacements=repl_keys)
+        >>> upd_dict
+        {'d': 1, 'b': 2, 'e': 3}
+
+        >>> source_dict = {'a': 1, 'b': 2, 'c': {'d': 3, 'e': {'f': 4, 'g': 5}}}
+
+        >>> repl_keys = {'d': 3, 'f': 4}
+        >>> upd_dict = update_dict_keys(source_dict, replacements=repl_keys)
+        >>> upd_dict
+        {'a': 1, 'b': 2, 'c': {3: 3, 'e': {4: 4, 'g': 5}}}
+    """
+
+    if replacements is None:
+        updated_dict = dictionary.copy()
+
+    else:
+        updated_dict = {}
+
+        if isinstance(dictionary, list):
+            updated_dict = list()
+            for x in dictionary:
+                updated_dict.append(update_dict_keys(x, replacements))
+
+        else:
+            for k in dictionary.keys():
+                v = dictionary[k]
+                k_ = replacements.get(k, k)
+
+                if isinstance(v, (dict, list)):
+                    updated_dict[k_] = update_dict_keys(v, replacements)
+                else:
+                    updated_dict[k_] = v
+
+    return updated_dict
+
+
+def get_dict_values(key, dictionary):
+    """
+    Get all values in a (nested) dictionary for a given key.
+
+    See also
+    [`OPS-GDV-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
+    [`OPS-GDV-2 <https://stackoverflow.com/questions/9807634/>`_].
 
     :param key: any that can be the key of a dictionary
     :type key: any
-    :param target_dict: a (nested) dictionary
-    :type target_dict: dict
+    :param dictionary: a (nested) dictionary
+    :type dictionary: dict
     :return: all values of the ``key`` within the given ``target_dict``
     :rtype: typing.Generator[typing.Iterable]
 
     **Examples**::
 
-        >>> from pyhelpers.ops import get_all_values_from_nested_dict
+        >>> from pyhelpers.ops import get_dict_values
 
         >>> key_ = 'key'
         >>> target_dict_ = {'key': 'val'}
-        >>> val = get_all_values_from_nested_dict(key_, target_dict_)
+        >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['val']]
 
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': 'v2'}}
-        >>> val = get_all_values_from_nested_dict(key_, target_dict_)
+        >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['v1']]
 
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': ['v1', 'v1_1']}}
-        >>> val = get_all_values_from_nested_dict(key_, target_dict_)
+        >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['v1', 'v1_1']]
 
         >>> key_ = 'k2'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
-        >>> val = get_all_values_from_nested_dict(key_, target_dict_)
+        >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['v2', 'v2_1']]
     """
 
-    for k, v in target_dict.items():
+    for k, v in dictionary.items():
         if key == k:
             yield [v] if isinstance(v, str) else v
 
         elif isinstance(v, dict):
-            for x in get_all_values_from_nested_dict(key, v):
+            for x in get_dict_values(key, v):
                 yield x
 
         elif isinstance(v, collections.abc.Iterable):
             for d in v:
                 if isinstance(d, dict):
-                    for y in get_all_values_from_nested_dict(key, d):
+                    for y in get_dict_values(key, d):
                         yield y
 
 
-def remove_multiple_keys_from_dict(target_dict, *keys):
+def remove_dict_keys(dictionary, *keys):
     """
     Remove multiple keys from a dictionary.
 
-    :param target_dict: a dictionary
-    :type target_dict: dict
+    :param dictionary: a dictionary
+    :type dictionary: dict
     :param keys: (a sequence of) any that can be the key of a dictionary
     :type keys: any
 
     **Example**::
 
-        >>> from pyhelpers.ops import remove_multiple_keys_from_dict
+        >>> from pyhelpers.ops import remove_dict_keys
 
         >>> target_dict_ = {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4', 'k5': 'v5'}
 
-        >>> remove_multiple_keys_from_dict(target_dict_, 'k1', 'k3', 'k4')
+        >>> remove_dict_keys(target_dict_, 'k1', 'k3', 'k4')
 
         >>> target_dict_
         {'k2': 'v2', 'k5': 'v5'}
@@ -595,8 +658,8 @@ def remove_multiple_keys_from_dict(target_dict, *keys):
 
     # assert isinstance(dictionary, dict)
     for k in keys:
-        if k in target_dict.keys():
-            target_dict.pop(k)
+        if k in dictionary.keys():
+            dictionary.pop(k)
 
 
 def merge_dicts(*dicts):
