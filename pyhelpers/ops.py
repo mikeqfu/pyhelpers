@@ -93,7 +93,8 @@ def get_obj_attr(obj, col_names=None):
 
     **Test**::
 
-        >>> from pyhelpers import get_obj_attr, PostgreSQL
+        >>> from pyhelpers.ops import get_obj_attr
+        >>> from pyhelpers.sql import PostgreSQL
 
         >>> postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
         Password (postgres@localhost:5432): ***
