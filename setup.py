@@ -54,7 +54,6 @@ setuptools.setup(
         'XlsxWriter',
         'Shapely',
         'SQLAlchemy',
-        'fuzzywuzzy',
         'joblib',
         'numpy',
         'openpyxl',
@@ -65,6 +64,7 @@ setuptools.setup(
         'requests',
         'scipy',
         'xlrd',
+        # 'fuzzywuzzy',
         # 'python-rapidjson',
         # 'python-Levenshtein'
         # 'gdal',
