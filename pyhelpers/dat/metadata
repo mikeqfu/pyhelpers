@@ -1,0 +1,8 @@
+{
+    "Project": "PyHelpers",
+    "Package": "pyhelpers",
+    "Author": "Qian Fu",
+    "Affiliation": "School of Engineering, University of Birmingham",
+    "Email": "q.fu@bham.ac.uk",
+    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks."
+}
