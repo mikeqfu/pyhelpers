@@ -7,6 +7,5 @@ pandas
 requests
 SQLAlchemy
 joblib
-fuzzywuzzy
 Sphinx~=4.3.0
 sphinx-rtd-theme~=1.0.0
