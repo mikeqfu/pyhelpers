@@ -1,8 +1,9 @@
 import setuptools
 
-from pyhelpers import __author__, __description__, __email__, __package__, __version__
+from pyhelpers import __author__, __author_email__, __description__, __license__, __package__, \
+    __version__
 
-with open("README.rst", 'r', encoding='utf-8') as readme:
+with open("README.rst", mode='r', encoding='utf-8') as readme:
     long_description = readme.read()
 
 setuptools.setup(
@@ -18,9 +19,9 @@ setuptools.setup(
     url=f'https://github.com/mikeqfu/{__package__}',
 
     author=__author__,
-    author_email=__email__,
+    author_email=__author_email__,
 
-    license='GPLv2',
+    license=__license__,
 
     classifiers=[
         'Intended Audience :: Developers',
@@ -51,19 +52,19 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["*.tests", "tests.*", "tests"]),
 
     install_requires=[
-        'XlsxWriter',
-        'Shapely',
-        'SQLAlchemy',
-        'joblib',
         'numpy',
-        'openpyxl',
-        'pandas',
-        'psycopg2',
         'pyproj',
-        'orjson',
-        'requests',
         'scipy',
-        'xlrd',
+        'Shapely',
+        'pandas',
+        'requests',
+        'SQLAlchemy',
+        'psycopg2',
+        # 'joblib',
+        # 'orjson',
+        # 'openpyxl',
+        # 'XlsxWriter',
+        # 'xlrd',
         # 'fuzzywuzzy',
         # 'python-rapidjson',
         # 'python-Levenshtein'
