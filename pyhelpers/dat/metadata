@@ -4,5 +4,7 @@
     "Author": "Qian Fu",
     "Affiliation": "School of Engineering, University of Birmingham",
     "Email": "q.fu@bham.ac.uk",
-    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks."
+    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
+    "Version": "1.3.0a5",
+    "License": "GPLv2"
 }
