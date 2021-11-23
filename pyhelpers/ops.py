@@ -9,6 +9,7 @@ import datetime
 import html.parser
 import inspect
 import itertools
+import json
 import math
 import os
 import random
@@ -20,7 +21,6 @@ import urllib.parse
 import urllib.request
 
 import numpy as np
-import orjson
 import pandas as pd
 import pkg_resources
 import requests
@@ -91,7 +91,7 @@ def get_obj_attr(obj, col_names=None):
     :return: tabular data of the main attributes of the given object
     :rtype: pandas.DataFrame
 
-    **Test**::
+    **Examples**::
 
         >>> from pyhelpers.ops import get_obj_attr
         >>> from pyhelpers.sql import PostgreSQL
@@ -101,17 +101,20 @@ def get_obj_attr(obj, col_names=None):
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
         >>> obj_attr = get_obj_attr(postgres)
-
         >>> obj_attr.head()
-               Attribute                                              Value
-        0        address               postgres:***@localhost:5432/postgres
-        1        backend                                         postgresql
-        2     connection  <sqlalchemy.pool.base._ConnectionFairy object ...
-        3  database_info  {'drivername': 'postgresql+psycopg2', 'host': ...
-        4  database_name                                           postgres
+               Attribute                                 Value
+        0  DATABASE_NAME                              postgres
+        1           HOST                             localhost
+        2           PORT                                  5432
+        3       USERNAME                              postgres
+        4        address  postgres:***@localhost:5432/postgres
 
         >>> obj_attr.Attribute.to_list()
-        ['address',
+        ['DATABASE_NAME',
+         'HOST',
+         'PORT',
+         'USERNAME',
+         'address',
          'backend',
          'database_info',
          'database_name',
@@ -145,7 +148,7 @@ def eval_dtype(str_val):
     :return: converted value
     :rtype: any
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers.ops import eval_dtype
 
@@ -182,7 +185,6 @@ def gps_to_utc(gps_time):
         >>> from pyhelpers.ops import gps_to_utc
 
         >>> utc_dt = gps_to_utc(gps_time=1271398985.7822514)
-
         >>> utc_dt
         datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
     """
@@ -279,13 +281,13 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 
     **Examples**::
 
-        >>> import os
         >>> from pyhelpers.ops import get_number_of_chunks
+        >>> import os
 
-        >>> file_path = "C:\\Python39\\python39.pdb"
+        >>> file_path = "C:\\Program Files\\Python39\\python39.pdb"
 
         >>> os.path.getsize(file_path)
-        13602816
+        13611008
         >>> get_number_of_chunks(file_path, chunk_size_limit=2)
         7
     """
@@ -321,7 +323,7 @@ def loop_in_pairs(iterable):
     :return: a `zip <https://docs.python.org/3.9/library/functions.html#zip>`_-type variable
     :rtype: zip
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers.ops import loop_in_pairs
 
@@ -358,9 +360,10 @@ def split_list_by_size(lst, sub_len):
         >>> from pyhelpers.ops import split_list_by_size
 
         >>> lst_ = list(range(0, 10))
-        >>> sub_lst_len = 3
+        >>> lst_
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        >>> lists = split_list_by_size(lst_, sub_lst_len)
+        >>> lists = split_list_by_size(lst_, sub_len=3)
         >>> list(lists)
         [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
     """
@@ -387,9 +390,10 @@ def split_list(lst, num_of_sub):
         >>> from pyhelpers.ops import split_list
 
         >>> lst_ = list(range(0, 10))
-        >>> num_of_sub_lists = 3
+        >>> lst_
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        >>> lists = list(split_list(lst_, num_of_sub_lists))
+        >>> lists = split_list(lst_, num_of_sub=3)
         >>> list(lists)
         [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
     """
@@ -417,18 +421,49 @@ def split_iterable(iterable, chunk_size):
         >>> from pyhelpers.ops import split_iterable
         >>> import pandas
 
-        >>> lst = list(range(0, 10))
-        >>> size_of_chunk = 3
+        >>> iterable_1 = list(range(0, 10))
+        >>> iterable_1
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        >>> for lst_ in split_iterable(lst, size_of_chunk): print(list(lst_))
+        >>> iterable_1_ = split_iterable(iterable_1, chunk_size=3)
+        >>> type(iterable_1_)
+        generator
+
+        >>> for dat in iterable_1_:
+        ...     print(list(dat))
         [0, 1, 2]
         [3, 4, 5]
         [6, 7, 8]
         [9]
 
-        >>> lst = pandas.Series(range(0, 20))
-        >>> size_of_chunk = 5
-        >>> for lst_ in split_iterable(lst, size_of_chunk): print(list(lst_))
+        >>> iterable_2 = pandas.Series(range(0, 20))
+        >>> iterable_2
+        0      0
+        1      1
+        2      2
+        3      3
+        4      4
+        5      5
+        6      6
+        7      7
+        8      8
+        9      9
+        10    10
+        11    11
+        12    12
+        13    13
+        14    14
+        15    15
+        16    16
+        17    17
+        18    18
+        19    19
+        dtype: int64
+
+        >>> iterable_2_ = split_iterable(iterable_2, chunk_size=5)
+
+        >>> for dat in iterable_2_:
+        ...     print(list(dat))
         [0, 1, 2, 3, 4]
         [5, 6, 7, 8, 9]
         [10, 11, 12, 13, 14]
@@ -450,7 +485,8 @@ def update_dict(dictionary, updates, inplace=False):
     :type dictionary: dict
     :param updates: a dictionary with new data
     :type updates: dict
-    :param inplace: whether to directly update the original ``source_dict``, defaults to ``False``
+    :param inplace: whether to replace the original ``dictionary`` with the updated one,
+        defaults to ``False``
     :type inplace: bool
     :return: an updated dictionary
     :rtype: dict
@@ -524,8 +560,8 @@ def update_dict_keys(dictionary, replacements=None):
 
     :param dictionary: a (nested) dictionary in which certain keys are to be updated
     :type dictionary: dict
-    :param replacements: a replacement dictionary in the form of ``{<current_key>: <new_key>}``,
-        defaults to ``None``
+    :param replacements: a dictionary in the form of ``{<current_key>: <new_key>}``,
+        describing which keys are to be updated, defaults to ``None``
     :type replacements: dict or None
     :return: an updated dictionary
     :rtype: dict
@@ -897,7 +933,7 @@ def swap_cols(array, c1, c2, as_list=False):
     :return: a new array/list in which the positions of the c1-th and c2-th columns are swapped
     :rtype: numpy.ndarray or list
 
-    **Test**::
+    **Examples**::
 
         >>> from pyhelpers.ops import swap_cols
         >>> import numpy
@@ -939,7 +975,7 @@ def swap_rows(array, r1, r2, as_list=False):
     :return: a new array/list in which the positions of the r1-th and r2-th rows are swapped
     :rtype: numpy.ndarray or list
 
-    **Test**::
+    **Examples**::
 
         >>> from pyhelpers.ops import swap_rows
         >>> import numpy
@@ -1083,13 +1119,13 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 
         >>> date_ = '2019-01-01'
         >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=True)
-        >>> print(closest_date_)  # Timestamp('2019-01-02 00:00:00', freq='D')
-        2019-01-02 00:00:00
+        >>> closest_date_
+        Timestamp('2019-01-02 00:00:00', freq='D')
 
         >>> date_ = pandas.to_datetime('2019-01-01')
         >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=False)
-        >>> print(closest_date_)  # '2019-01-02 00:00:00.000000'
-        2019-01-02 00:00:00.000000
+        >>> closest_date_
+        '2019-01-02 00:00:00.000000'
     """
 
     closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
@@ -1115,7 +1151,8 @@ def cmap_discretisation(cmap, n_colours):
     See also [`OPS-CD-1
     <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance,
+        e.g. built-in `colormaps`_ that is accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
@@ -1186,7 +1223,8 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     See also [`OPS-CBI-1
     <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance, e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_
+    :param cmap: a colormap instance,
+        e.g. built-in `colormaps`_ that is accessible via `matplotlib.cm.get_cmap`_
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: number of colours
     :type n_colours: int
@@ -1299,15 +1337,15 @@ def is_network_connected():
 
 def is_url(url, partially=False):
     """
-    Check if a string is a valid URL.
+    Check whether ``url`` is a valid URL.
 
     See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_]
 
-    :param url: a string-type data
+    :param url: a string-type variable
     :type url: str
     :param partially: whether to consider the input as partially valid, defaults to ``False``
     :type partially: bool
-    :return: whether the input is a valid URL
+    :return: whether ``url`` is a valid URL
     :rtype: bool
 
     **Examples**::
@@ -1379,17 +1417,27 @@ def is_url_connectable(url):
         host = socket.gethostbyname(netloc)
         s = socket.create_connection((host, 80))
         s.close()
+
         return True
+
     except (socket.gaierror, OSError):
         return False
 
 
-def is_downloadable(url):
+def is_downloadable(url, request_field='content-type', **kwargs):
     """
-    Check whether the url contain a downloadable resource.
+    Check whether a URL leads to a web page where there is downloadable contents.
 
     :param url: a valid URL
     :type url: str
+    :param request_field: name of the field/header indicating the original media type of the resource,
+        defaults to ``'content-type'``
+    :type request_field: str
+    :param kwargs: [optional] parameters of `requests.head`_
+    :return: whether the ``url`` leads to downloadable contents
+    :rtype: bool
+
+    .. _`requests.head`: https://2.python-requests.org/en/master/api/#requests.head
 
     **Example**::
 
@@ -1404,9 +1452,10 @@ def is_downloadable(url):
         False
     """
 
-    h = requests.head(url, allow_redirects=True)
+    kwargs.update({'allow_redirects': True})
+    h = requests.head(url=url, **kwargs)
 
-    content_type = h.headers.get('content-type').lower()
+    content_type = h.headers.get(request_field).lower()
 
     if content_type.startswith('text/html'):
         downloadable = False
@@ -1425,16 +1474,16 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
     :type url: str
     :param max_retries: maximum number of retries, defaults to ``5``
     :type max_retries: int
-    :param backoff_factor: ``backoff_factor`` of `urllib3.util.retry.Retry()`_, defaults to ``0.1``
+    :param backoff_factor: ``backoff_factor`` of `urllib3.util.retry.Retry`_, defaults to ``0.1``
     :type backoff_factor: float
     :param retry_status: a list of HTTP status codes that force to retry downloading,
-        inherited from ``status_forcelist`` of `urllib3.util.retry.Retry()`_;
+        inherited from ``status_forcelist`` of `urllib3.util.retry.Retry`_;
         when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
-    :param kwargs: [optional] parameters of `urllib3.util.retry.Retry()`_
+    :param kwargs: [optional] parameters of `urllib3.util.retry.Retry`_
     :return: a requests session
     :rtype: `requests.Session`_
 
-    .. _urllib3.util.retry.Retry():
+    .. _urllib3.util.retry.Retry:
         https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
     .. _requests.Session:
         https://2.python-requests.org/en/master/api/#request-sessions
@@ -1542,8 +1591,8 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
     if dump_dat:
         path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
 
-        json_out = open(path_to_json, mode='wb')
-        json_out.write(orjson.dumps(user_agent_strings))
+        json_out = open(path_to_json, mode='w')
+        json_out.write(json.dumps(user_agent_strings))
         json_out.close()
 
     return user_agent_strings
@@ -1602,8 +1651,8 @@ def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbos
     if not update:
         path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
 
-        json_in = open(path_to_json, mode='rb')
-        user_agent_strings = orjson.loads(json_in.read())
+        json_in = open(path_to_json, mode='r')
+        user_agent_strings = json.loads(json_in.read())
 
     else:
         if verbose:
@@ -1634,13 +1683,13 @@ def get_user_agent_string(fancy=None, **kwargs):
     """
     Get a random user-agent string of a certain browser.
 
-    :param fancy: name of a preferred browser, defaults to ``None``; options include ``'Chrome'``,
-        ``'Firefox'``, ``'Safari'``, ``'Edge'``, ``'Internet Explorer'`` and ``'Opera'``;
+    :param fancy: name of a preferred browser, defaults to ``None``;
+        options include ``'Chrome'``, ``'Firefox'``, ``'Safari'``, ``'Edge'``,
+        ``'Internet Explorer'`` and ``'Opera'``;
         if ``fancy=None``, the function returns a user-agent string of a randomly-selected browser
         among all the available options
     :type: fancy: None or str
-    :param kwargs: [optional] parameters of the function
-        :py:func:`get_user_agent_strings()<pyhelpers.ops.get_user_agent_strings>`
+    :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.ops.get_user_agent_strings`
     :return: a user-agent string of a certain browser
     :rtype: str
 
@@ -1661,7 +1710,7 @@ def get_user_agent_string(fancy=None, **kwargs):
     .. note::
 
         In the above examples, the returned user-agent string is random and may be different
-        every time we run the function.
+        every time of running the function.
     """
 
     if fancy is not None:
@@ -1691,8 +1740,7 @@ def fake_requests_headers(randomized=True, **kwargs):
         from among all available data of several popular browsers, defaults to ``True``;
         if ``randomized=False``, the function uses a random Chrome user-agent string
     :type randomized: bool
-    :param kwargs: [optional] parameters of the function
-        :py:func:`get_user_agent_string()<pyhelpers.ops.get_user_agent_string>`
+    :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.ops.get_user_agent_string`
     :return: fake HTTP headers
     :rtype: dict
 
@@ -1797,9 +1845,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param frh_args: optional parameters used by
         :py:func:`fake_requests_headers()<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
     :type frh_args: dict or None
-    :param kwargs: [optional] parameters of `requests.Session.get()`_
+    :param kwargs: [optional] parameters of `requests.Session.get`_
 
-    .. _requests.Session.get():
+    .. _requests.Session.get:
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
 
     **Example**::
@@ -1879,7 +1927,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
         else:
             f = open(file=path_to_file_, mode='wb')
-            shutil.copyfileobj(response.raw, f)
+            shutil.copyfileobj(fsrc=response.raw, fdst=f)
             f.close()
 
             if os.stat(path=path_to_file_).st_size == 0:
