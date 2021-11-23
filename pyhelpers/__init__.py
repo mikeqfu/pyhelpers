@@ -3,7 +3,7 @@ import json
 
 import pkg_resources
 
-with open(pkg_resources.resource_filename(__name__, "dat\\metadata"), mode='r') as metadata_file:
+with open(pkg_resources.resource_filename(__name__, "dat/metadata.json"), mode='r') as metadata_file:
     metadata = json.load(metadata_file)
 
 __project__ = metadata['Project']
