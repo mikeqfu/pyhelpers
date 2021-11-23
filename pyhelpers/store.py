@@ -9,8 +9,6 @@ import pickle
 import subprocess
 import zipfile
 
-import joblib
-import orjson
 import pandas as pd
 
 from .ops import confirmed
@@ -115,7 +113,9 @@ def save(data, path_to_file, warning=False, **kwargs):
     :type path_to_file: str
     :param warning: whether to show a warning messages, defaults to ``False``
     :type warning: bool
-    :param kwargs: [optional] parameters of ``pyhelpers.store.save_*`` functions
+    :param kwargs: [optional] parameters of :py:func:`pyhelpers.store.save_spreadsheet`,
+        :py:func:`pyhelpers.store.save_feather`, :py:func:`pyhelpers.store.save_json` or
+        :py:func:`pyhelpers.store.save_pickle`
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
@@ -209,7 +209,7 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of the function `pickle.dump`_
+    :param kwargs: [optional] parameters of `pickle.dump`_
 
     .. _`open`: https://docs.python.org/3/library/functions.html#open
     .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
@@ -270,6 +270,8 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     _get_specific_filepath_info(path_to_joblib, verbose=verbose, ret_info=False)
 
     try:
+        import joblib
+
         joblib.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
         print("Done.") if verbose else ""
 
@@ -502,7 +504,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
 # JSON files
 
-def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs):
+def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
@@ -510,20 +512,21 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
-    :param method: an open-source Python package for JSON serialization, options include
-        ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
-        if ``None``, use the built-in `json module <https://docs.python.org/3/library/json.html>`_
+    :param method: an open-source module used for JSON serialization, options include
+        ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
+        ``'rapidjson'`` (for `python-rapidjson`_)
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `orjson.dumps`_ (if ``method='orjson'``),
-        `rapidjson.dump`_ (if ``method='rapidjson'``), or `json.dump`_ otherwise
+    :param kwargs: [optional] parameters of `json.dump`_ (if ``method=None``),
+        `orjson.dumps`_ (if ``method='orjson'``), or `rapidjson.dump`_ (if ``method='rapidjson'``)
 
+    .. _`json module`: https://docs.python.org/3/library/json.html
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
+    .. _`json.dump`: https://docs.python.org/3/library/json.html#json.dump
     .. _`orjson.dumps`: https://github.com/ijl/orjson#serialize
     .. _`rapidjson.dump`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
-    .. _`json.dump`: https://docs.python.org/3/library/json.html#json.dump
 
     **Example**::
 
@@ -533,7 +536,7 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
         >>> json_dat = {'a': 1, 'b': 2, 'c': 3}
         >>> json_path = cd("tests\\data", "dat.json")
 
-        >>> save_json(json_dat, json_path, verbose=True)
+        >>> save_json(json_dat, json_path, indent=4, verbose=True)
         Saving "dat.json" to "tests\\data\\" ... Done.
     """
 
@@ -541,14 +544,19 @@ def save_json(json_data, path_to_json, method='orjson', verbose=False, **kwargs)
 
     try:
         if method == 'orjson':
+            import orjson
+
             json_out = open(path_to_json, mode='wb')
             json_out.write(orjson.dumps(json_data, **kwargs))
 
         else:
             json_out = open(path_to_json, mode='w')
+
             if method == 'rapidjson':
                 import rapidjson
+
                 rapidjson.dump(json_data, json_out, **kwargs)
+
             else:
                 json.dump(json_data, json_out, **kwargs)
 
@@ -940,8 +948,11 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         print("Loading \"{}\"".format(os.path.relpath(path_to_joblib)), end=" ... ")
 
     try:
+        import joblib
+
         joblib_data = joblib.load(filename=path_to_joblib, **kwargs)
         print("Done.") if verbose else ""
+
         return joblib_data
 
     except Exception as e:
@@ -1070,6 +1081,8 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
 
     try:
         if method == 'orjson':
+            import orjson
+
             json_in = open(path_to_json, mode='rb', **kwargs)
             json_data = orjson.loads(json_in.read())
 
@@ -1078,7 +1091,9 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
 
             if method == 'rapidjson':
                 import rapidjson
+
                 json_data = rapidjson.load(json_in, **kwargs)
+
             else:
                 json_data = json.load(json_in, **kwargs)
 
