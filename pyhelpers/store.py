@@ -1174,26 +1174,37 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
     .. _`zipfile.ZipFile.extractall`:
         https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.store import unzip
         >>> from pyhelpers.dir import cd, delete_dir
 
-        >>> output_dir = cd("tests\\data")
-        >>> zip_file_path = cd(output_dir, "zipped.zip")
+        >>> zip_file_path = cd("tests\\data", "zipped.zip")
 
-        >>> unzip(zip_file_path, output_dir, verbose=True)
+        >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
         Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.
 
-        >>> # Delete the extracted directory "zipped"
-        >>> delete_dir(cd(output_dir, "zipped"), verbose=True)
+        >>> output_dir = cd("tests\\data\\zipped_alt")
+        >>> unzip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
+        Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped_alt\\" ... Done.
+
+        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
+        >>> delete_dir(cd("tests\\data\\zipped"), verbose=True)
         The directory "tests\\data\\zipped\\" is not empty.
         Confirmed to delete it? [No]|Yes: yes
         Deleting "tests\\data\\zipped\\" ... Done.
+        >>> delete_dir(output_dir, verbose=True)
+        The directory "tests\\data\\zipped_alt\\" is not empty.
+        Confirmed to delete it
+        ? [No]|Yes: >? yes
+        Deleting "tests\\data\\zipped_alt\\" ... Done.
     """
 
-    if out_dir is not None:
+    if out_dir is None:
         out_dir = os.path.splitext(path_to_zip_file)[0]
+
+    if not os.path.exists(out_dir):
+        os.makedirs(name=out_dir)
 
     if verbose:
         rel_path = os.path.relpath(path_to_zip_file)
@@ -1236,18 +1247,37 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dir import cd, delete_dir
 
-        >>> output_dir = cd("tests\\data")
-        >>> zip_file_path = cd(output_dir, "zipped.zip")
+        >>> zip_file_path = cd("tests\\data", "zipped.zip")
 
-        >>> seven_zip(zip_file_path, output_dir, verbose=True)
+        >>> seven_zip(path_to_zip_file=zip_file_path, verbose=True)
         7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
 
         Scanning the drive for archives:
         1 file, 158 bytes (1 KiB)
 
-        Extracting archive: .\\tests\\data\\zipped.zip
+        Extracting archive: \\tests\\data\\zipped.zip
         --
-        Path = .\\tests\\data\\zipped.zip
+        Path = \\tests\\data\\zipped.zip
+        Type = zip
+        Physical Size = 158
+
+        Everything is Ok
+
+        Size:       4
+        Compressed: 158
+
+        File extracted successfully.
+
+        >>> output_dir = cd("tests\\data\\zipped_alt")
+        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
+        7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
+
+        Scanning the drive for archives:
+        1 file, 158 bytes (1 KiB)
+
+        Extracting archive: \\tests\\data\\zipped.zip
+        --
+        Path = \\tests\\data\\zipped.zip
         Type = zip
         Physical Size = 158
 
@@ -1259,8 +1289,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         File extracted successfully.
 
         >>> # Extract a .7z file
-        >>> zip_file_path = cd(output_dir, "zipped.7z")
-        >>> seven_zip(zip_file_path, output_dir, verbose=True)
+        >>> zip_file_path = cd("tests\\data", "zipped.7z")
+        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
         7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
 
         Scanning the drive for archives:
@@ -1284,11 +1314,16 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 
         File extracted successfully.
 
-        >>> # Delete the extracted file
-        >>> delete_dir(cd(output_dir, "zipped"), verbose=True)
-        The directory "tests\\data\\zipped" is not empty.
+        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
+        >>> delete_dir(cd("tests\\data\\zipped"), verbose=True)
+        The directory "tests\\data\\zipped\\" is not empty.
         Confirmed to delete it? [No]|Yes: yes
-        Deleting "tests\\data\\zipped" ... Done.
+        Deleting "tests\\data\\zipped\\" ... Done.
+        >>> delete_dir(output_dir, verbose=True)
+        The directory "tests\\data\\zipped_alt\\" is not empty.
+        Confirmed to delete it
+        ? [No]|Yes: >? yes
+        Deleting "tests\\data\\zipped_alt\\" ... Done.
     """
 
     if seven_zip_exe is None:
@@ -1296,7 +1331,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         if not os.path.isfile(seven_zip_exe):
             seven_zip_exe = "7z.exe"
 
-    if out_dir is not None:
+    if out_dir is None:
         out_dir = os.path.splitext(path_to_zip_file)[0]
 
     try:
