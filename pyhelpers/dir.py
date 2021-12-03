@@ -13,12 +13,12 @@ from .ops import confirmed
 """ == Change directories ==================================================================== """
 
 
-def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
+def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     """
     Get the full pathname of a directory (or file).
 
-    :param sub_dir: name of a directory or names of directories (and/or a filename)
-    :type sub_dir: str
+    :param subdir: name of a directory or names of directories (and/or a filename)
+    :type subdir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
     :param cwd: current working directory, defaults to ``None``
@@ -40,7 +40,7 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
         >>> os.path.relpath(current_wd)
         '.'
 
-        >>> # (The directory will be created if it does not exists.)
+        >>> # The directory will be created if it does not exist
         >>> path_to_tests_dir = cd("tests", mkdir=True)
         >>> os.path.relpath(path_to_tests_dir)
         'tests'
@@ -53,7 +53,7 @@ def cd(*sub_dir, mkdir=False, cwd=None, back_check=False, **kwargs):
         while not os.path.exists(path):
             path = os.path.dirname(path)
 
-    for x in sub_dir:
+    for x in subdir:
         path = os.path.dirname(path) if x == ".." else os.path.join(path, x)
 
     if mkdir:
@@ -117,12 +117,12 @@ def go_from_altered_cwd(dir_name, **kwargs):
     return altered_cwd
 
 
-def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
+def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
     Get the full pathname of a directory (or file) under ``data_dir``.
 
-    :param sub_dir: name of directory or names of directories (and/or a filename)
-    :type sub_dir: str
+    :param subdir: name of directory or names of directories (and/or a filename)
+    :type subdir: str
     :param data_dir: name of a directory where data is (or will be) stored, defaults to ``"data"``
     :type data_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
@@ -171,17 +171,17 @@ def cdd(*sub_dir, data_dir="data", mkdir=False, **kwargs):
     """
 
     kwargs.update({'mkdir': mkdir})
-    path = cd(data_dir, *sub_dir, **kwargs)
+    path = cd(data_dir, *subdir, **kwargs)
 
     return path
 
 
-def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
+def cd_dat(*subdir, dat_dir="dat", mkdir=False, **kwargs):
     """
     Get the full pathname of a directory (or file) under ``dat_dir`` of a package.
 
-    :param sub_dir: name of directory or names of directories (and/or a filename)
-    :type sub_dir: str
+    :param subdir: name of directory or names of directories (and/or a filename)
+    :type subdir: str
     :param dat_dir: name of a directory to store data, defaults to ``"dat"``
     :type dat_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
@@ -204,7 +204,7 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
     """
 
     path = pkg_resources.resource_filename(__name__, dat_dir)
-    for x in sub_dir:
+    for x in subdir:
         path = os.path.join(path, x)
 
     if mkdir:
@@ -222,12 +222,12 @@ def cd_dat(*sub_dir, dat_dir="dat", mkdir=False, **kwargs):
 """ == Validate directories ================================================================== """
 
 
-def is_dir(path_to_dir):
+def is_dir(dir_pathname):
     """
     Check whether ``path_to_dir`` is a directory name.
 
-    :param path_to_dir: name of a directory
-    :type path_to_dir: str
+    :param dir_pathname: name of a directory
+    :type dir_pathname: str
     :return: whether ``path_to_dir`` is a path-like string that describes a directory name
     :rtype: bool
 
@@ -248,19 +248,19 @@ def is_dir(path_to_dir):
         True
     """
 
-    if os.path.dirname(path_to_dir):
+    if os.path.dirname(dir_pathname):
         return True
     else:
         return False
 
 
-def validate_dir(path_to_dir=None, sub_dir="", msg="Invalid input!", **kwargs):
+def validate_dir(dir_pathname=None, sub_dir="", msg="Invalid input!", **kwargs):
     """
     Validate the pathname of a directory.
 
-    :param path_to_dir: pathname of a data directory, defaults to ``None``
-    :type path_to_dir: str or None
-    :param sub_dir: name of a sub-directory to be examined if ``directory=None``, defaults to ``""``
+    :param dir_pathname: pathname of a data directory, defaults to ``None``
+    :type dir_pathname: str or None
+    :param sub_dir: name of a subdirectory to be examined if ``directory=None``, defaults to ``""``
     :type sub_dir: str
     :param msg: error message if ``data_dir`` is not a full pathname, defaults to ``"Invalid input!"``
     :type msg: str
@@ -286,15 +286,15 @@ def validate_dir(path_to_dir=None, sub_dir="", msg="Invalid input!", **kwargs):
         'data'
     """
 
-    if path_to_dir:
-        assert isinstance(path_to_dir, str), msg
+    if dir_pathname:
+        assert isinstance(dir_pathname, str), msg
 
-        if not os.path.isabs(path_to_dir):  # Use default file directory
-            data_dir_ = cd(path_to_dir.strip('.\\.'), **kwargs)
+        if not os.path.isabs(dir_pathname):  # Use default file directory
+            data_dir_ = cd(dir_pathname.strip('.\\.'), **kwargs)
 
         else:
-            data_dir_ = os.path.realpath(path_to_dir.lstrip('.\\.'))
-            assert os.path.isabs(path_to_dir), msg
+            data_dir_ = os.path.realpath(dir_pathname.lstrip('.\\.'))
+            assert os.path.isabs(dir_pathname), msg
 
     else:
         data_dir_ = cd(sub_dir, **kwargs) if sub_dir else cd()
@@ -305,17 +305,17 @@ def validate_dir(path_to_dir=None, sub_dir="", msg="Invalid input!", **kwargs):
 """ == Delete directories ==================================================================== """
 
 
-def _print_deleting_msg(verbose, rel_path_to_dir):
+def _print_deleting_msg(verbose, dir_relpath):
     if verbose:
-        print("Deleting \"{}\\\"".format(rel_path_to_dir), end=" ... ")
+        print("Deleting \"{}\\\"".format(dir_relpath), end=" ... ")
 
 
-def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
+def delete_dir(dir_pathname, confirmation_required=True, verbose=False, **kwargs):
     """
     Delete a directory.
 
-    :param path_to_dir: pathname of a directory
-    :type path_to_dir: str
+    :param dir_pathname: pathname of a directory
+    :type dir_pathname: str
     :param confirmation_required: whether to prompt a message for confirmation to proceed,
         defaults to ``True``
     :type confirmation_required: bool
@@ -357,23 +357,23 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         The directory "test_dir\\folder\\" exists? False
     """
 
-    rel_path_to_dir = os.path.relpath(path_to_dir)
+    dir_relpath = os.path.relpath(dir_pathname)
 
     try:
-        if os.listdir(path_to_dir):
+        if os.listdir(dir_pathname):
             if confirmed("The directory \"{}\\\" is not empty.\nConfirmed to delete it\n?".format(
-                    rel_path_to_dir), confirmation_required=confirmation_required):
-                _print_deleting_msg(verbose=verbose, rel_path_to_dir=rel_path_to_dir)
-                shutil.rmtree(path_to_dir, **kwargs)
+                    dir_relpath), confirmation_required=confirmation_required):
+                _print_deleting_msg(verbose=verbose, dir_relpath=dir_relpath)
+                shutil.rmtree(dir_pathname, **kwargs)
 
         else:
-            if confirmed("To delete the directory \"{}\\\"\n?".format(rel_path_to_dir),
+            if confirmed("To delete the directory \"{}\\\"\n?".format(dir_relpath),
                          confirmation_required=confirmation_required):
-                _print_deleting_msg(verbose=verbose, rel_path_to_dir=rel_path_to_dir)
-                os.rmdir(path_to_dir)
+                _print_deleting_msg(verbose=verbose, dir_relpath=dir_relpath)
+                os.rmdir(dir_pathname)
 
         if verbose:
-            print("Done.") if not os.path.exists(path_to_dir) else print("Cancelled.")
+            print("Done.") if not os.path.exists(dir_pathname) else print("Cancelled.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
