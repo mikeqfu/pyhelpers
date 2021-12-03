@@ -290,7 +290,8 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
     The file extension can be `".txt"`, `".csv"`, `".xlsx"` or `".xls"`;
     engines can include: `xlsxwriter`_ (for .xlsx) and `openpyxl`_ (for .xlsx/.xlsm).
 
-    :param spreadsheet_data: data that could be saved as a spreadsheet, e.g. .xlsx, .csv
+    :param spreadsheet_data: data that could be saved as a spreadsheet
+        (e.g. with a file extension ".xlsx" or ".csv")
     :type spreadsheet_data: pandas.DataFrame
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str or None
@@ -378,7 +379,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :type sheet_names: list or tuple or iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str
-    :param mode: mode to write to excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
+    :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
@@ -1156,7 +1157,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
 """ == Uncompress data ======================================================================= """
 
 
-def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
+def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     """
     Extract data from a `zipped (compressed)
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_ file.
@@ -1165,8 +1166,6 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
     :type path_to_zip_file: str
     :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
     :type out_dir: str or None
-    :param mode: defaults to ``'r'``
-    :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `zipfile.ZipFile.extractall`_
@@ -1196,7 +1195,7 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
         >>> delete_dir(output_dir, verbose=True)
         The directory "tests\\data\\zipped_alt\\" is not empty.
         Confirmed to delete it
-        ? [No]|Yes: >? yes
+        ? [No]|Yes: yes
         Deleting "tests\\data\\zipped_alt\\" ... Done.
     """
 
@@ -1207,13 +1206,13 @@ def unzip(path_to_zip_file, out_dir=None, mode='r', verbose=False, **kwargs):
         os.makedirs(name=out_dir)
 
     if verbose:
-        rel_path = os.path.relpath(path_to_zip_file)
-        out_dir_ = os.path.relpath(out_dir) + ("\\" if not out_dir.endswith("\\") else "")
+        rel_path = os.path.relpath(path=path_to_zip_file)
+        out_dir_ = os.path.relpath(path=out_dir) + ("\\" if not out_dir.endswith("\\") else "")
         print("Extracting \"{}\" to \"{}\"".format(rel_path, out_dir_), end=" ... ")
 
     try:
-        with zipfile.ZipFile(path_to_zip_file, mode) as zf:
-            zf.extractall(out_dir, **kwargs)
+        with zipfile.ZipFile(file=path_to_zip_file) as zf:
+            zf.extractall(path=out_dir, **kwargs)
         zf.close()
 
         print("Done.") if verbose else ""
