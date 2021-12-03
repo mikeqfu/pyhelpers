@@ -222,12 +222,12 @@ def cd_dat(*subdir, dat_dir="dat", mkdir=False, **kwargs):
 """ == Validate directories ================================================================== """
 
 
-def is_dir(dir_pathname):
+def is_dir(path_to_dir):
     """
     Check whether ``path_to_dir`` is a directory name.
 
-    :param dir_pathname: name of a directory
-    :type dir_pathname: str
+    :param path_to_dir: name of a directory
+    :type path_to_dir: str
     :return: whether ``path_to_dir`` is a path-like string that describes a directory name
     :rtype: bool
 
@@ -248,20 +248,20 @@ def is_dir(dir_pathname):
         True
     """
 
-    if os.path.dirname(dir_pathname):
+    if os.path.dirname(path_to_dir):
         return True
     else:
         return False
 
 
-def validate_dir(dir_pathname=None, sub_dir="", msg="Invalid input!", **kwargs):
+def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     """
     Validate the pathname of a directory.
 
-    :param dir_pathname: pathname of a data directory, defaults to ``None``
-    :type dir_pathname: str or None
-    :param sub_dir: name of a subdirectory to be examined if ``directory=None``, defaults to ``""``
-    :type sub_dir: str
+    :param path_to_dir: pathname of a data directory, defaults to ``None``
+    :type path_to_dir: str or None
+    :param subdir: name of a subdirectory to be examined if ``directory=None``, defaults to ``""``
+    :type subdir: str
     :param msg: error message if ``data_dir`` is not a full pathname, defaults to ``"Invalid input!"``
     :type msg: str
     :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.dir.cd`
@@ -281,23 +281,23 @@ def validate_dir(dir_pathname=None, sub_dir="", msg="Invalid input!", **kwargs):
         >>> os.path.relpath(dat_dir)
         'tests'
 
-        >>> dat_dir = validate_dir(sub_dir="data")
+        >>> dat_dir = validate_dir(subdir="data")
         >>> os.path.relpath(dat_dir)
         'data'
     """
 
-    if dir_pathname:
-        assert isinstance(dir_pathname, str), msg
+    if path_to_dir:
+        assert isinstance(path_to_dir, str), msg
 
-        if not os.path.isabs(dir_pathname):  # Use default file directory
-            data_dir_ = cd(dir_pathname.strip('.\\.'), **kwargs)
+        if not os.path.isabs(path_to_dir):  # Use default file directory
+            data_dir_ = cd(path_to_dir.strip('.\\.'), **kwargs)
 
         else:
-            data_dir_ = os.path.realpath(dir_pathname.lstrip('.\\.'))
-            assert os.path.isabs(dir_pathname), msg
+            data_dir_ = os.path.realpath(path_to_dir.lstrip('.\\.'))
+            assert os.path.isabs(path_to_dir), msg
 
     else:
-        data_dir_ = cd(sub_dir, **kwargs) if sub_dir else cd()
+        data_dir_ = cd(subdir, **kwargs) if subdir else cd()
 
     return data_dir_
 
@@ -305,17 +305,17 @@ def validate_dir(dir_pathname=None, sub_dir="", msg="Invalid input!", **kwargs):
 """ == Delete directories ==================================================================== """
 
 
-def _print_deleting_msg(verbose, dir_relpath):
+def _print_deleting_msg(verbose, relpath_to_dir):
     if verbose:
-        print("Deleting \"{}\\\"".format(dir_relpath), end=" ... ")
+        print("Deleting \"{}\\\"".format(relpath_to_dir), end=" ... ")
 
 
-def delete_dir(dir_pathname, confirmation_required=True, verbose=False, **kwargs):
+def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
     """
     Delete a directory.
 
-    :param dir_pathname: pathname of a directory
-    :type dir_pathname: str
+    :param path_to_dir: pathname of a directory
+    :type path_to_dir: str
     :param confirmation_required: whether to prompt a message for confirmation to proceed,
         defaults to ``True``
     :type confirmation_required: bool
@@ -357,23 +357,23 @@ def delete_dir(dir_pathname, confirmation_required=True, verbose=False, **kwargs
         The directory "test_dir\\folder\\" exists? False
     """
 
-    dir_relpath = os.path.relpath(dir_pathname)
+    dir_relpath = os.path.relpath(path_to_dir)
 
     try:
-        if os.listdir(dir_pathname):
+        if os.listdir(path_to_dir):
             if confirmed("The directory \"{}\\\" is not empty.\nConfirmed to delete it\n?".format(
                     dir_relpath), confirmation_required=confirmation_required):
-                _print_deleting_msg(verbose=verbose, dir_relpath=dir_relpath)
-                shutil.rmtree(dir_pathname, **kwargs)
+                _print_deleting_msg(verbose=verbose, relpath_to_dir=dir_relpath)
+                shutil.rmtree(path_to_dir, **kwargs)
 
         else:
             if confirmed("To delete the directory \"{}\\\"\n?".format(dir_relpath),
                          confirmation_required=confirmation_required):
-                _print_deleting_msg(verbose=verbose, dir_relpath=dir_relpath)
-                os.rmdir(dir_pathname)
+                _print_deleting_msg(verbose=verbose, relpath_to_dir=dir_relpath)
+                os.rmdir(path_to_dir)
 
         if verbose:
-            print("Done.") if not os.path.exists(dir_pathname) else print("Cancelled.")
+            print("Done.") if not os.path.exists(path_to_dir) else print("Cancelled.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
