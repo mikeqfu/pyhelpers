@@ -229,7 +229,7 @@ def wgs84_to_osgb36_calc(longitude, latitude):
     z_2 = tz + (-ry) * x_1 + rx * y_1 + (1 + s) * z_1
 
     # Back to spherical polar coordinates from cartesian
-    # Need some of the characteristics of the new ellipsoid
+    # Need some characteristics of the new ellipsoid
     # The GSR80 semi-major and semi-minor axes used for WGS84(m)
     a, b = 6377563.396, 6356256.909
     e2 = 1 - (b * b) / (a * a)  # The eccentricity of the Airy 1830 ellipsoid
@@ -394,7 +394,7 @@ def osgb36_to_wgs84_calc(easting, northing):
     z_2 = tz + (-ry) * x_1 + rx * y_1 + (1 + s) * z_1
 
     # Back to spherical polar coordinates from cartesian
-    # Need some of the characteristics of the new ellipsoid
+    # Need some characteristics of the new ellipsoid
     # The GSR80 semi-major and semi-minor axes used for WGS84(m)
     a_2, b_2 = 6378137.000, 6356752.3141
     e2_2 = 1 - (b_2 * b_2) / (a_2 * a_2)  # The eccentricity of the GRS80 ellipsoid
@@ -598,7 +598,7 @@ def calc_distance_on_unit_sphere(pt1, pt2):
 
 def calc_hypotenuse_distance(pt1, pt2):
     """
-    Calculate hypotenuse given two points (the right angled triangle, given its side and perpendicular).
+    Calculate hypotenuse given two points (the right-angled triangle, given its side and perpendicular).
 
     :param pt1: a point
     :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
