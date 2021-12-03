@@ -165,7 +165,6 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
     """
 
     import matplotlib.style
-    import matplotlib.font_manager
 
     if reset is False:
         if fig_style is not None:
@@ -176,6 +175,8 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
         matplotlib.rcParams['legend.labelspacing'] = legend_spacing
 
         if font_name:  # Use the font, 'Cambria'
+            import matplotlib.font_manager
+
             if os.path.isfile(matplotlib.font_manager.findfont(font_name)):
                 # Set 'font.family' to 'serif', then matplotlib will use that list
                 matplotlib.rcParams['font.family'] = 'serif'
@@ -307,7 +308,8 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
 """ == Pandas ================================================================================ """
 
 
-def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, ignore_future_warning=True):
+def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_asian_text=False,
+                   ignore_future_warning=True):
     """
     Alter parameters of some frequently-used
     `Pandas options and settings <https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html>`_
@@ -324,6 +326,8 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, ignor
     :param precision: number of decimal places, which corresponds to ``'display.precision'`` for
         `pandas.set_option`_, defaults to ``4``
     :type precision: int
+    :param east_asian_text: whether to adjust the display for east asian texts, defaults to ``False``
+    :type east_asian_text: bool
     :param ignore_future_warning: whether to ignore/suppress future warnings, defaults to ``True``
     :type ignore_future_warning: bool
 
@@ -411,30 +415,32 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, ignor
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html
     """
 
+    options = {
+        'display.max_columns': max_columns,  # 0
+        'display.max_rows': max_rows,  # 60
+        'display.precision': precision,  # 6
+        'display.width': 1000,  # 80
+        'display.float_format': lambda x: '%.{}f'.format(precision) % x,  # None
+        'display.expand_frame_repr': False,  # True
+        'io.excel.xlsx.writer': 'openpyxl',  # 'auto'
+        'mode.chained_assignment': None,  # 'warn'
+    }
+
+    if east_asian_text:
+        options.update({'display.unicode.east_asian_width': True})
+
     if reset is False:
-        pd.set_option('display.max_columns', max_columns)
-        pd.set_option('display.max_rows', max_rows)
-        pd.set_option('display.precision', precision)
-        pd.set_option('display.width', 1000)  # Set the display width
-        pd.set_option('display.float_format', lambda x: '%.{}f'.format(precision) % x)
-        pd.set_option('display.expand_frame_repr', False)  # NOT to wrap
-        pd.set_option('io.excel.xlsx.writer', 'openpyxl')
-        pd.set_option('mode.chained_assignment', None)
+        for key, val in options.items():
+            pd.set_option(key, val)
 
-    else:
-        # registered_options = pd._config.config._registered_options
+    elif reset is True:
+        # noinspection PyProtectedMember
+        registered_options = pd._config.config._registered_options
 
-        if reset == 'all':
-            if ignore_future_warning:
-                warnings.simplefilter(action='ignore', category=FutureWarning)
-            pd.reset_option('all')
+        for key in options.keys():
+            pd.set_option(key, registered_options[key].defval)
 
-        elif reset is True:
-            pd.set_option('display.max_columns', 20)
-            pd.set_option('display.max_rows', 60)
-            pd.set_option('display.precision', 6)
-            pd.set_option('display.width', 80)  # Set the display width
-            pd.set_option('display.float_format', None)
-            pd.set_option('display.expand_frame_repr', True)
-            pd.set_option('io.excel.xlsx.writer', 'auto')
-            pd.set_option('mode.chained_assignment', 'warn')
+    elif reset == 'all':
+        if ignore_future_warning:
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+        pd.reset_option('all')
