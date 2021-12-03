@@ -37,7 +37,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
     See also
     [`OPS-C-1 <https://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/>`_].
 
-    :param prompt: a message that prompts an response (Yes/No), defaults to ``None``
+    :param prompt: a message that prompts a response (Yes/No), defaults to ``None``
     :type prompt: str or None
     :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
     :type confirmation_required: bool
@@ -84,7 +84,7 @@ def get_obj_attr(obj, col_names=None):
     """
     Get main attributes of an object.
 
-    :param obj: a object, e.g. a class
+    :param obj: an object, e.g. a class
     :type obj: object
     :param col_names: a list of column names
     :type col_names: list
@@ -854,7 +854,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     """
     Load in a compressed sparse row (CSR) or compressed row storage (CRS).
 
-    :param path_to_csr: path where a CSR (e.g. .npz) file is saved
+    :param path_to_csr: path where a CSR file (e.g. with a file extension ".npz") is saved
     :type path_to_csr: str
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
@@ -1465,10 +1465,9 @@ def is_downloadable(url, request_field='content-type', **kwargs):
     return downloadable
 
 
-def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
-                                 **kwargs):
+def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default', **kwargs):
     """
-    Instantiate a requests session.
+    Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session.
 
     :param url: a valid URL
     :type url: str
@@ -1480,21 +1479,22 @@ def instantiate_requests_session(url, max_retries=5, backoff_factor=0.1, retry_s
         inherited from ``status_forcelist`` of `urllib3.util.retry.Retry`_;
         when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
     :param kwargs: [optional] parameters of `urllib3.util.retry.Retry`_
-    :return: a requests session
+    :return: a `requests`_ session
     :rtype: `requests.Session`_
 
-    .. _urllib3.util.retry.Retry:
+    .. _`requests`: https://docs.python-requests.org/en/latest/
+    .. _`urllib3.util.retry.Retry`:
         https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
-    .. _requests.Session:
+    .. _`requests.Session`:
         https://2.python-requests.org/en/master/api/#request-sessions
 
     **Example**::
 
-        >>> from pyhelpers.ops import instantiate_requests_session
+        >>> from pyhelpers.ops import init_requests_session
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-        >>> s = instantiate_requests_session(logo_url)
+        >>> s = init_requests_session(logo_url)
 
         >>> type(s)
         requests.sessions.Session
@@ -1907,7 +1907,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     else:
         if rsr_args is None:
             rsr_args = {}
-        session = instantiate_requests_session(url=url, max_retries=max_retries, **rsr_args)
+        session = init_requests_session(url=url, max_retries=max_retries, **rsr_args)
 
         if frh_args is None:
             frh_args = {}
