@@ -20,4 +20,4 @@ sql
     :toctree: _generated/
     :template: function.rst
 
-    get_db_address
+    get_database_address
