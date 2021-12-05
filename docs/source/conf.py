@@ -50,6 +50,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
+    'sphinx_copybutton',
 ]
 
 # Enable to reference numbered figures:
@@ -101,10 +102,10 @@ pygments_style = 'sphinx'  # or 'default'
 html_static_path = ['_static']
 
 # Add custom CSS:
-html_css_files = ['rtd_overrides.css']
+html_css_files = ['rtd_overrides.css', 'copy_button.css']
 
 # Add custom JavaScript:
-html_js_files = ['copybutton.js']
+html_js_files = ['prompt_button.js']
 
 # Output file base name for HTML help builder:
 htmlhelp_basename = __project__ + 'doc'  # Defaults to 'pydoc'
@@ -136,7 +137,7 @@ latex_documents = [
      ),
 ]
 
-# Customised title page
+# Customized title page
 latex_maketitle = r'''
     \pagenumbering{roman}
 
