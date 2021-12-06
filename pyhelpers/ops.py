@@ -202,8 +202,8 @@ def parse_size(size, binary=True, precision=1):
 
     :param size: human- or machine-readable format of size
     :type size: str or int or float
-    :param binary: whether to use binary (i.e. factorised by 1024) representation, defaults to ``True``;
-        if ``binary=False``, use the decimal (or metric) representation (i.e. factorised by 10 ** 3)
+    :param binary: whether to use binary (i.e. factorized by 1024) representation, defaults to ``True``;
+        if ``binary=False``, use the decimal (or metric) representation (i.e. factorized by 10 ** 3)
     :type binary: bool
     :param precision: number of decimal places (when converting ``size`` to human-readable format),
         defaults to ``1``
@@ -273,8 +273,8 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     :param chunk_size_limit: the minimum limit of file size (in mebibyte i.e. MiB, or megabyte, i.e. MB)
         above which the function counts how many chunks there could be, defaults to ``50``;
     :type chunk_size_limit: int
-    :param binary: whether to use binary (i.e. factorised by 1024) representation, defaults to ``True``;
-        if ``binary=False``, use the decimal (or metric) representation (i.e. factorised by 10 ** 3)
+    :param binary: whether to use binary (i.e. factorized by 1024) representation, defaults to ``True``;
+        if ``binary=False``, use the decimal (or metric) representation (i.e. factorized by 10 ** 3)
     :type binary: bool
     :return: number of chunks
     :rtype: int or None
@@ -915,7 +915,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         return csr_mat
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
+        print("Failed. {}".format(e))
 
 
 def swap_cols(array, c1, c2, as_list=False):
