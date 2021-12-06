@@ -760,7 +760,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
             print("Done.") if verbose else ""
 
         except Exception as e:
-            print("Failed. {}".format(e)) if verbose else ""
+            print("Failed. {}".format(e))
 
     else:
         print("\"Inkscape\" (https://inkscape.org) is required to convert a .svg file to a .emf. file "
@@ -901,7 +901,7 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
         return pickle_data
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
+        print("Failed. {}".format(e))
 
 
 def load_joblib(path_to_joblib, verbose=False, **kwargs):
@@ -957,7 +957,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         return joblib_data
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
+        print("Failed. {}".format(e))
 
 
 def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
@@ -1039,15 +1039,15 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     return workbook_data
 
 
-def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
+def load_json(path_to_json, method=None, verbose=False, **kwargs):
     """
     Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
     :type path_to_json: str
     :param method: an open-source Python package for JSON serialization, options include
-        ``'orjson'`` (default, for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_);
-        otherwise, use the built-in `json module <https://docs.python.org/3/library/json.html>`_
+        ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
+        ``'rapidjson'`` (for `python-rapidjson`_)
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
@@ -1057,6 +1057,7 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
     :rtype: dict
 
     .. _`JSON`: https://www.json.org/json-en.html
+    .. _`json module`: https://docs.python.org/3/library/json.html
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
     .. _`open`: https://docs.python.org/3/library/functions.html#open
@@ -1105,7 +1106,7 @@ def load_json(path_to_json, method='orjson', verbose=False, **kwargs):
         return json_data
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
+        print("Failed. {}".format(e))
 
 
 def load_feather(path_to_feather, verbose=False, **kwargs):
@@ -1151,7 +1152,7 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
         return feather_data
 
     except Exception as e:
-        print("Failed. {}".format(e)) if verbose else ""
+        print("Failed. {}".format(e))
 
 
 """ == Uncompress data ======================================================================= """
