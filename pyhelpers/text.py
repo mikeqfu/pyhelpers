@@ -189,7 +189,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
     :param x: a string-type variable
     :type x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: list or tuple
+    :type lookup_list: typing.List[str] or typing.Tuple[str] or typing.Sequence[str]
     :param n: number of similar strings to return, defaults to ``1``;
         if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
     :type n: int or None
