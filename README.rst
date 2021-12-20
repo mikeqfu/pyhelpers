@@ -5,13 +5,13 @@ PyHelpers
 |PyPI| |Python| |License| |Downloads| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=yellow&label=PyPI
-    :alt: PyPI - Version
+    :alt: PyPI - Release
     :target: https://pypi.org/project/pyhelpers/
 .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers?label=Python
-    :alt: PyPI - Python Version
+    :alt: Python version
     :target: https://docs.python.org/3/
 .. |License| image:: https://img.shields.io/pypi/l/pyhelpers?label=License
-    :alt: PyPI - License
+    :alt: License for PyHelpers
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
 .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?label=Downloads
     :alt: PyPI - Downloads
@@ -23,7 +23,7 @@ PyHelpers
 | **Author**: Qian Fu
 | **Email**: q.fu@bham.ac.uk
 |
-PyHelpers is an open-source Python package designed as a lite tool kit for facilitating data (pre)processing tasks. It provides a miscellaneous collection of easy-to-use Python functions/classes that can help with day-to-day reading/writing of file-like objects, manipulation of various types of data (e.g. geographical data and textual data) and communication with a SQL database.
+PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing tasks. It provides a miscellaneous collection of easy-to-use functions/classes that can help with tasks such as reading/writing of file-like objects, manipulation of various types of data (e.g. geographical data and textual data) and communication with a relational database management system (e.g. PostgreSQL).
 
 Resources
 #########
