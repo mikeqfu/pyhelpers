@@ -1779,35 +1779,35 @@ def fake_requests_headers(randomized=True, **kwargs):
     return fake_headers
 
 
-def _download_with_tqdm(response, path_to_file):
+def _download_file_from_url(response, path_to_file):
     import tqdm
 
     file_size = int(response.headers.get('content-length'))  # Total size in bytes
 
-    block_size = 1024 * 1024
-    if file_size >= block_size:
-        chunk_size, unit = block_size, 'MB'
-    else:
-        chunk_size, unit = 1024, 'KB'
+    unit_divisor = 1024
+    block_size = unit_divisor ** 2
+    chunk_size = block_size if file_size >= block_size else unit_divisor
+
     total_iter = file_size // chunk_size
 
-    iterable = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
-    progress = tqdm.tqdm(iterable=iterable, total=total_iter, unit=unit, unit_scale=True)
+    progress = tqdm.tqdm(
+        desc=f'"{os.path.relpath(path_to_file)}"', total=total_iter, unit='B',
+        unit_scale=True, unit_divisor=unit_divisor)
 
-    f = open(path_to_file, mode='wb')
-    written = 0
-    for dat in progress:
-        if dat:
-            try:
-                f.write(dat)
-            except TypeError:
-                f.write(dat.encode())
-            f.flush()
-            progress.update(len(dat))
-            progress.refresh()
-            written = written + len(dat)
+    contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
+    with open(file=path_to_file, mode='wb') as f:
+        written = 0
+        for data in contents:
+            if data:
+                try:
+                    f.write(data)
+                except TypeError:
+                    f.write(data.encode())
+                progress.update(len(data))
+                written += len(data)
 
-    progress.close()
+        progress.close()
+
     f.close()
 
     if file_size != 0 and written != file_size:
@@ -1815,7 +1815,8 @@ def _download_with_tqdm(response, path_to_file):
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5, random_header=True,
-                           verbose=False, rsr_args=None, frh_args=None, **kwargs):
+                           verbose=False, requests_session_args=None, fake_headers_args=None,
+                           **kwargs):
     """
     Download an object available at a valid URL.
 
@@ -1838,13 +1839,12 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type random_header: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param rsr_args: optional parameters used by
-        :py:func:`requests_session_response()<pyhelpers.ops.requests_session_response>`,
-        defaults to ``None``
-    :type rsr_args: dict or None
-    :param frh_args: optional parameters used by
-        :py:func:`fake_requests_headers()<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
-    :type frh_args: dict or None
+    :param requests_session_args: [optional] parameters of
+        :py:func:`init_requests_session<pyhelpers.ops.init_requests_session>`, defaults to ``None``
+    :type requests_session_args: dict or None
+    :param fake_headers_args: [optional] parameters of
+        :py:func:`fake_requests_headers<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
+    :type fake_headers_args: dict or None
     :param kwargs: [optional] parameters of `requests.Session.get`_
 
     .. _requests.Session.get:
@@ -1854,12 +1854,22 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
         >>> from pyhelpers.ops import download_file_from_url
         >>> from pyhelpers.dir import cd
+        >>> import os
         >>> from PIL import Image
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests", "images", "python-logo.png")
 
+        >>> # Check if "python-logo.png" exists at the specified path
+        >>> os.path.exists(path_to_img)
+        False
+
+        >>> # Download the .png file
         >>> download_file_from_url(logo_url, path_to_img)
+
+        >>> # If download is successful, check again:
+        >>> os.path.exists(path_to_img)
+        True
 
         >>> img = Image.open(path_to_img)
         >>> img.show()  # as illustrated below
@@ -1878,19 +1888,12 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     .. note::
 
         - When setting ``verbose`` to be ``True`` (or ``1``), the function relies on `tqdm`_,
-          which is not an essential dependency for installing `pyhelpers`_>=1.2.15.
+          which is not an essential dependency for installing `pyhelpers>=1.2.15`_.
           You may need to install `tqdm`_ before proceeding with ``verbose=True`` (or ``verbose=1``).
 
-        .. _tqdm: https://pypi.org/project/tqdm/
-        .. _pyhelpers: https://pypi.org/project/pyhelpers/
+        .. _`tqdm`: https://pypi.org/project/tqdm/
+        .. _`pyhelpers>=1.2.15`: https://pypi.org/project/pyhelpers/1.2.15/
     """
-
-    # url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-    # path_to_file = cd("tests", "images", "python-logo.png")
-    # max_retries = 5
-    # random_header = True
-    # verbose = True
-    # fh_args = None
 
     path_to_dir = os.path.dirname(path_to_file)
     if path_to_dir == "":
@@ -1905,29 +1908,27 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                   f"The download is cancelled.")
 
     else:
-        if rsr_args is None:
-            rsr_args = {}
-        session = init_requests_session(url=url, max_retries=max_retries, **rsr_args)
+        if requests_session_args is None:
+            requests_session_args = {}
+        session = init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
-        if frh_args is None:
-            frh_args = {}
-        try:
-            fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
-        except IndexError:  # Try again
-            fake_headers = fake_requests_headers(randomized=random_header, **frh_args)
+        if fake_headers_args is None:
+            fake_headers_args = {}
+        fake_headers = fake_requests_headers(randomized=random_header, **fake_headers_args)
 
         # Streaming, so we can iterate over the response
-        response = session.get(url, stream=True, headers=fake_headers, **kwargs)
+        response = session.get(url=url, stream=True, headers=fake_headers, **kwargs)
 
         if not os.path.exists(path_to_dir):
             os.makedirs(path_to_dir)
 
         if verbose:
-            _download_with_tqdm(response=response, path_to_file=path_to_file_)
+            _download_file_from_url(response=response, path_to_file=path_to_file_)
 
         else:
-            f = open(file=path_to_file_, mode='wb')
-            shutil.copyfileobj(fsrc=response.raw, fdst=f)
+            with open(file=path_to_file_, mode='wb') as f:
+                shutil.copyfileobj(fsrc=response.raw, fdst=f)
+
             f.close()
 
             if os.stat(path=path_to_file_).st_size == 0:
