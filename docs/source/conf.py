@@ -6,11 +6,11 @@ Configuration file for the Sphinx documentation builder.
 import os
 import sys
 
-# If the directory is relative to the documentation root, use os.path.abspath to make it absolute
+# If the directory is relative to the documentation root, use os.path.abspath to make it absolute:
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
-# A list of modules to be mocked up.
+# A list of modules to be mocked up:
 autodoc_mock_imports = [
     'numpy',
     'pyproj',
@@ -77,7 +77,7 @@ source_suffix = '.rst'  # e.g. source_suffix = ['.rst', '.md'])
 # The master toctree document:
 master_doc = 'index'
 
-# Content inserted into the main body of an `autoclass` directive
+# Content inserted into the main body of an `autoclass` directive:
 autoclass_content = 'both'  # ['class', 'init']
 
 # Automatically documented members are sorted by source order ('bysource'):

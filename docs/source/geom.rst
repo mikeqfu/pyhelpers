@@ -25,8 +25,6 @@ Geometric transformation
 
     wgs84_to_osgb36
     osgb36_to_wgs84
-    wgs84_to_osgb36_calc
-    osgb36_to_wgs84_calc
 
 .. rubric:: Dimension / Shape
 .. autosummary::
