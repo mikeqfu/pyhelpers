@@ -86,15 +86,17 @@ def transform_geom_point_type(*pts, as_geom=True):
 
 # Coordinate system
 
-def wgs84_to_osgb36(longitude, latitude, **kwargs):
+def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     """
     Convert latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
     to British national grid (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
 
-    :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
-    :type longitude: float or int
-    :param latitude: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
-    :type latitude: float or int
+    :param longitudes: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
+    :type longitudes: int or float or typing.Iterable[int, float]
+    :param latitudes: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
+    :type latitudes: int or float or typing.Iterable[int, float]
+    :param as_array: whether to return an array, defaults to ``False``
+    :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
     :return: geographic Cartesian coordinate (Easting, Northing) or (X, Y)
     :rtype: tuple
@@ -105,37 +107,61 @@ def wgs84_to_osgb36(longitude, latitude, **kwargs):
 
     .. _wgs84_to_osgb36-example:
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.geom import wgs84_to_osgb36
+        >>> import numpy
 
         >>> lon, lat = -0.1277, 51.5074
-
         >>> x, y = wgs84_to_osgb36(lon, lat)
-
         >>> print(f"(Easting, Northing): {(x, y)}")
         (Easting, Northing): (530035.6864715678, 180380.27177236252)
+
+        >>> lonlat_array = numpy.array([[-0.12772401, 51.50740693],   # London
+        ...                             [-1.90294064, 52.47928436],   # Birmingham
+        ...                             [-2.24527795, 53.47894006],   # Manchester
+        ...                             [ 0.60693267, 51.24669501]])  # Leeds
+        >>> lons, lats = lonlat_array.T  # lonlat_array[:, 0], lonlat_array[:, 1]
+        >>> xs, ys = wgs84_to_osgb36(longitudes=lons, latitudes=lats)
+        >>> xs
+        array([530034.00057811, 406689.00100754, 383819.00096473, 582044.00120751])
+        >>> ys
+        array([180380.99978837, 286821.99910345, 398051.99922367, 152952.99925431])
+
+        >>> xy_array = wgs84_to_osgb36(longitudes=lons, latitudes=lats, as_array=True)
+        >>> xy_array
+        array([[530034.00057811, 180380.99978837],
+               [406689.00100754, 286821.99910345],
+               [383819.00096473, 398051.99922367],
+               [582044.00120751, 152952.99925431]])
     """
 
     wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
     osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
 
     transformer = pyproj.Transformer.from_crs(crs_from=wgs84, crs_to=osgb36)
-    easting, northing = transformer.transform(xx=latitude, yy=longitude, **kwargs)
+    xy_data = transformer.transform(xx=latitudes, yy=longitudes, **kwargs)  # easting, northing
 
-    return easting, northing
+    # if all(isinstance(coords, pd.Series) for coords in (latitude, longitude)):
+    #     xy_data = tuple(map(pd.Series, xy_data))
+    if as_array:
+        xy_data = np.asarray(xy_data).T
+
+    return xy_data
 
 
-def osgb36_to_wgs84(easting, northing, **kwargs):
+def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     """
     Convert British national grid
     (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
     to latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_).
 
-    :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
-    :type easting: int or float
-    :param northing: Northing (Y), northward-measured distance (or the y-coordinate)
-    :type northing: int or float
+    :param eastings: Easting (X), eastward-measured distance (or the x-coordinate)
+    :type eastings: int or float or typing.Iterable[int, float]
+    :param northings: Northing (Y), northward-measured distance (or the y-coordinate)
+    :type northings: int or float or typing.Iterable[int, float]
+    :param as_array: whether to return an array, defaults to ``False``
+    :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
     :return: geographic coordinate (Longitude, Latitude)
     :rtype: tuple
@@ -146,280 +172,49 @@ def osgb36_to_wgs84(easting, northing, **kwargs):
 
     .. _osgb36_to_wgs84-example:
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.geom import osgb36_to_wgs84
+        >>> import numpy
 
         >>> x, y = 530034, 180381
-
         >>> lon, lat = osgb36_to_wgs84(x, y)
-
         >>> print(f"(Longitude, Latitude): {(lon, lat)}")
         (Longitude, Latitude): (-0.12772400574286916, 51.50740692743041)
+
+        >>> xy_array = numpy.array([(530034, 180381),   # London
+        ...                         (406689, 286822),   # Birmingham
+        ...                         (383819, 398052),   # Manchester
+        ...                         (582044, 152953)],  # Leeds
+        ...                        dtype=numpy.int64)
+        >>> xs, ys = xy_array.T  # xy_array[:, 0], xy_array[:, 1]
+        >>> lons, lats = osgb36_to_wgs84(xs, ys)
+        >>> lons
+        array([-0.12772401, -1.90294064, -2.24527795,  0.60693267])
+        >>> lats
+        array([51.50740693, 52.47928436, 53.47894006, 51.24669501])
+
+        >>> lonlat_array = osgb36_to_wgs84(xs, ys, as_array=True)
+        >>> lonlat_array
+        array([[-0.12772401, 51.50740693],
+               [-1.90294064, 52.47928436],
+               [-2.24527795, 53.47894006],
+               [ 0.60693267, 51.24669501]])
     """
 
     osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
     wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
 
     transformer = pyproj.Transformer.from_crs(crs_from=osgb36, crs_to=wgs84)
-    latitude, longitude = transformer.transform(xx=easting, yy=northing, **kwargs)
+    latlon_data = transformer.transform(xx=eastings, yy=northings, **kwargs)
 
-    return longitude, latitude
+    lonlat_data = [latlon_data[1], latlon_data[0]]
+    # if all(isinstance(coords, pd.Series) for coords in (eastings, northings)):
+    #     lonlat_data = tuple(map(pd.Series, lonlat_data))
+    if as_array:
+        lonlat_data = np.asarray(lonlat_data).T
 
-
-def wgs84_to_osgb36_calc(longitude, latitude):
-    """
-    Convert latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
-    to British national grid (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
-    by calculation.
-
-    :param longitude: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
-    :type longitude: float or int
-    :param latitude: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
-    :type latitude: float or int
-    :return: geographic Cartesian coordinate (Easting, Northing) or (X, Y)
-    :rtype: tuple
-
-    **Example**::
-
-        >>> from pyhelpers.geom import wgs84_to_osgb36_calc
-
-        >>> lon, lat = -0.1277, 51.5074
-
-        >>> easting, northing = wgs84_to_osgb36_calc(lon, lat)
-
-        >>> print("(Easting, Northing): {}".format((easting, northing)))
-        (Easting, Northing): (530035.689215283, 180380.27273760783)
-
-    .. note::
-
-        - This function is slightly modified from the original code available at
-          [`GEOM-WTOC-1 <http://blogs.casa.ucl.ac.uk/2014/12/26/>`_].
-
-        - Compare also :ref:`wgs84_to_osgb36(lon, lat)<wgs84_to_osgb36-example>`.
-    """
-
-    # First convert to radians. These are on the wrong ellipsoid currently: GRS80.
-    # (Denoted by _1)
-    lon_1, lat_1 = longitude * np.pi / 180, latitude * np.pi / 180
-
-    # Want to convert to the Airy 1830 ellipsoid, which has the following:
-    # The GSR80 semi-major and semi-minor axes used for WGS84(m)
-    a_1, b_1 = 6378137.000, 6356752.3141
-    e2_1 = 1 - (b_1 * b_1) / (a_1 * a_1)  # The eccentricity of the GRS80 ellipsoid
-    nu_1 = a_1 / np.sqrt(1 - e2_1 * np.sin(lat_1) ** 2)
-
-    # First convert to cartesian from spherical polar coordinates
-    h = 0  # Third spherical coord.
-    x_1 = (nu_1 + h) * np.cos(lat_1) * np.cos(lon_1)
-    y_1 = (nu_1 + h) * np.cos(lat_1) * np.sin(lon_1)
-    z_1 = ((1 - e2_1) * nu_1 + h) * np.sin(lat_1)
-
-    # Perform Helmut transform (to go between GRS80 (_1) and Airy 1830 (_2))
-    s = 20.4894 * 10 ** -6  # The scale factor -1
-    # The translations along x,y,z axes respectively:
-    tx, ty, tz = -446.448, 125.157, -542.060
-    # The rotations along x,y,z respectively, in seconds:
-    rxs, rys, rzs = -0.1502, -0.2470, -0.8421
-    rx = rxs * np.pi / (180 * 3600.)
-    ry = rys * np.pi / (180 * 3600.)
-    rz = rzs * np.pi / (180 * 3600.)  # In radians
-    x_2 = tx + (1 + s) * x_1 + (-rz) * y_1 + ry * z_1
-    y_2 = ty + rz * x_1 + (1 + s) * y_1 + (-rx) * z_1
-    z_2 = tz + (-ry) * x_1 + rx * y_1 + (1 + s) * z_1
-
-    # Back to spherical polar coordinates from cartesian
-    # Need some characteristics of the new ellipsoid
-    # The GSR80 semi-major and semi-minor axes used for WGS84(m)
-    a, b = 6377563.396, 6356256.909
-    e2 = 1 - (b * b) / (a * a)  # The eccentricity of the Airy 1830 ellipsoid
-    p = np.sqrt(x_2 ** 2 + y_2 ** 2)
-
-    # Lat is obtained by an iterative procedure:
-    latitude = np.arctan2(z_2, (p * (1 - e2)))  # Initial value
-    lat_old = 2 * np.pi
-    nu = 0
-    while abs(latitude - lat_old) > 10 ** -16:
-        latitude, lat_old = lat_old, latitude
-        nu = a / np.sqrt(1 - e2 * np.sin(lat_old) ** 2)
-        latitude = np.arctan2(z_2 + e2 * nu * np.sin(lat_old), p)
-
-    # Lon and height are then pretty easy
-    longitude = np.arctan2(y_2, x_2)
-    # h = p / cos(lat) - nu
-
-    # e, n are the British national grid coordinates - easting and northing
-    # scale factor on the central meridian
-    f0 = 0.9996012717
-    # Latitude of true origin (radians)
-    lat0 = 49 * np.pi / 180
-    # Longitude of true origin and central meridian (radians)
-    lon0 = -2 * np.pi / 180
-    # Northing & easting of true origin (m)
-    n0, e0 = -100000, 400000
-    y = (a - b) / (a + b)
-
-    # meridional radius of curvature
-    rho = a * f0 * (1 - e2) * (1 - e2 * np.sin(latitude) ** 2) ** (-1.5)
-    eta2 = nu * f0 / rho - 1
-
-    m1 = (1 + y + (5 / 4) * y ** 2 + (5 / 4) * y ** 3) * (latitude - lat0)
-    m2 = (3 * y + 3 * y ** 2 + (21 / 8) * y ** 3) * np.sin(latitude - lat0) * np.cos(latitude + lat0)
-    m3 = ((15 / 8) * y ** 2 +
-          (15 / 8) * y ** 3) * np.sin(2 * (latitude - lat0)) * np.cos(2 * (latitude + lat0))
-    m4 = (35 / 24) * y ** 3 * np.sin(3 * (latitude - lat0)) * np.cos(3 * (latitude + lat0))
-
-    # meridional arc
-    m = b * f0 * (m1 - m2 + m3 - m4)
-
-    i = m + n0
-    ii = nu * f0 * np.sin(latitude) * np.cos(latitude) / 2
-    iii = nu * f0 * np.sin(latitude) * np.cos(latitude) ** 3 * (
-            5 - np.tan(latitude) ** 2 + 9 * eta2) / 24
-    iii_a = nu * f0 * np.sin(latitude) * np.cos(latitude) ** 5 * (
-            61 - 58 * np.tan(latitude) ** 2 + np.tan(latitude) ** 4) / 720
-    iv = nu * f0 * np.cos(latitude)
-    v = nu * f0 * np.cos(latitude) ** 3 * (nu / rho - np.tan(latitude) ** 2) / 6
-    vi = nu * f0 * np.cos(latitude) ** 5 * (
-            5 - 18 * np.tan(latitude) ** 2 + np.tan(latitude) ** 4 + 14 * eta2 -
-            58 * eta2 * np.tan(latitude) ** 2) / 120
-
-    y = i + ii * (longitude - lon0) ** 2 + iii * (
-            longitude - lon0) ** 4 + iii_a * (longitude - lon0) ** 6
-    x = e0 + iv * (longitude - lon0) + v * (longitude - lon0) ** 3 + vi * (longitude - lon0) ** 5
-
-    return x, y
-
-
-def osgb36_to_wgs84_calc(easting, northing):
-    """
-    Convert british national grid
-    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
-    to latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
-    by calculation.
-
-    :param easting: Easting (X), eastward-measured distance (or the x-coordinate)
-    :type easting: int or float
-    :param northing: Northing (Y), northward-measured distance (or the y-coordinate)
-    :type northing: int or float
-    :return: geographic coordinate (Longitude, Latitude)
-    :rtype: tuple
-
-    **Example**::
-
-        >>> from pyhelpers.geom import osgb36_to_wgs84_calc
-
-        >>> x, y = 530034, 180381
-
-        >>> longitude, latitude = osgb36_to_wgs84_calc(x, y)
-
-        >>> print("(Longitude, Latitude): {}".format((longitude, latitude)))
-        (Longitude, Latitude): (-0.1277240422737611, 51.50740676560936)
-
-    .. note::
-
-        - This function is slightly modified from the original code available at
-          [`GEOM-OTWC-1 <http://blogs.casa.ucl.ac.uk/2014/12/26/>`_].
-
-        - Compare also :ref:`osgb36_to_wgs84(longitude, latitude)<osgb36_to_wgs84-example>`.
-    """
-
-    # The Airy 180 semi-major and semi-minor axes used for OSGB36 (m)
-    a, b = 6377563.396, 6356256.909
-    # Scale factor on the central meridian
-    f0 = 0.9996012717
-    # Latitude of true origin (radians)
-    lat0 = 49 * np.pi / 180
-    # Longitude of true origin and central meridian (radians):
-    lon0 = -2 * np.pi / 180
-    # Northing and Easting of true origin (m):
-    n0, e0 = -100000, 400000
-    e2 = 1 - (b * b) / (a * a)  # eccentricity squared
-    n = (a - b) / (a + b)
-
-    # Initialise the iterative variables
-    lat, m = lat0, 0
-
-    while northing - n0 - m >= 0.00001:  # Accurate to 0.01mm
-        lat += (northing - n0 - m) / (a * f0)
-        m1 = (1 + n + (5. / 4) * n ** 2 + (5. / 4) * n ** 3) * (lat - lat0)
-        m2 = (3 * n + 3 * n ** 2 + (21. / 8) * n ** 3) * np.sin(lat - lat0) * np.cos(lat + lat0)
-        m3 = ((15. / 8) * n ** 2 + (15. / 8) * n ** 3) * np.sin(
-            2 * (lat - lat0)) * np.cos(2 * (lat + lat0))
-        m4 = (35. / 24) * n ** 3 * np.sin(3 * (lat - lat0)) * np.cos(3 * (lat + lat0))
-        # meridional arc
-        m = b * f0 * (m1 - m2 + m3 - m4)
-
-    # transverse radius of curvature
-    nu = a * f0 / np.sqrt(1 - e2 * np.sin(lat) ** 2)
-
-    # meridional radius of curvature
-    rho = a * f0 * (1 - e2) * (1 - e2 * np.sin(lat) ** 2) ** (-1.5)
-    eta2 = nu / rho - 1
-
-    sec_lat = 1. / np.cos(lat)
-    vii = np.tan(lat) / (2 * rho * nu)
-    viii = np.tan(lat) / (24 * rho * nu ** 3) * (
-            5 + 3 * np.tan(lat) ** 2 + eta2 - 9 * np.tan(lat) ** 2 * eta2)
-    ix = np.tan(lat) / (720 * rho * nu ** 5) * (
-            61 + 90 * np.tan(lat) ** 2 + 45 * np.tan(lat) ** 4)
-    x_ = sec_lat / nu
-    xi = sec_lat / (6 * nu ** 3) * (nu / rho + 2 * np.tan(lat) ** 2)
-    xii = sec_lat / (120 * nu ** 5) * (5 + 28 * np.tan(lat) ** 2 + 24 * np.tan(lat) ** 4)
-    xiia = sec_lat / (5040 * nu ** 7) * (
-            61 + 662 * np.tan(lat) ** 2 + 1320 * np.tan(lat) ** 4 + 720 * np.tan(lat) ** 6)
-    de = easting - e0
-
-    # These are on the wrong ellipsoid currently: Airy1830. (Denoted by _1)
-    lat_1 = lat - vii * de ** 2 + viii * de ** 4 - ix * de ** 6
-    lon_1 = lon0 + x_ * de - xi * de ** 3 + xii * de ** 5 - xiia * de ** 7
-
-    """ Want to convert to the GRS80 ellipsoid. """
-    # First convert to cartesian from spherical polar coordinates
-    h = 0  # Third spherical coord.
-    x_1 = (nu / f0 + h) * np.cos(lat_1) * np.cos(lon_1)
-    y_1 = (nu / f0 + h) * np.cos(lat_1) * np.sin(lon_1)
-    z_1 = ((1 - e2) * nu / f0 + h) * np.sin(lat_1)
-
-    # Perform Helmut transform (to go between Airy 1830 (_1) and GRS80 (_2))
-    s = -20.4894 * 10 ** -6  # The scale factor -1
-    # The translations along x,y,z axes respectively
-    tx, ty, tz = 446.448, -125.157, + 542.060
-    # The rotations along x,y,z respectively, in seconds
-    rxs, rys, rzs = 0.1502, 0.2470, 0.8421
-    rx, ry = rxs * np.pi / (180 * 3600.), rys * np.pi / (180 * 3600.)
-    rz = rzs * np.pi / (180 * 3600.)  # In radians
-    x_2 = tx + (1 + s) * x_1 + (-rz) * y_1 + ry * z_1
-    y_2 = ty + rz * x_1 + (1 + s) * y_1 + (-rx) * z_1
-    z_2 = tz + (-ry) * x_1 + rx * y_1 + (1 + s) * z_1
-
-    # Back to spherical polar coordinates from cartesian
-    # Need some characteristics of the new ellipsoid
-    # The GSR80 semi-major and semi-minor axes used for WGS84(m)
-    a_2, b_2 = 6378137.000, 6356752.3141
-    e2_2 = 1 - (b_2 * b_2) / (a_2 * a_2)  # The eccentricity of the GRS80 ellipsoid
-    p = np.sqrt(x_2 ** 2 + y_2 ** 2)
-
-    # Lat is obtained by an iterative procedure:
-    lat = np.arctan2(z_2, (p * (1 - e2_2)))  # Initial value
-    lat_old = 2 * np.pi
-    while abs(lat - lat_old) > 10 ** -16:
-        lat, lat_old = lat_old, lat
-        nu_2 = a_2 / np.sqrt(1 - e2_2 * np.sin(lat_old) ** 2)
-        lat = np.arctan2(z_2 + e2_2 * nu_2 * np.sin(lat_old), p)
-
-    # Lon and height are then pretty easy
-    lon = np.arctan2(y_2, x_2)
-    # h = p / cos(lat) - nu_2
-
-    # Print the results
-    # print([(lat - lat_1) * 180 / pi, (lon - lon_1) * 180 / pi])
-
-    # Convert to degrees
-    lon = lon * 180 / np.pi
-    lat = lat * 180 / np.pi
-
-    return lon, lat
+    return lonlat_data
 
 
 # Dimension / Shape
@@ -1185,7 +980,7 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
 def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=False,
                   annot_font_size=12, fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
     """
-    Visualise the square given its centre point, four vertices and rotation angle (in degree).
+    Sketch a square given its centre point, four vertices and rotation angle (in degree).
 
     :param ctr_x: x coordinate of a square centre
     :type ctr_x: int or float
