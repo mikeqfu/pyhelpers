@@ -24,7 +24,8 @@ autodoc_mock_imports = [
 ]
 
 # == Project information ===========================================================================
-from pyhelpers import __author__, __package__, __project__, __version__, __copyright__
+from pyhelpers import __affiliation__, __author__, __copyright__, __description__, __package__, \
+    __project__, __version__
 
 # General information about the project:
 project = __project__
@@ -137,6 +138,8 @@ latex_documents = [
      ),
 ]
 
+affiliation_school, affiliation_univ = __affiliation__.split(', ')
+
 # Customized title page
 latex_maketitle = r'''
     \pagenumbering{roman}
@@ -144,25 +147,29 @@ latex_maketitle = r'''
     \makeatletter
     \hypertarget{titlepage}{}
     \begin{titlepage}
-        \flushleft
+        \flushright
 
-        \vspace*{30mm}
-        \textbf{\Huge {{PyHelpers Documentation}}}
+        \vspace*{22mm}
+        \textbf{\Huge {{%s Documentation}}}
         
         \vspace{5mm}
-        \LARGE A lite toolkit for facilitating data manipulations \par
-        \textit{\Large {{Release %s}}}
+        \textit{\Large {{%s}}} \par
+        \vspace{5mm}
+        \textbf{\textit{\LARGE {{Release %s}}}} \par
 
-        \vspace{60mm}
-        \Large \textbf{{%s}}
+        \vspace{45mm}
+        \LARGE \textbf{{%s}} \par
 
-        \vspace{10mm}
-        \large School of Engineering \par
-        \large University of Birmingham \par
+        \vspace{5mm}
+        \textit{\Large {{%s}}} \par
+        \textit{\Large {{%s}}} \par
 
-        \vspace{55mm}
-        \small First release: September 2019 \par
-        \small Last updated: \MonthYearFormat\today
+        \vspace{35mm}
+        \textbf{\Large {{First release:}}} \Large September 2019 \par
+        \textbf{\Large {{Last updated:}}} \Large \MonthYearFormat\today \par
+        
+        \vspace{35mm}
+        \Large \textcopyright \space Copyright %s \par
 
     \end{titlepage}
     \bookmark[dest=titlepage]{Title}
@@ -187,7 +194,13 @@ latex_maketitle = r'''
 
     \clearpage
     \pagenumbering{arabic}
-    ''' % (release, __author__)
+    ''' % (__project__,
+           __description__.rstrip('.'),
+           release,
+           __author__,
+           affiliation_school,
+           affiliation_univ,
+           __copyright__)
 
 latex_preamble = r'''
     \setlength{\headheight}{14pt}
