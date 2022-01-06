@@ -1,13 +1,12 @@
-.. _brief-tutorial:
+.. _pyhelpers-tutorial:
 
 ========
 Tutorial
 ========
 
-This brief tutorial provides a few examples for each of the :ref:`modules<modules>`, and demonstrates what `pyhelpers`_ could offer to assist us in performing data manipulation tasks in our practical work.
+This brief tutorial provides a few examples for each of the :ref:`modules<modules>` to demonstrate that what `pyhelpers`_ could offer to assist us in performing data manipulation tasks in our day-to-day work.
 
-.. _pyhelpers: https://pypi.org/project/pyhelpers/
-
+.. _`pyhelpers`: https://pypi.org/project/pyhelpers/
 
 
 .. _tutorial-preparation:
@@ -24,13 +23,13 @@ To begin with, let's use `NumPy`_ and `Pandas`_ to create an example data set, w
 
     - `NumPy`_ and `Pandas`_ are installed along with the installation of `pyhelpers`_ as they are among the dependencies of the package.
 
-For demonstration purposes, we can use `numpy.random.rand`_ to generate a 100-by-100 array of random samples drawn from a standard uniform distribution, and name it ``random_array``:
+For demonstration purposes, firstly, we can use the function `numpy.random.rand`_ to generate a 100-by-100 Numpy array of random samples drawn from a standard uniform distribution, and name it ``random_array``:
 
 .. _`numpy.random.rand`: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
 
 .. code-block:: python
 
-    >>> import numpy as np
+    >>> import numpy as np  # Import NumPy and abbreviate it to 'np'
 
     >>> np.random.seed(0)  # Ensure that the generated array data is reproducible
 
@@ -49,16 +48,17 @@ For demonstration purposes, we can use `numpy.random.rand`_ to generate a 100-by
             0.1419334 ],
            [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
             0.81357508]])
-    >>> random_array.shape
+
+    >>> random_array.shape  # Check the shape of the array
     (100, 100)
 
-Then we use `pandas.DataFrame`_ to transform ``random_array`` into tabular data (i.e. a data frame) and name it ``data_frame``:
+Then, we use `pandas.DataFrame`_ to transform ``random_array`` into a Pandas data frame, which is presented in tabular form, and name it ``data_frame``:
 
 .. _`pandas.DataFrame`: https://pandas.pydata.org/pandas-docs/stable/user_guide/dsintro.html#dataframe
 
 .. code-block:: python
 
-    >>> import pandas as pd
+    >>> import pandas as pd  # Import Pandas and abbreviate it to 'pd'
 
     >>> data_frame = pd.DataFrame(random_array, columns=['col_' + str(x) for x in range(100)])
     >>> data_frame
@@ -77,23 +77,23 @@ Then we use `pandas.DataFrame`_ to transform ``random_array`` into tabular data 
 
     [100 rows x 100 columns]
 
+[See also the example of `saving data as a Pickle file <#tutorial-store-saving-dataframe>`_.]
+
 
 
 .. _tutorial-settings-examples:
 
-Alter settings for display of the data
-======================================
+Alter settings for display of data
+==================================
 
-The module :py:mod:`settings<pyhelpers.settings>` can be used to alter a few frequently-used parameters (of `GDAL`_, `Matplotlib`_, `NumPy`_ and `Pandas`_) such that they adapt the working environment to suit our own preferences.
+The module :py:mod:`pyhelpers.settings` can be used to alter a few frequently-used parameters (of `GDAL`_, `Matplotlib`_, `NumPy`_ and `Pandas`_) such that the working environment is adapted to suit our own preferences. For example, we could apply the function :py:func:`np_preferences<pyhelpers.settings.np_preferences>` with its default parameters whereby we may have a 'neater' view of the ``random_array``:
 
 .. _`Matplotlib`: https://matplotlib.org/
 .. _`GDAL`: https://gdal.org/
 
-For example, we could apply the function :py:func:`np_preferences()<pyhelpers.settings.np_preferences>` with its default parameters, which set a fixed number of decimal places to have a clearer view of the ``random_array``:
-
 .. code-block:: python
 
-    >>> from pyhelpers.settings import np_preferences  # from pyhelpers import np_preferences
+    >>> from pyhelpers.settings import np_preferences
 
     >>> # To round the numbers to four decimal places
     >>> np_preferences()  # By default, reset=False and precision=4
@@ -111,7 +111,7 @@ For example, we could apply the function :py:func:`np_preferences()<pyhelpers.se
            [0.2697, 0.7388, 0.8071, 0.2006, 0.3087, ..., 0.5063, 0.2319, 0.9484, 0.8813, 0.1419],
            [0.8850, 0.1970, 0.5686, 0.9310, 0.5645, ..., 0.5504, 0.3972, 0.7584, 0.0238, 0.8136]])
 
-By setting ``reset=True``, the altered parameters are reset to their default values:
+To reset the display, we can set ``reset=True`` by which the altered parameters are reset to their default values:
 
 .. code-block:: python
 
@@ -134,11 +134,11 @@ By setting ``reset=True``, the altered parameters are reset to their default val
 
 .. note::
 
-    - Basically, the function :py:func:`np_preferences()<pyhelpers.settings.np_preferences>` inherits the functionality of `numpy.set_printoptions`_ with a slight modification.
+    - Basically, the function :py:func:`np_preferences<pyhelpers.settings.np_preferences>` inherits the functionality of `numpy.set_printoptions`_, but with some modifications.
 
 .. _numpy.set_printoptions: https://numpy.org/doc/stable/reference/generated/numpy.set_printoptions.html
 
-Another function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` alters a few default `options and settings`_ of `Pandas`_, such as representation and maximum number of columns when displaying a `pandas.DataFrame`_. Applying :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` with its default setting should allow us to view all the 100 columns and the precision of numbers changes to four decimal places.
+For another example, the function :py:func:`pd_preferences<pyhelpers.settings.pd_preferences>` alters a few `Pandas`_ `options and settings`_, such as representation and maximum number of columns when displaying a `pandas.DataFrame`_. Applying the function with its default parameters should allow us to view all the 100 columns and the precision of numbers changes to four decimal places.
 
 .. _`options and settings`: https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html
 
@@ -146,7 +146,7 @@ Another function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` 
 
     .. code-block:: python
 
-        >>> from pyhelpers.settings import pd_preferences  # from pyhelpers import pd_preferences
+        >>> from pyhelpers.settings import pd_preferences
 
         >>> pd_preferences()  # By default, reset=False and precision=4
 
@@ -170,7 +170,7 @@ Another function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` 
 
     .. code-block:: python
 
-        >>> from pyhelpers.settings import pd_preferences  # from pyhelpers import pd_preferences
+        >>> from pyhelpers.settings import pd_preferences
 
         >>> pd_preferences()  # By default, reset=False and precision=4
 
@@ -192,9 +192,9 @@ Another function :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` 
 
     .. note::
 
-        - Here the columns from ``'col_12'`` to ``'col_99'`` are omitted from the above demonstration due to maximum limit of the page width.
+        - Here the columns from ``'col_12'`` to ``'col_99'`` are omitted from the above demonstration due to the limit of the page width.
 
-Similarly, the parameter ``reset`` of :py:func:`pd_preferences()<pyhelpers.settings.pd_preferences>` defaults to ``False``. By setting ``reset=True``, the altered parameters are reset to their default values. In addition, we can also set ``reset='all'`` to reset all pandas options to their default values, if necessary.
+Similarly, :py:func:`pd_preferences<pyhelpers.settings.pd_preferences>` also offers a parameter ``reset``, which defaults to ``False``; by setting ``reset=True``, the altered parameters are reset to their default values. In addition, we can also set ``reset='all'`` to reset all Pandas options to their default values, if needed.
 
 .. code-block:: python
 
@@ -218,7 +218,7 @@ Similarly, the parameter ``reset`` of :py:func:`pd_preferences()<pyhelpers.setti
 
 .. note::
 
-    - The functions currently available in the module :py:mod:`settings<pyhelpers.settings>` handles with only a few parameters (for the author's personal preference). To suit your own tastes, you may try to change the source code.
+    - The functions that are currently available in the module :py:mod:`pyhelpers.settings` handle only a few parameters for the author's personal preference. We may change the source code as appropriate to adapt the settings to different tastes.
 
 
 
@@ -227,11 +227,11 @@ Similarly, the parameter ``reset`` of :py:func:`pd_preferences()<pyhelpers.setti
 Specify a directory or a file path
 ==================================
 
-The module :py:mod:`dir<pyhelpers.dir>` can be used to assist us in manipulating folders/directories. For example, the function :py:func:`cd()<pyhelpers.dir.cd>` returns an absolute path to the current working directory or, if specified, its sub-directories/files:
+The module :py:mod:`pyhelpers.dir` offers to assist with manipulating folders/directories. For example, the function :py:func:`cd<pyhelpers.dir.cd>` returns an absolute path to the current working directory or, if specified, to a subdirectory or a file any level deep from the current working directory:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import cd  # from pyhelpers import cd
+    >>> from pyhelpers.dir import cd
     >>> import os
 
     >>> cwd = cd()  # The current working directory
@@ -241,7 +241,7 @@ The module :py:mod:`dir<pyhelpers.dir>` can be used to assist us in manipulating
     >>> print(rel_path_cwd)
     .
 
-To specify a path to a temporary folder, named *"pyhelpers_tutorial"*:
+To specify a path to a temporary folder, named ``"pyhelpers_tutorial"``:
 
 .. code-block:: python
 
@@ -256,14 +256,14 @@ To specify a path to a temporary folder, named *"pyhelpers_tutorial"*:
     >>> print(rel_dir_path)
     pyhelpers_tutorial
 
-Check whether the directory *"pyhelpers_tutorial\\"* exists:
+Check whether the directory ``"pyhelpers_tutorial\"`` exists:
 
 .. code-block:: python
 
     >>> print(f'The directory "{rel_dir_path}\\" exists? {os.path.exists(path_to_dir)}')
     The directory "pyhelpers_tutorial\" exists? False
 
-In the case that the directory *"pyhelpers_tutorial\\"* does not exist, we could set the parameter ``mkdir`` (which defaults to ``False``) to be ``True``. The folder will be created at the specified path:
+If the directory ``"pyhelpers_tutorial\"`` does not exist, we could set the parameter ``mkdir=True`` by which the directory should be created as we specify the path:
 
 .. code-block:: python
 
@@ -274,11 +274,11 @@ In the case that the directory *"pyhelpers_tutorial\\"* does not exist, we could
     >>> print(f'The directory "{rel_dir_path}\\" exists? {os.path.exists(path_to_dir)}')
     The directory "pyhelpers_tutorial\" exists? True
 
-Now we add a filename (e.g. ``"quick_start.dat"``) and get a path to the file:
+When we specify a sequence of names (in order with a filename being the last), the function :py:func:`cd<pyhelpers.dir.cd>` would assume that all the names prior to the filename are folder names, which specify a path to the file. For example, let's specify a path to a file named ``"quick_start.dat"``:
 
 .. code-block:: python
 
-    >>> # A filename
+    >>> # Name of a file
     >>> filename = "quick_start.dat"
 
     >>> # Path to the file named "quick_start.dat"
@@ -289,47 +289,45 @@ Now we add a filename (e.g. ``"quick_start.dat"``) and get a path to the file:
     >>> print(rel_file_path)
     pyhelpers_tutorial\quick_start.dat
 
-When multiple names are provided with the last one being a filename and if ``mkdir=True``, :py:func:`cd()<pyhelpers.dir.cd>` would assume that all except the filename are folder names and, if they do not exist, create the folders along the specified path.
-
-For example, let's specify a data directory, named *"data"*, in the *"pyhelpers_tutorial"* folder:
+If any of the folders/subfolders of a specified path does not exist, setting ``mkdir=True`` should enable the function :py:func:`cd<pyhelpers.dir.cd>` to create all the missing ones along the path. For example, let's specify a data directory, named ``"data"``, which is contained within the folder ``"pyhelpers_tutorial"``:
 
 .. code-block:: python
 
     >>> # Path to a data directory
-    >>> data_dir = cd(path_to_dir, "data")
+    >>> data_dir = cd("pyhelpers_tutorial", "data")  # equivalent to `cd(path_to_dir, "data")`
 
     >>> # Relative path of the data directory
     >>> rel_data_dir = os.path.relpath(data_dir)
     >>> print(rel_data_dir)
     pyhelpers_tutorial\data
 
-Examine ``rel_data_dir`` (or ``data_dir``):
+We can use the function :py:func:`is_dir<pyhelpers.dir.is_dir>` to examine whether ``data_dir`` (or ``rel_data_dir``) specifies a path (or a relative path) to a directory:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import is_dir  # from pyhelpers import is_dir
+    >>> from pyhelpers.dir import is_dir
 
-    >>> # Check whether `rel_data_dir` specifies a path to a directory
-    >>> print(f'`rel_data_dir` specifies a directory? {is_dir(rel_data_dir)}')
-    `rel_data_dir` specifies a directory? True
+    >>> # Check whether `rel_data_dir` specifies a (relative) path to a directory
+    >>> print(f'`rel_data_dir` specifies a directory pathname? {is_dir(rel_data_dir)}')
+    `rel_data_dir` specifies a directory pathname? True
 
     >>> # Check whether the data directory exists
     >>> print(f'The directory "{rel_data_dir}\\" exists? {os.path.exists(rel_data_dir)}')
     The directory "pyhelpers_tutorial\data\" exists? False
 
-.. _tutorial-dir-examples-pickle-file-path:
+.. _tutorial-dir-pickle-pathname:
 
-Specify a path to a pickle file, named *"dat.pickle"*, in the *"data"* folder:
+For another example, let's specify a path to a Pickle file, named ``"dat.pickle"``, in the directory ``"pyhelpers_tutorial\data\"``:
 
 .. code-block:: python
 
-    >>> # A pickle filename
+    >>> # Filename of a Pickle file
     >>> pickle_filename = "dat.pickle"
 
-    >>> # Path to the pickle file "dat.pickle"
+    >>> # Path to the Pickle file, i.e. cd("pyhelpers_tutorial", "data", "dat.pickle")
     >>> path_to_pickle = cd(data_dir, pickle_filename)
 
-    >>> # Relative path of the pickle file
+    >>> # Relative path of the Pickle file
     >>> rel_pickle_path = os.path.relpath(path_to_pickle)
     >>> print(rel_pickle_path)
     pyhelpers_tutorial\data\dat.pickle
@@ -361,17 +359,199 @@ Let's now set the parameter ``mkdir`` to be ``True``:
     >>> print(f'The file "{rel_pickle_path}" exists? {os.path.exists(rel_pickle_path)}')
     The file "pyhelpers_tutorial\data\dat.pickle" exists? False
 
-To delete the directory *"pyhelpers_tutorial\\"* created above, we can use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`:
+[See also the example of `saving data as a Pickle file <#tutorial-store-saving-dataframe>`_.]
+
+To delete the directory `"pyhelpers_tutorial\"` (and all contained within it), we can use the function :py:func:`delete_dir<pyhelpers.dir.delete_dir>`:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import delete_dir  # from pyhelpers import delete_dir
+    >>> from pyhelpers.dir import delete_dir
 
     >>> # Delete the directory "pyhelpers_tutorial\"
     >>> delete_dir(path_to_dir, verbose=True)
     The directory "pyhelpers_tutorial\" is not empty.
-    Confirmed to delete it? [No]|Yes: yes
+    Confirmed to delete it
+    ? [No]|Yes: yes
     Deleting "pyhelpers_tutorial\" ... Done.
+
+
+
+.. _tutorial-store-examples:
+
+Save data to / load data from a Pickle file
+===========================================
+
+The module :py:mod:`pyhelpers.store` can facilitate tasks such as saving our data to, and loading the data from, file-like objects of some popular formats, such as `CSV`_, `JSON`_ and `Pickle`_.
+
+.. _`Pickle`: https://docs.python.org/3/library/pickle.html
+.. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
+.. _`JSON`: https://www.json.org/json-en.html
+
+.. _tutorial-store-saving-dataframe:
+
+For example, we could save the ``data_frame`` that has been created in the [Preparation](#tutorial-preparation) section as a `Pickle`_ file by using the functions :py:func:`save_pickle<pyhelpers.store.save_pickle>` and retrieve it later by using :py:func:`load_pickle<pyhelpers.store.load_pickle>`. Firstly, let's save ``data_frame`` to ``path_to_pickle``, which has been specified in the :ref:`Specify a directory or a file path<tutorial-dir-pickle-pathname>` section:
+
+.. code-block:: python
+
+    >>> from pyhelpers.store import save_pickle, load_pickle
+
+    >>> # Write `data_frame` to the file "dat.pickle"
+    >>> save_pickle(data_frame, path_to_pickle, verbose=True)
+    Saving "dat.pickle" to "pyhelpers_tutorial\data\" ... Done.
+
+Now, we can retrieve the data from ``path_to_pickle`` and store the retrieved data in another variable named ``df_retrieved``:
+
+.. code-block:: python
+
+    >>> df_retrieved = load_pickle(path_to_pickle, verbose=True)
+    Loading "pyhelpers_tutorial\data\dat.pickle" ... Done.
+
+Check whether ``df_retrieved`` is equal to ``data_frame`` (namely, whether they have the same shape and elements):
+
+.. code-block:: python
+
+    >>> print(f'`df_retrieved` is equal to `data_frame`? {df_retrieved.equals(data_frame)}')
+    `df_retrieved` is equal to `data_frame`? True
+
+Before we move on, let's delete again the Pickle file (i.e. ``path_to_pickle``) and the directory created in the above example:
+
+.. code-block:: python
+
+    >>> delete_dir(path_to_dir, verbose=True)
+    The directory "pyhelpers_tutorial\" is not empty.
+    Confirmed to delete it
+    ? [No]|Yes: yes
+    Deleting "pyhelpers_tutorial\" ... Done.
+
+.. note::
+
+    - In the module :py:mod:`store<pyhelpers.store>`, some functions such as :py:func:`save_spreadsheet<pyhelpers.store.save_spreadsheet>` and :py:func:`save_multiple_spreadsheets<pyhelpers.store.save_multiple_spreadsheets>` may require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are NOT essential dependencies for the installation of `pyhelpers`_. We could install them as needed via an appropriate method such as ``pip install``.
+
+.. _openpyxl: https://pypi.org/project/openpyxl/
+.. _XlsxWriter: https://pypi.org/project/XlsxWriter/
+.. _xlrd: https://pypi.org/project/xlrd/
+
+
+
+.. _tutorial-geom-examples:
+
+Convert coordinates between `OSGB36`_ and `WGS84`_
+==================================================
+
+.. _`OSGB36`: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
+.. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
+
+The module :py:mod:`pyhelpers.geom` can assist us in manipulating geometric and geographical data. For example, we can use the function :py:func:`osgb36_to_wgs84<pyhelpers.geom.osgb36_to_wgs84>` to convert coordinates from `OSGB36`_ (British national grid) to `WGS84`_ (latitude and longitude):
+
+.. code-block:: python
+
+    >>> from pyhelpers.geom import osgb36_to_wgs84
+
+    >>> # To convert coordinate of a single point (530034, 180381):
+    >>> easting, northing = 530034, 180381  # London
+
+    >>> longitude, latitude = osgb36_to_wgs84(easting, northing)  # Longitude and latitude
+    >>> (longitude, latitude)
+    (-0.12772400574286916, 51.50740692743041)
+
+We could also use the function to convert an array of OSGB36 coordinates:
+
+.. code-block:: python
+
+    >>> xy_array = np.array([(530034, 180381),   # London
+    ...                      (406689, 286822),   # Birmingham
+    ...                      (383819, 398052),   # Manchester
+    ...                      (582044, 152953)],  # Leeds
+    ...                     dtype=np.int64)
+    >>> eastings, northings = xy_array.T
+
+    >>> lonlat_array = osgb36_to_wgs84(eastings, northings, as_array=True)
+    >>> lonlat_array
+    array([[-0.12772401, 51.50740693],
+           [-1.90294064, 52.47928436],
+           [-2.24527795, 53.47894006],
+           [ 0.60693267, 51.24669501]])
+
+Similarly, we can convert from the (longitude, latitude) back to (easting, northing) by using the function :py:func:`wgs84_to_osgb36<pyhelpers.geom.wgs84_to_osgb36>`:
+
+.. code-block:: python
+
+    >>> from pyhelpers.geom import wgs84_to_osgb36
+
+    >>> longitudes, latitudes = lonlat_array.T
+
+    >>> xy_array_ = wgs84_to_osgb36(longitudes, latitudes, as_array=True)
+    >>> xy_array_
+    array([[530034.00088084, 180380.99951018],
+           [406689.00082267, 286821.99957672],
+           [383819.00081883, 398051.99967237],
+           [582044.00090117, 152952.99950009]])
+
+.. note::
+
+    - Conversion of coordinates between different systems may inevitably introduce errors, which are mostly negligible.
+
+Check whether ``xy_array_`` is almost equal to ``xy_array``:
+
+.. code-block:: python
+
+    >>> eq_res = np.array_equal(xy_array, np.round(xy_array_))
+    >>> print(f'`xy_array_` is almost equal to `xy_array`? {eq_res}')
+    `xy_array_` is almost equal to `xy_array`? True
+
+
+
+.. _tutorial-text-examples:
+
+Find similar texts
+==================
+
+The module :py:mod:`pyhelpers.text` can assist us in manipulating textual data. For example, suppose we have a word ``'angle'``, which is stored in a `str`_-type variable named ``word``, and a list of words, which is stored in a `list`_-type variable named ``lookup_list``; if we'd like to find from the list a one that is most similar to ``'angle'``, we can use the function :py:func:`find_similar_str<pyhelpers.text.find_similar_str>`:
+
+.. _`str`: https://docs.python.org/3/library/stdtypes.html#textseq
+.. _`list`: https://docs.python.org/3/library/stdtypes.html#list
+
+.. code-block:: python
+
+    >>> from pyhelpers.text import find_similar_str
+
+    >>> word = 'angle'
+    >>> lookup_list = ['Anglia',
+    ...                'East Coast',
+    ...                'East Midlands',
+    ...                'North and East',
+    ...                'London North Western',
+    ...                'Scotland',
+    ...                'South East',
+    ...                'Wales',
+    ...                'Wessex',
+    ...                'Western']
+
+    >>> # Find the most similar word to 'angle'
+    >>> result_1 = find_similar_str(word, lookup_list)
+    >>> result_1
+    'Anglia'
+
+By default, the function relies on `difflib`_ - a Python built-in module - to perform the task. Alternatively, we could also make use of an open-source package, `FuzzyWuzzy`_, via setting the parameter ``processor='fuzzywuzzy'``:
+
+.. _`FuzzyWuzzy`: https://pypi.org/project/fuzzywuzzy/
+.. _`difflib`: https://docs.python.org/3/library/difflib.html
+
+.. code-block:: python
+
+    >>> # Find the most similar word to 'angle' by using FuzzyWuzzy
+    >>> result_2 = find_similar_str(word, lookup_list, processor='fuzzywuzzy')
+    >>> result_2
+    'Anglia'
+
+.. note::
+
+    - The package `FuzzyWuzzy`_ is NOT an essential dependency for the installation of pyhelpers>=`1.3.0`_. We need to install it (e.g. via ``pip install``) to make the function run successfully with setting ``processor='fuzzywuzzy'``.
+    - In previous versions of pyhelpers (i.e. <=`1.2.14`_), optional values for the parameter ``processor`` include ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been replaced with ``'difflib'`` since `1.2.15`_.
+
+.. _`1.3.0`: https://pypi.org/project/pyhelpers/1.3.0/
+.. _`1.2.14`: https://pypi.org/project/pyhelpers/1.2.14/
+.. _`1.2.15`: https://pypi.org/project/pyhelpers/1.2.15/
 
 
 
@@ -380,52 +560,53 @@ To delete the directory *"pyhelpers_tutorial\\"* created above, we can use the f
 Download an image file
 ======================
 
-The module :py:mod:`ops<pyhelpers.ops>` provides a miscellany of helper functions that perform various operations. For example, we can use the function :py:func:`download_file_from_url()<pyhelpers.ops.download_file_from_url>` to download files from a given URL.
+The module :py:mod:`pyhelpers.ops` provides a miscellany of helper functions that may assist with various operations. For example, we can use the function :py:func:`download_file_from_url<pyhelpers.ops.download_file_from_url>` to download a file from a given URL.
 
-Now let's try to download a Python logo from the homepage of `Python`_:
+Let's now try to download an image file of `Python logo`_ from its `home page <https://www.python.org/>`_. Firstly, we need to specify the URL of the image file:
 
-.. _Python: https://www.python.org/
+.. _`Python logo`: https://www.python.org/static/community_logos/python-logo-master-v3-TM.png
 
 .. code-block:: python
 
-    >>> # from pyhelpers import download_file_from_url
     >>> from pyhelpers.ops import download_file_from_url
 
     >>> # URL of a .png file of the Python logo
     >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-Then we need to specify a directory where we'd like to save the logo and a filename for it. For example, we name the file *"python-logo.png"* and save it to the directory *"pyhelpers_tutorial\\images\\"*:
+Then, we need to specify a directory where we'd like to save the image file, and a filename for it; let's say we want to name the file ``"python-logo.png"`` and save it to the directory ``"pyhelpers_tutorial\images\"``:
 
 .. code-block:: python
 
     >>> python_logo_filename = "python-logo.png"
+    >>> # python_logo_file_path = cd("pyhelpers_tutorial", "images", python_logo_filename)
     >>> python_logo_file_path = cd(path_to_dir, "images", python_logo_filename)
 
     >>> # Download the .png file of the Python logo
     >>> download_file_from_url(url, python_logo_file_path, verbose=False)
 
-If we set ``verbose`` to be ``True``, relevant information to the downloading would be printed during the downloading process.
+The parameter ``verbose`` is by default ``False``. If we set ``verbose=True``, the function would print out relevant information about the download as the file is being downloaded.
 
 .. note::
 
-    - The parameter ``verbose`` defaults to ``False``.
-    - When ``verbose=True`` (or ``verbose=1``), the function relies on `tqdm`_, which is not an essential dependency for installing `pyhelpers`_>=1.2.15. If `tqdm`_ is not yet available on your system, you need to install it before you run the following line.
+    - When ``verbose=True`` (or ``verbose=1``), the function requires an open-source package `tqdm`_, which is NOT an essential dependency for installing pyhelpers>=`1.2.15`_. We can just install the dependency package via ``pip install`` to make the function run successfully.
 
-.. _tqdm: https://pypi.org/project/tqdm/
+.. _`tqdm`: https://pypi.org/project/tqdm/
+
+Assuming `tqdm`_ has been installed in our working environment, try:
 
 .. code-block:: python
 
-    >>> download_file_from_url(url, python_logo_file_path, verbose=True)
-    82.0KB [00:00, ...KB/s]
+    >>> download_file_from_url(url, python_logo_file_path, if_exists='replace', verbose=True)
+    "pyhelpers_tutorial\images\python-logo.png": 81.6kB [00:00, 10.8MB/s]
 
 .. note::
 
-    - '...kKB/s' shown above is an estimated speed of downloading the file, which varies depending on network conditions at the time of running the function.
-    - Setting ``if_exists='replace'`` allows us download the image file again and replace the one that was just downloaded to the specified destination.
+    - '...MB/s' shown at the end of the output above is an estimated speed of downloading the file, which varies depending on network conditions at the time of running the function.
+    - Setting ``if_exists='replace'`` (default) allows us to download the image file again and replace the one that was just downloaded to the specified destination.
 
-Now we may view the downloaded image file by using `Pillow`_:
+Now let's have a look at the downloaded image file by using `Pillow`_:
 
-.. _Pillow: https://python-pillow.org/
+.. _`Pillow`: https://python-pillow.org/
 
 .. code-block:: python
 
@@ -443,207 +624,34 @@ Now we may view the downloaded image file by using `Pillow`_:
 
 .. note::
 
-    - If using `Jupyter Notebook`_, we may use `IPython.display.Image`_ to display the image in the current notebook.
+    - In `Jupyter Notebook`_, we may use `IPython.display.Image`_ to display the image in the notebook by running ``IPython.display.Image(python_logo_file_path)``.
 
-.. _Jupyter Notebook: https://jupyter.org/
-.. _IPython.display.Image: https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.Image
+.. _`Jupyter Notebook`: https://jupyter.org/
+.. _`IPython.display.Image`: https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.Image
 
-To delete *"pyhelpers_tutorial\\"* and the download directory *"pyhelpers_tutorial\\images\\"*, we can again use the function :py:func:`delete_dir()<pyhelpers.dir.delete_dir>`.
+To delete ``"pyhelpers_tutorial\"`` and the download directory ``"pyhelpers_tutorial\images\"``, again, we can use the function :py:func:`delete_dir<pyhelpers.dir.delete_dir>`:
 
 .. code-block:: python
 
     >>> delete_dir(path_to_dir, confirmation_required=False, verbose=True)
     Deleting "pyhelpers_tutorial\" ... Done.
 
-Here, setting ``confirmation_required=False`` can allow us to delete the directory straightaway without having to type 'yes' to confirm the action. This is implemented through the function :py:func:`confirmed()<pyhelpers.ops.confirmed>`, which is also from the module :py:mod:`ops<pyhelpers.ops>` and can be helpful especially when we'd like to request a confirmation before proceeding with certain actions. For example:
+Setting the parameter ``confirmation_required=False`` can allow us to delete the directory straightaway without having to type ``yes`` to confirm the action. This is actually implemented through the function :py:func:`confirmed<pyhelpers.ops.confirmed>`, which is also from the module :py:mod:`pyhelpers.ops` and can be helpful especially when we'd like to impose a manual confirmation before proceeding with certain actions. For example:
 
 .. code-block:: python
 
-    >>> from pyhelpers.ops import confirmed  # from pyhelpers import confirmed
+    >>> from pyhelpers.ops import confirmed
 
-    >>> if confirmed(prompt="Continue? ...", confirmation_required=True):
+    >>> # We can specify any prompting message as to what needs to be confirmed.
+    >>> if confirmed(prompt="Continue? ..."):
     ...     print("OK! Go ahead.")
     Continue? ... [No]|Yes: yes
     OK! Go ahead.
 
 .. note::
 
-    - We may alter the value of ``prompt`` to specify any prompting message as to what needs to be confirmed.
-    - What we type is case-insensitive. To make the function return ``True``, it doesn't have to be precisely ``'Yes'`` but something like ``'Y'``, ``'yes'`` or ``'ye'`` can do the job as well. Similarly, no matter we type ``'No'`` or ``'n'``, it returns ``False``.
-    - By setting ``confirmation_required=False``, a confirmation is not required, in which case this function will become ineffective as it just returns ``True``.
-
-
-
-.. _tutorial-store-examples:
-
-Save data to / load data from a Pickle file
-===========================================
-
-The module :py:mod:`store<pyhelpers.store>` can facilitate daily tasks of saving our data to, as well as loading the data from, file-like objects of some common formats, such as `Pickle`_, `CSV`_ and `JSON`_.
-
-.. _Pickle: https://docs.python.org/3/library/pickle.html
-.. _CSV: https://en.wikipedia.org/wiki/Comma-separated_values
-.. _JSON: https://www.json.org/json-en.html
-
-.. note::
-
-    - Some functions of the module :py:mod:`store<pyhelpers.store>`, such as `save_spreadsheet()`_ and `save_multiple_spreadsheets()`_ require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are installed along with the installation of `pyhelpers`_.
-
-.. _save_spreadsheet(): https://pyhelpers.readthedocs.io/en/latest/_generated/pyhelpers.store.save_spreadsheet.html
-.. _save_multiple_spreadsheets(): https://pyhelpers.readthedocs.io/en/latest/_generated/pyhelpers.store.save_multiple_spreadsheets.html
-.. _openpyxl: https://pypi.org/project/openpyxl/
-.. _XlsxWriter: https://pypi.org/project/XlsxWriter/
-.. _xlrd: https://pypi.org/project/xlrd/
-
-For example, we could save ``data_frame`` that has been created in the :ref:`Preparation <tutorial-preparation>` section (or you may create your own data instead and name it ``data_frame``) as a `Pickle`_ file by using the functions :py:func:`save_pickle()<pyhelpers.store.save_pickle>` and retrieve it later by using :py:func:`load_pickle()<pyhelpers.store.load_pickle>`.
-
-Let's firstly save ``data_frame`` to ``path_to_pickle``, which has been specified in the :ref:`Specify a directory or a file path<tutorial-dir-examples-pickle-file-path>` section:
-
-.. code-block:: python
-
-    >>> # from pyhelpers import save_pickle, load_pickle
-    >>> from pyhelpers.store import save_pickle, load_pickle
-
-    >>> # Write `data_frame` to the file "dat.pickle"
-    >>> save_pickle(data_frame, path_to_pickle, verbose=True)
-    Saving "dat.pickle" to "pyhelpers_tutorial\data\" ... Done.
-
-Then we retrieve the data from ``path_to_pickle`` and store the retrieved data in another variable named ``df_retrieved``:
-
-.. code-block:: python
-
-    >>> df_retrieved = load_pickle(path_to_pickle, verbose=True)
-    Loading "pyhelpers_tutorial\data\dat.pickle" ... Done.
-
-Check whether ``df_retrieved`` is equal to ``data_frame``:
-
-.. code-block:: python
-
-    >>> print(f'`df_retrieved` is equal to `data_frame`? {df_retrieved.equals(data_frame)}')
-    `df_retrieved` is equal to `data_frame`? True
-
-Now, before we move on, let's delete again the Pickle file (i.e. ``path_to_pickle``) and the folder created for the above example:
-
-.. code-block:: python
-
-    >>> delete_dir(path_to_dir, confirmation_required=False, verbose=True)
-    Deleting "pyhelpers_tutorial\" ... Done.
-
-
-
-.. _tutorial-geom-examples:
-
-Convert coordinates between `OSGB36`_ and `WGS84`_
-==================================================
-
-.. _OSGB36: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
-.. _WGS84: https://en.wikipedia.org/wiki/World_Geodetic_System
-
-The module :py:mod:`geom<pyhelpers.geom>` can assist us of manipulating geometric and geographical data. For example, we can use the function :py:func:`osgb36_to_wgs84()<pyhelpers.geom.osgb36_to_wgs84>` to convert coordinates from `OSGB36`_ (British national grid) to `WGS84`_ (latitude and longitude):
-
-.. code-block:: python
-
-    >>> from pyhelpers.geom import osgb36_to_wgs84  # from pyhelpers import osgb36_to_wgs84
-
-    >>> # To convert coordinate of a single point (530034, 180381):
-    >>> easting, northing = 530034, 180381  # London
-
-    >>> longitude, latitude = osgb36_to_wgs84(easting, northing)  # Longitude and latitude
-    >>> (longitude, latitude)
-    (-0.12772400574286916, 51.50740692743041)
-
-We could also convert an array of OSGB36 coordinates:
-
-.. code-block:: python
-
-    >>> xy_array = np.array([(530034, 180381),   # London
-    ...                      (406689, 286822),   # Birmingham
-    ...                      (383819, 398052),   # Manchester
-    ...                      (582044, 152953)],  # Leeds
-    ...                     dtype=np.int64)
-
-    >>> eastings, northings = xy_array.T
-
-    >>> lonlat_array = np.array(osgb36_to_wgs84(eastings, northings)).T
-    >>> lonlat_array
-    array([[-0.12772401, 51.50740693],
-           [-1.90294064, 52.47928436],
-           [-2.24527795, 53.47894006],
-           [ 0.60693267, 51.24669501]])
-
-Similarly, we can convert from the (longitude, latitude) back to (easting, northing) by using the function :py:func:`wgs84_to_osgb36()<pyhelpers.geom.wgs84_to_osgb36>`.
-
-.. code-block:: python
-
-    >>> from pyhelpers.geom import wgs84_to_osgb36  # from pyhelpers import wgs84_to_osgb36
-
-    >>> longitudes, latitudes = lonlat_array.T
-
-    >>> xy_array_ = np.array(wgs84_to_osgb36(longitudes, latitudes)).T
-    >>> xy_array_
-    array([[530034.00088084, 180380.99951018],
-           [406689.00082267, 286821.99957672],
-           [383819.00081883, 398051.99967237],
-           [582044.00090117, 152952.99950009]])
-
-Check whether ``xy_array_`` is almost equal to ``xy_array``:
-
-.. code-block:: python
-
-    >>> eq_res = np.array_equal(xy_array, np.round(xy_array_))
-    >>> print(f'`xy_array_` is almost equal to `xy_array`? {eq_res}')
-    `xy_array_` is almost equal to `xy_array`? True
-
-
-
-.. _tutorial-text-examples:
-
-Find similar texts
-==================
-
-The module :ref:`pyhelpers.text<text>` can assist us of manipulating textual data. For example, when we have a word ``'ang'``, which is stored in a `str`_ type variable named ``word`` and we would like to find the most similar one to it from ``lookup_list`` that stores a list of words, we can use the function :py:func:`find_similar_str()<pyhelpers.text.find_similar_str>`:
-
-.. _str: https://docs.python.org/3/library/stdtypes.html#textseq
-
-.. code-block:: python
-
-    >>> from pyhelpers.text import find_similar_str  # from pyhelpers import find_similar_str
-
-    >>> word = 'ang'
-    >>> lookup_list = ['Anglia',
-    ...                'East Coast',
-    ...                'East Midlands',
-    ...                'North and East',
-    ...                'London North Western',
-    ...                'Scotland',
-    ...                'South East',
-    ...                'Wales',
-    ...                'Wessex',
-    ...                'Western']
-
-    >>> # Find the most similar word to 'ang'
-    >>> result_1 = find_similar_str(word, lookup_list, processor='fuzzywuzzy')
-    >>> result_1
-    'Anglia'
-
-The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, meaning that it would use the open-source package `FuzzyWuzzy`_ to perform the task. Alternatively, we could also make use of Python built-in module, `difflib`_, by setting ``processor='difflib'``:
-
-.. _`FuzzyWuzzy`: https://pypi.org/project/fuzzywuzzy/
-.. _`difflib`: https://docs.python.org/3/library/difflib.html
-
-.. code-block:: python
-
-    >>> # Find the most similar word to 'ang' by using difflib
-    >>> result_2 = find_similar_str(word, lookup_list, processor='difflib')
-    >>> result_2
-    'Anglia'
-
-.. note::
-
-    - Options for the ``processor`` in older versions of `pyhelpers<=1.2.14`_ were ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been replaced with ``'difflib'`` since `v1.2.15`_.
-
-.. _pyhelpers<=1.2.14: https://pypi.org/project/pyhelpers/1.2.14/
-.. _v1.2.15: https://pypi.org/project/pyhelpers/1.2.15/
+    - What we type to respond to the prompting message is case-insensitive. It doesn't have to be precisely ``Yes`` to make the function return ``True``; something like ``yes``, ``Y`` or ``ye`` can do the job as well. If we type ``no`` or ``n``, it returns ``False``.
+    - The function also provides a parameter ``confirmation_required``, which defaults to ``True``. If setting ``confirmation_required=False``, a confirmation is not required, in which case this function will become ineffective as it just returns ``True``.
 
 
 
@@ -652,13 +660,20 @@ The parameter ``processor`` for the function is by default ``'fuzzywuzzy'``, mea
 Work with a PostgreSQL server
 =============================
 
-The module :py:mod:`sql<pyhelpers.sql>` provides a convenient way to communicate with a SQL database. The current release of the module contains only :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` class, which could assist us in implementing some basic queries in a `PostgreSQL`_ database:
+The module :py:mod:`pyhelpers.dbms` offers a convenient way of communicating with `databases`_, such as `PostgreSQL`_.
 
+.. _`databases`: https://en.wikipedia.org/wiki/Database
 .. _`PostgreSQL`: https://www.postgresql.org/
+
+.. note::
+
+    - The current release of pyhelpers is only able to deal with `PostgreSQL`_ as the module :py:mod:`pyhelpers.dbms` needs to be further developed to work with other types of databases.
+
+The class :py:class:`PostgreSQL<pyhelpers.dbms.PostgreSQL>`, for example, could assist us in executing some basic SQL statements on a PostgreSQL database server. To demonstrate it works, let's start with importing the class:
 
 .. code-block:: python
 
-    >>> from pyhelpers.sql import PostgreSQL  # from pyhelpers import PostgreSQL
+    >>> from pyhelpers.dbms import PostgreSQL
 
 
 .. _tutorial-sql-examples-connect-db:
@@ -666,32 +681,35 @@ The module :py:mod:`sql<pyhelpers.sql>` provides a convenient way to communicate
 Connect to a database
 ---------------------
 
-After the class :py:class:`PostgreSQL<pyhelpers.sql.PostgreSQL>` is successfully imported, we can create an instance to connect a PostgreSQL server by specifying the parameters: ``host``, ``port``, ``username``, ``database_name`` and ``password``.
+Now, we can create an instance of the class :py:class:`PostgreSQL<pyhelpers.dbms.PostgreSQL>` to connect a PostgreSQL server by specifying the key parameters, including ``host``, ``port``, ``username``, ``database_name`` and ``password``.
 
-For example, let's use the default parameters of a PostgreSQL server (as it is installed on a PC) to create an instance named ``pgdb`` and connect/create a database named *"pyhelpers_tutorial"*:
+.. note::
+
+    - If we leave ``host``, ``port``, ``username`` and ``database_name`` unspecified, their default arguments (namely, ``host='localhost'``, ``port=5432``, ``username='postgres'`` and ``database_name='postgres'``) are passed to instantiate the class, in which case we would connect to the default PostgreSQL server (as is installed on a PC).
+    - If the specified ``database_name`` does not exist, it will be automatically created along with the class instantiation.
+    - If we prefer not to specify explicitly the parameter ``password``, we could just leave it. In that case, we will be asked to type in the password manually when instantiating the class.
+
+For example, let's create an instance named ``pgdb``, and we'd like to establish a connection with a database named "*pyhelpers_tutorial*", which is hosted at the default PostgreSQL server:
 
 .. code-block:: python
 
-    >>> pgdb = PostgreSQL(host='localhost',
-    ...                   port=5432,
-    ...                   username='postgres',
-    ...                   database_name="pyhelpers_tutorial",
-    ...                   password=None)
+    >>> pgdb = PostgreSQL(database_name="pyhelpers_tutorial")
     Password (postgres@localhost:5432): ***
+    Creating a database: "pyhelpers_tutorial" ... Done.
     Connecting postgres:***@localhost:5432/pyhelpers_tutorial ... Successfully.
 
-To check whether the database has been successfully created, we could use `pgAdmin`_ to see if *"pyhelpers_tutorial"* has been listed in the *Databases* tree of the default server:
+We can use `pgAdmin`_ - the most popular graphical management tool for PostgreSQL - to check whether the database "*pyhelpers_tutorial*" exists now in the Databases tree of the default server, as illustrated in :numref:`tutorial-sql-examples-db-1`:
 
-.. _pgAdmin: https://www.pgadmin.org/
+.. _`pgAdmin`: https://www.pgadmin.org/
 
 .. figure:: _images/tutorial-sql-examples-db-1.png
     :name: tutorial-sql-examples-db-1
     :align: center
     :width: 60%
 
-    The database *"pyhelpers_tutorial"*.
+    The database "*pyhelpers_tutorial*".
 
-Alternatively, we could also use the method :py:meth:`.database_exists()<pyhelpers.sql.PostgreSQL.database_exists>`:
+Alternatively, we could also use the method :py:meth:`.database_exists<pyhelpers.dbms.PostgreSQL.database_exists>`:
 
 .. code-block:: python
 
@@ -700,33 +718,29 @@ Alternatively, we could also use the method :py:meth:`.database_exists()<pyhelpe
     The database "pyhelpers_tutorial" exists? True
 
     >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
-    We are currently connected to the database "pyhelpers_tutorial".
+    We are now connected with the database "pyhelpers_tutorial".
 
-.. note::
-
-    - If the database *"pyhelpers_tutorial"* does not exist, it will be created as we create the instance ``pgdb``.
-    - The ``password`` is by default ``None``. If we do not wish to specify the password explicitly in our script, we could just leave it as ``None`` and would be asked to type in the password manually when creating an instance of the class.
-    - Similar to ``password``, we will also be asked to type in the correct value of the other parameters if they are ``None``.
-
-In the same server, we could also create multiple databases. For example, let's now create another database named *"pyhelpers_tutorial_alt"* by using the method :py:meth:`.create_database()<pyhelpers.sql.PostgreSQL.create_database>`:
+In the same server, we can create multiple databases. For example, let's now create another database named "*pyhelpers_tutorial_alt*" by using the method :py:meth:`.create_database<pyhelpers.dbms.PostgreSQL.create_database>`:
 
 .. code-block:: python
 
     >>> pgdb.create_database("pyhelpers_tutorial_alt", verbose=True)
     Creating a database: "pyhelpers_tutorial_alt" ... Done.
 
+As we can see in :numref:`tutorial-sql-examples-db-2`, the database "*pyhelpers_tutorial_alt*" has now been added to the default *Databases* tree:
+
 .. figure:: _images/tutorial-sql-examples-db-2.png
     :name: tutorial-sql-examples-db-2
     :align: center
     :width: 60%
 
-    The database *"pyhelpers_tutorial_alt"*.
+    The database "*pyhelpers_tutorial_alt*".
 
 .. note::
 
-    - Once a new database is created, the instance ``pgdb`` is by default connected with the newly created database.
+    - When a new database is created, the instance ``pgdb`` disconnects the currently-connected database and connect to the new one.
 
-Check the database that is currently connected:
+Check whether "*pyhelpers_tutorial_alt*" is the database being connected now:
 
 .. code-block:: python
 
@@ -735,9 +749,9 @@ Check the database that is currently connected:
     The database "pyhelpers_tutorial_alt" exists? True
 
     >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
-    We are currently connected to the database "pyhelpers_tutorial_alt".
+    We are now connected with the database "pyhelpers_tutorial_alt".
 
-To connect back to *"pyhelpers_tutorial"*, we can use the method :py:meth:`.database_exists()<pyhelpers.sql.PostgreSQL.connect_database>`:
+To connect again to "*pyhelpers_tutorial*", we can use the method :py:meth:`.connect_database<pyhelpers.dbms.PostgreSQL.connect_database>`:
 
 .. code-block:: python
 
@@ -745,22 +759,24 @@ To connect back to *"pyhelpers_tutorial"*, we can use the method :py:meth:`.data
     Connecting postgres:***@localhost:5432/pyhelpers_tutorial ... Successfully.
 
     >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
-    We are currently connected to the database "pyhelpers_tutorial".
+    We are now connected with the database "pyhelpers_tutorial".
 
 
 .. _tutorial-sql-examples-import-data:
 
-Import data into the database
------------------------------
+Import data into a database
+---------------------------
 
-After the connection to the database has been established, we can use the method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` to import ``data_frame`` (created in the :ref:`Preparation<tutorial-preparation>` section) into a table named *"df_table"* under the default *"public"* schema:
+With the established connection to the database, we can use the method :py:meth:`.import_data<pyhelpers.dbms.PostgreSQL.import_data>` to import the ``data_frame``, which has been created in the :ref:`Preparation<tutorial-preparation>` section, into a table named "*df_table*" under the default schema "*public*":
 
 .. code-block:: python
 
-    >>> pgdb.import_data(data_frame, table_name="df_table", verbose=2)
+    >>> pgdb.import_data(data_frame, table_name="df_table", if_exists='replace', verbose=2)
     To import data into "public"."df_table" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
     Importing the data into the table "public"."df_table" ... Done.
+
+We should now be able to see the table in pgAdmin, as illustrated in :numref:`tutorial-sql-examples-df_table`:
 
 .. figure:: _images/tutorial-sql-examples-df_table.png
     :name: tutorial-sql-examples-df_table
@@ -769,11 +785,11 @@ After the connection to the database has been established, we can use the method
 
     The table *"public"."df_table"*.
 
-The method :py:meth:`.import_data()<pyhelpers.sql.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``'method'`` is set to be ``'multi'`` by default. However, it can also take the method :py:meth:`.psql_insert_copy()<pyhelpers.sql.PostgreSQL.psql_insert_copy>` as an alternative ``'method'`` to significantly speed up importing data into the database, especially when the data is fairly large.
+The method :py:meth:`.import_data<pyhelpers.dbms.PostgreSQL.import_data>` relies on `pandas.DataFrame.to_sql`_, with the parameter ``method`` being set to be ``'multi'`` by default. Optionally, it can also take the method :py:meth:`.psql_insert_copy<pyhelpers.dbms.PostgreSQL.psql_insert_copy>` as an argument to significantly speed up importing data into a database, especially when the data size is fairly large.
 
-.. _pandas.DataFrame.to_sql: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+.. _`pandas.DataFrame.to_sql`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
-Let's now try to import the same data into a table named *"df_table_alt"* by setting ``method=pgdb.psql_insert_copy``:
+Let's now try to import the same data into a table named "*df_table_alt*" by setting ``method=pgdb.psql_insert_copy``:
 
 .. code-block:: python
 
@@ -782,6 +798,8 @@ Let's now try to import the same data into a table named *"df_table_alt"* by set
     To import data into "public"."df_table_alt" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
     Importing the data into the table "public"."df_table_alt" ... Done.
+
+In pgAdmin, we can see the table has been added to the *Tables* list, as illustrated in :numref:`tutorial-sql-examples-df_table_alt`:
 
 .. figure:: _images/tutorial-sql-examples-df_table_alt.png
     :name: tutorial-sql-examples-df_table_alt
@@ -793,32 +811,32 @@ Let's now try to import the same data into a table named *"df_table_alt"* by set
 
 .. _tutorial-sql-examples-fetch-data:
 
-Fetch data from the database
-----------------------------
+Fetch data from a database
+--------------------------
 
-To retrieve the imported data, we can use the method :py:meth:`.read_table()<pyhelpers.sql.PostgreSQL.read_table>`:
+To retrieve the imported data, we can use the method :py:meth:`.read_table<pyhelpers.dbms.PostgreSQL.read_table>`:
 
 .. code-block:: python
 
     >>> df_retrieval_1 = pgdb.read_table("df_table")
 
     >>> res = df_retrieval_1.equals(data_frame)
-    >>> print("`df_retrieval_1` and `data_frame` have the same shape and elements? {}".format(res))
-    `df_retrieval_1` and `data_frame` have the same shape and elements? True
+    >>> print("`df_retrieval_1` is equal to `data_frame`? {}".format(res))
+    `df_retrieval_1` is equal to `data_frame`? True
 
-Alternatively, we can also use the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>`, which is more flexible in reading/querying data by PostgreSQL statement and could be much faster especially when the tabular data is fairly large. Let's use this method to fetch the same data from the table *"df_table_alt"*:
+Alternatively, we can also use the method :py:meth:`.read_sql_query<pyhelpers.dbms.PostgreSQL.read_sql_query>`, which serves as a more flexible way of reading/querying data. It takes PostgreSQL statements, and could be much faster when the queried table is fairly large. Let's try this method to fetch the same data from the table "*df_table_alt*":
 
 .. code-block:: python
 
     >>> df_retrieval_2 = pgdb.read_sql_query(sql_query='SELECT * FROM public.df_table_alt')
 
     >>> res = df_retrieval_2.round(8).equals(df_retrieval_1.round(8))
-    >>> print(f"`df_retrieval_2` and `df_retrieval_1` have the same shape and elements? {res}")
-    `df_retrieval_2` and `df_retrieval_1` have the same shape and elements? True
+    >>> print(f"`df_retrieval_2` is equal to `df_retrieval_1`? {res}")
+    `df_retrieval_2` is equal to `df_retrieval_1`? True
 
 .. note::
 
-    - The parameter ``sql_query`` for the method :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>` must end without ``';'``.
+    - For the method :py:meth:`.read_sql_query<pyhelpers.dbms.PostgreSQL.read_sql_query>`, any PostgreSQL statement that is passed to the parameter ``sql_query`` should NOT end with ``';'``.
 
 
 .. _tutorial-sql-examples-drop-data:
@@ -826,7 +844,9 @@ Alternatively, we can also use the method :py:meth:`.read_sql_query()<pyhelpers.
 Drop data
 ---------
 
-Before we finish the tutorial, we may want to clear up the databases and tables we've created. To delete a table (e.g. *"df_table"*), we can use the method :py:meth:`.drop_table()<pyhelpers.sql.PostgreSQL.drop_table>`:
+Before we leave this notebook, let's clear up the databases and tables we've created.
+
+We can delete/drop a table (e.g. "*df_table*") by using the method :py:meth:`.drop_table<pyhelpers.dbms.PostgreSQL.drop_table>`:
 
 .. code-block:: python
 
@@ -835,7 +855,7 @@ Before we finish the tutorial, we may want to clear up the databases and tables 
     ? [No]|Yes: yes
     Dropping "public"."df_table" ... Done.
 
-To delete a database, we can use the method :py:meth:`.drop_database()<pyhelpers.sql.PostgreSQL.drop_database>`:
+To delete/drop a database, we can use the method :py:meth:`.drop_database<pyhelpers.dbms.PostgreSQL.drop_database>`:
 
 .. code-block:: python
 
@@ -847,27 +867,27 @@ To delete a database, we can use the method :py:meth:`.drop_database()<pyhelpers
 
     >>> # Drop "pyhelpers_tutorial_alt"
     >>> pgdb.drop_database(database_name="pyhelpers_tutorial_alt", verbose=True)
-    To drop the database "pyhelpers_tutorial_alt" from postgres:***@localhost:5432/postgres
+    To drop the database "pyhelpers_tutorial_alt" from postgres:***@localhost:5432
     ? [No]|Yes: yes
     Dropping "pyhelpers_tutorial_alt" ... Done.
 
-Check the currently connected database:
+Check which database is the one being currently connected:
 
 .. code-block:: python
 
-    >>> print("The database being currently connected is \"{}\".".format(pgdb.database_name))
-    The database being currently connected is "postgres".
+    >>> print("We are currently connected with the database \"{}\".".format(pgdb.database_name))
+    We are currently connected with the database "postgres".
 
-Now we have removed all the databases and tables created above, and restored the PostgreSQL server to its original status.
+Now we have removed all the databases created above, and restored the PostgreSQL server to its original status.
 
 .. _tutorial-the-end:
 
-**This is the end of the** :ref:`brief tutorial<brief-tutorial>`.
+**This is the end of the** :ref:`Tutorial<pyhelpers-tutorial>`.
 
 -----------------------------------------------------------------
 
 Any issues regarding the use of the package are all welcome and should be logged/reported onto the `Issue Tracker`_.
 
-.. _Issue Tracker: https://github.com/mikeqfu/pyhelpers/issues
+.. _`Issue Tracker`: https://github.com/mikeqfu/pyhelpers/issues
 
-For more details and examples, check out :ref:`Modules<modules>`.
+For more details and examples, check :ref:`Modules<modules>`.
