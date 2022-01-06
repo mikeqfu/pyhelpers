@@ -20,10 +20,7 @@ PyHelpers
     :alt: Zenodo - DOI
     :target: https://zenodo.org/badge/latestdoi/173177909
 
-| **Author**: Qian Fu
-| **Email**: q.fu@bham.ac.uk
-|
-PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing tasks. It provides a miscellaneous collection of easy-to-use functions/classes that can help with tasks such as reading/writing of file-like objects, manipulation of various types of data (e.g. geographical data and textual data) and communication with a relational database management system (e.g. PostgreSQL).
+PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL).
 
 Resources
 #########
