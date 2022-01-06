@@ -1,5 +1,5 @@
 """
-Basic data manipulation with SQL.
+Communication with databases.
 
 *(The current release includes* `PostgreSQL <https://www.postgresql.org/>`_ *only.)*
 """
@@ -40,7 +40,7 @@ def get_database_address(db_cls):
 
     **Examples**::
 
-        >>> from pyhelpers.sql import get_database_address, PostgreSQL
+        >>> from pyhelpers.dbms import get_database_address, PostgreSQL
 
         >>> db_addr = get_database_address(db_cls=PostgreSQL)
         >>> db_addr
@@ -129,7 +129,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> # Connect the default database 'postgres'
             >>> postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
@@ -252,7 +252,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -296,7 +296,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -356,7 +356,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -425,7 +425,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -465,7 +465,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Creating a database: "testdb" ... Done.
@@ -513,7 +513,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -554,7 +554,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -618,7 +618,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -674,7 +674,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -713,7 +713,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -769,7 +769,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -866,7 +866,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -925,7 +925,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -1125,7 +1125,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -1192,7 +1192,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
@@ -1496,7 +1496,7 @@ class PostgreSQL:
 
         **Examples**::
 
-            >>> from pyhelpers.sql import PostgreSQL
+            >>> from pyhelpers.dbms import PostgreSQL
             >>> import pandas
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')

@@ -1,9 +1,9 @@
-sql
-===
+dbms
+====
 
-.. py:module:: pyhelpers.sql
+.. py:module:: pyhelpers.dbms
 
-.. automodule:: pyhelpers.sql
+.. automodule:: pyhelpers.dbms
     :noindex:
     :no-members:
     :no-inherited-members:

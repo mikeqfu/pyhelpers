@@ -2,7 +2,7 @@
 Modules
 =======
 
-The current release includes the following modules, with each containing a number of helper functions:
+The current release includes the following modules, with each containing a number of utilities:
 
 .. py:module:: pyhelpers
 
@@ -14,7 +14,7 @@ The current release includes the following modules, with each containing a numbe
     store
     geom
     text
-    sql
+    dbms
 
 .. toctree::
     :maxdepth: 2
@@ -26,4 +26,4 @@ The current release includes the following modules, with each containing a numbe
     store
     geom
     text
-    sql
+    dbms
