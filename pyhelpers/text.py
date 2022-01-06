@@ -130,10 +130,10 @@ def extract_words1upper(x, join_with=None):
         'Retaining Wall'
     """
 
-    x_ = remove_punctuation(x)
+    y = remove_punctuation(x)
 
     # re.sub(r"([A-Z])", r" \1", x).split()
-    extracted_words = re.findall(r'[a-zA-Z][^A-Z]*', x_)
+    extracted_words = re.findall(r'[a-zA-Z][^A-Z]*', y)
 
     if join_with:
         extracted_words = join_with.join(extracted_words)
@@ -146,14 +146,14 @@ def extract_words1upper(x, join_with=None):
 
 def find_matched_str(x, lookup_list):
     """
-    Find from a list the closest, case-insensitive, str to the given one.
+    Find all that are matched with a string from among a sequence of strings.
 
-    :param x: a string-type variable; if ``None``, the function will return ``None``
-    :type x: str or None
+    :param x: a string-type variable
+    :type x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: typing.Iterable
-    :return: a string-type variable that is case-insensitively the same as ``str_x``
-    :rtype: typing.Generator[typing.Iterable] or None
+    :type lookup_list: typing.List[str] or typing.Tuple[str] or typing.Sequence[str]
+    :return: a generator containing all that are matched with ``x``
+    :rtype: typing.Generator or None
 
     **Examples**::
 
@@ -164,19 +164,20 @@ def find_matched_str(x, lookup_list):
         >>> list(res)
         []
 
-        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
+        >>> lookup_lst += ['apple']
+        >>> lookup_lst
+        ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
+
         >>> res = find_matched_str('apple', lookup_lst)
         >>> list(res)
         ['apple']
+
+        >>> res = find_matched_str(r'app(le)?', lookup_lst)
+        >>> list(res)
+        ['app', 'apple']
     """
 
-    assert isinstance(x, str), "`x` must be a string."
-    assert isinstance(lookup_list, collections.abc.Iterable), "`lookup_list` must be iterable."
-
-    if x == '' or x is None:
-        return None
-
-    else:
+    if x is not None:
         for y in lookup_list:
             if re.match(x, y, re.IGNORECASE):
                 yield y
@@ -184,7 +185,7 @@ def find_matched_str(x, lookup_list):
 
 def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='difflib', **kwargs):
     """
-    Find similar string from a list of strings.
+    From among a sequence of strings, find ``n`` ones that are similar to ``x``.
 
     :param x: a string-type variable
     :type x: str
@@ -198,13 +199,13 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
         - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type processor: str
+    :type processor: str or None
 
     :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
     :type ignore_punctuation: bool
     :param kwargs: [optional] parameters of `difflib.get_close_matches`_ or
         `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``processor``
-    :return: a string-type variable that should be similar to (or the same as) ``str_x``
+    :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str or list or None
 
     .. _`difflib.get_close_matches`:
@@ -216,29 +217,38 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
 
         >>> from pyhelpers.text import find_similar_str
 
-        >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
+        >>> lookup_lst = ['Anglia',
+        ...               'East Coast',
+        ...               'East Midlands',
+        ...               'North and East',
+        ...               'London North Western',
+        ...               'Scotland',
+        ...               'South East',
+        ...               'Wales',
+        ...               'Wessex',
+        ...               'Western']
 
-        >>> str_similar = find_similar_str('Apple', lookup_lst)
+        >>> str_similar = find_similar_str('angle', lookup_lst)
         >>> str_similar
-        'app'
-        >>> str_similar = find_similar_str('Apple', lookup_lst, processor='fuzzywuzzy')
+        'Anglia'
+        >>> str_similar = find_similar_str('angle', lookup_lst, processor='fuzzywuzzy')
         >>> str_similar
-        'app'
+        'Anglia'
 
         >>> str_similar = find_similar_str('x', lookup_lst)
         >>> str_similar  # None
 
         >>> str_similar = find_similar_str('x', lookup_lst, processor='fuzzywuzzy')
         >>> str_similar
-        'apex'
+        'Wessex'
     """
 
-    assert processor in ('difflib', 'fuzzywuzzy'), \
+    assert processor in ('difflib', 'fuzzywuzzy', None), \
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
     m = len(lookup_list) if n is None else copy.copy(n)
 
-    if processor == 'difflib':
+    if processor == 'difflib' or processor is None:
         x_ = x.lower()
         lookup_dict = {y.lower(): y for y in lookup_list}
 
