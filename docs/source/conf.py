@@ -138,12 +138,13 @@ latex_documents = [
      ),
 ]
 
+first_release_date = 'September 2019'
 affiliation_school, affiliation_univ = __affiliation__.split(', ')
 
 # Customized title page
 latex_maketitle = r'''
+    \newgeometry{top=1.1in,bottom=1.1in,right=1.2in,left=1.2in}
     \pagenumbering{roman}
-
     \makeatletter
     \hypertarget{titlepage}{}
     \begin{titlepage}
@@ -165,13 +166,14 @@ latex_maketitle = r'''
         \textit{\Large {{%s}}} \par
 
         \vspace{35mm}
-        \textbf{\Large {{First release:}}} \Large September 2019 \par
+        \textbf{\Large {{First release:}}} \Large %s \par
         \textbf{\Large {{Last updated:}}} \Large \MonthYearFormat\today \par
         
-        \vspace{35mm}
+        \vspace{30mm}
         \Large \textcopyright \space Copyright %s \par
 
     \end{titlepage}
+    \restoregeometry
     \bookmark[dest=titlepage]{Title}
     \makeatother
 
@@ -200,6 +202,7 @@ latex_maketitle = r'''
            __author__,
            affiliation_school,
            affiliation_univ,
+           first_release_date,
            __copyright__)
 
 latex_preamble = r'''
