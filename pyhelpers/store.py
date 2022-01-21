@@ -7,6 +7,7 @@ import os
 import pathlib
 import pickle
 import subprocess
+import warnings
 import zipfile
 
 import pandas as pd
@@ -102,116 +103,20 @@ def _get_specific_filepath_info(path_to_file, verbose=False, verbose_end=" ... "
 """ == Save data ============================================================================= """
 
 
-def save(data, path_to_file, warning=False, **kwargs):
-    """
-    Save data to a file of specific format.
-
-    :param data: data that could be saved to
-        a `CSV`_, `Microsoft Excel`_, `Feather`_, `JSON`_ or `pickle`_ file
-    :type data: any
-    :param path_to_file: path where a file is saved
-    :type path_to_file: str
-    :param warning: whether to show a warning messages, defaults to ``False``
-    :type warning: bool
-    :param kwargs: [optional] parameters of :py:func:`pyhelpers.store.save_spreadsheet`,
-        :py:func:`pyhelpers.store.save_feather`, :py:func:`pyhelpers.store.save_json` or
-        :py:func:`pyhelpers.store.save_pickle`
-
-    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
-    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
-    .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
-    .. _`JSON`: https://www.json.org/json-en.html
-    .. _`Pickle`: https://docs.python.org/3/library/pickle.html
-
-    **Examples**::
-
-        >>> from pyhelpers.store import save
-        >>> from pyhelpers.dir import cd
-        >>> import pandas
-
-        >>> data_dir = cd("tests\\data")
-
-        >>> dat_list = [(530034, 180381),
-        ...             (406689, 286822),
-        ...             (383819, 398052),
-        ...             (582044, 152953)]
-
-        >>> idx = ['London', 'Birmingham', 'Manchester', 'Leeds']
-        >>> col = ['Easting', 'Northing']
-
-        >>> dat = pandas.DataFrame(dat_list, idx, col)
-        >>> dat
-                    Easting  Northing
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
-
-        >>> dat_file_path = cd(data_dir, "dat.txt")
-        >>> save(dat, dat_file_path, verbose=True)
-        Saving "dat.txt" to "tests\\data\\" ... Done.
-
-        >>> dat_file_path = cd(data_dir, "dat.csv")
-        >>> save(dat, dat_file_path, verbose=True)
-        Saving "dat.csv" to "tests\\data\\" ... Done.
-
-        >>> dat_file_path = cd(data_dir, "dat.xlsx")
-        >>> save(dat, dat_file_path, verbose=True)
-        Saving "dat.xlsx" to "tests\\data\\" ... Done.
-
-        >>> dat_file_path = cd(data_dir, "dat.pickle")
-        >>> save(dat, dat_file_path, verbose=True)
-        Saving "dat.pickle" to "tests\\data\\" ... Done.
-
-        >>> dat_file_path = cd(data_dir, "dat.feather")
-        >>> # `save(data_[, ...])` may produce an error due to the index of `dat`
-        >>> save(dat.reset_index(), dat_file_path, verbose=True)
-        Saving "dat.feather" to "tests\\data\\" ... Done.
-    """
-
-    # Make a copy the original data
-    data_ = data.copy()
-    if isinstance(data, pd.DataFrame) and data.index.nlevels > 1:
-        data_.reset_index(inplace=True)
-
-    # Save the data according to the file extension
-    if path_to_file.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        save_spreadsheet(data_, path_to_file, **kwargs)
-
-    elif path_to_file.endswith(".feather"):
-        save_feather(data_, path_to_file, **kwargs)
-
-    elif path_to_file.endswith(".json"):
-        save_json(data_, path_to_file, **kwargs)
-
-    elif path_to_file.endswith(".pickle"):
-        save_pickle(data_, path_to_file, **kwargs)
-
-    else:
-        if warning:
-            print("Note that the current file extension is not recognisable by this \"save()\".")
-
-        if confirmed("To save \"{}\" as a .pickle file? ".format(os.path.basename(path_to_file))):
-            save_pickle(data_, path_to_file, **kwargs)
-
-
 # Pickle files
 
-def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs):
+def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     """
-    Save data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
     :param pickle_data: data that could be dumped by the built-in module `pickle.dump`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str
-    :param mode: mode to `open`_ file, defaults to ``'wb'``
-    :type mode: str
+    :type path_to_pickle: str or os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `pickle.dump`_
 
-    .. _`open`: https://docs.python.org/3/library/functions.html#open
     .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
 
     **Example**::
@@ -229,50 +134,9 @@ def save_pickle(pickle_data, path_to_pickle, mode='wb', verbose=False, **kwargs)
     _get_specific_filepath_info(path_to_pickle, verbose=verbose, ret_info=False)
 
     try:
-        pickle_out = open(path_to_pickle, mode=mode)
+        pickle_out = open(path_to_pickle, mode='wb')
         pickle.dump(pickle_data, pickle_out, **kwargs)
         pickle_out.close()
-        print("Done.") if verbose else ""
-
-    except Exception as e:
-        print("Failed. {}.".format(e))
-
-
-# Joblib
-
-def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
-    """
-    Save data to a `joblib <https://pypi.org/project/joblib/>`_ file.
-
-    :param joblib_data: data that could be dumped by `joblib.dump`_
-    :type joblib_data: any
-    :param path_to_joblib: path where a pickle file is saved
-    :type path_to_joblib: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
-    :param kwargs: [optional] parameters of `joblib.dump`_
-
-    .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
-
-    **Example**::
-
-        >>> from pyhelpers.store import save_joblib
-        >>> from pyhelpers.dir import cd
-        >>> import numpy
-
-        >>> joblib_dat = numpy.random.rand(100, 100)
-        >>> joblib_path = cd("tests\\data", "dat.joblib")
-
-        >>> save_joblib(joblib_dat, joblib_path, verbose=True)
-        Saving "dat.joblib" to "tests\\data\\" ... Done.
-    """
-
-    _get_specific_filepath_info(path_to_joblib, verbose=verbose, ret_info=False)
-
-    try:
-        import joblib
-
-        joblib.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
         print("Done.") if verbose else ""
 
     except Exception as e:
@@ -294,7 +158,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         (e.g. with a file extension ".xlsx" or ".csv")
     :type spreadsheet_data: pandas.DataFrame
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str or None
+    :type path_to_spreadsheet: str or os.PathLike[str] or None
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param engine: options include ``'openpyxl'`` for latest Excel file formats,
@@ -378,7 +242,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
     :param sheet_names: all sheet names of an Excel workbook
     :type sheet_names: list or tuple or iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str
+    :type path_to_spreadsheet: str or os.PathLike[str]
     :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
     :param index: whether to include the index as a column, defaults to ``False``
@@ -512,7 +376,7 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
     :param json_data: data that could be dumped by as a JSON file
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str
+    :type path_to_json: str or os.PathLike[str]
     :param method: an open-source module used for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
         ``'rapidjson'`` (for `python-rapidjson`_)
@@ -568,6 +432,47 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         print("Failed. {}.".format(e))
 
 
+# Joblib
+
+def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
+    """
+    Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
+
+    :param joblib_data: data that could be dumped by `joblib.dump`_
+    :type joblib_data: any
+    :param path_to_joblib: path where a pickle file is saved
+    :type path_to_joblib: str or os.PathLike[str]
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :param kwargs: [optional] parameters of `joblib.dump`_
+
+    .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
+
+    **Example**::
+
+        >>> from pyhelpers.store import save_joblib
+        >>> from pyhelpers.dir import cd
+        >>> import numpy
+
+        >>> joblib_dat = numpy.random.rand(100, 100)
+        >>> joblib_path = cd("tests\\data", "dat.joblib")
+
+        >>> save_joblib(joblib_dat, joblib_path, verbose=True)
+        Saving "dat.joblib" to "tests\\data\\" ... Done.
+    """
+
+    _get_specific_filepath_info(path_to_joblib, verbose=verbose, ret_info=False)
+
+    try:
+        import joblib
+
+        joblib.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
+        print("Done.") if verbose else ""
+
+    except Exception as e:
+        print("Failed. {}.".format(e))
+
+
 # Feather files
 
 def save_feather(feather_data, path_to_feather, verbose=False):
@@ -577,7 +482,7 @@ def save_feather(feather_data, path_to_feather, verbose=False):
     :param feather_data: a data frame to be saved as a feather-formatted file
     :type feather_data: pandas.DataFrame
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str
+    :type path_to_feather: str or os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
 
@@ -619,9 +524,9 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
     :param path_to_fig_file: path where a figure file is saved
-    :type path_to_fig_file: str
+    :type path_to_fig_file: str or os.PathLike[str]
     :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
-    :type dpi: int, None
+    :type dpi: int or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
@@ -629,7 +534,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     :param kwargs: [optional] parameters of `matplotlib.pyplot.savefig`_
 
     .. _`matplotlib.pyplot.savefig`:
-        https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.savefig.html
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
     .. _`Inkscape`: https://inkscape.org
 
     **Examples**::
@@ -855,25 +760,138 @@ def save_web_page_as_pdf(url_to_web_page, path_to_pdf, page_size='A4', zoom=1.0,
             print("Failed. {}".format(e), end="")
 
 
+# A comprehensive function
+
+def save_data(data, path_to_file, warning=True, **kwargs):
+    """
+    Save data to a file of specific format.
+
+    :param data: data that could be saved to
+        a `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_, `Feather`_ file, or
+        an image file of a `Matplotlib`-supported format
+    :type data: any
+    :param path_to_file: path where a file is saved
+    :type path_to_file: str or os.PathLike[str]
+    :param warning: whether to show a warning messages, defaults to ``True``
+    :type warning: bool
+    :param kwargs: [optional] parameters of
+        :py:func:`save_pickle<pyhelpers.store.save_pickle>`,
+        :py:func:`save_spreadsheet<pyhelpers.store.save_spreadsheet>`,
+        :py:func:`save_json<pyhelpers.store.save_json>`,
+        :py:func:`save_joblib<pyhelpers.store.save_joblib>`,
+        :py:func:`save_feather<pyhelpers.store.save_feather>`, or
+        :py:func:`save_fig<pyhelpers.store.save_fig>`
+
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`Pickle`: https://docs.python.org/3/library/pickle.html
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`JSON`: https://www.json.org/json-en.html
+    .. _`Joblib`: https://pypi.org/project/joblib/
+    .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`Matplotlib`:
+        https://matplotlib.org/stable/api/backend_bases_api.html#
+        matplotlib.backend_bases.FigureCanvasBase.get_supported_filetypes
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_data
+        >>> from pyhelpers.dir import cd
+        >>> import pandas
+
+        >>> data_dir = cd("tests\\data")
+
+        >>> dat_list = [(530034, 180381),
+        ...             (406689, 286822),
+        ...             (383819, 398052),
+        ...             (582044, 152953)]
+
+        >>> idx = ['London', 'Birmingham', 'Manchester', 'Leeds']
+        >>> col = ['Easting', 'Northing']
+
+        >>> dat = pandas.DataFrame(dat_list, idx, col)
+        >>> dat
+                    Easting  Northing
+        London       530034    180381
+        Birmingham   406689    286822
+        Manchester   383819    398052
+        Leeds        582044    152953
+
+        >>> dat_pathname = cd(data_dir, "dat.txt")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.txt" to "tests\\data\\" ... Done.
+
+        >>> dat_pathname = cd(data_dir, "dat.csv")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.csv" to "tests\\data\\" ... Done.
+
+        >>> dat_pathname = cd(data_dir, "dat.xlsx")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.xlsx" to "tests\\data\\" ... Done.
+
+        >>> dat_pathname = cd(data_dir, "dat.pickle")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.pickle" to "tests\\data\\" ... Done.
+
+        >>> dat_pathname = cd(data_dir, "dat.feather")
+        >>> # `save(data_[, ...])` may produce an error due to the index of `dat`
+        >>> save_data(dat.reset_index(), dat_pathname, verbose=True)
+        Saving "dat.feather" to "tests\\data\\" ... Done.
+    """
+
+    data_ = data.copy()  # Make a copy the original data
+
+    if isinstance(data, pd.DataFrame) and data.index.nlevels > 1:
+        data_.reset_index(inplace=True)
+
+    path_to_file_ = path_to_file.lower()
+
+    # Save the data according to the file extension
+    if path_to_file_.endswith(".pickle"):
+        save_pickle(data_, path_to_file, **kwargs)
+
+    elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
+        save_spreadsheet(data_, path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".json"):
+        save_json(data_, path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".joblib"):
+        save_joblib(data_, path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".feather"):
+        save_feather(data_, path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(
+            ('eps', 'jpeg', 'jpg', 'pdf', 'pgf', 'png', 'ps',
+             'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff')):
+        save_fig(path_to_file, **kwargs)
+
+    else:
+        if warning:
+            warnings.warn(
+                "The specified file format (extension) is not recognisable by "
+                "`pyhelpers.store.save_data`.")
+
+        if confirmed("To save the data as a .pickle file\n?"):
+            save_pickle(data_, path_to_file, **kwargs)
+
+
 """ == Load data ============================================================================= """
 
 
-def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
+def load_pickle(path_to_pickle, verbose=False, **kwargs):
     """
-    Load data from a `pickle`_ file.
+    Load data from a `Pickle`_ file.
 
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str
-    :param mode: mode to `open`_ file, defaults to ``'rb'``
-    :type mode: str
+    :type path_to_pickle: str or os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `pickle.load`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
 
-    .. _`pickle`: https://docs.python.org/3/library/pickle.html
-    .. _`open`: https://docs.python.org/3/library/functions.html#open
+    .. _`Pickle`: https://docs.python.org/3/library/pickle.html
     .. _`pickle.load`: https://docs.python.org/3/library/pickle.html#pickle.load
 
     Example::
@@ -894,67 +912,11 @@ def load_pickle(path_to_pickle, mode='rb', verbose=False, **kwargs):
         print("Loading \"{}\"".format(os.path.relpath(path_to_pickle)), end=" ... ")
 
     try:
-        pickle_in = open(path_to_pickle, mode=mode)
+        pickle_in = open(path_to_pickle, mode='rb')
         pickle_data = pickle.load(pickle_in, **kwargs)
         pickle_in.close()
         print("Done.") if verbose else ""
         return pickle_data
-
-    except Exception as e:
-        print("Failed. {}".format(e))
-
-
-def load_joblib(path_to_joblib, verbose=False, **kwargs):
-    """
-    Load data from a `joblib`_ file.
-
-    :param path_to_joblib: path where a joblib file is saved
-    :type path_to_joblib: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
-    :param kwargs: [optional] parameters of `joblib.load`_
-    :return: data retrieved from the specified path ``path_to_joblib``
-    :rtype: any
-
-    .. _`joblib`: https://pypi.org/project/joblib/
-    .. _`joblib.load`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
-
-    Example::
-
-        >>> from pyhelpers.store import load_joblib
-        >>> from pyhelpers.dir import cd
-
-        >>> joblib_path = cd("tests\\data", "dat.joblib")
-
-        >>> joblib_dat = load_joblib(joblib_path, verbose=True)
-        Loading "tests\\data\\dat.joblib" ... Done.
-
-        >>> joblib_dat
-        array([[0.39217296, 0.04115659, 0.92330057, ..., 0.14532720, 0.49324968,
-                0.03881915],
-               [0.90634699, 0.25862333, 0.26697948, ..., 0.29660476, 0.68259263,
-                0.84159475],
-               [0.31764887, 0.75153717, 0.24380341, ..., 0.48122767, 0.10094099,
-                0.29790084],
-               ...,
-               [0.52814915, 0.71957599, 0.08243408, ..., 0.87212171, 0.57398544,
-                0.97802605],
-               [0.48905238, 0.58182107, 0.73918226, ..., 0.16899552, 0.68858890,
-                0.56816121],
-               [0.14348573, 0.77819159, 0.31177084, ..., 0.85290419, 0.73422955,
-                0.63899742]])
-    """
-
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_joblib)), end=" ... ")
-
-    try:
-        import joblib
-
-        joblib_data = joblib.load(filename=path_to_joblib, **kwargs)
-        print("Done.") if verbose else ""
-
-        return joblib_data
 
     except Exception as e:
         print("Failed. {}".format(e))
@@ -965,7 +927,7 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     Load multiple sheets of an `Microsoft Excel`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str
+    :type path_to_spreadsheet: str or os.PathLike[str]
     :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -1044,7 +1006,7 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
     Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str
+    :type path_to_json: str or os.PathLike[str]
     :param method: an open-source Python package for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
         ``'rapidjson'`` (for `python-rapidjson`_)
@@ -1109,18 +1071,74 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
         print("Failed. {}".format(e))
 
 
+def load_joblib(path_to_joblib, verbose=False, **kwargs):
+    """
+    Load data from a `joblib`_ file.
+
+    :param path_to_joblib: path where a joblib file is saved
+    :type path_to_joblib: str or os.PathLike[str]
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :param kwargs: [optional] parameters of `joblib.load`_
+    :return: data retrieved from the specified path ``path_to_joblib``
+    :rtype: any
+
+    .. _`joblib`: https://pypi.org/project/joblib/
+    .. _`joblib.load`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
+
+    Example::
+
+        >>> from pyhelpers.store import load_joblib
+        >>> from pyhelpers.dir import cd
+
+        >>> joblib_path = cd("tests\\data", "dat.joblib")
+
+        >>> joblib_dat = load_joblib(joblib_path, verbose=True)
+        Loading "tests\\data\\dat.joblib" ... Done.
+
+        >>> joblib_dat
+        array([[0.39217296, 0.04115659, 0.92330057, ..., 0.14532720, 0.49324968,
+                0.03881915],
+               [0.90634699, 0.25862333, 0.26697948, ..., 0.29660476, 0.68259263,
+                0.84159475],
+               [0.31764887, 0.75153717, 0.24380341, ..., 0.48122767, 0.10094099,
+                0.29790084],
+               ...,
+               [0.52814915, 0.71957599, 0.08243408, ..., 0.87212171, 0.57398544,
+                0.97802605],
+               [0.48905238, 0.58182107, 0.73918226, ..., 0.16899552, 0.68858890,
+                0.56816121],
+               [0.14348573, 0.77819159, 0.31177084, ..., 0.85290419, 0.73422955,
+                0.63899742]])
+    """
+
+    if verbose:
+        print("Loading \"{}\"".format(os.path.relpath(path_to_joblib)), end=" ... ")
+
+    try:
+        import joblib
+
+        joblib_data = joblib.load(filename=path_to_joblib, **kwargs)
+        print("Done.") if verbose else ""
+
+        return joblib_data
+
+    except Exception as e:
+        print("Failed. {}".format(e))
+
+
 def load_feather(path_to_feather, verbose=False, **kwargs):
     """
     Load data frame from a `Feather`_ file.
 
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str
+    :type path_to_feather: str or os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `pandas.read_feather`_
 
-        * columns: (sequence, None) a sequence of column names, if ``None``, all columns
-        * use_threads: (bool) whether to parallelize reading using multiple threads, defaults to ``True``
+        * columns: a sequence of column names, if ``None``, all columns
+        * use_threads: whether to parallelize reading using multiple threads, defaults to ``True``
 
     :return: data retrieved from the specified path ``path_to_feather``
     :rtype: pandas.DataFrame
@@ -1153,6 +1171,69 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
 
     except Exception as e:
         print("Failed. {}".format(e))
+
+
+def load_data(path_to_file, warning=True, **kwargs):
+    """
+    Load data from a file.
+
+    :param path_to_file: pathname of a file;
+        supported file formats include
+        `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_ and `Feather`_
+    :type path_to_file: str or os.PathLike[str]
+    :param warning: whether to show a warning messages, defaults to ``True``
+    :type warning: bool
+    :param kwargs: [optional] parameters of
+        :py:func:`load_pickle<pyhelpers.store.save_pickle>`,
+        :py:func:`load_spreadsheet<pyhelpers.store.load_multiple_spreadsheets>`,
+        :py:func:`load_json<pyhelpers.store.load_json>`,
+        :py:func:`load_joblib<pyhelpers.store.load_joblib>`,
+        :py:func:`load_feather<pyhelpers.store.load_feather>`, or
+        `pandas.read_csv <https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html>`_
+    :return: loaded data
+    :rtype: any
+
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`Pickle`: https://docs.python.org/3/library/pickle.html
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`JSON`: https://www.json.org/json-en.html
+    .. _`Joblib`: https://pypi.org/project/joblib/
+    .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+
+    .. seealso::
+
+        Try with the examples for the function :py:func:`pyhelpers.store.save_data`.
+    """
+
+    path_to_file_ = path_to_file.lower()
+
+    if path_to_file_.endswith(".pickle"):
+        data = load_pickle(path_to_file, **kwargs)
+
+    elif path_to_file_.endswith((".csv", ".txt")):
+        data = pd.read_csv(path_to_file, **kwargs)
+
+    elif path_to_file_.endswith((".xlsx", ".xls")):
+        data = load_multiple_spreadsheets(path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".json"):
+        data = load_json(path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".joblib"):
+        data = load_joblib(path_to_file, **kwargs)
+
+    elif path_to_file_.endswith(".feather"):
+        data = load_feather(path_to_file, **kwargs)
+
+    else:
+        data = None
+
+        if warning:
+            warnings.warn(
+                "The specified file format (extension) is not recognisable by "
+                "`pyhelpers.store.load_data`.")
+
+    return data
 
 
 """ == Uncompress data ======================================================================= """
@@ -1222,8 +1303,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
         print("Failed. {}".format(e))
 
 
-def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
-              **kwargs):
+def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None, **kwargs):
     """
     Use `7-Zip <https://www.7-zip.org/>`_ to extract data from a compressed file.
 
