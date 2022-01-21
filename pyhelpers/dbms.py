@@ -1340,8 +1340,10 @@ class PostgreSQL:
         .. _`pandas.DataFrame.to_sql`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
-        See the example for the method
-        :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>`.
+        .. seealso::
+
+            The examples for the method :py:meth:`pyhelpers.sql.PostgreSQL.read_sql_query`.
+
         """
 
         schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
@@ -1429,8 +1431,10 @@ class PostgreSQL:
         .. _`pandas.read_sql`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
 
-        See the example for the method
-        :py:meth:`.read_sql_query()<pyhelpers.sql.PostgreSQL.read_sql_query>`.
+        .. seealso::
+
+            The examples for the method :py:meth:`pyhelpers.sql.PostgreSQL.read_sql_query`.
+
         """
 
         schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
