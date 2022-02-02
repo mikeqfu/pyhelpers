@@ -25,7 +25,10 @@ import pandas as pd
 import pkg_resources
 import requests
 import requests.adapters
+import scipy.sparse
 import urllib3.util.retry
+
+import pyhelpers._cache
 
 """ == General use =========================================================================== """
 
@@ -907,7 +910,6 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         indptr = csr_loader['indptr']
         shape = csr_loader['shape']
 
-        import scipy.sparse
         csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)
 
         print("Done.") if verbose else ""
@@ -1195,11 +1197,10 @@ def cmap_discretisation(cmap, n_colours):
     import matplotlib.cm
     import matplotlib.colors
 
-    if isinstance(cmap, str):
-        cmap = matplotlib.cm.get_cmap(cmap)
+    cmap_ = matplotlib.cm.get_cmap(cmap) if isinstance(cmap, str) else copy.copy(cmap)
 
     colours_i = np.concatenate((np.linspace(0, 1., n_colours), (0., 0., 0., 0.)))
-    colours_rgba = cmap(colours_i)
+    colours_rgba = cmap_(colours_i)
     indices = np.linspace(0, 1., n_colours + 1)
     c_dict = {}
 
@@ -1311,7 +1312,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" == Web scraping ========================================================================== """
+""" == Web data extraction =================================================================== """
 
 
 def is_network_connected():
@@ -1528,12 +1529,11 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
 
     **Example**::
 
-        >>> # noinspection PyProtectedMember
-        >>> from pyhelpers.ops import _user_agent_strings
+        from pyhelpers.ops import _user_agent_strings
 
-        >>> uas = _user_agent_strings()
-        >>> list(uas.keys())
-        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+        uas = _user_agent_strings()
+        list(uas.keys())
+        # ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
     """
 
     class _FakeUserAgentParser(html.parser.HTMLParser):
@@ -1570,12 +1570,12 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
             if self.recording:
                 self.data.append(data.strip())
 
-    resource_url = 'http://useragentstring.com/pages/useragentstring.php'
-
     if browser_names is None:
         browser_names_ = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
     else:
         browser_names_ = browser_names.copy()
+
+    resource_url = 'http://useragentstring.com/pages/useragentstring.php'
 
     user_agent_strings = {}
     for browser_name in browser_names_:
@@ -1592,15 +1592,15 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
 
         json_out = open(path_to_json, mode='w')
-        json_out.write(json.dumps(user_agent_strings))
+        json_out.write(json.dumps(user_agent_strings, indent=4))
         json_out.close()
 
     return user_agent_strings
 
 
-def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
+def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
     """
-    Get user-agent strings for some popular browsers.
+    Load user-agent strings of popular browsers.
 
     The current version collects a partially comprehensive list of user-agent strings for
     `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_ and `Opera`_.
@@ -1625,21 +1625,21 @@ def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbos
 
     **Examples**::
 
-        >>> from pyhelpers.ops import get_user_agent_strings
+        >>> from pyhelpers.ops import load_user_agent_strings
 
-        >>> uas = get_user_agent_strings()
+        >>> uas = load_user_agent_strings()
 
         >>> list(uas.keys())
         ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
         >>> type(uas['Chrome'])
         list
         >>> uas['Chrome'][0]
-        'Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.1 (KHTML, like Gecko) Ubuntu/10.04 Chromiu...
+        'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.10...
 
-        >>> uas_list = get_user_agent_strings(flattened=True, shuffled=True)
+        >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
         >>> type(uas_list)
         list
-        >>> uas_list[0]
+        >>> uas_list[0]  # a random one
         'Mozilla/5.0 (Windows NT) AppleWebKit/534.20 (KHTML, like Gecko) Chrome/11.0.672.2 Safari...
 
     .. note::
@@ -1649,10 +1649,10 @@ def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbos
     """
 
     if not update:
-        path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
-
-        json_in = open(path_to_json, mode='r')
-        user_agent_strings = json.loads(json_in.read())
+        # path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
+        # json_in = open(path_to_json, mode='r')
+        # user_agent_strings = json.loads(json_in.read())
+        user_agent_strings = pyhelpers._cache._USER_AGENT_STRINGS
 
     else:
         if verbose:
@@ -1660,13 +1660,14 @@ def get_user_agent_strings(shuffled=False, flattened=False, update=False, verbos
 
         try:
             user_agent_strings = _user_agent_strings(dump_dat=True)
+            pyhelpers._cache._USER_AGENT_STRINGS = user_agent_strings
             if verbose:
                 print("Done.")
 
         except Exception as e:
             if verbose:
                 print("Failed. {}".format(e))
-            user_agent_strings = get_user_agent_strings(update=False, verbose=False)
+            user_agent_strings = load_user_agent_strings(update=False, verbose=False)
 
     if shuffled:
         for browser_name, ua_str in user_agent_strings.items():
@@ -1718,13 +1719,13 @@ def get_user_agent_string(fancy=None, **kwargs):
         assert fancy in browser_names, f"`fancy` must be one of {browser_names}."
 
         kwargs.update({'flattened': False})
-        user_agent_strings_ = get_user_agent_strings(**kwargs)
+        user_agent_strings_ = load_user_agent_strings(**kwargs)
 
         user_agent_strings = user_agent_strings_[fancy]
 
     else:
         kwargs.update({'flattened': True})
-        user_agent_strings = get_user_agent_strings(**kwargs)
+        user_agent_strings = load_user_agent_strings(**kwargs)
 
     user_agent_string = random.choice(user_agent_strings)
 
@@ -1753,8 +1754,7 @@ def fake_requests_headers(randomized=True, **kwargs):
         {'user-agent': 'Mozilla/5.0 (X11; U; FreeBSD i386; en-US; rv:1.7.7) Gecko/20050420 Firefo...
 
         >>> fake_headers_2 = fake_requests_headers(randomized=False)
-        >>> # using a random Chrome user-agent string
-        >>> fake_headers_2
+        >>> fake_headers_2  # using a random Chrome user-agent string
         {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_4) AppleWebKit/534.30 (KHTML,...
 
         >>> fake_headers_2 == fake_headers_1

@@ -85,7 +85,7 @@ Web data extraction
     is_url_connectable
     is_downloadable
     init_requests_session
-    get_user_agent_strings
+    load_user_agent_strings
     get_user_agent_string
     fake_requests_headers
     download_file_from_url
