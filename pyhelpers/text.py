@@ -14,6 +14,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 
+from pyhelpers._cache import _ENGLISH_WRITTEN_NUMBERS
 from pyhelpers.ops import dict_to_dataframe
 
 """ == Basic processing of textual data ====================================================== """
@@ -143,6 +144,58 @@ def extract_words1upper(x, join_with=None):
         extracted_words = join_with.join(extracted_words)
 
     return extracted_words
+
+
+def numeral_english_to_arabic(x):
+    """
+    Convert a string which potentially is a number written in English to an Arabic number
+
+    :param x: a number written in English
+    :type x: str
+    :return: a number written in Arabic
+    :rtype: int
+
+    **Examples**::
+
+        >>> from pyhelpers.text import numeral_english_to_arabic
+
+        >>> numeral_english_to_arabic('one')
+        1
+
+        >>> numeral_english_to_arabic('one hundred and one')
+        101
+
+        >>> numeral_english_to_arabic('a thousand two hundred and three')
+        1203
+
+        >>> numeral_english_to_arabic('200 and five')
+        205
+
+        >>> numeral_english_to_arabic('Two hundred and fivety')  # Two hundred and fifty
+        Exception: Illegal word: "fivety"
+    """
+
+    current = result = 0
+
+    for word in x.lower().replace('-', ' ').split():
+        if word not in _ENGLISH_WRITTEN_NUMBERS and not word.isdigit():
+            # word_ = find_similar_str(word, ENGLISH_WRITTEN_NUMBERS)
+            # if word_ is None:
+            raise Exception(f"Illegal word: \"{word}\"")
+            # else:
+            #     word = word_
+
+        if word.isdigit():
+            scale, increment = (1, int(word))
+        else:
+            scale, increment = _ENGLISH_WRITTEN_NUMBERS[word]
+        current = current * scale + increment
+
+        if scale > 100:
+            result += current
+            current = 0
+
+    return result + current
 
 
 """ == Comparison of textual data ============================================================ """
