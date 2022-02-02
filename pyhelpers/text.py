@@ -14,7 +14,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 
-from .ops import dict_to_dataframe
+from pyhelpers.ops import dict_to_dataframe
 
 """ == Basic processing of textual data ====================================================== """
 
@@ -65,13 +65,13 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False):
     return acronym
 
 
-def remove_punctuation(x, rm_whitespace=False):
+def remove_punctuation(x, rm_whitespace=True):
     """
     Remove punctuation from string-type data.
 
     :param x: raw string-type data
     :type x: str
-    :param rm_whitespace: whether to remove whitespace, defaults to ``False``
+    :param rm_whitespace: whether to remove whitespace, defaults to ``True``
     :type rm_whitespace: bool
     :return: text with punctuation removed
     :rtype: str
@@ -80,27 +80,31 @@ def remove_punctuation(x, rm_whitespace=False):
 
         >>> from pyhelpers.text import remove_punctuation
 
-        >>> raw_text = 'Hello\tworld! :-)'
+        >>> raw_text = 'Hello\tworld! This is a test. :-)'
 
         >>> text = remove_punctuation(raw_text)
         >>> text
-        'Hello\tworld '
+        'Hello\tworld  This is a test'
 
         >>> text = remove_punctuation(raw_text, rm_whitespace=True)
         >>> text
-        'Hello world'
+        'Hello world This is a test'
     """
+
+    x_ = re.sub(r'[^\w\s]', ' ', x)
 
     # noinspection PyBroadException
     try:
-        y = x.translate(str.maketrans('', '', string.punctuation))
+        y = x_.translate(str.maketrans('', '', string.punctuation))
     except Exception:
-        y = ''.join(p for p in x if p not in string.punctuation)
+        y = ''.join(y_ for y_ in x_ if y_ not in string.punctuation)
+
+    z = y.strip()
 
     if rm_whitespace:
-        y = ' '.join(y.split())
+        z = ' '.join(z.split())
 
-    return y
+    return z
 
 
 def extract_words1upper(x, join_with=None):
@@ -183,7 +187,7 @@ def find_matched_str(x, lookup_list):
                 yield y
 
 
-def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='difflib', **kwargs):
+def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='difflib', **kwargs):
     """
     From among a sequence of strings, find ``n`` ones that are similar to ``x``.
 
@@ -194,12 +198,12 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
     :param n: number of similar strings to return, defaults to ``1``;
         if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
     :type n: int or None
-    :param processor: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
+    :param method: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
 
-        - if ``processor='difflib'``, the function relies on `difflib.get_close_matches`_
-        - if ``processor='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if ``method='difflib'``, the function relies on `difflib.get_close_matches`_
+        - if ``method='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type processor: str or None
+    :type method: str or None
 
     :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
     :type ignore_punctuation: bool
@@ -243,14 +247,14 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
         'Wessex'
     """
 
-    assert processor in ('difflib', 'fuzzywuzzy', None), \
+    assert method in ('difflib', 'fuzzywuzzy', None), \
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
     m = len(lookup_list) if n is None else copy.copy(n)
 
-    if processor == 'difflib' or processor is None:
+    if method in {'difflib', None}:
         x_ = x.lower()
-        lookup_dict = {y.lower(): y for y in lookup_list}
+        lookup_dict = {y.lower(): y for y in set(lookup_list)}
 
         if ignore_punctuation:
             x_ = remove_punctuation(x_)
@@ -263,10 +267,10 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, processor='di
         else:
             sim_str = lookup_dict[sim_str_[0]]
 
-    elif processor == 'fuzzywuzzy':
+    elif method == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
 
-        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list]
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in set(lookup_list)]
 
         if sum(l_distances) == 0:
             sim_str = None
