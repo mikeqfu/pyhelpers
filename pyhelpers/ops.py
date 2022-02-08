@@ -37,8 +37,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
     """
     Type to confirm whether to proceed or not.
 
-    See also
-    [`OPS-C-1 <https://code.activestate.com/recipes/541096-prompt-the-user-for-confirmation/>`_].
+    See also [`OPS-C-1 <https://code.activestate.com/recipes/541096/>`_].
 
     :param prompt: a message that prompts a response (Yes/No), defaults to ``None``
     :type prompt: str or None
@@ -99,35 +98,35 @@ def get_obj_attr(obj, col_names=None):
         >>> from pyhelpers.ops import get_obj_attr
         >>> from pyhelpers.dbms import PostgreSQL
 
-        >>> postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
+        >>> postgres = PostgreSQL()
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
         >>> obj_attr = get_obj_attr(postgres)
         >>> obj_attr.head()
-               Attribute                                 Value
-        0  DATABASE_NAME                              postgres
-        1           HOST                             localhost
-        2           PORT                                  5432
-        3       USERNAME                              postgres
-        4        address  postgres:***@localhost:5432/postgres
+                  Attribute       Value
+        0  DEFAULT_DATABASE    postgres
+        1   DEFAULT_DIALECT  postgresql
+        2    DEFAULT_DRIVER    psycopg2
+        3      DEFAULT_HOST   localhost
+        4      DEFAULT_PORT        5432
 
         >>> obj_attr.Attribute.to_list()
-        ['DATABASE_NAME',
-         'HOST',
-         'PORT',
-         'USERNAME',
+        ['DEFAULT_DATABASE',
+         'DEFAULT_DIALECT',
+         'DEFAULT_DRIVER',
+         'DEFAULT_HOST',
+         'DEFAULT_PORT',
+         'DEFAULT_SCHEMA',
+         'DEFAULT_USERNAME',
          'address',
-         'backend',
          'database_info',
          'database_name',
-         'dialect',
-         'driver',
          'engine',
          'host',
          'port',
          'url',
-         'user']
+         'username']
     """
 
     if col_names is None:
@@ -312,6 +311,51 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     return number_of_chunks
 
 
+def find_executable(app_name, possibilities=None):
+    """
+    Get pathname of an executable file for a specified application.
+
+    :param app_name: executable filename of the application that is to be called
+    :type app_name: str
+    :param possibilities: possible pathnames
+    :type possibilities: list or None
+    :return: pathname of the executable file
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import find_executable
+        >>> import os
+
+        >>> python_exe = "python.exe"
+        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
+
+        >>> path_to_python_exe = find_executable(app_name=python_exe, possibilities=possible_paths)
+        >>> os.path.relpath(path_to_python_exe)
+        'venv\\Scripts\\python.exe'
+
+        >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
+        >>> path_to_test_exe = find_executable(app_name=text_exe, possibilities=possible_paths)
+        >>> path_to_test_exe
+        'pyhelpers.exe'
+    """
+
+    exe = copy.copy(app_name)
+
+    if not os.path.isfile(exe):
+        alt_exe_pathnames = [shutil.which(app_name)]
+        if possibilities is not None:
+            alt_exe_pathnames += possibilities
+
+        for exe_pathname in alt_exe_pathnames:
+            if exe_pathname:
+                if os.path.isfile(exe_pathname):
+                    exe = exe_pathname
+                    break
+
+    return exe
+
+
 """ == Basic data manipulation =============================================================== """
 
 
@@ -319,7 +363,7 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 
 def loop_in_pairs(iterable):
     """
-    A function to iterate a list as pair (current, next).
+    Get every pair (current, next).
 
     :param iterable: iterable object
     :type iterable: typing.Iterable
@@ -334,9 +378,9 @@ def loop_in_pairs(iterable):
         >>> list(res)
         []
 
-        >>> res = loop_in_pairs(iterable=[1, 2])
+        >>> res = loop_in_pairs(iterable=range(0, 10))
         >>> list(res)
-        [(1, 2)]
+        [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]
     """
 
     a, b = itertools.tee(iterable)
@@ -702,6 +746,53 @@ def remove_dict_keys(dictionary, *keys):
             dictionary.pop(k)
 
 
+def compare_dicts(dict1, dict2):
+    """
+    Compare the difference between two dictionaries.
+
+    See also [`OPS-CD-1 <https://stackoverflow.com/questions/23177439>`_].
+
+    :param dict1: a dictionary
+    :type dict1: dict
+    :param dict2: another dictionary
+    :type dict2: dict
+    :return: in comparison to ``dict1``, the main difference on ``dict2``, including:
+        modified items, keys that are the same, keys where values remain unchanged, new keys and
+        keys that are removed
+    :rtype: typing.Tuple[dict, list]
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import compare_dicts
+
+        >>> d1 = {'a': 1, 'b': 2, 'c': 3}
+        >>> d2 = {'b': 2, 'c': 4, 'd': [5, 6]}
+
+        >>> items_modified, k_shared, k_unchanged, k_new, k_removed = compare_dicts(d1, d2)
+        >>> items_modified
+        {'c': [3, 4]}
+        >>> k_shared
+        ['b', 'c']
+        >>> k_unchanged
+        ['b']
+        >>> k_new
+        ['d']
+        >>> k_removed
+        ['a']
+    """
+
+    dk1, dk2 = map(lambda x: set(x.keys()), (dict1, dict2))
+
+    shared_keys = dk1.intersection(dk2)
+
+    added_keys, removed_keys = list(dk2 - dk1), list(dk1 - dk2)
+
+    modified_items = {k: [dict1[k], dict2[k]] for k in shared_keys if dict1[k] != dict2[k]}
+    unchanged_keys = list(set(k for k in shared_keys if dict1[k] == dict2[k]))
+
+    return modified_items, list(shared_keys), unchanged_keys, added_keys, removed_keys
+
+
 def merge_dicts(*dicts):
     """
     Merge multiple dictionaries.
@@ -711,7 +802,7 @@ def merge_dicts(*dicts):
     :return: a single dictionary containing all elements of the input
     :rtype: dict
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import merge_dicts
 
@@ -722,13 +813,33 @@ def merge_dicts(*dicts):
         >>> merged_dict = merge_dicts(dict_a, dict_b, dict_c)
         >>> merged_dict
         {'a': 1, 'b': 2, 'c': 3}
+
+        >>> dict_c_ = {'c': 4}
+        >>> merged_dict = merge_dicts(merged_dict, dict_c_)
+        >>> merged_dict
+        {'a': 1, 'b': 2, 'c': [3, 4]}
+
+        >>> dict_1 = merged_dict
+        >>> dict_2 = {'b': 2, 'c': 4, 'd': [5, 6]}
+        >>> merged_dict = merge_dicts(dict_1, dict_2)
+        {'a': 1, 'b': 2, 'c': [[3, 4], 4], 'd': [5, 6]}
     """
 
-    super_dict = {}
+    new_dict = {}
     for d in dicts:
-        super_dict.update(d)
+        d_ = d.copy()
+        # dk1, dk2 = map(lambda x: set(x.keys()), (new_dict, d_))
+        # modified = {k: [new_dict[k], d_[k]] for k in dk1.intersection(dk2) if new_dict[k] != d_[k]}
+        modified_items, _, _, _, _, = compare_dicts(new_dict, d_)
 
-    return super_dict
+        if bool(modified_items):
+            new_dict.update(modified_items)
+            for k_ in modified_items.keys():
+                remove_dict_keys(d_, k_)
+
+        new_dict.update(d_)
+
+    return new_dict
 
 
 # Tabular data
@@ -747,38 +858,25 @@ def detect_nan_for_str_column(data_frame, column_names=None):
     **Example**::
 
         >>> from pyhelpers.ops import detect_nan_for_str_column
-        >>> import numpy
-        >>> import pandas
+        >>> from pyhelpers._cache import example_dataframe
 
-        >>> df = pandas.DataFrame(numpy.resize(range(10), (10, 2)), columns=['a', 'b'])
-        >>> df
-           a  b
-        0  0  1
-        1  2  3
-        2  4  5
-        3  6  7
-        4  8  9
-        5  0  1
-        6  2  3
-        7  4  5
-        8  6  7
-        9  8  9
+        >>> dat = example_dataframe()
+        >>> dat
+                    Easting  Northing
+        London       530034    180381
+        Birmingham   406689    286822
+        Manchester   383819    398052
+        Leeds        582044    152953
 
-        >>> df.iloc[3, 1] = numpy.nan
-        >>> df
-           a    b
-        0  0  1.0
-        1  2  3.0
-        2  4  5.0
-        3  6  NaN
-        4  8  9.0
-        5  0  1.0
-        6  2  3.0
-        7  4  5.0
-        8  6  7.0
-        9  8  9.0
+        >>> dat.iloc[3, 1] = None
+        >>> dat
+                    Easting  Northing
+        London       530034  180381.0
+        Birmingham   406689  286822.0
+        Manchester   383819  398052.0
+        Leeds        582044       NaN
 
-        >>> nan_col_pos = detect_nan_for_str_column(df, column_names=None)
+        >>> nan_col_pos = detect_nan_for_str_column(data_frame=dat, column_names=None)
         >>> list(nan_col_pos)
         [1]
     """
@@ -806,7 +904,6 @@ def create_rotation_matrix(theta):
         >>> from pyhelpers.ops import create_rotation_matrix
 
         >>> rot_mat = create_rotation_matrix(theta=30)
-
         >>> rot_mat
         array([[-0.98803162,  0.15425145],
                [-0.15425145, -0.98803162]])
@@ -836,10 +933,10 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
 
         >>> from pyhelpers.ops import dict_to_dataframe
 
-        >>> input_dict_ = {'a': 1, 'b': 2}
+        >>> test_dict = {'a': 1, 'b': 2}
 
-        >>> df = dict_to_dataframe(input_dict_)
-        >>> df
+        >>> dat = dict_to_dataframe(input_dict=test_dict)
+        >>> dat
           key  value
         0   a      1
         1   b      2
@@ -889,14 +986,14 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         ...                        indices=csr_m.indices, data=csr_m.data,
         ...                        shape=csr_m.shape)
 
-        >>> csr_mat_ = parse_csr_matrix(path_to_csr_npz, verbose=True)
+        >>> parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
         Loading "\\tests\\data\\csr_mat.npz" ... Done.
 
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
-        >>> (csr_mat_ != csr_m).count_nonzero() == 0
+        >>> (parsed_csr_mat != csr_m).count_nonzero() == 0
         True
 
-        >>> (csr_mat_ != csr_m).nnz == 0
+        >>> (parsed_csr_mat != csr_m).nnz == 0
         True
     """
 
@@ -938,26 +1035,33 @@ def swap_cols(array, c1, c2, as_list=False):
     **Examples**::
 
         >>> from pyhelpers.ops import swap_cols
-        >>> import numpy
+        >>> from pyhelpers._cache import example_dataframe
 
-        >>> arr = numpy.array([[55.95615851, -2.96251228],
-        ...                    [55.95705685, -2.96253458],
-        ...                    [55.95706935, -2.96093324],
-        ...                    [55.956171  , -2.96091098]])
+        >>> example_arr = example_dataframe().to_numpy(dtype=int)
+        >>> example_arr
+        array([[530034, 180381],
+               [406689, 286822],
+               [383819, 398052],
+               [582044, 152953]])
 
-        >>> new_arr = swap_cols(arr, c1=0, c2=1)
+        >>> # Swap the 0th and 1st columns
+        >>> new_arr = swap_cols(example_arr, c1=0, c2=1)
         >>> new_arr
-        array([[-2.96251228, 55.95615851],
-               [-2.96253458, 55.95705685],
-               [-2.96093324, 55.95706935],
-               [-2.96091098, 55.956171  ]])
+        array([[180381, 530034],
+               [286822, 406689],
+               [398052, 383819],
+               [152953, 582044]])
+
+        >>> new_list = swap_cols(example_arr, c1=0, c2=1, as_list=True)
+        >>> new_list
+        [[180381, 530034], [286822, 406689], [398052, 383819], [152953, 582044]]
     """
 
     array_ = array.copy()
     array_[:, c1], array_[:, c2] = array[:, c2], array[:, c1]
 
     if as_list:
-        array_ = list(array_)
+        array_ = array_.tolist()
 
     return array_
 
@@ -980,26 +1084,33 @@ def swap_rows(array, r1, r2, as_list=False):
     **Examples**::
 
         >>> from pyhelpers.ops import swap_rows
-        >>> import numpy
+        >>> from pyhelpers._cache import example_dataframe
 
-        >>> arr = numpy.array([[55.95615851, -2.96251228],
-        ...                    [55.95705685, -2.96253458],
-        ...                    [55.95706935, -2.96093324],
-        ...                    [55.956171  , -2.96091098]])
+        >>> example_arr = example_dataframe().to_numpy(dtype=int)
+        >>> example_arr
+        array([[530034, 180381],
+               [406689, 286822],
+               [383819, 398052],
+               [582044, 152953]])
 
-        >>> new_arr = swap_rows(arr, r1=0, r2=1)
+        >>> # Swap the 0th and 1st rows
+        >>> new_arr = swap_rows(example_arr, r1=0, r2=1)
         >>> new_arr
-        array([[55.95705685, -2.96253458],
-               [55.95615851, -2.96251228],
-               [55.95706935, -2.96093324],
-               [55.956171  , -2.96091098]])
+        array([[406689, 286822],
+               [530034, 180381],
+               [383819, 398052],
+               [582044, 152953]])
+
+        >>> new_list = swap_rows(example_arr, r1=0, r2=1, as_list=True)
+        >>> new_list
+        [[406689, 286822], [530034, 180381], [383819, 398052], [582044, 152953]]
     """
 
     array_ = array.copy()
     array_[r1, :], array_[r2, :] = array[r2, :], array[r1, :]
 
     if as_list:
-        array_ = list(array_)
+        array_ = array_.tolist()
 
     return array_
 
@@ -1024,6 +1135,22 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
         >>> import pandas
 
         >>> data = pandas.DataFrame(range(100), columns=['col'])
+        >>> data
+            col
+        0     0
+        1     1
+        2     2
+        3     3
+        4     4
+        ..  ...
+        95   95
+        96   96
+        97   97
+        98   98
+        99   99
+
+        [100 rows x 1 columns]
+
         >>> data.describe()
                       col
         count  100.000000
@@ -1064,22 +1191,11 @@ def interquartile_range(num_dat):
     **Example**::
 
         >>> from pyhelpers.ops import interquartile_range
-        >>> import pandas
 
-        >>> data = pandas.DataFrame(range(100), columns=['col'])
-        >>> data.describe()
-                      col
-        count  100.000000
-        mean    49.500000
-        std     29.011492
-        min      0.000000
-        25%     24.750000
-        50%     49.500000
-        75%     74.250000
-        max     99.000000
+        >>> data = list(range(100))
 
-        >>> iqr_ = interquartile_range(data)
-        >>> iqr_
+        >>> iqr_result = interquartile_range(data)
+        >>> iqr_result
         49.5
     """
 
@@ -1108,8 +1224,8 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
         >>> from pyhelpers.ops import find_closest_date
         >>> import pandas
 
-        >>> date_list = pandas.date_range('2019-01-02', '2019-12-31')
-        >>> date_list
+        >>> example_dates = pandas.date_range('2019-01-02', '2019-12-31')
+        >>> example_dates
         DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
                        '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09',
                        '2019-01-10', '2019-01-11',
@@ -1119,15 +1235,15 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
                        '2019-12-30', '2019-12-31'],
                       dtype='datetime64[ns]', length=364, freq='D')
 
-        >>> date_ = '2019-01-01'
-        >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=True)
-        >>> closest_date_
-        Timestamp('2019-01-02 00:00:00', freq='D')
-
-        >>> date_ = pandas.to_datetime('2019-01-01')
-        >>> closest_date_ = find_closest_date(date_, date_list, as_datetime=False)
-        >>> closest_date_
+        >>> example_date = '2019-01-01'
+        >>> closest_example_date = find_closest_date(example_date, example_dates)
+        >>> closest_example_date
         '2019-01-02 00:00:00.000000'
+
+        >>> example_date = pandas.to_datetime('2019-01-01')
+        >>> closest_example_date = find_closest_date(example_date, example_dates, as_datetime=True)
+        >>> closest_example_date
+        Timestamp('2019-01-02 00:00:00', freq='D')
     """
 
     closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
@@ -1190,8 +1306,12 @@ def cmap_discretisation(cmap, n_colours):
         :align: center
         :width: 60%
 
-        An example of discrete colour ramp, created by
+        An example of discrete colour ramp, created by the function
         :py:func:`cmap_discretisation()<pyhelpers.ops.cmap_discretisation>`.
+
+    .. code-block:: python
+
+        >>> plt.close()
     """
 
     import matplotlib.cm
@@ -1265,7 +1385,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         :width: 23%
 
         An example of colour bar with numerical index,
-        created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        created by the function :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
 
     .. code-block:: python
 
@@ -1290,7 +1410,11 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         :width: 23%
 
         An example of colour bar with textual index,
-        created by :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        created by the function :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+
+    .. code-block:: python
+
+        >>> plt.close(fig='all')
     """
 
     import matplotlib.cm
@@ -1372,6 +1496,7 @@ def is_url(url, partially=False):
         False
     """
 
+    # noinspection PyBroadException
     try:
         parsed_url = urllib.parse.urlparse(url)
         schema_netloc = [parsed_url.scheme, parsed_url.netloc]
@@ -1385,7 +1510,7 @@ def is_url(url, partially=False):
         else:
             assert re.match(r'(ht|f)tp(s)?', parsed_url.scheme.lower())
 
-    except AssertionError:
+    except Exception:  # (AssertionError, AttributeError)
         rslt = False
 
     return rslt
@@ -1640,7 +1765,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         >>> type(uas_list)
         list
         >>> uas_list[0]  # a random one
-        'Mozilla/5.0 (Windows NT) AppleWebKit/534.20 (KHTML, like Gecko) Chrome/11.0.672.2 Safari...
+        'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/534.13 (KHTML, like Gecko) C...
 
     .. note::
 
@@ -1701,12 +1826,12 @@ def get_user_agent_string(fancy=None, **kwargs):
         >>> # Get a random user-agent string
         >>> uas_0 = get_user_agent_string()
         >>> uas_0
-        'Mozilla/5.0 (Windows; U; Win98; de-DE; rv:1.7.7) Gecko/20050414 Firefox/1.0.3'
+        'Opera/7.01 (Windows 98; U)  [en]'
 
         >>> # Get a random Chrome user-agent string
         >>> uas_1 = get_user_agent_string(fancy='Chrome')
         >>> uas_1
-        'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:22.0) Gecko/20130328 Firefox/22.0'
+        'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.9...
 
     .. note::
 
@@ -1751,14 +1876,11 @@ def fake_requests_headers(randomized=True, **kwargs):
 
         >>> fake_headers_1 = fake_requests_headers()
         >>> fake_headers_1
-        {'user-agent': 'Mozilla/5.0 (X11; U; FreeBSD i386; en-US; rv:1.7.7) Gecko/20050420 Firefo...
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.19 (KHTML...
 
         >>> fake_headers_2 = fake_requests_headers(randomized=False)
         >>> fake_headers_2  # using a random Chrome user-agent string
-        {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_4) AppleWebKit/534.30 (KHTML,...
-
-        >>> fake_headers_2 == fake_headers_1
-        False
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1 (KHTML,...
 
     .. note::
 
@@ -1839,23 +1961,23 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type random_header: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param requests_session_args: [optional] parameters of
-        :py:func:`init_requests_session<pyhelpers.ops.init_requests_session>`, defaults to ``None``
+    :param requests_session_args: [optional] parameters of the function
+        :py:func:`pyhelpers.ops.init_requests_session`, defaults to ``None``
     :type requests_session_args: dict or None
-    :param fake_headers_args: [optional] parameters of
-        :py:func:`fake_requests_headers<pyhelpers.ops.fake_requests_headers>`, defaults to ``None``
+    :param fake_headers_args: [optional] parameters of the function
+        :py:func:`pyhelpers.ops.fake_requests_headers`, defaults to ``None``
     :type fake_headers_args: dict or None
-    :param kwargs: [optional] parameters of `requests.Session.get`_
+    :param kwargs: [optional] parameters of `requests.Session.get()`_
 
-    .. _requests.Session.get:
+    .. _`requests.Session.get()`:
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
 
     **Example**::
 
         >>> from pyhelpers.ops import download_file_from_url
         >>> from pyhelpers.dir import cd
-        >>> import os
         >>> from PIL import Image
+        >>> import os
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests", "images", "python-logo.png")
