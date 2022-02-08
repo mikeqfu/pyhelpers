@@ -105,22 +105,25 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
         https://pyproj4.github.io/pyproj/stable/api/transformer.html?
         #pyproj.transformer.Transformer.transform
 
-    .. _wgs84_to_osgb36-example:
+    .. _geom-wgs84_to_osgb36-example:
 
     **Examples**::
 
         >>> from pyhelpers.geom import wgs84_to_osgb36
-        >>> import numpy
+        >>> from pyhelpers._cache import example_dataframe
 
         >>> lon, lat = -0.1277, 51.5074
         >>> x, y = wgs84_to_osgb36(lon, lat)
         >>> print(f"(Easting, Northing): {(x, y)}")
         (Easting, Northing): (530035.6864715678, 180380.27177236252)
 
-        >>> lonlat_array = numpy.array([[-0.12772401, 51.50740693],   # London
-        ...                             [-1.90294064, 52.47928436],   # Birmingham
-        ...                             [-2.24527795, 53.47894006],   # Manchester
-        ...                             [ 0.60693267, 51.24669501]])  # Leeds
+        >>> lonlat_array = example_dataframe(osgb36=False).to_numpy()
+        >>> lonlat_array
+        array([[-0.12772401, 51.50740693],
+               [-1.90294064, 52.47928436],
+               [-2.24527795, 53.47894006],
+               [ 0.60693267, 51.24669501]])
+
         >>> lons, lats = lonlat_array.T  # lonlat_array[:, 0], lonlat_array[:, 1]
         >>> xs, ys = wgs84_to_osgb36(longitudes=lons, latitudes=lats)
         >>> xs
@@ -175,18 +178,14 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.geom import osgb36_to_wgs84
-        >>> import numpy
+        >>> from pyhelpers._cache import example_dataframe
 
         >>> x, y = 530034, 180381
         >>> lon, lat = osgb36_to_wgs84(x, y)
         >>> print(f"(Longitude, Latitude): {(lon, lat)}")
         (Longitude, Latitude): (-0.12772400574286916, 51.50740692743041)
 
-        >>> xy_array = numpy.array([(530034, 180381),   # London
-        ...                         (406689, 286822),   # Birmingham
-        ...                         (383819, 398052),   # Manchester
-        ...                         (582044, 152953)],  # Leeds
-        ...                        dtype=numpy.int64)
+        >>> xy_array = example_dataframe().to_numpy()
         >>> xs, ys = xy_array.T  # xy_array[:, 0], xy_array[:, 1]
         >>> lons, lats = osgb36_to_wgs84(xs, ys)
         >>> lons
@@ -395,6 +394,8 @@ def calc_hypotenuse_distance(pt1, pt2):
     """
     Calculate hypotenuse given two points (the right-angled triangle, given its side and perpendicular).
 
+    See also [`GEOM-CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
+
     :param pt1: a point
     :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
     :param pt2: another point
@@ -404,11 +405,8 @@ def calc_hypotenuse_distance(pt1, pt2):
 
     .. note::
 
-        This is the length of the vector from the ``orig_pt`` to ``dest_pt``.
-
-        ``numpy.hypot(x, y)`` return the Euclidean norm, ``sqrt(x*x + y*y)``.
-
-        See also [`GEOM-CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
+        - This is the length of the vector from the ``orig_pt`` to ``dest_pt``.
+        - ``numpy.hypot(x, y)`` return the Euclidean norm, ``sqrt(x*x + y*y)``.
 
     **Examples**::
 
@@ -540,43 +538,43 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
     **Examples**::
 
         >>> from pyhelpers.geom import find_closest_points
-        >>> import numpy
         >>> from shapely.geometry import LineString, MultiPoint
+        >>> import numpy
 
         >>> pts_1 = numpy.array([[1.5429, 52.6347],
         ...                      [1.4909, 52.6271],
         ...                      [1.4248, 52.63075]])
-        >>> pts_reference = numpy.array([[2.5429, 53.6347],
-        ...                              [2.4909, 53.6271],
-        ...                              [2.4248, 53.63075]])
+        >>> pts_ref = numpy.array([[2.5429, 53.6347],
+        ...                        [2.4909, 53.6271],
+        ...                        [2.4248, 53.63075]])
 
-        >>> pts_closest = find_closest_points(pts_1, pts_reference, k=1)
+        >>> pts_closest = find_closest_points(pts_1, pts_ref, k=1)
         >>> pts_closest
         array([[ 2.4248 , 53.63075],
                [ 2.4248 , 53.63075],
                [ 2.4248 , 53.63075]])
 
-        >>> pts_closest = find_closest_points(pts_1, pts_reference, k=1, as_geom=True)
+        >>> pts_closest = find_closest_points(pts_1, pts_ref, k=1, as_geom=True)
         >>> pts_closest.wkt
         'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
 
-        >>> _, idx = find_closest_points(pts_1, pts_reference, k=1, ret_idx=True)
+        >>> _, idx = find_closest_points(pts_1, pts_ref, k=1, ret_idx=True)
         >>> idx
         array([2, 2, 2], dtype=int64)
 
-        >>> _, _, dist = find_closest_points(pts_1, pts_reference, k=1, ret_idx=True, ret_dist=True)
+        >>> _, _, dist = find_closest_points(pts_1, pts_ref, k=1, ret_idx=True, ret_dist=True)
         >>> dist
         array([1.33036206, 1.37094221, 1.41421356])
 
         >>> pts_2 = LineString(pts_1)
-        >>> pts_closest = find_closest_points(pts_2, pts_reference, k=1)
+        >>> pts_closest = find_closest_points(pts_2, pts_ref, k=1)
         >>> pts_closest
         array([[ 2.4248 , 53.63075],
                [ 2.4248 , 53.63075],
                [ 2.4248 , 53.63075]])
 
         >>> pts_3 = MultiPoint(pts_1)
-        >>> pts_closest = find_closest_points(pts_3, pts_reference, k=1, as_geom=True)
+        >>> pts_closest = find_closest_points(pts_3, pts_ref, k=1, as_geom=True)
         >>> pts_closest.wkt
         'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
     """
@@ -722,8 +720,7 @@ def get_geometric_midpoint(pt1, pt2, as_geom=False):
 
     .. seealso::
 
-        Check out also the example of the function
-        :py:func:`get_geometric_midpoint_calc<pyhelpers.geom.get_geometric_midpoint_calc>`.
+        - Examples for the function :py:func:`pyhelpers.geom.get_geometric_midpoint_calc`.
     """
 
     pt_x_, pt_y_ = transform_geom_point_type(pt1, pt2, as_geom=True)
@@ -741,7 +738,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
     Get the midpoint between two points by pure calculation.
 
     See also
-    [`GEOM-GGMC-1 <https://code.activestate.com/recipes/577713-midpoint-of-two-gps-points/>`_]
+    [`GEOM-GGMC-1 <https://code.activestate.com/recipes/577713/>`_]
     and
     [`GEOM-GGMC-2 <https://www.movable-type.co.uk/scripts/latlong.html>`_].
 
@@ -772,8 +769,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
 
     .. seealso::
 
-        Check out also the example of the function
-        :py:func:`get_geometric_midpoint<pyhelpers.geom.get_geometric_midpoint>`.
+        - Examples for the function :py:func:`pyhelpers.geom.get_geometric_midpoint`.
     """
 
     pt_x_, pt_y_ = transform_geom_point_type(pt1, pt2, as_geom=True)
@@ -937,8 +933,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
 
     .. seealso::
 
-        Check out also the exmaple of the function
-        :py:func:`get_square_vertices<pyhelpers.geom.get_square_vertices>`.
+        - Exmaples for the function :py:func:`pyhelpers.geom.get_square_vertices`.
     """
 
     theta_rad = np.deg2rad(rotation_theta)
@@ -1024,7 +1019,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         :align: center
         :width: 53%
 
-        An example of a sketch of a square, created by
+        An example of a sketch of a square, created by the function
         :py:func:`sketch_square()<pyhelpers.geom.sketch_square>`.
 
     .. code-block:: python
@@ -1040,6 +1035,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         :width: 53%
 
         An example of a sketch of a square rotated 75 degrees anticlockwise about the centre.
+
+    .. code-block:: python
+
+        >>> plt.close(fig='all')
     """
 
     import matplotlib.pyplot
