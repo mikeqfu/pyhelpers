@@ -14,8 +14,8 @@ import subprocess
 import numpy as np
 import pandas as pd
 
-from pyhelpers._cache import _ENGLISH_WRITTEN_NUMBERS
-from pyhelpers.ops import dict_to_dataframe
+from ._cache import _ENGLISH_WRITTEN_NUMBERS
+from .ops import dict_to_dataframe, find_executable
 
 """ == Basic processing of textual data ====================================================== """
 
@@ -285,17 +285,17 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         ...               'Wessex',
         ...               'Western']
 
-        >>> str_similar = find_similar_str('angle', lookup_lst)
+        >>> str_similar = find_similar_str(x='angle', lookup_list=lookup_lst)
         >>> str_similar
         'Anglia'
-        >>> str_similar = find_similar_str('angle', lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar = find_similar_str(x='angle', lookup_list=lookup_lst, method='fuzzywuzzy')
         >>> str_similar
         'Anglia'
 
-        >>> str_similar = find_similar_str('x', lookup_lst)
+        >>> str_similar = find_similar_str(x='x', lookup_list=lookup_lst)
         >>> str_similar  # None
 
-        >>> str_similar = find_similar_str('x', lookup_lst, processor='fuzzywuzzy')
+        >>> str_similar = find_similar_str(x='x', lookup_list=lookup_lst, method='fuzzywuzzy')
         >>> str_similar
         'Wessex'
     """
@@ -307,7 +307,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
 
     if method in {'difflib', None}:
         x_ = x.lower()
-        lookup_dict = {y.lower(): y for y in set(lookup_list)}
+        lookup_dict = {y.lower(): y for y in lookup_list}
 
         if ignore_punctuation:
             x_ = remove_punctuation(x_)
@@ -323,7 +323,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
     elif method == 'fuzzywuzzy':
         import fuzzywuzzy.fuzz
 
-        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in set(lookup_list)]
+        l_distances = [fuzzywuzzy.fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list]
 
         if sum(l_distances) == 0:
             sim_str = None
@@ -408,10 +408,12 @@ def calculate_idf(raw_documents, rm_punc=False):
         >>> from pyhelpers.text import calculate_idf
         >>> import pandas
 
-        >>> raw_doc = pandas.Series(['This is an apple.',
-        ...                          'That is a pear.',
-        ...                          'It is human being.',
-        ...                          'Hello world!'])
+        >>> raw_doc_ = [
+        ...     'This is an apple.',
+        ...     'That is a pear.',
+        ...     'It is human being.',
+        ...     'Hello world!']
+        >>> raw_doc = pandas.Series(raw_doc_)
 
         >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=False)
         >>> docs_tf_
@@ -495,10 +497,12 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
         >>> from pyhelpers.text import calculate_tf_idf
         >>> import pandas
 
-        >>> raw_doc = pandas.Series(['This is an apple.',
-        ...                          'That is a pear.',
-        ...                          'It is human being.',
-        ...                          'Hello world!'])
+        >>> raw_doc_ = [
+        ...     'This is an apple.',
+        ...     'That is a pear.',
+        ...     'It is human being.',
+        ...     'Hello world!']
+        >>> raw_doc = pandas.Series(raw_doc_)
 
         >>> docs_tf_idf_ = calculate_tf_idf(raw_doc, rm_punc=False)
         >>> docs_tf_idf_
@@ -617,7 +621,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-""" == Transformation of textual data ======================================================== """
+""" == Conversion of text files ============================================================== """
 
 
 def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, **kwargs):
@@ -646,10 +650,10 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
         >>> from pyhelpers.text import convert_md_to_rst
         >>> from pyhelpers.dir import cd
 
-        >>> dat_dir = cd("tests\\data")
+        >>> dat_dir = cd("tests\\documents")
 
-        >>> path_to_md_file = cd(dat_dir, "markdown.md")
-        >>> path_to_rst_file = cd(dat_dir, "markdown.rst")
+        >>> path_to_md_file = cd(dat_dir, "readme.md")
+        >>> path_to_rst_file = cd(dat_dir, "readme.rst")
 
         >>> convert_md_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
         Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
@@ -659,30 +663,34 @@ def convert_md_to_rst(path_to_md, path_to_rst, verbose=False, pandoc_exe=None, *
     # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
 
     if verbose:
-        rel_md_path = pathlib.Path(os.path.relpath(abs_md_path))
-        rel_rst_path = pathlib.Path(os.path.relpath(abs_rst_path))
-        if not os.path.exists(abs_rst_path):
-            print("Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path), end=" ... ")
-        else:
-            print("Updating \"{}\" at \"{}\\\"".format(rel_rst_path.name, rel_rst_path.parent),
-                  end=" ... ")
+        rel_md_path, rel_rst_path = map(
+            lambda x: pathlib.Path(os.path.relpath(x)), (abs_md_path, abs_rst_path))
 
-    if pandoc_exe is None:
-        pandoc_exe = '"{}"'.format("C:\\Program Files\\Pandoc\\pandoc.exe")
-        if not os.path.isfile(pandoc_exe):
-            pandoc_exe = "pandoc"
+        if not os.path.exists(abs_rst_path):
+            msg = "Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path)
+        else:
+            msg = "Updating \"{}\" at \"{}\\\"".format(rel_rst_path.name, rel_rst_path.parent)
+        print(msg, end=" ... ")
+
+    pandoc_exe_ = copy.copy(pandoc_exe)
+    if pandoc_exe_ is None:
+        pandoc_exe_ = find_executable(
+            app_name="pandoc.exe", possibilities=["C:\\Program Files\\Pandoc\\pandoc.exe"])
 
     try:
         subprocess.call(
-            '{} "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe, abs_md_path, abs_rst_path))
+            '"{}" "{}" -f markdown -t rst -s -o "{}"'.format(pandoc_exe_, abs_md_path, abs_rst_path))
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
     except FileNotFoundError:
         import pypandoc
 
         pypandoc.convert_file(str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
-        print("Done.") if verbose else ""
+
+        if verbose:
+            print("Done.")
 
     except Exception as e:
         print("Failed. {}".format(e))
