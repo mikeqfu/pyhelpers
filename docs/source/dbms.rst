@@ -14,10 +14,3 @@ dbms
     :template: class.rst
 
     PostgreSQL
-
-.. rubric:: Utilities
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    get_database_address

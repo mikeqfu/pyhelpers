@@ -21,6 +21,7 @@ General use
     gps_to_utc
     parse_size
     get_number_of_chunks
+    find_executable
 
 Basic data manipulation
 -----------------------
@@ -38,6 +39,7 @@ Basic data manipulation
     update_dict_keys
     get_dict_values
     remove_dict_keys
+    compare_dicts
     merge_dicts
 
 .. rubric:: Tabular data

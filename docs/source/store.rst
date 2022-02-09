@@ -21,8 +21,8 @@ Save data
     save_json
     save_joblib
     save_feather
-    save_fig
     save_svg_as_emf
+    save_fig
     save_web_page_as_pdf
     save_data
 
@@ -34,6 +34,7 @@ Load data
     :template: function.rst
 
     load_pickle
+    load_csv
     load_multiple_spreadsheets
     load_json
     load_joblib

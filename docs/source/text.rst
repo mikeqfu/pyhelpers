@@ -18,6 +18,7 @@ Basic processing of textual data
     get_acronym
     remove_punctuation
     extract_words1upper
+    numeral_english_to_arabic
 
 Comparison of textual data
 --------------------------
@@ -42,8 +43,8 @@ Basic computation of textual data
     euclidean_distance_between_texts
     cosine_similarity_between_texts
 
-Transformation of textual data
-------------------------------
+Conversion of text files
+------------------------
 
 .. autosummary::
     :toctree: _generated/
