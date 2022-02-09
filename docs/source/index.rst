@@ -33,6 +33,7 @@ PyHelpers is an open-source Python package designed as a lite toolkit for facili
     :includehidden:
     :caption: Documentation
 
+    introduction
     installation
     modules
     license
