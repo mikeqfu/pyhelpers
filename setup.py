@@ -63,7 +63,7 @@ setuptools.setup(
         'psycopg2',
     ],
 
-    package_data={"": ["dat/*", "requirements.txt", "LICENSE"]},
+    package_data={"": ["dat/*"]},
     include_package_data=True,
 
 )
