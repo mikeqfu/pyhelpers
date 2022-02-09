@@ -42,21 +42,22 @@ def example_dataframe(osgb36=True):
 # import name: (package/module name, install name)
 _OPTIONAL_DEPENDENCY = {
     "fuzzywuzzy": ("FuzzyWuzzy", "fuzzywuzzy"),
-    "joblib": ("Joblib", "joblib"),
+    "Levenshtein": ("python-Levenshtein", "python-Levenshtein"),
+    "tqdm": ("tqdm", "tqdm"),
     "matplotlib": ("Matplotlib", "matplotlib"),
     "nltk": ("NLTK", "nltk"),
+    "joblib": ("Joblib", "joblib"),
     "openpyxl": ("openpyxl", "openpyxl"),
-    "orjson": ("orjson", "orjson"),
-    "pdfkit": ("pdfkit", "pdfkit"),
-    "Levenshtein": ("python-Levenshtein", "python-Levenshtein"),
-    "osgeo.gdal": ("GDAL", "gdal"),
-    "rapidjson": ("python-rapidjson", "python-rapidjson"),
-    "pyxlsb": ("pyxlsb", "pyxlsb"),
-    "tqdm": ("tqdm", "tqdm"),
-    "xlrd": ("xlrd", "xlrd"),
     "xlsxwriter": ("XlsxWriter", "xlsxwriter"),
-    "scipy": ("SciPy", "scipy"),
+    "xlrd": ("xlrd", "xlrd"),
+    "pyxlsb": ("pyxlsb", "pyxlsb"),
+    "pyarrow": ("PyArrow", "pyarrow"),
+    "orjson": ("orjson", "orjson"),
+    "rapidjson": ("python-rapidjson", "python-rapidjson"),
+    "osgeo.gdal": ("GDAL", "gdal"),
     "pyproj": ("pyproj", "pyproj"),
+    "pypandoc": ("Pypandoc", "pypandoc"),
+    "pdfkit": ("pdfkit", "pdfkit"),
 }
 
 
