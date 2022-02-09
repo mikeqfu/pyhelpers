@@ -1759,13 +1759,13 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         >>> type(uas['Chrome'])
         list
         >>> uas['Chrome'][0]
-        'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.10...
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/...
 
         >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
         >>> type(uas_list)
         list
         >>> uas_list[0]  # a random one
-        'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/534.13 (KHTML, like Gecko) C...
+        'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.792.0 Saf...
 
     .. note::
 
