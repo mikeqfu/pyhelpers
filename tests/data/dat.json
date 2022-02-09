@@ -1,5 +1,18 @@
 {
-    "a": 1,
-    "b": 2,
-    "c": 3
+    "London": {
+        "Easting": 530034,
+        "Northing": 180381
+    },
+    "Birmingham": {
+        "Easting": 406689,
+        "Northing": 286822
+    },
+    "Manchester": {
+        "Easting": 383819,
+        "Northing": 398052
+    },
+    "Leeds": {
+        "Easting": 582044,
+        "Northing": 152953
+    }
 }
