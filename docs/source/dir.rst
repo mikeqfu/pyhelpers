@@ -18,7 +18,7 @@ Change directories
     cd
     go_from_altered_cwd
     cdd
-    cd_dat
+    cd_data
 
 Validate directories
 --------------------
