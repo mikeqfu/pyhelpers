@@ -2,7 +2,7 @@ import json
 
 import setuptools
 
-with open("src/pyhelpers/data/metadata.json", mode='r') as metadata_file:
+with open("pyhelpers/data/metadata.json", mode='r') as metadata_file:
     metadata = json.load(metadata_file)
 
 __package__ = metadata['Package']

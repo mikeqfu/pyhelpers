@@ -8,8 +8,7 @@ import sys
 
 # If the directory is relative to the documentation root, use os.path.abspath to make it absolute:
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.path.insert(0, os.path.abspath('../../src/pyhelpers'))
+sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 # == Project information ===========================================================================
 from pyhelpers import __affiliation__, __author__, __copyright__, __description__, __package__, \
