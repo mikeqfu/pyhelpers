@@ -81,8 +81,12 @@ def _import_optional_dependency(optional_dependency: str):
 # == ops.py ======================================================================================
 
 def _load_user_agent_strings():
-    path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
-    json_in = open(path_to_json, mode='r')
+    try:
+        path_to_json = pkg_resources.resource_filename(__name__, "data/user-agent-strings.json")
+        json_in = open(path_to_json, mode='r')
+    except FileNotFoundError:
+        json_in = open("pyhelpers/data/user-agent-strings.json", mode='r')
+
     user_agent_strings = json.loads(json_in.read())
 
     return user_agent_strings
