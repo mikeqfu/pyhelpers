@@ -7,8 +7,8 @@ import os
 import sys
 
 # If the directory is relative to the documentation root, use os.path.abspath to make it absolute:
-sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('../../pyhelpers'))
+sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('../../src/pyhelpers'))
 
 # A list of modules to be mocked up:
 autodoc_mock_imports = [
