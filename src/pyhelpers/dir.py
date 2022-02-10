@@ -176,14 +176,14 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     return path
 
 
-def cd_dat(*subdir, dat_dir="dat", mkdir=False, **kwargs):
+def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
     Get the full pathname of a directory (or file) under ``dat_dir`` of a package.
 
     :param subdir: name of directory or names of directories (and/or a filename)
     :type subdir: str
-    :param dat_dir: name of a directory to store data, defaults to ``"dat"``
-    :type dat_dir: str
+    :param data_dir: name of a directory to store data, defaults to ``"data"``
+    :type data_dir: str
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
     :param kwargs: [optional] parameters (e.g. ``mode=0o777``) of `os.makedirs`_
@@ -194,16 +194,16 @@ def cd_dat(*subdir, dat_dir="dat", mkdir=False, **kwargs):
 
     **Example**::
 
-        >>> from pyhelpers.dir import cd_dat
+        >>> from pyhelpers.dir import cd_data
         >>> import os
 
-        >>> path_to_dat_dir = cd_dat("tests", dat_dir="dat", mkdir=False)
+        >>> path_to_dat_dir = cd_data("tests", data_dir="data", mkdir=False)
 
         >>> os.path.relpath(path_to_dat_dir)
-        'pyhelpers\\dat\\tests'
+        'src\\pyhelpers\\data\\tests'
     """
 
-    path = pkg_resources.resource_filename(__name__, dat_dir)
+    path = pkg_resources.resource_filename(__name__, data_dir)
     for x in subdir:
         path = os.path.join(path, x)
 
@@ -239,7 +239,7 @@ def is_dir(path_to_dir):
         >>> is_dir(x)
         False
 
-        >>> x = "\\tests"
+        >>> x = "/tests"
         >>> is_dir(x)
         True
 

@@ -1714,7 +1714,7 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         user_agent_strings[browser_name] = list(set(fua_parser.data))
 
     if dump_dat:
-        path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
+        path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
 
         json_out = open(path_to_json, mode='w')
         json_out.write(json.dumps(user_agent_strings, indent=4))
@@ -1774,7 +1774,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
     """
 
     if not update:
-        # path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
+        # path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
         # json_in = open(path_to_json, mode='r')
         # user_agent_strings = json.loads(json_in.read())
         user_agent_strings = pyhelpers._cache._USER_AGENT_STRINGS

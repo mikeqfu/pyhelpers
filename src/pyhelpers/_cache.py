@@ -61,7 +61,7 @@ _OPTIONAL_DEPENDENCY = {
 }
 
 
-def import_optional_dependency(optional_dependency: str):
+def _import_optional_dependency(optional_dependency: str):
     # if optional_dependency not in sys.modules:
     try:
         importlib.import_module(optional_dependency)
@@ -81,7 +81,7 @@ def import_optional_dependency(optional_dependency: str):
 # == ops.py ======================================================================================
 
 def _load_user_agent_strings():
-    path_to_json = pkg_resources.resource_filename(__name__, "dat\\user-agent-strings.json")
+    path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
     json_in = open(path_to_json, mode='r')
     user_agent_strings = json.loads(json_in.read())
 
