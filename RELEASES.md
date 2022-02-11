@@ -2,14 +2,78 @@
 
 <br/>
 
+#### [1.3.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.1)
+
+(*10 February 2022*)
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.3.0...1.3.1) since [1.3.0](https://pypi.org/project/pyhelpers/1.3.0/):
+
+- Renamed the following functions: 
+  - ~~`save()`~~ to `save_data()` in the module `store`;
+  - ~~`get_user_agent_strings()`~~ to `load_user_agent_strings()` in the module `ops`.
+- Improved the functions:
+  - `remove_punctuation()`, `find_similar_str()` and `convert_md_to_rst()` in the module `text`;
+  - `merge_dicts()` in the module `ops`.
+- Added a few constants cached as the package/module is imported.
+- Added the following new functions/methods: 
+  - `load_csv()` and `load_data()` to the module `store`;
+  - `numeral_english_to_arabic()` to the module `text`;
+  - `PostgreSQL.list_schema_names()` to the module `dbms`;
+  - `find_executable()` and `compare_dicts()` to the module `ops`.
+
+**For more details, check out the [PyHelpers 1.3.1 documentation](https://pyhelpers.readthedocs.io/en/1.3.1/).**
+
+<br/>
+
+#### [1.3.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.0)
+
+(*6 January 2022*)
+
+##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.18...1.3.0) since [1.2.18](https://pypi.org/project/pyhelpers/1.2.18/):
+
+- Renamed the following functions: 
+  - in the module `dir`:
+    - ~~`validate_input_data_dir()`~~ to `validate_dir()`;
+  - in the module `ops`:
+    - ~~`get_all_values_from_nested_dict()`~~ to `get_dict_values()`;
+    - ~~`update_nested_dict()`~~ to `update_dict()`;
+    - ~~`remove_multiple_keys_from_dict()`~~ to `remove_dict_keys()`.
+- Improved the following functions/classes:
+  - in the module `ops`:
+    - `update_nested_dict()`;
+    - `parse_size()`;
+    - `download_file_from_url()`;
+    - `init_requests_session()` (renamed from ~~`instantiate_requests_session()`~~);
+  - in the module `text`:
+    - `find_similar_str()`;
+  - in the module `dbms`  (previously `sql`):
+    - `PostgreSQL`;
+  - in the module `store`:
+    - `load_json()`;
+  - in the module `geom`:
+    - `wgs84_to_osgb36()`;
+    - `osgb36_to_wgs84()`.
+- Added the following functions to the module `ops`:
+  - `parse_size()`;
+  - `get_number_of_chunks()`;
+  - `loop_in_pairs()`;
+  - `is_url()`;
+  - `update_dict_keys()`.
+- Reduced the number of essential dependencies.
+
+**For more details, check out the [PyHelpers 1.3.0 documentation](https://pyhelpers.readthedocs.io/en/1.3.0/).**
+
+<br/>
+
 #### [1.2.18](https://github.com/mikeqfu/pyhelpers/releases/tag/1.2.18)
 
 (*20 October 2021*)
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.2.17...1.2.18) since [1.2.17](https://pypi.org/project/pyhelpers/1.2.17/):
 
-- added a new function [get_fake_user_agent](https://github.com/mikeqfu/pyhelpers/commit/b4b822f71e03ea79ba4e663f2a20b772ce5824bd#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1227-R1276) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/b4b822f71e03ea79ba4e663f2a20b772ce5824bd/pyhelpers/ops.py)
-- fixed the issue in [fake_requests_headers](https://github.com/mikeqfu/pyhelpers/commit/69adc0e7fdea6175c7ab6a9013470d541d96e3e2#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1248-R1376) that may occasionally raise [IndexError](https://docs.python.org/3/library/exceptions.html#IndexError)
+- In the module `ops`:
+  - Fixed the issue in [`fake_requests_headers()`](https://github.com/mikeqfu/pyhelpers/commit/69adc0e7fdea6175c7ab6a9013470d541d96e3e2#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1248-R1376) that may occasionally raise [`IndexError`](https://docs.python.org/3/library/exceptions.html#IndexError);
+  - Added a new function [`get_fake_user_agent()`](https://github.com/mikeqfu/pyhelpers/commit/b4b822f71e03ea79ba4e663f2a20b772ce5824bd#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1227-R1276).
 
 **For more information about the update and/or a full walk-through of this release, <br/>check out [PyHelpers 1.2.18 documentation](https://pyhelpers.readthedocs.io/en/1.2.18/).**
 
@@ -322,7 +386,7 @@
 - removed the parameter `encoding` from relevant functions in the module [store](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/store.py)
 - removed the function [~~csr_matrix_to_dict~~](https://github.com/mikeqfu/pyhelpers/commit/40d7a3234690dfdba26294c814bcee41b8c15acf#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127L50-L58) from the module [text](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/text.py)
 - added an optional parameter `**kwargs` to the following functions:
-  - [cd](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R11), [cdd](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R32), [cd_dat](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R56) and [rm_dir](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R125) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/dir.py)
+  - [cd](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R11), [cdd](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R32), [cd_data](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R56) and [rm_dir](https://github.com/mikeqfu/pyhelpers/commit/780b8bf50db0a265084ffcff91479c7d5c12bb4d#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R125) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/dir.py)
   - [download](https://github.com/mikeqfu/pyhelpers/commit/860cfd69ddf26480af722f59018550c83763b091#diff-6f8fcaf7c0adfbc7a2f9590aa4d76d65bbe0f8f0b383509db21cf9f01a579155R10) in the module [download](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/download.py):
   - [save_svg_as_emf](https://github.com/mikeqfu/pyhelpers/commit/646bcccdd2b01f70ecbac939d00c37c855fde92a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R467) and [save_web_page_as_pdf](https://github.com/mikeqfu/pyhelpers/commit/646bcccdd2b01f70ecbac939d00c37c855fde92a#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607R501-R502) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/7b6a647bc7d672c604306bb335b783663b6d0b9d/pyhelpers/store.py)
 
@@ -442,7 +506,7 @@
 
 ##### Main [changes](https://github.com/mikeqfu/pyhelpers/compare/1.0.16...1.0.17) since [1.0.16](https://pypi.org/project/pyhelpers/1.0.16/):
 
-- modified the function [rm_dir](https://github.com/mikeqfu/pyhelpers/commit/f3b4e1bb9654c2102bea524cb280c19030f80163#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R100-R121) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/3961ec9a2a2c15d60454551d758b20875cd02570/pyhelpers/dir.py)
+- modified the function [rm_dir()](https://github.com/mikeqfu/pyhelpers/commit/f3b4e1bb9654c2102bea524cb280c19030f80163#diff-9658546df62eded721ef6049c33f4b2d7e985d9cce8c08ba9538a32da5229a09R100-R121) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/3961ec9a2a2c15d60454551d758b20875cd02570/pyhelpers/dir.py)
 - tidied up the code of three modules: 
   - [misc](https://github.com/mikeqfu/pyhelpers/commit/ffa1220c443e5d26587d6469104e5dde05d8e4e4)
   - [geom](https://github.com/mikeqfu/pyhelpers/commit/d8a9b0defd7a4539a89b150250e26a2967924f9b)
