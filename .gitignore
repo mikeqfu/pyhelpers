@@ -36,3 +36,4 @@ venv/
 .idea
 tests/cmd
 tests/quick-start.*
+tests/*.html
