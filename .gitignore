@@ -1,31 +1,12 @@
 # Distribution / packaging
-.Python
-build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
 # Sphinx documentation
-docs/_build/
 docs/build/
 docs/source/_generated
 
 # Environments
-.venv
 venv/
 
 # Jupyter Notebooks
@@ -34,6 +15,7 @@ venv/
 
 # Customised
 .idea
-tests/cmd
-tests/quick-start.*
-tests/*.html
+tests/*
+!tests/data/
+!tests/documents/
+!tests/images/
