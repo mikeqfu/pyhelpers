@@ -1,5 +1,5 @@
 """
-Saving and loading file-like objects.
+Saving, loading and relevant operations of file-like objects.
 """
 
 import copy
@@ -10,10 +10,12 @@ import os
 import pathlib
 import pickle
 import subprocess
+import tempfile
 import warnings
 import zipfile
 
 import pandas as pd
+import pkg_resources
 
 from .ops import confirmed, find_executable, is_url
 
@@ -645,8 +647,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         :align: center
         :width: 76%
 
-        An example figure created for the function
-        :py:func:`save_svg_as_emf()<pyhelpers.store.save_svg_as_emf>`.
+        An example figure created for the function :py:func:`~pyhelpers.store.save_svg_as_emf`.
 
     .. code-block:: python
 
@@ -737,7 +738,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         :align: center
         :width: 76%
 
-        An example figure created for the function :py:func:`save_fig()<pyhelpers.store.save_fig>`.
+        An example figure created for the function :py:func:`~pyhelpers.store.save_fig`.
 
     .. code-block:: python
 
@@ -903,13 +904,13 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     :param warning: whether to show a warning messages, defaults to ``True``
     :type warning: bool
     :param kwargs: [optional] parameters of one of the following functions:
-        :py:func:`save_pickle()<pyhelpers.store.save_pickle>`,
-        :py:func:`save_spreadsheet()<pyhelpers.store.save_spreadsheet>`,
-        :py:func:`save_json()<pyhelpers.store.save_json>`,
-        :py:func:`save_joblib()<pyhelpers.store.save_joblib>`,
-        :py:func:`save_feather()<pyhelpers.store.save_feather>`,
-        :py:func:`save_fig()<pyhelpers.store.save_fig>` or
-        :py:func:`save_web_page_as_pdf()<pyhelpers.store.save_web_page_as_pdf>`
+        :py:func:`~pyhelpers.store.save_pickle`,
+        :py:func:`~pyhelpers.store.save_spreadsheet`,
+        :py:func:`~pyhelpers.store.save_json`,
+        :py:func:`~pyhelpers.store.save_joblib`,
+        :py:func:`~pyhelpers.store.save_feather`,
+        :py:func:`~pyhelpers.store.save_fig` or
+        :py:func:`~pyhelpers.store.save_web_page_as_pdf`
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
@@ -1455,12 +1456,12 @@ def load_data(path_to_file, warning=True, **kwargs):
     :param warning: whether to show a warning messages, defaults to ``True``
     :type warning: bool
     :param kwargs: [optional] parameters of one of the following functions:
-        :py:func:`load_pickle()<pyhelpers.store.load_pickle>`,
-        :py:func:`load_csv()<pyhelpers.store.load_csv>`,
-        :py:func:`load_spreadsheet()<pyhelpers.store.load_multiple_spreadsheets>`,
-        :py:func:`load_json()<pyhelpers.store.load_json>`,
-        :py:func:`load_joblib()<pyhelpers.store.load_joblib>` or
-        :py:func:`load_feather()<pyhelpers.store.load_feather>`
+        :py:func:`~pyhelpers.store.load_pickle`,
+        :py:func:`~pyhelpers.store.load_csv`,
+        :py:func:`~pyhelpers.store.load_multiple_spreadsheets`,
+        :py:func:`~pyhelpers.store.load_json`,
+        :py:func:`~pyhelpers.store.load_joblib` or
+        :py:func:`~pyhelpers.store.load_feather`
     :return: loaded data
     :rtype: any
 
@@ -1785,3 +1786,93 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         if verbose:
             print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function; "
                   "however, it is not found on this device.\nInstall it and then try again.")
+
+
+""" == Convert data ========================================================================== """
+
+
+def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replace', vbscript=None,
+                sheet_name='1', ret_null=False):
+    """
+    Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
+
+    See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
+
+    :param xlsx_pathname: pathname of an Excel spreasheet (in the format of .xlsx)
+    :type xlsx_pathname: str
+    :param csv_pathname: pathname of a CSV format file;
+        when ``csv_pathname=None`` (default),
+        the target CSV file is generated as a `tempfile.NamedTemporaryFile`_;
+        when ``csv_pathname=""``,
+        the target CSV file is generated at the same directory where the source Excel spreadsheet is;
+        otherwise, it could also be a specific pathname
+    :type csv_pathname: str or None
+    :param method: method used for converting .xlsx/.xls to .csv;
+        when ``method=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
+        when ``method='xlsx2csv'``, the function would rely on `xlsx2csv`_
+    :type method: str or None
+    :param if_exists: how to proceed if the target ``csv_pathname`` exists, defaults to ``'replace'``
+    :type if_exists: str
+    :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
+    :type vbscript: str or None
+    :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
+    :type sheet_name: str
+    :param ret_null: whether to return something depending on the specified ``method``,
+        defaults to ``False``
+    :return: the pathname of the generated CSV file or None, when ``method=None``;
+        `io.StringIO`_ buffer, when ``method='xlsx2csv'``
+    :rtype: str or _io.StringIO or None
+
+    .. _`tempfile.NamedTemporaryFile`:
+        https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
+    .. _`xlsx2csv`: https://github.com/dilshod/xlsx2csv
+    .. _`io.StringIO`: https://docs.python.org/3/library/io.html#io.StringIO
+
+    **Examples**::
+
+        >>> from pyhelpers.store import xlsx_to_csv
+        >>> from pyhelpers.dir import cd
+        >>> import os
+
+        >>> path_to_test_xlsx = cd("tests/data/dat.xlsx")
+
+        >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx)
+        >>> os.path.exists(path_to_temp_csv)
+        True
+
+        >>> os.remove(path_to_temp_csv)
+    """
+
+    if method is None:
+
+        if vbscript is None:
+            vbscript = pkg_resources.resource_filename(__name__, "data/xlsx2csv.vbs")
+
+        if csv_pathname is None:
+            temp_file = tempfile.NamedTemporaryFile()
+            csv_pathname_ = temp_file.name + ".csv"
+        elif csv_pathname == "":
+            csv_pathname_ = xlsx_pathname.replace(".xlsx", ".csv")
+        else:
+            csv_pathname_ = copy.copy(csv_pathname)
+
+        if os.path.exists(csv_pathname_):
+            if if_exists == 'replace':
+                os.remove(csv_pathname_)
+            elif if_exists == 'pass':
+                return csv_pathname_
+
+        subprocess.call(["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name])
+
+        if not ret_null:
+            return csv_pathname_
+
+    elif method == 'xlsx2csv':
+        import xlsx2csv
+        import io
+
+        buffer = io.StringIO()
+        xlsx2csv.Xlsx2csv(xlsx_pathname, outputencoding="utf-8", sheet_name=sheet_name).convert(buffer)
+        buffer.seek(0)
+
+        return buffer
