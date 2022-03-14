@@ -1115,6 +1115,62 @@ def swap_rows(array, r1, r2, as_list=False):
     return array_
 
 
+def np_shift(array, step, fill_value=np.nan):
+    """
+    Shift an array by desired number of rows.
+
+    See also [`OPS-NS-1 <https://stackoverflow.com/questions/30399534/>`_]
+
+    :param array: an array of numbers
+    :type array: numpy.ndarray
+    :param step: number of rows to shift
+    :type step: int
+    :param fill_value: values to fill missing rows due to the shift, defaults to ``NaN``
+    :type fill_value: float or int
+    :return: shifted array
+    :rtype: numpy.ndarray
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import np_shift
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> arr = example_dataframe().to_numpy()
+        >>> arr
+        array([[530034, 180381],
+               [406689, 286822],
+               [383819, 398052],
+               [582044, 152953]], dtype=int64)
+
+        >>> np_shift(arr, step=-1)
+        array([[406689., 286822.],
+               [383819., 398052.],
+               [582044., 152953.],
+               [    nan,     nan]])
+
+        >>> np_shift(arr, step=1, fill_value=0)
+        array([[     0,      0],
+               [530034, 180381],
+               [406689, 286822],
+               [383819, 398052]], dtype=int64)
+    """
+
+    result = np.empty_like(array, dtype=type(fill_value))  # np.zeros_like(array)
+
+    if step > 0:
+        result[:step] = fill_value
+        result[step:] = array[:-step]
+
+    elif step < 0:
+        result[step:] = fill_value
+        result[:step] = array[-step:]
+
+    else:
+        result[:] = array
+
+    return result
+
+
 """ == Basic computation ===================================================================== """
 
 
@@ -1299,15 +1355,15 @@ def cmap_discretisation(cmap, n_colours):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    The exmaple is illustrated in :numref:`cmap-discretisation`:
+    The exmaple is illustrated in :numref:`ops-cmap_discretisation-demo`:
 
-    .. figure:: ../_images/cmap-discretisation.*
-        :name: cmap-discretisation
+    .. figure:: ../_images/ops-cmap_discretisation-demo.*
+        :name: ops-cmap_discretisation-demo
         :align: center
         :width: 60%
 
         An example of discrete colour ramp, created by the function
-        :py:func:`cmap_discretisation()<pyhelpers.ops.cmap_discretisation>`.
+        :py:func:`~pyhelpers.ops.cmap_discretisation`.
 
     .. code-block:: python
 
@@ -1377,15 +1433,15 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    The above example is illustrated in :numref:`colour-bar-index-1`:
+    The above example is illustrated in :numref:`ops-colour_bar_index-demo-1`:
 
-    .. figure:: ../_images/colour-bar-index-1.*
-        :name: colour-bar-index-1
+    .. figure:: ../_images/ops-colour_bar_index-demo-1.*
+        :name: ops-colour_bar_index-demo-1
         :align: center
         :width: 23%
 
         An example of colour bar with numerical index,
-        created by the function :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        created by the function :py:func:`~pyhelpers.ops.colour_bar_index`.
 
     .. code-block:: python
 
@@ -1402,15 +1458,15 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> plt.tight_layout()
         >>> plt.show()
 
-    This second example is illustrated in :numref:`colour-bar-index-2`:
+    This second example is illustrated in :numref:`ops-colour_bar_index-demo-2`:
 
-    .. figure:: ../_images/colour-bar-index-2.*
-        :name: colour-bar-index-2
+    .. figure:: ../_images/ops-colour_bar_index-demo-2.*
+        :name: ops-colour_bar_index-demo-2
         :align: center
         :width: 23%
 
         An example of colour bar with textual index,
-        created by the function :py:func:`colour_bar_index()<pyhelpers.ops.colour_bar_index>`.
+        created by the function :py:func:`~pyhelpers.ops.colour_bar_index`.
 
     .. code-block:: python
 
@@ -1996,8 +2052,8 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> img = Image.open(path_to_img)
         >>> img.show()  # as illustrated below
 
-    .. figure:: ../_images/python-logo.*
-        :name: python-logo
+    .. figure:: ../_images/ops-download_file_from_url-demo.*
+        :name: ops-download_file_from_url-demo
         :align: center
         :width: 65%
 
