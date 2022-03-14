@@ -26,12 +26,13 @@ Geometric transformation
     wgs84_to_osgb36
     osgb36_to_wgs84
 
-.. rubric:: Dimension / Shape
+.. rubric:: Dimension / Projection
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
     drop_axis
+    project_point_to_line
 
 Geometry calculation
 --------------------
@@ -45,6 +46,7 @@ Geometry calculation
     calc_hypotenuse_distance
     find_closest_point
     find_closest_points
+    find_shortest_path
 
 .. rubric:: Locating
 .. autosummary::

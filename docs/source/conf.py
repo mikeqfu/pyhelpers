@@ -131,7 +131,7 @@ affiliation_school, affiliation_univ = __affiliation__.split(', ')
 
 # Customized title page
 latex_maketitle = r'''
-    \newgeometry{top=1.1in,bottom=1.1in,right=1.2in,left=1.2in}
+    \newgeometry{top=1.1in,bottom=1.1in,right=1.0in,left=1.0in}
     \pagenumbering{roman}
     \makeatletter
     \hypertarget{titlepage}{}
@@ -139,7 +139,7 @@ latex_maketitle = r'''
         \flushright
 
         \vspace*{22mm}
-        \textbf{\Huge {{%s Documentation}}}
+        \textbf{\Huge {{%s}}}
         
         \vspace{5mm}
         \textit{\Large {{%s}}} \par

@@ -53,6 +53,7 @@ Basic data manipulation
     parse_csr_matrix
     swap_cols
     swap_rows
+    np_shift
 
 Basic computation
 -----------------

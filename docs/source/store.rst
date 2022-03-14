@@ -50,3 +50,12 @@ Uncompress data
 
     unzip
     seven_zip
+
+Convert data
+------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    xlsx_to_csv

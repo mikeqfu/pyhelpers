@@ -14,7 +14,7 @@ To install the latest release of pyhelpers from `PyPI`_ via `pip`_:
 
 To install the most recent version of pyhelpers hosted on `GitHub`_:
 
-.. _GitHub: https://github.com/mikeqfu/pyhelpers
+.. _`GitHub`: https://github.com/mikeqfu/pyhelpers
 
 .. code-block:: console
 
