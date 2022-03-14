@@ -640,10 +640,10 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         >>> plt.plot([x[0], y[0]], [x[1], y[1]])
         >>> plt.show()
 
-    The above exmaple is illustrated in :numref:`fig-2`:
+    The above exmaple is illustrated in :numref:`store-save_fig-demo-1`:
 
-    .. figure:: ../_images/fig.*
-        :name: fig-2
+    .. figure:: ../_images/store-save_fig-demo.*
+        :name: store-save_fig-demo-1
         :align: center
         :width: 76%
 
@@ -653,12 +653,12 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
 
         >>> img_dir = cd("tests\\images")
 
-        >>> svg_file_pathname = cd(img_dir, "fig.svg")
+        >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> plt.savefig(svg_file_pathname)  # Save the figure as a .svg file
 
-        >>> emf_file_pathname = cd(img_dir, "fig.emf")
+        >>> emf_file_pathname = cd(img_dir, "store-save_fig-demo.emf")
         >>> save_svg_as_emf(svg_file_pathname, emf_file_pathname, verbose=True)
-        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
+        Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
 
         >>> plt.close()
     """
@@ -731,10 +731,10 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         >>> plt.plot([x[0], y[0]], [x[1], y[1]])
         >>> plt.show()
 
-    The above exmaple is illustrated in :numref:`fig-1`:
+    The above exmaple is illustrated in :numref:`store-save_fig-demo-2`:
 
-    .. figure:: ../_images/fig.*
-        :name: fig-1
+    .. figure:: ../_images/store-save_fig-demo.*
+        :name: store-save_fig-demo-2
         :align: center
         :width: 76%
 
@@ -744,14 +744,14 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
         >>> img_dir = cd("tests\\images")
 
-        >>> png_file_pathname = cd(img_dir, "fig.png")
+        >>> png_file_pathname = cd(img_dir, "store-save_fig-demo.png")
         >>> save_fig(png_file_pathname, dpi=300, verbose=True)
-        Saving "fig.png" to "tests\\images\\" ... Done.
+        Saving "store-save_fig-demo.png" to "tests\\images\\" ... Done.
 
-        >>> svg_file_pathname = cd(img_dir, "fig.svg")
+        >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> save_fig(svg_file_pathname, dpi=300, verbose=True, conv_svg_to_emf=True)
-        Saving "fig.svg" to "tests\\images\\" ... Done.
-        Saving the .svg file as "tests\\images\\fig.emf" ... Done.
+        Saving "store-save_fig-demo.svg" to "tests\\images\\" ... Done.
+        Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
 
         >>> plt.close()
     """

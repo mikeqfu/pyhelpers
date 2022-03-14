@@ -956,10 +956,8 @@ class PostgreSQL:
 
         :param table_name: name of a table
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, consider
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str
         :return: whether the table exists in the currently-connected database
         :rtype: bool
@@ -1012,10 +1010,8 @@ class PostgreSQL:
         :type table_name: str
         :param column_specs: specifications for each column of the table
         :type column_specs: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, consider
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
         :param verbose: whether to print relevant information in console as the function runs, 
             defaults to ``False``
@@ -1131,10 +1127,8 @@ class PostgreSQL:
 
         :param table_name: name of a table
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, consider
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
         :param as_dict: whether to return the column information as a dictionary, defaults to ``True``
         :type as_dict: bool
@@ -1166,10 +1160,8 @@ class PostgreSQL:
         """
         List the names of all tables in a schema in the currently-connected database.
 
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, it defaults to
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
         :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
@@ -1316,10 +1308,8 @@ class PostgreSQL:
 
         :param table_name: name of a table
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, it defaults to
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
@@ -1409,10 +1399,8 @@ class PostgreSQL:
         :type data: pandas.DataFrame or pandas.io.parsers.TextFileReader or list or tuple
         :param table_name: name of a table
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, it defaults to
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str
         :param if_exists: if the table already exists, to ``'replace'``, ``'append'``
             or, by default, ``'fail'`` and do nothing but raise a ValueError.
@@ -1514,10 +1502,8 @@ class PostgreSQL:
 
         :param table_name: name of a table
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``;
-            when ``schema_name=None``, it defaults to
-            :py:attr:`PostgreSQL.DEFAULT_SCHEMA<pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA>`
-            (i.e. ``'public'``)
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str
         :param condition: defaults to ``None``
         :type condition: str or None

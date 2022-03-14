@@ -1,5 +1,5 @@
 """
-Altering settings of working environment.
+Settings of working environment.
 """
 
 import copy
@@ -130,8 +130,7 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
         :align: center
         :width: 70%
 
-        An example figure, before applying the function
-        :py:func:`mpl_preferences()<pyhelpers.settings.mpl_preferences>`.
+        An example figure, before applying the function :py:func:`~pyhelpers.settings.mpl_preferences`.
 
     .. code-block:: python
 
@@ -146,7 +145,7 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
         :align: center
         :width: 70%
 
-        After applying the function :py:func:`mpl_preferences()<pyhelpers.settings.mpl_preferences>`.
+        After applying the function :py:func:`~pyhelpers.settings.mpl_preferences`.
 
     Reset to default settings:
 

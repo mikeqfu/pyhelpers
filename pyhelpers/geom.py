@@ -739,7 +739,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     .. figure:: ../_images/geom-find_shortest_path-demo.*
         :name: geom-find_shortest_path-demo
         :align: center
-        :width: 100%
+        :width: 85%
 
         An example of sorting a sequence of points given the shortest path.
 

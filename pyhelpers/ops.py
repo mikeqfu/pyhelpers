@@ -2036,7 +2036,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> import os
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        >>> path_to_img = cd("tests", "images", "python-logo.png")
+        >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
 
         >>> # Check if "python-logo.png" exists at the specified path
         >>> os.path.exists(path_to_img)
