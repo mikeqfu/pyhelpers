@@ -886,8 +886,8 @@ Now we have removed all the databases created above, and restored the PostgreSQL
 
 -----------------------------------------------------------------
 
-Any issues regarding the use of the package are all welcome and should be logged/reported onto the `Issue Tracker`_.
+Any issues regarding the use of the package are all welcome and should be logged/reported onto the `Bug Tracker`_.
 
-.. _`Issue Tracker`: https://github.com/mikeqfu/pyhelpers/issues
+.. _`Bug Tracker`: https://github.com/mikeqfu/pyhelpers/issues
 
 For more details and examples, check :ref:`Modules<modules>`.

@@ -26,7 +26,7 @@ Resources
 #########
 
 - `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_
-- `Issue Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
+- `Bug Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
 
 License
 #######
