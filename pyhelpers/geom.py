@@ -216,7 +216,7 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     return lonlat_data
 
 
-# Dimension / Shape
+# Dimension / Projection
 
 def _drop_z(x, y, _):
     return x, y
@@ -321,6 +321,59 @@ def drop_axis(geom, axis='z', as_array=False):
             geom_obj = geom_obj[0]
 
     return geom_obj
+
+
+def project_point_to_line(point, line, drop_dimension=None):
+    """
+    Find the projected point from a known point to a line.
+
+    :param point: geometry object of a point
+    :type point: shapely.geometry.Point
+    :param line: geometry object of a line
+    :type line: shapely.geometry.LineString
+    :param drop_dimension: which dimension to drop, defaults to ``None``;
+        options include ``'x'``, ``'y'`` and ``'z'``
+    :type drop_dimension: str or None
+    :return: the original point (with all or partial dimensions, given ``drop``) and the projected one
+    :rtype: tuple
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import project_point_to_line
+        >>> from shapely.geometry import Point, LineString
+
+        >>> pt = Point([399297, 655095, 43])
+        >>> ls = LineString([[399299, 655091, 42], [399295, 655099, 42]])
+
+        >>> _, pt_ = project_point_to_line(pt, ls)
+        >>> pt_.wkt
+        'POINT Z (399297 655095 42)'
+    """
+
+    if line.length == 0:
+        point_, line_ = point, shapely.geometry.Point(line.coords)
+
+    else:
+        if drop_dimension is not None:
+            assert drop_dimension in ('x', 'y', 'z')
+            func = globals()['_drop_{}'.format(drop_dimension)]
+            point_, line_ = shapely.ops.transform(func, point), shapely.ops.transform(func, line)
+        else:
+            point_, line_ = copy.copy(point), copy.copy(line)
+
+        x = np.array(point_.coords[0])
+
+        u = np.array(line_.coords[0])
+        v = np.array(line_.coords[len(line_.coords) - 1])
+
+        n = v - u
+        n /= np.linalg.norm(n, 2)
+
+        p = u + n * np.dot(x - u, n)
+
+        line_ = shapely.geometry.Point(p)
+
+    return point_, line_
 
 
 """ == Geometry calculation ================================================================== """
@@ -621,6 +674,115 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
             closest_points = closest_points, distances
 
     return closest_points
+
+
+def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs):
+    """
+    Find the shortest path through a sequence of points.
+
+    :param points_sequence: a sequence of points
+    :type points_sequence: numpy.ndarray
+    :param ret_dist: whether to return the distance of the shortest path, defaults to ``False``
+    :type ret_dist: bool
+    :param as_geom: whether to return the sorted path as a line geometry object, defaults to ``False``
+    :type as_geom: bool
+    :param kwargs: (optional) parameters used by `sklearn.neighbors.NearestNeighbors`_
+    :return: a sequence of sorted points given two-nearest neighbors
+    :rtype: numpy.ndarray or shapely.geometry.LineString or tuple
+
+    .. _`sklearn.neighbors.NearestNeighbors`:
+        https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import find_shortest_path
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> pts_arr = example_dataframe().to_numpy()
+        >>> pts_arr
+        array([[530034, 180381],
+               [406689, 286822],
+               [383819, 398052],
+               [582044, 152953]], dtype=int64)
+
+        >>> pts_arr_sorted = find_shortest_path(points_sequence=pts_arr)
+        >>> pts_arr_sorted
+        array([[582044, 152953],
+               [530034, 180381],
+               [406689, 286822],
+               [383819, 398052]], dtype=int64)
+
+    This example is illustrated below (see :numref:`geom-find_shortest_path-demo`)::
+
+        >>> import matplotlib.pyplot as plt
+        >>> import matplotlib.gridspec as mgs
+        >>> from pyhelpers.settings import mpl_preferences
+
+        >>> mpl_preferences(font_name='Times New Roman')
+
+        >>> fig = plt.figure(figsize=(7, 5))
+        >>> gs = mgs.GridSpec(1, 2, figure=fig)
+
+        >>> ax1 = fig.add_subplot(gs[:, 0])
+        >>> ax1.scatter(360000, 677200, label='start location')
+        >>> ax1.plot(pts_arr[:, 0], pts_arr[:, 1], label='original')
+        >>> ax1.legend()
+
+        >>> ax2 = fig.add_subplot(gs[:, 1])
+        >>> ax2.scatter(360000, 677200, label='start location', color='orange')
+        >>> ax2.plot(pts_arr_sorted[:, 0], pts_arr_sorted[:, 1], label='sorted', color='orange')
+        >>> ax2.legend()
+
+        >>> plt.tight_layout()
+        >>> plt.show()
+
+    .. figure:: ../_images/geom-find_shortest_path-demo.*
+        :name: geom-find_shortest_path-demo
+        :align: center
+        :width: 100%
+
+        An example of sorting a sequence of points given the shortest path.
+
+    .. code-block:: python
+
+        >>> plt.close()
+    """
+
+    if len(points_sequence) <= 2:
+        shortest_path = points_sequence
+
+    else:
+        import networkx as nx
+        from sklearn.neighbors import NearestNeighbors
+
+        nn_clf = NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
+        kn_g = nn_clf.kneighbors_graph()
+
+        nx_g = nx.from_scipy_sparse_matrix(kn_g)
+
+        possible_paths = [list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence))]
+
+        min_dist, idx = np.inf, 0
+
+        for i in range(len(points_sequence)):
+            nodes_order = possible_paths[i]  # order of nodes
+            ordered_nodes = points_sequence[nodes_order]  # ordered nodes
+
+            # cost = the sum of euclidean distances between the i-th and (i+1)-th points
+            dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1)).sum()
+            if dist <= min_dist:
+                min_dist = dist
+                idx = i
+
+        shortest_path = points_sequence[possible_paths[idx]]
+
+        if as_geom:
+            shortest_path = shapely.geometry.LineString(shortest_path)
+
+        if ret_dist:
+            shortest_path = shortest_path, min_dist
+
+    return shortest_path
 
 
 # Locating
@@ -933,7 +1095,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
 
     .. seealso::
 
-        - Exmaples for the function :py:func:`pyhelpers.geom.get_square_vertices`.
+        - Examples for the function :py:func:`pyhelpers.geom.get_square_vertices`.
     """
 
     theta_rad = np.deg2rad(rotation_theta)
@@ -1012,25 +1174,25 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
         >>> sketch_square(c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5))
         >>> plt.show()
 
-    The above exmaple is illustrated in :numref:`sketch-square-1`:
+    The above exmaple is illustrated in :numref:`geom-sketch_square-demo-1`:
 
-    .. figure:: ../_images/sketch-square-1.*
-        :name: sketch-square-1
+    .. figure:: ../_images/geom-sketch_square-demo-1.*
+        :name: geom-sketch_square-demo-1
         :align: center
         :width: 53%
 
         An example of a sketch of a square, created by the function
-        :py:func:`sketch_square()<pyhelpers.geom.sketch_square>`.
+        :py:func:`~pyhelpers.geom.sketch_square`.
 
     .. code-block:: python
 
         >>> sketch_square(c1, c2, side_len, rotation_theta=75, annotation=True, fig_size=(5, 5))
         >>> plt.show()
 
-    This second example is illustrated in :numref:`sketch-square-2`:
+    This second example is illustrated in :numref:`geom-sketch_square-demo-2`:
 
-    .. figure:: ../_images/sketch-square-2.*
-        :name: sketch-square-2
+    .. figure:: ../_images/geom-sketch_square-demo-2.*
+        :name: geom-sketch_square-demo-2
         :align: center
         :width: 53%
 
