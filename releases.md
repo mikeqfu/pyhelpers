@@ -2,6 +2,21 @@
 
 <br/>
 
+#### **[1.3.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.2)**
+
+(*14 March 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.3.1...1.3.2) since [1.3.1](https://pypi.org/project/pyhelpers/1.3.1/):**
+
+- Added the following new functions: 
+  - [xlsx_to_csv()](https://github.com/mikeqfu/pyhelpers/commit/7871eadbe0358ec1c48430fa9f671e5d93741343) to the module [store](https://github.com/mikeqfu/pyhelpers/blob/79a979462b492b5529448ae53291cc5555ced43f/pyhelpers/store.py);
+  - [np_shift()](https://github.com/mikeqfu/pyhelpers/commit/e41df8b9da04f571bd53ac3df79a9de27a53521a) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/79a979462b492b5529448ae53291cc5555ced43f/pyhelpers/ops.py);
+  - [project_point_to_line()](https://github.com/mikeqfu/pyhelpers/commit/e0b74756e6dba5697da758655d46f9cafeb1bbc7#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R326-R376) and [find_shortest_path()](https://github.com/mikeqfu/pyhelpers/commit/e0b74756e6dba5697da758655d46f9cafeb1bbc7#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R679-R785) to the module [geom](https://github.com/mikeqfu/pyhelpers/blob/79a979462b492b5529448ae53291cc5555ced43f/pyhelpers/geom.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.3.2 documentation](https://pyhelpers.readthedocs.io/en/1.3.2/).**
+
+<br/>
+
 #### **[1.3.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.1)**
 
 (*10 February 2022*)
