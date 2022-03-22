@@ -373,7 +373,7 @@ class PostgreSQL:
         Establish a connection to a database in the currently-connected server.
 
         :param database_name: name of a database;
-            if ``database_name=None`` (default), the database name is input manually
+            when ``database_name=None`` (default), the database name is input manually
         :type database_name: str or None
         :param verbose: whether to print relevant information in console as the function runs, 
             defaults to ``False``
@@ -401,8 +401,7 @@ class PostgreSQL:
             >>> testdb.database_name
             'testdb'
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -465,8 +464,7 @@ class PostgreSQL:
             >>> testdb.get_database_size(database_name=testdb.DEFAULT_DATABASE)
             '8577 kB'
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -555,8 +553,7 @@ class PostgreSQL:
             >>> testdb.database_name
             'testdb'
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -590,8 +587,7 @@ class PostgreSQL:
             >>> testdb.database_name
             'testdb'
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -720,8 +716,7 @@ class PostgreSQL:
             >>> testdb.schema_exists('test_schema')  # (if the schema 'test_schema' does not exist)
             False
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -761,8 +756,7 @@ class PostgreSQL:
             >>> testdb.schema_exists(schema_name=test_schema_name)
             True
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -897,8 +891,7 @@ class PostgreSQL:
                 "polygons" ... Done.
                 "test_schema" (does not exist.)
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
@@ -919,7 +912,7 @@ class PostgreSQL:
                     if confirmation_required:
                         log_msg = "Dropping {}".format(print_schema)
                     else:
-                        log_msg = "Dropping the {}: ".format(print_plural, print_schema)
+                        log_msg = "Dropping the {}: {}".format(print_plural, print_schema)
                     print(log_msg, end=" ... ")
                 else:  # len(schemas) > 1
                     if confirmation_required:
@@ -928,8 +921,7 @@ class PostgreSQL:
                         print("Dropping the following {} from {}:".format(print_plural, self.address))
 
             for schema in schemas:
-                if not self.schema_exists(schema):
-                    # `schema` does not exist
+                if not self.schema_exists(schema):  # `schema` does not exist
                     if verbose:
                         if len(schemas) == 1:
                             print("The schema \"{}\" does not exist.".format(schemas[0]))
@@ -986,8 +978,7 @@ class PostgreSQL:
             ? [No]|Yes: yes
             Dropping "public"."points" ... Done.
 
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
