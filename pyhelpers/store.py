@@ -685,10 +685,14 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         try:
             abs_emf_path.parent.mkdir(exist_ok=True)
 
-            subprocess.call([inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf], **kwargs)
+            ret_code = subprocess.call([inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf], **kwargs)
+
+            if ret_code == 1:
+                ret_code = subprocess.call(
+                    [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf], **kwargs)
 
             if verbose:
-                print("Done.")
+                print("Done." if ret_code == 0 else "Failed.")
 
         except Exception as e:
             print("Failed. {}".format(e))
