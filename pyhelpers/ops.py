@@ -2006,7 +2006,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param url: valid URL to a web resource
     :type url: str
     :param path_to_file: a path where the downloaded object is saved as, or a filename
-    :type path_to_file: str
+    :type path_to_file: str or os.PathLike[str]
     :param if_exists: given that the specified file already exists, options include
         ``'replace'`` (default, continuing to download the requested file and replace the existing one
         at the specified path) and ``'pass'`` (cancelling the download)
