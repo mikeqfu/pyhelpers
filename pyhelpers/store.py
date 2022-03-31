@@ -1002,12 +1002,13 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     elif path_to_file_.endswith(".feather"):
         save_feather(data, path_to_file, **kwargs)
 
-    elif (is_url(data) or os.path.isfile(data)) and path_to_file_.endswith(".pdf"):
-        save_web_page_as_pdf(data, path_to_file_, **kwargs)
+    elif path_to_file_.endswith(".pdf"):
+        if is_url(data) or os.path.isfile(data):
+            save_web_page_as_pdf(data, path_to_file_, **kwargs)
 
     elif path_to_file_.endswith(
-            ('eps', 'jpeg', 'jpg', 'pdf', 'pgf', 'png', 'ps',
-             'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff')):
+            ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
+             '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
         save_fig(path_to_file, **kwargs)
 
     else:
