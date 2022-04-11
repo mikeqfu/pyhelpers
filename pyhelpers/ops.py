@@ -863,14 +863,16 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         >>> dat = example_dataframe()
         >>> dat
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
         Leeds        582044    152953
 
-        >>> dat.iloc[3, 1] = None
+        >>> dat.loc['Leeds', 'Northing'] = None
         >>> dat
                     Easting  Northing
+        City
         London       530034  180381.0
         Birmingham   406689  286822.0
         Manchester   383819  398052.0

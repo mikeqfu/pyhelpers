@@ -138,6 +138,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
         >>> pickle_dat = example_dataframe()
         >>> pickle_dat
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
@@ -209,6 +210,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         >>> spreadsheet_dat = example_dataframe()
         >>> spreadsheet_dat
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
@@ -292,6 +294,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
         >>> dat1 = example_dataframe()
         >>> dat1
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
@@ -299,7 +302,7 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
         >>> dat2 = dat1.T
         >>> dat2
-                  London  Birmingham  Manchester   Leeds
+        City      London  Birmingham  Manchester   Leeds
         Easting   530034      406689      383819  582044
         Northing  180381      286822      398052  152953
 
@@ -416,6 +419,7 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         >>> from pyhelpers.store import save_json
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers._cache import example_dataframe
+        >>> import json
 
         >>> json_pathname = cd("tests\\data", "dat.json")
 
@@ -427,6 +431,7 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         >>> example_df = example_dataframe()
         >>> example_df
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
@@ -575,6 +580,7 @@ def save_feather(feather_data, path_to_feather, verbose=False, **kwargs):
         >>> feather_dat = example_dataframe()
         >>> feather_dat
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
@@ -939,6 +945,7 @@ def save_data(data, path_to_file, warning=True, **kwargs):
         >>> dat = example_dataframe()
         >>> dat
                     Easting  Northing
+        City
         London       530034    180381
         Birmingham   406689    286822
         Manchester   383819    398052
