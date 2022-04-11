@@ -36,6 +36,8 @@ def example_dataframe(osgb36=True):
 
     _example_dataframe = pd.DataFrame(data=_example_df, index=_index, columns=_columns)
 
+    _example_dataframe.index.name = 'City'
+
     return _example_dataframe
 
 
