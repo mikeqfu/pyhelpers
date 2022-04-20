@@ -1,45 +1,13 @@
+"""
+Cache.
+"""
+
 import importlib
+import importlib.util
 import json
+import sys
 
 import pkg_resources
-
-
-# An example DataFrame
-def example_dataframe(osgb36=True):
-    """
-    Create an example dataframe.
-
-    :param osgb36: whether to use data based on OSGB36 National Grid, defaults to ``True``
-    :type osgb36: bool
-    :return: an example dataframe
-    :rtype: pandas.DataFrame
-    """
-    import pandas as pd
-
-    if osgb36:
-        _example_df = [
-            (530034, 180381),  # London
-            (406689, 286822),  # Birmingham
-            (383819, 398052),  # Manchester
-            (582044, 152953),  # Leeds
-        ]
-    else:
-        _example_df = [
-            (-0.12772401, 51.50740693),  # London
-            (-1.90294064, 52.47928436),  # Birmingham
-            (-2.24527795, 53.47894006),  # Manchester
-            (0.60693267, 51.24669501),  # Leeds
-        ]
-
-    _index = ['London', 'Birmingham', 'Manchester', 'Leeds']
-    _columns = ['Easting', 'Northing']
-
-    _example_dataframe = pd.DataFrame(data=_example_df, index=_index, columns=_columns)
-
-    _example_dataframe.index.name = 'City'
-
-    return _example_dataframe
-
 
 # import name: (package/module name, install name)
 _OPTIONAL_DEPENDENCY = {
@@ -60,36 +28,101 @@ _OPTIONAL_DEPENDENCY = {
     "pyproj": ("pyproj", "pyproj"),
     "pypandoc": ("Pypandoc", "pypandoc"),
     "pdfkit": ("pdfkit", "pdfkit"),
+    "psycopg2": ("psycopg2", "psycopg2"),
+    "pyodbc": ("pyodbc", "pyodbc"),
+    "ujson": ("UltraJSON", "ujson"),
 }
 
 
-def _import_optional_dependency(optional_dependency: str):
-    # if optional_dependency not in sys.modules:
-    try:
-        importlib.import_module(optional_dependency)
+def _check_dependency(name):
+    """
+    Import optional dependency package.
 
-    except (ImportError, ModuleNotFoundError):
-        import_package_name = optional_dependency.split(".")[0]
-        if import_package_name == 'osgeo':
-            import_package_name = 'osgeo.gdal'
+    :param name: name of a package as an optional dependency of pyhelpers
+    :type name: str
 
-        package_name, install_name = _OPTIONAL_DEPENDENCY[import_package_name]
-        msg = f"Missing optional dependency \"{package_name}\". " \
-              f"Use pip or conda to install it, e.g. 'pip install {install_name}'."
+    **Examples**::
 
-        print(msg)
+        _check_dependency(dependency='psycopg2')
+
+        _check_dependency(dependency='pyodbc')
+    """
+
+    import_name = name.replace('-', '_')
+
+    if import_name in sys.modules:  # The optional dependency has already been imported
+        return sys.modules.get(import_name)
+
+    # elif (package_spec := importlib.util.find_spec(import_name)) is not None:
+    elif importlib.util.find_spec(import_name) is not None:
+        # import_package = importlib.util.module_from_spec(package_spec)
+        # sys.modules[import_name] = import_package
+        # package_spec.loader.exec_module(import_package)
+        return importlib.import_module(import_name)
+
+    else:
+        if import_name in _OPTIONAL_DEPENDENCY:
+            package_name, install_name = _OPTIONAL_DEPENDENCY[import_name]
+        else:
+            package_name, install_name = name, name.split('.')[0]
+
+        raise ModuleNotFoundError(
+            f"The specified dependency '{package_name}' is not available. "
+            f"Use pip or conda to install it, e.g. 'pip install {install_name}'.")
 
 
-# == ops.py ======================================================================================
+# An example DataFrame
+def example_dataframe(osgb36=True):
+    """
+    Create an example dataframe.
+
+    :param osgb36: whether to use data based on OSGB36 National Grid, defaults to ``True``
+    :type osgb36: bool
+    :return: an example dataframe
+    :rtype: pandas.DataFrame
+    """
+
+    pd_ = _check_dependency(name='pandas')
+
+    if osgb36:
+        _example_df = [
+            (530034, 180381),  # London
+            (406689, 286822),  # Birmingham
+            (383819, 398052),  # Manchester
+            (582044, 152953),  # Leeds
+        ]
+    else:
+        _example_df = [
+            (-0.12772401, 51.50740693),  # London
+            (-1.90294064, 52.47928436),  # Birmingham
+            (-2.24527795, 53.47894006),  # Manchester
+            (0.60693267, 51.24669501),  # Leeds
+        ]
+
+    _index = ['London', 'Birmingham', 'Manchester', 'Leeds']
+    _columns = ['Easting', 'Northing']
+
+    _example_dataframe = pd_.DataFrame(data=_example_df, index=_index, columns=_columns)
+
+    _example_dataframe.index.name = 'City'
+
+    return _example_dataframe
+
+
+# == For ops.py ====================================================================================
 
 def _load_user_agent_strings():
-    try:
-        path_to_json = pkg_resources.resource_filename(__name__, "data/user-agent-strings.json")
-        json_in = open(path_to_json, mode='r')
-    except FileNotFoundError:
-        json_in = open("pyhelpers/data/user-agent-strings.json", mode='r')
+    """
+    Load (fake) user agent strings.
 
-    user_agent_strings = json.loads(json_in.read())
+    :return: (fake) user agent strings
+    :rtype: dict
+    """
+
+    path_to_json = pkg_resources.resource_filename(__name__, "data/user-agent-strings.json")
+
+    with open(path_to_json, mode='r') as f:
+        user_agent_strings = json.loads(f.read())
 
     return user_agent_strings
 
@@ -97,7 +130,7 @@ def _load_user_agent_strings():
 _USER_AGENT_STRINGS = _load_user_agent_strings()
 
 
-# == text.py =====================================================================================
+# == For text.py ===================================================================================
 
 def _english_written_numbers():
     metadata = dict()
