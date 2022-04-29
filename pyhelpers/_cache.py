@@ -2,9 +2,11 @@
 Cache.
 """
 
+import copy
 import importlib
 import importlib.util
 import json
+import os
 import sys
 
 import pkg_resources
@@ -71,8 +73,17 @@ def _check_dependency(name):
             f"Use pip or conda to install it, e.g. 'pip install {install_name}'.")
 
 
+def _check_rel_pathname(pathname):
+    try:
+        pathname_ = os.path.relpath(pathname)
+    except ValueError:
+        pathname_ = copy.copy(pathname)
+
+    return pathname_
+
+
 # An example DataFrame
-def example_dataframe(osgb36=True):
+def example_dataframe(osgb36=False):
     """
     Create an example dataframe.
 
@@ -80,27 +91,48 @@ def example_dataframe(osgb36=True):
     :type osgb36: bool
     :return: an example dataframe
     :rtype: pandas.DataFrame
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> example_dataframe()
+                          Easting       Northing
+        City
+        London      530039.558844  180371.680166
+        Birmingham  406705.887014  286868.166642
+        Manchester  383830.039036  398113.055831
+        Leeds       430147.447354  433553.327117
+
+        >>> example_dataframe(osgb36=False)
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
     """
 
     pd_ = _check_dependency(name='pandas')
 
     if osgb36:
+        _columns = ['Easting', 'Northing']
         _example_df = [
-            (530034, 180381),  # London
-            (406689, 286822),  # Birmingham
-            (383819, 398052),  # Manchester
-            (582044, 152953),  # Leeds
+            (530039.5588445, 180371.6801655),  # London
+            (406705.8870136, 286868.1666422),  # Birmingham
+            (383830.0390357, 398113.0558309),  # Manchester
+            (430147.4473539, 433553.3271173),  # Leeds
         ]
     else:
+        _columns = ['Longitude', 'Latitude']
         _example_df = [
-            (-0.12772401, 51.50740693),  # London
-            (-1.90294064, 52.47928436),  # Birmingham
-            (-2.24527795, 53.47894006),  # Manchester
-            (0.60693267, 51.24669501),  # Leeds
+            (-0.1276474, 51.5073219),  # London
+            (-1.9026911, 52.4796992),  # Birmingham
+            (-2.2451148, 53.4794892),  # Manchester
+            (-1.5437941, 53.7974185),  # Leeds
         ]
 
     _index = ['London', 'Birmingham', 'Manchester', 'Leeds']
-    _columns = ['Easting', 'Northing']
 
     _example_dataframe = pd_.DataFrame(data=_example_df, index=_index, columns=_columns)
 
