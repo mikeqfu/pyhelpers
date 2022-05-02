@@ -1,15 +1,18 @@
 """
-Saving, loading and relevant operations of file-like objects.
+Saving, loading and other relevant operations of file-like objects.
 """
 
 import copy
 import csv
+import io
 import json
 import operator
 import os
 import pathlib
 import pickle
+import platform
 import subprocess
+import sys
 import tempfile
 import warnings
 import zipfile
@@ -17,12 +20,13 @@ import zipfile
 import pandas as pd
 import pkg_resources
 
+from ._cache import _check_dependency, _check_rel_pathname
 from .ops import confirmed, find_executable, is_url
 
 
 def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
     """
-    Get information about the path of a file.
+    Check about a specified file pathname.
 
     :param path_to_file: path where a file is saved
     :type path_to_file: str or pathlib.Path
@@ -35,10 +39,10 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
     :return: a relative path and a filename (if ``ret_info=True``)
     :rtype: tuple
 
-    **Test**::
+    **Tests**::
 
-        >>> from pyhelpers.dir import cd
         >>> from pyhelpers.store import _check_path_to_file
+        >>> from pyhelpers.dir import cd
 
         >>> file_path = cd()
         >>> try:
@@ -103,7 +107,65 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
         return rel_path, filename
 
 
-""" == Save data ============================================================================= """
+def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
+    if verbose:
+        rel_pathname = _check_rel_pathname(path_to_file)
+        print("Loading \"{}\"".format(rel_pathname), end=verbose_end)
+
+
+def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
+    """
+    Check about a specified executable file pathname.
+
+    :param exe_name: name of an executable file
+    :type exe_name: str
+    :param exe_pathname: pathname of an executable file
+    :type exe_pathname: str or None
+    :param possible_pathnames: a number of possible pathnames of the executable file
+    :type possible_pathnames: list or set
+    :return: whether the specified executable file exists and its pathname
+    :rtype: typing.Tuple[bool, str]
+
+    **Tests**::
+
+        >>> from pyhelpers.store import _check_exe_pathname
+        >>> import os
+
+        >>> possibilities = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
+
+        >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, possibilities)
+        >>> python_exists
+        True
+        >>> os.path.basename(path_to_exe)
+        'python.exe'
+    """
+
+    if exe_pathname is None:
+        exe_exists, exe_pathname_ = find_executable(app_name=exe_name, possibilities=possible_pathnames)
+    else:
+        exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
+
+    return exe_exists, exe_pathname_
+
+
+def _set_index(df, index=None):
+    data = df.copy()
+
+    if index is None:
+        idx_col = df.columns[0]
+        if idx_col == '':
+            data = df.set_index(idx_col)
+            data.index.name = None
+
+    else:
+        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
+        idx_keys = [df.columns[x] if isinstance(x, int) else x for x in idx_keys_]
+        data = df.set_index(keys=idx_keys)
+
+    return data
+
+
+""" == Save data =============================================================================== """
 
 
 # Pickle files
@@ -122,7 +184,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
 
     .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.store import save_pickle
         >>> from pyhelpers.dir import cd
@@ -137,12 +199,12 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
         >>> # Get an example dataframe
         >>> pickle_dat = example_dataframe()
         >>> pickle_dat
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
         Updating "dat.pickle" at "tests\\data\\" ... Done.
@@ -209,23 +271,19 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         >>> # Get an example dataframe
         >>> spreadsheet_dat = example_dataframe()
         >>> spreadsheet_dat
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> spreadsheet_pathname = cd("tests\\data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
         Saving "dat.csv" to "tests\\data\\" ... Done.
 
-        >>> spreadsheet_pathname = cd("tests\\data", "dat.xls")
-        >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, verbose=True)
-        Saving "dat.xls" to "tests\\data\\" ... Done.
-
         >>> spreadsheet_pathname = cd("tests\\data", "dat.xlsx")
-        >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, verbose=True)
+        >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
         Saving "dat.xlsx" to "tests\\data\\" ... Done.
     """
 
@@ -256,8 +314,8 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         print("Failed. {}.".format(e.args[0])) if verbose else ""
 
 
-def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w',
-                               index=False, confirmation_required=True, verbose=False, **kwargs):
+def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w', index=False,
+                      confirmation_required=True, verbose=False, **kwargs):
     """
     Save data to a multi-sheet `Microsoft Excel`_ file.
 
@@ -286,52 +344,49 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
 
     **Examples**::
 
-        >>> from pyhelpers.store import save_multiple_spreadsheets
+        >>> from pyhelpers.store import save_spreadsheets
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> # Get an example dataframe
-        >>> dat1 = example_dataframe()
+        >>> dat1 = example_dataframe()  # Get an example dataframe
         >>> dat1
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> dat2 = dat1.T
         >>> dat2
-        City      London  Birmingham  Manchester   Leeds
-        Easting   530034      406689      383819  582044
-        Northing  180381      286822      398052  152953
+        City          London  Birmingham  Manchester      Leeds
+        Longitude  -0.127647   -1.902691   -2.245115  -1.543794
+        Latitude   51.507322   52.479699   53.479489  53.797418
 
         >>> dat = [dat1, dat2]
         >>> dat_sheets = ['TestSheet1', 'TestSheet2']
         >>> dat_pathname = cd("tests\\data", "dat.xlsx")
 
-        >>> save_multiple_spreadsheets(dat, dat_sheets, dat_pathname, index=True, verbose=True)
+        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, index=True, verbose=True)
         Saving "dat.xlsx" to "tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
-        >>> save_multiple_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
-        ...                            verbose=True)
+        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True, verbose=True)
         Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
 
-        >>> save_multiple_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
-        ...                            confirmation_required=False, verbose=True)
+        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
+        ...                   confirmation_required=False, verbose=True)
         Updating "dat.xlsx" at "tests\\dataz\" ...
             'TestSheet1' ... Failed. Sheet 'TestSheet1' already exists and if_sheet_exists is se ...
             'TestSheet2' ... Failed. Sheet 'TestSheet2' already exists and if_sheet_exists is se ...
 
-        >>> save_multiple_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
-        ...                            confirmation_required=False, verbose=True,
-        ...                            if_sheet_exists='replace')
+        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
+        ...                   confirmation_required=False, verbose=True, if_sheet_exists='replace')
         Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
@@ -365,7 +420,8 @@ def save_multiple_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadshe
             else:
                 msg_ = "saved as '{}' ... Done. ".format(sheet_name_)
 
-            print(msg_) if verbose else ""
+            if verbose:
+                print(msg_)
 
         except Exception as e:
             print("Failed. {}".format(e))
@@ -399,20 +455,23 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
     :param path_to_json: path where a json file is saved
     :type path_to_json: str or os.PathLike[str]
     :param method: an open-source module used for JSON serialization, options include
-        ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
-        ``'rapidjson'`` (for `python-rapidjson`_)
+        ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
+        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `json.dump`_ (if ``method=None``),
-        `orjson.dumps`_ (if ``method='orjson'``) or `rapidjson.dump`_ (if ``method='rapidjson'``)
+    :param kwargs: [optional] parameters of `json.dump()`_ (if ``method=None``),
+        `orjson.dumps()`_ (if ``method='orjson'``), `ujson.dump()`_ (if ``method='ujson'``) or
+        `rapidjson.dump()`_ (if ``method='rapidjson'``)
 
     .. _`json module`: https://docs.python.org/3/library/json.html
+    .. _`UltraJSON`: https://pypi.org/project/ujson/
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`json.dump`: https://docs.python.org/3/library/json.html#json.dump
-    .. _`orjson.dumps`: https://github.com/ijl/orjson#serialize
-    .. _`rapidjson.dump`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
+    .. _`orjson.dumps()`: https://github.com/ijl/orjson#serialize
+    .. _`ujson.dump()`: https://github.com/ultrajson/ultrajson#encoder-options
+    .. _`rapidjson.dump()`: https://python-rapidjson.readthedocs.io/en/latest/dump.html
+    .. _`json.dump()`: https://docs.python.org/3/library/json.html#json.dump
 
     **Examples**::
 
@@ -430,53 +489,57 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         >>> # Get an example dataframe
         >>> example_df = example_dataframe()
         >>> example_df
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> # Convert the dataframe to JSON format
         >>> json_dat = json.loads(example_df.to_json(orient='index'))
         >>> json_dat
-        {'London': {'Easting': 530034, 'Northing': 180381},
-         'Birmingham': {'Easting': 406689, 'Northing': 286822},
-         'Manchester': {'Easting': 383819, 'Northing': 398052},
-         'Leeds': {'Easting': 582044, 'Northing': 152953}}
+        {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
+         'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
+         'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
+         'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
 
+        >>> # Use built-in json module
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
         >>> save_json(json_dat, json_pathname, method='orjson', verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
+        >>> save_json(json_dat, json_pathname, method='ujson', indent=4, verbose=True)
+        Updating "dat.json" at "tests\\data\\" ... Done.
+
         >>> save_json(json_dat, json_pathname, method='rapidjson', indent=4, verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
+
+    .. seealso::
+
+        - Examples for the function :py:func:`pyhelpers.store.load_json`.
     """
+
+    if method is not None:
+        valid_methods = {'ujson', 'orjson', 'rapidjson'}
+        assert method in valid_methods, f"`method` must be on one of {valid_methods}"
+        mod = _check_dependency(name=method)
+    else:
+        mod = sys.modules.get('json')
 
     _check_path_to_file(path_to_json, verbose=verbose, ret_info=False)
 
     try:
         if method == 'orjson':
-            import orjson
-
-            json_out = open(path_to_json, mode='wb')
-            json_dumps = orjson.dumps(json_data, **kwargs)
-            json_out.write(json_dumps)
+            with open(path_to_json, mode='wb') as json_out:
+                json_out.write(mod.dumps(json_data, **kwargs))
 
         else:
-            json_out = open(path_to_json, mode='w')
+            with open(path_to_json, mode='w') as json_out:
+                mod.dump(json_data, json_out, **kwargs)
 
-            if method == 'rapidjson':
-                import rapidjson
-
-                rapidjson.dump(json_data, json_out, **kwargs)
-
-            else:
-                json.dump(json_data, json_out, **kwargs)
-
-        json_out.close()
         print("Done.") if verbose else ""
 
     except Exception as e:
@@ -499,29 +562,29 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
 
     .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.store import save_joblib
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers._cache import example_dataframe
-        >>> import numpy
+        >>> import numpy as np
 
         >>> joblib_pathname = cd("tests\\data", "dat.joblib")
 
         >>> # Example 1:
-        >>> joblib_dat = example_dataframe().to_numpy(dtype=int)
+        >>> joblib_dat = example_dataframe().to_numpy()
         >>> joblib_dat
-        array([[530034, 180381],
-               [406689, 286822],
-               [383819, 398052],
-               [582044, 152953]])
+        array([[-0.1276474, 51.5073219],
+               [-1.9026911, 52.4796992],
+               [-2.2451148, 53.4794892],
+               [-1.5437941, 53.7974185]])
 
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
         Saving "dat.joblib" to "tests\\data\\" ... Done.
 
         >>> # Example 2:
-        >>> numpy.random.seed(0)
-        >>> joblib_dat = numpy.random.rand(100, 100)
+        >>> np.random.seed(0)
+        >>> joblib_dat = np.random.rand(100, 100)
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],
@@ -538,15 +601,19 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
                 0.81357508]])
 
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
-        Saving "dat.joblib" to "tests\\data\\" ... Done.
+        Updating "dat.joblib" at "tests\\data\\" ... Done.
+
+    .. seealso::
+
+        - Examples for the function :py:func:`pyhelpers.store.load_joblib`.
     """
 
     _check_path_to_file(path_to_joblib, verbose=verbose, ret_info=False)
 
     try:
-        import joblib
+        joblib_ = _check_dependency(name='joblib')
 
-        joblib.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
+        joblib_.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
         print("Done.") if verbose else ""
 
     except Exception as e:
@@ -555,7 +622,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
 
 # Feather files
 
-def save_feather(feather_data, path_to_feather, verbose=False, **kwargs):
+def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
@@ -563,6 +630,8 @@ def save_feather(feather_data, path_to_feather, verbose=False, **kwargs):
     :type feather_data: pandas.DataFrame
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str or os.PathLike[str]
+    :param index: whether to include the index as a column, defaults to ``False``
+    :type index: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `pandas.DataFrame.to_feather`_
@@ -570,29 +639,32 @@ def save_feather(feather_data, path_to_feather, verbose=False, **kwargs):
     .. _`pandas.DataFrame.to_feather`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_feather.html
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.store import save_feather
         >>> from pyhelpers.dir import cd
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> # Get an example dataframe
-        >>> feather_dat = example_dataframe()
+        >>> feather_dat = example_dataframe()  # Get an example dataframe
         >>> feather_dat
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> feather_pathname = cd("tests\\data", "dat.feather")
 
-        >>> save_feather(feather_dat.reset_index(), feather_pathname, verbose=True)
+        >>> save_feather(feather_dat, feather_pathname, verbose=True)
         Saving "dat.feather" to "tests\\data\\" ... Done.
 
-        >>> save_feather(feather_dat, feather_pathname, verbose=True)
+        >>> save_feather(feather_dat, feather_pathname, index=True, verbose=True)
         Updating "dat.feather" at "tests\\data\\" ... Done.
+
+    .. seealso::
+
+        - Examples for the function :py:func:`pyhelpers.store.load_feather`.
     """
 
     assert isinstance(feather_data, pd.DataFrame)
@@ -600,15 +672,17 @@ def save_feather(feather_data, path_to_feather, verbose=False, **kwargs):
     _check_path_to_file(path_to_feather, verbose=verbose, ret_info=False)
 
     try:
-        if list(feather_data.index) != range(len(feather_data)):
+        if list(feather_data.index) != range(len(feather_data)) or index is True:
             feather_data.reset_index().to_feather(path_to_feather, **kwargs)
         else:
             feather_data.to_feather(path_to_feather, **kwargs)
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e)) if verbose else ""
+        if verbose:
+            print("Failed. {}.".format(e))
 
 
 # Images
@@ -625,20 +699,23 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param inkscape_exe: absolute path to 'inkscape.exe', defaults to ``None``;
-        on Windows, the default installation path
+        when ``inkscape_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*"
-        (or "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*") is used when ``inkscape_exe=None``
+        or "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*"
     :type inkscape_exe: str or None
-    :param kwargs: [optional] parameters of `subprocess.call`_
+    :param kwargs: [optional] parameters of `subprocess.run`_
 
-    .. _`subprocess.call`:
-        https://docs.python.org/3/library/subprocess.html#subprocess.call
+    .. _`subprocess.run`:
+        https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
         >>> from pyhelpers.store import save_svg_as_emf
-        >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.settings import mpl_preferences
+        >>> import matplotlib.pyplot as plt
+
+        >>> mpl_preferences()
 
         >>> x, y = (1, 1), (2, 2)
 
@@ -651,7 +728,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-1
         :align: center
-        :width: 76%
+        :width: 75%
 
         An example figure created for the function :py:func:`~pyhelpers.store.save_svg_as_emf`.
 
@@ -669,18 +746,18 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         >>> plt.close()
     """
 
+    exe_name = "inkscape.exe"
+    possible_exe_pathnames = {
+        exe_name,
+        f"C:\\Program Files\\Inkscape\\{exe_name}",
+        f"C:\\Program Files\\Inkscape\\bin\\{exe_name}",
+    }
+    inkscape_exists, inkscape_exe_ = _check_exe_pathname(exe_name, inkscape_exe, possible_exe_pathnames)
+
     abs_svg_path, abs_emf_path = map(pathlib.Path, (path_to_svg, path_to_emf))
     assert abs_svg_path.suffix.lower() == ".svg"
 
-    inkscape_exe_ = copy.copy(inkscape_exe)
-    if inkscape_exe_ is None:
-        exe_pathnames = [
-            "C:\\Program Files\\Inkscape\\inkscape.exe",
-            "C:\\Program Files\\Inkscape\\bin\\inkscape.exe",
-        ]
-        inkscape_exe_ = find_executable(app_name="inkscape.exe", possibilities=exe_pathnames)
-
-    if os.path.isfile(inkscape_exe_):
+    if inkscape_exists:
         if verbose:
             if abs_emf_path.exists():
                 msg = f"Updating \"{abs_emf_path.name}\" at \"{os.path.relpath(abs_emf_path.parent)}\\\""
@@ -691,22 +768,24 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         try:
             abs_emf_path.parent.mkdir(exist_ok=True)
 
-            ret_code = subprocess.call([inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf], **kwargs)
+            command_args = [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf]
+            rslt = subprocess.run(command_args, **kwargs)
 
-            if ret_code == 1:
-                ret_code = subprocess.call(
-                    [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf], **kwargs)
+            if rslt.returncode != 0:
+                command_args = [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf]
+                rslt = subprocess.run(command_args, **kwargs)
 
             if verbose:
-                print("Done." if ret_code == 0 else "Failed.")
+                print("Done." if rslt.returncode == 0 else "Failed.")
 
         except Exception as e:
-            print("Failed. {}".format(e))
+            print("An error occurred: {}.".format(e))
 
     else:
         if verbose:
-            print("\"Inkscape\" (https://inkscape.org) is required to convert a SVG file to an EMF file;"
-                  " however, it is not found on this device.\nInstall it and then try again.")
+            print(
+                "\"Inkscape\" (https://inkscape.org) is required to convert a SVG file to an EMF file;"
+                " however, it is not found on this device.\nInstall it and then try again.")
 
 
 def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
@@ -733,7 +812,10 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
         >>> from pyhelpers.store import save_fig
         >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
+
+        >>> mpl_preferences()
 
         >>> x, y = (1, 1), (2, 2)
 
@@ -746,7 +828,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-2
         :align: center
-        :width: 76%
+        :width: 75%
 
         An example figure created for the function :py:func:`~pyhelpers.store.save_fig`.
 
@@ -755,11 +837,11 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         >>> img_dir = cd("tests\\images")
 
         >>> png_file_pathname = cd(img_dir, "store-save_fig-demo.png")
-        >>> save_fig(png_file_pathname, dpi=300, verbose=True)
+        >>> save_fig(png_file_pathname, dpi=600, verbose=True)
         Saving "store-save_fig-demo.png" to "tests\\images\\" ... Done.
 
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
-        >>> save_fig(svg_file_pathname, dpi=300, verbose=True, conv_svg_to_emf=True)
+        >>> save_fig(svg_file_pathname, dpi=600, verbose=True, conv_svg_to_emf=True)
         Saving "store-save_fig-demo.svg" to "tests\\images\\" ... Done.
         Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
 
@@ -771,13 +853,16 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     file_ext = pathlib.Path(path_to_fig_file).suffix
 
     try:
-        import matplotlib.pyplot
+        mpl_plt = _check_dependency(name='matplotlib.pyplot')
 
-        matplotlib.pyplot.savefig(path_to_fig_file, dpi=dpi, **kwargs)
-        print("Done.") if verbose else ""
+        mpl_plt.savefig(path_to_fig_file, dpi=dpi, **kwargs)
+
+        if verbose:
+            print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e)) if verbose else ""
+        if verbose:
+            print("Failed. {}.".format(e))
 
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
@@ -804,13 +889,13 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool
     :param wkhtmltopdf_exe: absolute path to 'wkhtmltopdf.exe', defaults to ``None``;
-        on Windows, the default installation path
-        "*C:\\\\Program Files\\\\wkhtmltopdf\\\\bin\\\\wkhtmltopdf.exe*" is used
-        when ``wkhtmltopdf_exe=None``
+        when ``wkhtmltopdf_exe=None``, use the default installation path, e.g. (on Windows)
+        "*C:\\\\Program Files\\\\wkhtmltopdf\\\\bin\\\\wkhtmltopdf.exe*"
+
     :type wkhtmltopdf_exe: str or None
     :param kwargs: [optional] parameters of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.store import save_web_page_as_pdf
         >>> from pyhelpers.dir import cd
@@ -819,14 +904,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
         >>> pdf_pathname = cd("tests\\documents", "pyhelpers.pdf")
 
         >>> web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
-        >>> save_web_page_as_pdf(web_page_url, pdf_pathname, verbose=True)
-        Saving "pyhelpers.pdf" to "tests\\documents\\" ...
-        Loading pages (1/6)
-        Counting pages (2/6)
-        Resolving links (4/6)
-        Loading headers and footers (5/6)
-        Printing pages (6/6)
-        Done
+        >>> save_web_page_as_pdf(web_page_url, pdf_pathname)
 
         >>> # Open the PDF file using the system's default application
         >>> subprocess.Popen(pdf_pathname, shell=True)
@@ -840,63 +918,58 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
         Loading headers and footers (5/6)
         Printing pages (6/6)
         Done
-
         >>> subprocess.Popen(pdf_pathname, shell=True)
     """
 
-    import pdfkit
+    exe_name = "wkhtmltopdf.exe"
+    possible_exe_pathnames = {exe_name, f"C:\\Program Files\\wkhtmltopdf\\bin\\{exe_name}"}
+    wkhtmltopdf_exists, wkhtmltopdf_exe_ = _check_exe_pathname(
+        exe_name, exe_pathname=wkhtmltopdf_exe, possible_pathnames=possible_exe_pathnames)
 
-    wkhtmltopdf_exe_ = copy.copy(wkhtmltopdf_exe)
-    if wkhtmltopdf_exe_ is None:
-        wkhtmltopdf_exe_ = find_executable(
-            "wkhtmltopdf.exe", possibilities=["C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"])
+    if wkhtmltopdf_exists:
+        pdfkit_ = _check_dependency(name='pdfkit')
 
-    if os.path.isfile(wkhtmltopdf_exe_):
-        pdfkit_configuration = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_exe)
+        pdfkit_configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe_)
+
+        try:
+            _check_path_to_file(
+                path_to_file=path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
+
+            wkhtmltopdf_options = {
+                'enable-local-file-access': None,
+                'page-size': page_size,
+                'zoom': str(float(zoom)),
+                'encoding': encoding,
+                # 'margin-top': '0',
+                # 'margin-right': '0',
+                # 'margin-left': '0',
+                # 'margin-bottom': '0',
+            }
+
+            os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
+
+            if os.path.isfile(path_to_pdf):
+                os.remove(path_to_pdf)
+
+            kwargs.update({'configuration': pdfkit_configuration, 'options': wkhtmltopdf_options})
+
+            if os.path.isfile(web_page):
+                status = pdfkit_.from_file(web_page, path_to_pdf, verbose=verbose, **kwargs)
+            elif is_url(web_page):
+                status = pdfkit_.from_url(web_page, path_to_pdf, verbose=verbose, **kwargs)
+            else:
+                status = None
+
+            if verbose and not status:
+                print("Failed. Check if the URL is available.")
+
+        except Exception as e:
+            if verbose:
+                print("Failed. {}".format(e), end="")
 
     else:
-        try:
-            pdfkit_configuration = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_exe_)
-        except (FileNotFoundError, OSError):
-            print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
-                  "however, it is not found on this device.\nInstall it and then try again.")
-            return None
-
-    try:
-        _check_path_to_file(
-            path_to_file=path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
-
-        wkhtmltopdf_options = {
-            'enable-local-file-access': None,
-            'page-size': page_size,
-            'zoom': str(float(zoom)),
-            'encoding': encoding,
-            # 'margin-top': '0',
-            # 'margin-right': '0',
-            # 'margin-left': '0',
-            # 'margin-bottom': '0',
-        }
-
-        os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
-
-        if os.path.isfile(path_to_pdf):
-            os.remove(path_to_pdf)
-
-        kwargs.update({'configuration': pdfkit_configuration, 'options': wkhtmltopdf_options})
-
-        if os.path.isfile(web_page):
-            status = pdfkit.from_file(web_page, path_to_pdf, verbose=verbose, **kwargs)
-        elif is_url(web_page):
-            status = pdfkit.from_url(web_page, path_to_pdf, verbose=verbose, **kwargs)
-        else:
-            status = None
-
-        if verbose and not status:
-            print("Failed. Check if the URL is available.")
-
-    except Exception as e:
-        if verbose:
-            print("Failed. {}".format(e), end="")
+        print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
+              "however, it is not found on this device.\nInstall it and then try again.")
 
 
 # A comprehensive function
@@ -944,12 +1017,12 @@ def save_data(data, path_to_file, warning=True, **kwargs):
         >>> # Get an example dataframe
         >>> dat = example_dataframe()
         >>> dat
-                    Easting  Northing
+                    Longitude   Latitude
         City
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
         >>> # Save the data to files different formats:
 
@@ -970,7 +1043,7 @@ def save_data(data, path_to_file, warning=True, **kwargs):
         Saving "dat.txt" to "tests\\data\\" ... Done.
 
         >>> dat_pathname = cd(data_dir, "dat.feather")
-        >>> save_data(dat, dat_pathname, verbose=True)
+        >>> save_data(dat, dat_pathname, index=True, verbose=True)
         Saving "dat.feather" to "tests\\data\\" ... Done.
 
         >>> # Convert `dat` to JSON format
@@ -978,10 +1051,10 @@ def save_data(data, path_to_file, warning=True, **kwargs):
 
         >>> dat_ = json.loads(dat.to_json(orient='index'))
         >>> dat_
-        {'London': {'Easting': 530034, 'Northing': 180381},
-         'Birmingham': {'Easting': 406689, 'Northing': 286822},
-         'Manchester': {'Easting': 383819, 'Northing': 398052},
-         'Leeds': {'Easting': 582044, 'Northing': 152953}}
+        {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
+         'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
+         'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
+         'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
 
         >>> dat_pathname = cd(data_dir, "dat.json")
         >>> save_data(dat_, dat_pathname, indent=4, verbose=True)
@@ -1028,7 +1101,7 @@ def save_data(data, path_to_file, warning=True, **kwargs):
             save_pickle(data, path_to_file, **kwargs)
 
 
-""" == Load data ============================================================================= """
+""" == Load data =============================================================================== """
 
 
 def load_pickle(path_to_pickle, verbose=False, **kwargs):
@@ -1046,7 +1119,11 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
     .. _`pickle.load`: https://docs.python.org/3/library/pickle.html#pickle.load
 
-    **Example**::
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_pickle`.
+
+    **Examples**::
 
         >>> from pyhelpers.store import load_pickle
         >>> from pyhelpers.dir import cd
@@ -1055,25 +1132,23 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         >>> pickle_dat = load_pickle(pickle_pathname, verbose=True)
         Loading "tests\\data\\dat.pickle" ... Done.
         >>> pickle_dat
-                    Easting  Northing
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_pickle`.
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
     """
 
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_pickle)), end=" ... ")
+    _check_loading_path(path_to_file=path_to_pickle, verbose=verbose)
 
     try:
-        pickle_in = open(path_to_pickle, mode='rb')
-        pickle_data = pickle.load(pickle_in, **kwargs)
-        pickle_in.close()
-        print("Done.") if verbose else ""
+        with open(file=path_to_pickle, mode='rb') as pickle_in:
+            pickle_data = pickle.load(pickle_in, **kwargs)
+
+        if verbose:
+            print("Done.")
+
         return pickle_data
 
     except Exception as e:
@@ -1092,7 +1167,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     :type header: int or typing.List[int] or None
     :param index: index number of the column(s) to use as the row labels of the dataframe,
         defaults to ``None``
-    :type index: str or list or None
+    :type index: str or int or list or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `csv.reader`_
@@ -1102,47 +1177,48 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`csv.reader`: https://docs.python.org/3/library/pickle.html#pickle.load
 
-    **Example**::
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_spreadsheet`.
+
+    **Examples**::
 
         >>> from pyhelpers.store import load_csv
         >>> from pyhelpers.dir import cd
 
         >>> csv_pathname = cd("tests\\data", "dat.csv")
-        >>> csv_dat = load_csv(csv_pathname, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
         Loading "tests\\data\\dat.csv" ... Done.
         >>> csv_dat
-                   Easting Northing
-        London      530034   180381
-        Birmingham  406689   286822
-        Manchester  383819   398052
-        Leeds       582044   152953
+                     Longitude    Latitude
+        City
+        London      -0.1276474  51.5073219
+        Birmingham  -1.9026911  52.4796992
+        Manchester  -2.2451148  53.4794892
+        Leeds       -1.5437941  53.7974185
 
         >>> csv_pathname = cd("tests\\data", "dat.txt")
-        >>> csv_dat = load_csv(csv_pathname, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
         Loading "tests\\data\\dat.txt" ... Done.
         >>> csv_dat
-                   Easting Northing
-        London      530034   180381
-        Birmingham  406689   286822
-        Manchester  383819   398052
-        Leeds       582044   152953
+                     Longitude    Latitude
+        City
+        London      -0.1276474  51.5073219
+        Birmingham  -1.9026911  52.4796992
+        Manchester  -2.2451148  53.4794892
+        Leeds       -1.5437941  53.7974185
 
         >>> csv_dat = load_csv(csv_pathname, header=[0, 1], verbose=True)
         Loading "tests\\data\\dat.txt" ... Done.
         >>> csv_dat
-                      Easting Northing
+                 City Easting Northing
                London  530034   180381
         0  Birmingham  406689   286822
         1  Manchester  383819   398052
         2       Leeds  582044   152953
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_spreadsheet`.
     """
 
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_csv)), end=" ... ")
+    _check_loading_path(path_to_file=path_to_csv, verbose=verbose)
 
     try:
         with open(path_to_csv, mode='r') as csv_file:
@@ -1156,13 +1232,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         else:
             csv_data = pd.DataFrame(csv_rows)
 
-        if index is None:
-            idx_col = csv_data.columns[0]
-            if idx_col == '':
-                csv_data.set_index(idx_col, inplace=True)
-                csv_data.index.name = None
-        else:
-            csv_data.set_index(keys=index, inplace=True)
+        csv_data = _set_index(csv_data, index=index)
 
         if verbose:
             print("Done.")
@@ -1173,7 +1243,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         print("Failed. {}".format(e))
 
 
-def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
+def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
     """
     Load multiple sheets of an `Microsoft Excel`_ file.
 
@@ -1191,15 +1261,21 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
     .. _`pandas.ExcelFile.parse`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
 
+    .. note::
+
+        - Example data can be referred to the functions
+          :py:func:`pyhelpers.store.save_multiple_spreadsheets` and
+          :py:func:`pyhelpers.store.save_spreadsheet`.
+
     **Examples**::
 
-        >>> from pyhelpers.store import load_multiple_spreadsheets
+        >>> from pyhelpers.store import load_spreadsheets
         >>> from pyhelpers.dir import cd
 
         >>> dat_dir = cd("tests\\data")
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
-        >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
+        >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
         Loading "tests\\data\\dat.xlsx" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
@@ -1208,31 +1284,26 @@ def load_multiple_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False,
         >>> list(wb_data.keys())
         ['TestSheet1', 'TestSheet2', 'TestSheet11', 'TestSheet21']
 
-        >>> wb_data = load_multiple_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
+        >>> wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
         >>> type(wb_data)
         list
         >>> len(wb_data)
         4
         >>> wb_data[0]
-                    Easting  Northing
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
-
-    .. seealso::
-
-        - Examples for the functions :py:func:`pyhelpers.store.save_multiple_spreadsheets` and
-          :py:func:`pyhelpers.store.save_spreadsheet`.
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
     """
+
+    _check_loading_path(path_to_file=path_to_spreadsheet, verbose=verbose, verbose_end=" ... \n")
 
     excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
 
     sheet_names = excel_file_reader.sheet_names
     workbook_dat = []
-
-    if verbose:
-        print("Loading \"{}\" ... ".format(os.path.relpath(path_to_spreadsheet)))
 
     for sheet_name in sheet_names:
         print("\t'{}'.".format(sheet_name), end=" ... ") if verbose else ""
@@ -1264,25 +1335,32 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
     :param path_to_json: path where a json file is saved
     :type path_to_json: str or os.PathLike[str]
     :param method: an open-source Python package for JSON serialization, options include
-        ``None`` (default, for the built-in `json module`_), ``'orjson'`` (for `orjson`_) and
-        ``'rapidjson'`` (for `python-rapidjson`_)
+        ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
+        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
     :type method: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `open`_ (if ``method='orjson'``),
-        `rapidjson.load`_ (if ``method='rapidjson'``) or `json.load`_ (if ``method=None``)
+    :param kwargs: [optional] parameters of `json.load()`_ (if ``method=None``),
+        `orjson.loads()`_ (if ``method='orjson'``), `ujson.load()`_ (if ``method='ujson'``) or
+        `rapidjson.load()`_ (if ``method='rapidjson'``)
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: dict
 
     .. _`JSON`: https://www.json.org/json-en.html
     .. _`json module`: https://docs.python.org/3/library/json.html
+    .. _`UltraJSON`: https://pypi.org/project/ujson/
     .. _`orjson`: https://pypi.org/project/orjson/
     .. _`python-rapidjson`: https://pypi.org/project/python-rapidjson
-    .. _`open`: https://docs.python.org/3/library/functions.html#open
-    .. _`rapidjson.load`: https://docs.python.org/3/library/functions.html#open
-    .. _`json.load`: https://docs.python.org/3/library/json.html#json.load
+    .. _`orjson.loads()`: https://github.com/ijl/orjson#deserialize
+    .. _`ujson.load()`: https://github.com/ultrajson/ultrajson/blob/main/python/JSONtoObj.c
+    .. _`rapidjson.load()`: https://docs.python.org/3/library/functions.html#open
+    .. _`json.load()`: https://docs.python.org/3/library/json.html#json.load
 
-    **Example**::
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_json`.
+
+    **Examples**::
 
         >>> from pyhelpers.store import load_json
         >>> from pyhelpers.dir import cd
@@ -1291,39 +1369,29 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
         >>> json_dat = load_json(json_path, verbose=True)
         Loading "tests\\data\\dat.json" ... Done.
         >>> json_dat
-        {'London': {'Easting': 530034, 'Northing': 180381},
-         'Birmingham': {'Easting': 406689, 'Northing': 286822},
-         'Manchester': {'Easting': 383819, 'Northing': 398052},
-         'Leeds': {'Easting': 582044, 'Northing': 152953}}
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_json`.
+        {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
+         'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
+         'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
+         'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
     """
 
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_json)), end=" ... ")
+    if method is not None:
+        valid_methods = {'ujson', 'orjson', 'rapidjson'}
+        assert method in valid_methods, f"`method` must be on one of {valid_methods}"
+        mod = _check_dependency(name=method)
+    else:
+        mod = sys.modules.get('json')
+
+    _check_loading_path(path_to_file=path_to_json, verbose=verbose)
 
     try:
         if method == 'orjson':
-            import orjson
-
-            json_in = open(path_to_json, mode='rb', **kwargs)
-            json_data = orjson.loads(json_in.read())
+            with open(path_to_json, mode='rb') as json_in:
+                json_data = mod.loads(json_in.read(), **kwargs)
 
         else:
-            json_in = open(path_to_json, mode='r')
-
-            if method == 'rapidjson':
-                import rapidjson
-
-                # noinspection PyUnresolvedReferences
-                json_data = rapidjson.load(json_in, **kwargs)
-
-            else:
-                json_data = json.load(json_in, **kwargs)
-
-        json_in.close()
+            with open(path_to_json, mode='r') as json_in:
+                json_data = mod.load(json_in, **kwargs)
 
         print("Done.") if verbose else ""
 
@@ -1348,7 +1416,11 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
     .. _`joblib`: https://pypi.org/project/joblib/
     .. _`joblib.load`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
 
-    **Example**::
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_joblib`.
+
+    **Examples**::
 
         >>> from pyhelpers.store import load_joblib
         >>> from pyhelpers.dir import cd
@@ -1370,20 +1442,15 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
                 0.1419334 ],
                [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
                 0.81357508]])
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_joblib`.
     """
 
-    import joblib
+    joblib_ = _check_dependency(name='joblib')
 
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_joblib)), end=" ... ")
+    _check_loading_path(path_to_file=path_to_joblib, verbose=verbose)
 
     try:
         # noinspection PyUnresolvedReferences
-        joblib_data = joblib.load(filename=path_to_joblib, **kwargs)
+        joblib_data = joblib_.load(filename=path_to_joblib, **kwargs)
         print("Done.") if verbose else ""
 
         return joblib_data
@@ -1392,12 +1459,15 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         print("Failed. {}".format(e))
 
 
-def load_feather(path_to_feather, verbose=False, **kwargs):
+def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
 
     :param path_to_feather: path where a feather file is saved
     :type path_to_feather: str or os.PathLike[str]
+    :param index: index number of the column(s) to use as the row labels of the dataframe,
+        defaults to ``None``
+    :type index: str or int or list or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param kwargs: [optional] parameters of `pandas.read_feather`_
@@ -1412,44 +1482,47 @@ def load_feather(path_to_feather, verbose=False, **kwargs):
     .. _`pandas.read_feather`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_feather.html
 
-    **Example**::
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_feather`.
+
+    **Examples**::
 
         >>> from pyhelpers.store import load_feather
         >>> from pyhelpers.dir import cd
 
         >>> feather_path = cd("tests\\data", "dat.feather")
-        >>> feather_dat = load_feather(feather_path, verbose=True)
+        >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
         Loading "tests\\data\\dat.feather" ... Done.
         >>> feather_dat
-                    Easting  Northing
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_feather`.
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
     """
 
-    if verbose:
-        print("Loading \"{}\"".format(os.path.relpath(path_to_feather)), end=" ... ")
+    _check_loading_path(path_to_file=path_to_feather, verbose=verbose)
 
     try:
         feather_data = pd.read_feather(path_to_feather, **kwargs)
 
-        if isinstance(feather_data, pd.DataFrame):
-            col_0 = feather_data.columns[0]
+        feather_data = _set_index(feather_data, index=index)
 
-            if col_0.startswith('level_') and all(feather_data[col_0] == range(feather_data.shape[0])):
-                del feather_data[col_0]
+        # if isinstance(feather_data, pd.DataFrame):
+        #     col_0 = feather_data.columns[0]
+        #
+        #     if col_0.startswith('level_') and all(feather_data[col_0] == range(feather_data.shape[0])):
+        #         del feather_data[col_0]
+        #
+        #     if feather_data.columns[0] == 'index':
+        #         feather_data.set_index('index', inplace=True)
+        #         # feather_data = feather_data.rename_axis(None, axis=1)
+        #         feather_data.index.name = None
 
-            if feather_data.columns[0] == 'index':
-                feather_data.set_index('index', inplace=True)
-                # feather_data = feather_data.rename_axis(None, axis=1)
-                feather_data.index.name = None
-
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
         return feather_data
 
@@ -1484,6 +1557,10 @@ def load_data(path_to_file, warning=True, **kwargs):
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
 
+    .. note::
+
+        - Example data can be referred to the function :py:func:`pyhelpers.store.save_data`.
+
     **Examples**::
 
         >>> from pyhelpers.store import load_data
@@ -1491,42 +1568,50 @@ def load_data(path_to_file, warning=True, **kwargs):
 
         >>> data_dir = cd("tests\\data")
 
-        >>> pickle_dat = load_data(cd(data_dir, "dat.pickle"), verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.pickle")
+        >>> pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "tests\\data\\dat.pickle" ... Done.
         >>> pickle_dat
-                    Easting  Northing
-        London       530034    180381
-        Birmingham   406689    286822
-        Manchester   383819    398052
-        Leeds        582044    152953
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> csv_dat = load_data(path_to_file=cd(data_dir, "dat.csv"), verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.pickle")
+        >>> csv_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "tests\\data\\dat.csv" ... Done.
         >>> csv_dat
-                   Easting Northing
-        London      530034   180381
-        Birmingham  406689   286822
-        Manchester  383819   398052
-        Leeds       582044   152953
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> json_dat = load_data(cd(data_dir, "dat.json"), verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.json")
+        >>> json_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "tests\\data\\dat.json" ... Done.
         >>> json_dat
-        {'London': {'Easting': 530034, 'Northing': 180381},
-         'Birmingham': {'Easting': 406689, 'Northing': 286822},
-         'Manchester': {'Easting': 383819, 'Northing': 398052},
-         'Leeds': {'Easting': 582044, 'Northing': 152953}}
+        {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
+         'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
+         'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
+         'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
 
-        >>> feather_dat = load_data(path_to_file=cd(data_dir, "dat.feather"), verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.feather")
+        >>> feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
         Loading "tests\\data\\dat.feather" ... Done.
         >>> feather_dat
-                   Easting Northing
-        London      530034   180381
-        Birmingham  406689   286822
-        Manchester  383819   398052
-        Leeds       582044   152953
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> joblib_dat = load_data(path_to_file=cd(data_dir, "dat.joblib"), verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.joblib")
+        >>> joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "tests\\data\\dat.joblib" ... Done.
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
@@ -1542,10 +1627,6 @@ def load_data(path_to_file, warning=True, **kwargs):
                 0.1419334 ],
                [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
                 0.81357508]])
-
-    .. seealso::
-
-        - Examples for the function :py:func:`pyhelpers.store.save_data`.
     """
 
     path_to_file_ = path_to_file.lower()
@@ -1557,7 +1638,7 @@ def load_data(path_to_file, warning=True, **kwargs):
         data = load_csv(path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".xlsx", ".xls")):
-        data = load_multiple_spreadsheets(path_to_file, **kwargs)
+        data = load_spreadsheets(path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".json"):
         data = load_json(path_to_file, **kwargs)
@@ -1579,7 +1660,7 @@ def load_data(path_to_file, warning=True, **kwargs):
     return data
 
 
-""" == Uncompress data ======================================================================= """
+""" == Uncompress data ========================================================================= """
 
 
 def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
@@ -1620,18 +1701,13 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
         ...     print(f.read())
         test
 
-        >>> # Delete the directory "tests\\data\\zipped\\"
-        >>> delete_dir(cd("tests\\data\\zipped"), verbose=True)
-        The directory "tests\\data\\zipped\\" is not empty.
-        Confirmed to delete it
+        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
+        >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
+        To delete the following directories:
+            "tests\\data\\zipped\\" (Not empty)
+            "tests\\data\\zipped_alt\\" (Not empty)
         ? [No]|Yes: yes
         Deleting "tests\\data\\zipped\\" ... Done.
-
-        >>> # Delete the directory "tests\\data\\zipped_alt\\"
-        >>> delete_dir(output_dir, verbose=True)
-        The directory "tests\\data\\zipped_alt\\" is not empty.
-        Confirmed to delete it
-        ? [No]|Yes: yes
         Deleting "tests\\data\\zipped_alt\\" ... Done.
     """
 
@@ -1649,9 +1725,9 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     try:
         with zipfile.ZipFile(file=path_to_zip_file) as zf:
             zf.extractall(path=out_dir, **kwargs)
-        zf.close()
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
     except Exception as e:
         print("Failed. {}".format(e))
@@ -1670,12 +1746,12 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
     :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``;
-        on Windows, the default installation path "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" is used
-        when ``seven_zip_exe=None``
+        when ``seven_zip_exe=None``, use the default installation path, e.g. (on Windows)
+        "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*"
     :type seven_zip_exe: str or None
-    :param kwargs: [optional] parameters of `subprocess.call`_
+    :param kwargs: [optional] parameters of `subprocess.run`_
 
-    .. _`subprocess.call`: https://docs.python.org/3/library/subprocess.html#subprocess.call
+    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
@@ -1701,7 +1777,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         Size:       4
         Compressed: 158
 
-        File extracted successfully.
+        Done.
 
         >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
@@ -1709,24 +1785,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         test
 
         >>> output_dir = cd("tests\\data\\zipped_alt")
-        >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir, verbose=True)
-        7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
-
-        Scanning the drive for archives:
-        1 file, 158 bytes (1 KiB)
-
-        Extracting archive: \\tests\\data\\zipped.zip
-        --
-        Path = \\tests\\data\\zipped.zip
-        Type = zip
-        Physical Size = 158
-
-        Everything is Ok
-
-        Size:       4
-        Compressed: 158
-
-        File extracted successfully.
+        >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir, verbose=False)
 
         >>> out_file_pathname = cd("tests\\data\\zipped_alt", "zipped.txt")
         >>> with open(out_file_pathname) as f:
@@ -1735,76 +1794,151 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 
         >>> # Extract a .7z file
         >>> zip_file_path = cd("tests\\data", "zipped.7z")
-        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
-        7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
-
-        Scanning the drive for archives:
-        1 file, 138 bytes (1 KiB)
-
-        Extracting archive: .\\tests\\data\\zipped.7z
-        --
-        Path = .\\tests\\data\\zipped.7z
-        Type = 7z
-        Physical Size = 138
-        Headers Size = 130
-        Method = LZMA2:12
-        Solid = -
-        Blocks = 1
-
-        Everything is Ok
-
-        Size:       4
-
-        Compressed: 138
-
-        File extracted successfully.
+        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir)
 
         >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
 
-        >>> # Delete the directory "tests\\data\\zipped\\"
-        >>> delete_dir(cd("tests\\data\\zipped"), verbose=True)
-        The directory "tests\\data\\zipped\\" is not empty.
-        Confirmed to delete it
+        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
+        >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
+        To delete the following directories:
+            "tests\\data\\zipped\\" (Not empty)
+            "tests\\data\\zipped_alt\\" (Not empty)
         ? [No]|Yes: yes
         Deleting "tests\\data\\zipped\\" ... Done.
-
-        >>> # Delete the directory "tests\\data\\zipped_alt\\"
-        >>> delete_dir(output_dir, verbose=True)
-        The directory "tests\\data\\zipped_alt\\" is not empty.
-        Confirmed to delete it
-        ? [No]|Yes: yes
         Deleting "tests\\data\\zipped_alt\\" ... Done.
     """
 
-    seven_zip_exe_ = copy.copy(seven_zip_exe)
-    if seven_zip_exe_ is None:
-        seven_zip_exe_ = find_executable(
-            app_name="inkscape.exe", possibilities=["C:\\Program Files\\7-Zip\\7z.exe"])
+    exe_name = "7z.exe"
+    possible_exe_pathnames = {exe_name, "C:\\Program Files\\7-Zip\\7z.exe"}
+    seven_zip_exists, seven_zip_exe_ = _check_exe_pathname(
+        exe_name, exe_pathname=seven_zip_exe, possible_pathnames=possible_exe_pathnames)
 
-    if out_dir is None:
-        out_dir = os.path.splitext(path_to_zip_file)[0]
+    if seven_zip_exists:
+        if out_dir is None:
+            out_dir = os.path.splitext(path_to_zip_file)[0]
+
+        try:
+            # subprocess.run(
+            #     '"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe_, path_to_zip_file, out_dir, mode),
+            #     **kwargs)
+            command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + out_dir, '-' + mode]
+            if not verbose:
+                command_args += ['-bso0', '-bsp0']
+
+            rslt = subprocess.run(command_args, **kwargs)
+
+            if verbose:
+                print("\nDone." if rslt.returncode == 0 else "\nFailed.")
+
+        except Exception as e:
+            if verbose:
+                print("An error occurred: {}.".format(e))
+
+    else:
+        print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function; "
+              "however, it is not found on this device.\nInstall it and then try again.")
+
+
+""" == Convert data ============================================================================ """
+
+
+def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbose=False, **kwargs):
+    """
+    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
+    to a `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
+    (.rst) file.
+
+    This function relies on
+    `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
+
+    :param path_to_md: path where a markdown file is saved
+    :type path_to_md: str
+    :param path_to_rst: path where a reStructuredText file is saved
+    :type path_to_rst: str
+    :param method: method used for performing the conversion, defaults to ``None``;
+        an alternative option is ``'pypandoc'``
+    :type method: None or str
+    :param pandoc_exe: absolute path to the executable "pandoc.exe", defaults to ``None``;
+        when ``pandoc_exe=None``, use the default installation path, e.g. (on Windows)
+        "*C:\\\\Program Files\\\\Pandoc\\\\pandoc.exe*"
+    :type pandoc_exe: str or None
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :param kwargs: [optional] parameters of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
+
+    **Examples**::
+
+        >>> from pyhelpers.store import markdown_to_rst
+        >>> from pyhelpers.dir import cd
+
+        >>> dat_dir = cd("tests\\documents")
+
+        >>> path_to_md_file = cd(dat_dir, "readme.md")
+        >>> path_to_rst_file = cd(dat_dir, "readme.rst")
+
+        >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
+        Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
+    """
+
+    exe_name = "pandoc.exe"
+    possible_exe_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
+    pandoc_exists, pandoc_exe_ = _check_exe_pathname(exe_name, pandoc_exe, possible_exe_pathnames)
+
+    abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
+    # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
+
+    if verbose:
+        rel_md_path, rel_rst_path = map(
+            lambda x: pathlib.Path(os.path.relpath(x)), (abs_md_path, abs_rst_path))
+
+        if not os.path.exists(abs_rst_path):
+            msg = "Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path)
+        else:
+            msg = "Updating \"{}\" at \"{}\\\"".format(rel_rst_path.name, rel_rst_path.parent)
+        print(msg, end=" ... ")
 
     try:
-        subprocess.call(
-            '"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe_, path_to_zip_file, out_dir, mode), **kwargs)
+        if method is None:
+            if pandoc_exists:
+                # subprocess.run(
+                #     f'"{pandoc_exe_}" "{abs_md_path}" -f markdown -t rst -s -o "{abs_rst_path}"')
+                command_args = [
+                    pandoc_exe_, abs_md_path, '-f', 'markdown', '-t', 'rst', '-s', '-o', abs_rst_path]
+                rslt = subprocess.run(command_args, **kwargs)
+                ret_code = rslt.returncode
 
-        print("\nFile extracted successfully.")
+            else:
+                ret_code = -1
+
+        else:
+            py_pandoc = _check_dependency(name='pypandoc')
+            rslt = py_pandoc.convert_file(
+                str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
+
+            ret_code = 0 if rslt == '' else -2
+
+        if verbose:
+            if ret_code == 0:
+                print("Done.")
+            elif ret_code == -1:
+                print(
+                    f"Failed."
+                    f"\n\"Pandoc\" is required to proceed with `method=None`; "
+                    f"however, it is not found on this device."
+                    f"\nInstall it (https://pandoc.org/) and then try again; "
+                    f"or, try instead `method='pypandoc'`")
+            else:
+                print("Failed.")
 
     except Exception as e:
-        print("\nFailed to extract \"{}\". {}.".format(path_to_zip_file, e))
-        if verbose:
-            print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function; "
-                  "however, it is not found on this device.\nInstall it and then try again.")
-
-
-""" == Convert data ========================================================================== """
+        print("An error occurred: {}".format(e))
 
 
 def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replace', vbscript=None,
-                sheet_name='1', ret_null=False):
+                sheet_name='1', ret_null=False, verbose=False):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
 
@@ -1831,6 +1965,8 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
     :type sheet_name: str
     :param ret_null: whether to return something depending on the specified ``method``,
         defaults to ``False``
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
     :return: the pathname of the generated CSV file or None, when ``method=None``;
         `io.StringIO`_ buffer, when ``method='xlsx2csv'``
     :rtype: str or _io.StringIO or None
@@ -1842,18 +1978,33 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
 
     **Examples**::
 
-        >>> from pyhelpers.store import xlsx_to_csv
+        >>> from pyhelpers.store import xlsx_to_csv, load_csv
         >>> from pyhelpers.dir import cd
         >>> import os
 
-        >>> path_to_test_xlsx = cd("tests/data/dat.xlsx")
+        >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")
 
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx)
         >>> os.path.exists(path_to_temp_csv)
         True
 
-        >>> os.remove(path_to_temp_csv)
+        >>> load_csv(path_to_temp_csv, index=0)
+                     Longitude    Latitude
+        City
+        London      -0.1276474  51.5073219
+        Birmingham  -1.9026911  52.4796992
+        Manchester  -2.2451148  53.4794892
+        Leeds       -1.5437941  53.7974185
+
+        >>> os.remove(path_to_temp_csv)  # Remove the temporary CSV file
     """
+
+    if verbose:
+        try:
+            rel_path = os.path.relpath(xlsx_pathname)
+        except ValueError:
+            rel_path = copy.copy(xlsx_pathname)
+        print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if method is None:
 
@@ -1874,17 +2025,34 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
             elif if_exists == 'pass':
                 return csv_pathname_
 
-        subprocess.call(["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name])
+        command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name]
+        if platform.system() == 'Linux':
+            command_args = ["wine"] + command_args
 
-        if not ret_null:
+        rslt = subprocess.run(command_args)
+        ret_code = rslt.returncode
+
+        if verbose:
+            print("Done." if ret_code == 0 else "Failed.")
+
+        if not ret_null and ret_code == 0:
             return csv_pathname_
 
     elif method == 'xlsx2csv':
-        import xlsx2csv
-        import io
+        xlsx_to_csv_ = _check_dependency(name='xlsx2csv')
 
         buffer = io.StringIO()
-        xlsx2csv.Xlsx2csv(xlsx_pathname, outputencoding="utf-8", sheet_name=sheet_name).convert(buffer)
-        buffer.seek(0)
+        try:
+            xlsx_to_csv_.Xlsx2csv(
+                xlsx_pathname, outputencoding="utf-8", sheet_name=sheet_name).convert(buffer)
+            buffer.seek(0)
 
-        return buffer
+            if verbose:
+                print("Done.")
+
+            return buffer
+
+        except Exception as e:
+            if verbose:
+                print("Failed. {}".format(e))
+            buffer.close()
