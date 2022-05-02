@@ -9,13 +9,12 @@ import typing
 
 import numpy as np
 import pyproj
-import scipy.spatial.ckdtree
 import shapely.geometry
 import shapely.ops
 
-from .ops import create_rotation_matrix
+from ._cache import _check_dependency
 
-""" == Geometric transformation ============================================================== """
+""" == Geometric data transformation =========================================================== """
 
 
 # Geometric type
@@ -31,43 +30,53 @@ def transform_geom_point_type(*pts, as_geom=True):
     :param as_geom: whether to return point(s) as `shapely.geometry.Point`_, defaults to ``True``
     :type as_geom: bool
     :return: a sequence of points (incl. ``None`` if errors occur)
-    :rtype: typing.Generator[shapely.geometry.Point, tuple]
+    :rtype: typing.Generator[shapely.geometry.Point, list, tuple, numpy.ndarray]
 
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
 
     **Examples**::
 
         >>> from pyhelpers.geom import transform_geom_point_type
+        >>> from pyhelpers._cache import example_dataframe
         >>> from shapely.geometry import Point
 
-        >>> pt1 = 1.5429, 52.6347
-        >>> pt2 = 1.4909, 52.6271
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> pt1 = example_df.loc['London'].values  # array([-0.1276474, 51.5073219])
+        >>> pt2 = example_df.loc['Birmingham'].values  # array([-1.9026911, 52.4796992])
 
         >>> geom_points = transform_geom_point_type(pt1, pt2)
         >>> for x in geom_points:
         ...     print(x)
-        POINT (1.5429 52.6347)
-        POINT (1.4909 52.6271)
+        POINT (-0.1276474 51.5073219)
+        POINT (-1.9026911 52.4796992)
 
         >>> geom_points = transform_geom_point_type(pt1, pt2, as_geom=False)
         >>> for x in geom_points:
         ...     print(x)
-        (1.5429, 52.6347)
-        (1.4909, 52.6271)
+        [-0.1276474 51.5073219]
+        [-1.9026911 52.4796992]
 
-        >>> pt1, pt2 = Point(pt1), Point(pt2)
+        >>> pt1, pt2 = map(Point, (pt1, pt2))
 
         >>> geom_points = transform_geom_point_type(pt1, pt2)
         >>> for x in geom_points:
         ...     print(x)
-        POINT (1.5429 52.6347)
-        POINT (1.4909 52.6271)
+        POINT (-0.1276474 51.5073219)
+        POINT (-1.9026911 52.4796992)
 
         >>> geom_points = transform_geom_point_type(pt1, pt2, as_geom=False)
         >>> for x in geom_points:
         ...     print(x)
-        (1.5429, 52.6347)
-        (1.4909, 52.6271)
+        (-0.1276474, 51.5073219)
+        (-1.9026911, 52.4796992)
     """
 
     for pt in pts:
@@ -79,7 +88,7 @@ def transform_geom_point_type(*pts, as_geom=True):
             pt_ = shapely.geometry.Point(pt) if as_geom else copy.copy(pt)
 
         else:
-            pt_ = None
+            pt_ = pt
 
         yield pt_
 
@@ -112,31 +121,40 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
         >>> from pyhelpers.geom import wgs84_to_osgb36
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> lon, lat = -0.1277, 51.5074
-        >>> x, y = wgs84_to_osgb36(lon, lat)
-        >>> print(f"(Easting, Northing): {(x, y)}")
-        (Easting, Northing): (530035.6864715678, 180380.27177236252)
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> lonlat_array = example_dataframe(osgb36=False).to_numpy()
+        >>> lon, lat = example_df.loc['London'].values
+        >>> x, y = wgs84_to_osgb36(longitudes=lon, latitudes=lat)
+        >>> print(f"London (Easting, Northing): {(x, y)}")
+        London (Easting, Northing): (530039.558844505, 180371.68016544735)
+
+        >>> lonlat_array = example_df.to_numpy()
         >>> lonlat_array
-        array([[-0.12772401, 51.50740693],
-               [-1.90294064, 52.47928436],
-               [-2.24527795, 53.47894006],
-               [ 0.60693267, 51.24669501]])
+        array([[-0.1276474, 51.5073219],
+               [-1.9026911, 52.4796992],
+               [-2.2451148, 53.4794892],
+               [-1.5437941, 53.7974185]])
 
         >>> lons, lats = lonlat_array.T  # lonlat_array[:, 0], lonlat_array[:, 1]
         >>> xs, ys = wgs84_to_osgb36(longitudes=lons, latitudes=lats)
         >>> xs
-        array([530034.00057811, 406689.00100754, 383819.00096473, 582044.00120751])
+        array([530039.5588445 , 406705.8870136 , 383830.03903573, 430147.44735387])
         >>> ys
-        array([180380.99978837, 286821.99910345, 398051.99922367, 152952.99925431])
+        array([180371.68016545, 286868.16664219, 398113.05583091, 433553.32711728])
 
         >>> xy_array = wgs84_to_osgb36(longitudes=lons, latitudes=lats, as_array=True)
         >>> xy_array
-        array([[530034.00057811, 180380.99978837],
-               [406689.00100754, 286821.99910345],
-               [383819.00096473, 398051.99922367],
-               [582044.00120751, 152952.99925431]])
+        array([[530039.5588445 , 180371.68016545],
+               [406705.8870136 , 286868.16664219],
+               [383830.03903573, 398113.05583091],
+               [430147.44735387, 433553.32711728]])
     """
 
     wgs84 = 'EPSG:4326'  # LonLat with WGS84 datum used by GPS units and Google Earth
@@ -180,25 +198,34 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
         >>> from pyhelpers.geom import osgb36_to_wgs84
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> x, y = 530034, 180381
-        >>> lon, lat = osgb36_to_wgs84(x, y)
-        >>> print(f"(Longitude, Latitude): {(lon, lat)}")
-        (Longitude, Latitude): (-0.12772400574286916, 51.50740692743041)
+        >>> example_df = example_dataframe(osgb36=True)
+        >>> example_df
+                          Easting       Northing
+        City
+        London      530039.558844  180371.680166
+        Birmingham  406705.887014  286868.166642
+        Manchester  383830.039036  398113.055831
+        Leeds       430147.447354  433553.327117
 
-        >>> xy_array = example_dataframe().to_numpy()
+        >>> x, y = example_df.loc['London'].values
+        >>> lon, lat = osgb36_to_wgs84(eastings=x, northings=y)
+        >>> print(f"London (Longitude, Latitude): {(lon, lat)}")
+        London (Longitude, Latitude): (-0.12764738749567286, 51.50732189539607)
+
+        >>> xy_array = example_df.to_numpy()
         >>> xs, ys = xy_array.T  # xy_array[:, 0], xy_array[:, 1]
-        >>> lons, lats = osgb36_to_wgs84(xs, ys)
+        >>> lons, lats = osgb36_to_wgs84(eastings=xs, northings=ys)
         >>> lons
-        array([-0.12772401, -1.90294064, -2.24527795,  0.60693267])
+        array([-0.12764739, -1.90269109, -2.24511479, -1.54379409])
         >>> lats
-        array([51.50740693, 52.47928436, 53.47894006, 51.24669501])
+        array([51.5073219, 52.4796992, 53.4794892, 53.7974185])
 
-        >>> lonlat_array = osgb36_to_wgs84(xs, ys, as_array=True)
+        >>> lonlat_array = osgb36_to_wgs84(eastings=xs, northings=ys, as_array=True)
         >>> lonlat_array
-        array([[-0.12772401, 51.50740693],
-               [-1.90294064, 52.47928436],
-               [-2.24527795, 53.47894006],
-               [ 0.60693267, 51.24669501]])
+        array([[-0.12764739, 51.5073219 ],
+               [-1.90269109, 52.4796992 ],
+               [-2.24511479, 53.4794892 ],
+               [-1.54379409, 53.7974185 ]])
     """
 
     osgb36 = 'EPSG:27700'  # UK Ordnance Survey, 1936 datum
@@ -340,14 +367,49 @@ def project_point_to_line(point, line, drop_dimension=None):
     **Examples**::
 
         >>> from pyhelpers.geom import project_point_to_line
-        >>> from shapely.geometry import Point, LineString
+        >>> from shapely.geometry import Point, LineString, MultiPoint
 
         >>> pt = Point([399297, 655095, 43])
         >>> ls = LineString([[399299, 655091, 42], [399295, 655099, 42]])
 
-        >>> _, pt_ = project_point_to_line(pt, ls)
-        >>> pt_.wkt
+        >>> _, pt_proj = project_point_to_line(point=pt, line=ls)
+        >>> pt_proj.wkt
         'POINT Z (399297 655095 42)'
+
+    This example is illustrated below (see :numref:`geom-project_point_to_line-demo`)::
+
+        >>> import matplotlib.pyplot as plt
+        >>> from pyhelpers.settings import mpl_preferences
+
+        >>> mpl_preferences(font_name='Times New Roman', font_size=12)
+
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(projection='3d')
+
+        >>> ls_zs = list(map(lambda c: c[2], ls.coords))
+        >>> ax.plot(ls.coords.xy[0], ls.coords.xy[1], ls_zs, label='Line')
+        >>> ax.scatter(pt.x, pt.y, pt.z, label='Point')
+        >>> ax.scatter(pt_proj.x, pt_proj.y, pt_proj.z, label='Projected point')
+
+        >>> for i in MultiPoint([*ls.coords, pt, pt_proj]).geoms:
+        ...     pos = tuple(map(int, i.coords[0]))
+        ...     ax.text(pos[0], pos[1], pos[2], str(pos))
+
+        >>> ax.legend(loc=3)
+        >>> plt.tight_layout()
+
+        >>> ax.set_xticklabels([])
+        >>> ax.set_yticklabels([])
+        >>> ax.set_zticklabels([])
+
+        >>> plt.show()
+
+    .. figure:: ../_images/geom-project_point_to_line-demo.*
+        :name: geom-project_point_to_line-demo
+        :align: center
+        :width: 85%
+
+        An example of projecting a point onto a line.
     """
 
     if line.length == 0:
@@ -376,7 +438,7 @@ def project_point_to_line(point, line, drop_dimension=None):
     return point_, line_
 
 
-""" == Geometry calculation ================================================================== """
+""" == Geometric data computation ============================================================== """
 
 
 # Distance
@@ -399,15 +461,25 @@ def calc_distance_on_unit_sphere(pt1, pt2):
         It assumes the earth is perfectly spherical and returns the distance based on each
         point's longitude and latitude.
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.geom import calc_distance_on_unit_sphere
+        >>> from pyhelpers._cache import example_dataframe
 
-        >>> pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> arc_len = calc_distance_on_unit_sphere(pt_1, pt_2)
-        >>> arc_len
-        2.243709962588554
+        >>> london, birmingham = example_df.loc[['London', 'Birmingham']].values
+
+        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
+        >>> arc_len_in_miles
+        101.10431101941569
     """
 
     # Convert latitude and longitude to spherical coordinates in radians.
@@ -508,27 +580,34 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     **Examples**::
 
         >>> from pyhelpers.geom import find_closest_point
-        >>> from shapely.geometry import Point
+        >>> from pyhelpers._cache import example_dataframe
 
-        >>> pt_1 = (2.5429, 53.6347)
-        >>> pt_reference_1 = [(1.5429, 52.6347),
-        ...                   (1.4909, 52.6271),
-        ...                   (1.4248, 52.63075)]
-        >>> pt_closest_1 = find_closest_point(pt=pt_1, ref_pts=pt_reference_1)
-        >>> pt_closest_1.wkt
-        'POINT (1.5429 52.6347)'
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> pt_2 = Point((2.5429, 53.6347))
-        >>> pt_reference_2 = [Point((1.5429, 52.6347)),
-        ...                   Point((1.4909, 52.6271)),
-        ...                   Point((1.4248, 52.63075))]
-        >>> pt_closest_2 = find_closest_point(pt=pt_2, ref_pts=pt_reference_2)
-        >>> pt_closest_2.wkt
-        'POINT (1.5429 52.6347)'
+        >>> # Find the city closest to London
+        >>> london = example_df.loc['London'].values
+        >>> ref_cities = example_df.loc['Birmingham':, :].values
+        >>> closest_to_london = find_closest_point(pt=london, ref_pts=ref_cities)
+        >>> closest_to_london.wkt  # Birmingham
+        'POINT (-1.9026911 52.4796992)'
 
-        >>> pt_closest_3 = find_closest_point(pt=pt_2, ref_pts=pt_reference_2, as_geom=False)
-        >>> pt_closest_3
-        array([ 1.5429, 52.6347])
+        >>> # Find the city closest to Leeds
+        >>> leeds = example_df.loc['Leeds'].values
+        >>> ref_cities = example_df.loc[:'Manchester', :].values
+        >>> closest_to_leeds = find_closest_point(pt=leeds, ref_pts=ref_cities)
+        >>> closest_to_leeds.wkt  # Manchester
+        'POINT (-2.2451148 53.4794892)'
+
+        >>> closest_to_leeds = find_closest_point(pt=leeds, ref_pts=ref_cities, as_geom=False)
+        >>> closest_to_leeds  # Manchester
+        array([-2.2451148, 53.4794892])
     """
 
     if not isinstance(pt, shapely.geometry.Point):
@@ -542,7 +621,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     else:
         ref_pts_ = (
             shapely.geometry.Point(x) if not isinstance(x, shapely.geometry.Point) else x
-            for x in ref_pts)
+            for x in (ref_pts.geoms if isinstance(ref_pts, shapely.geometry.MultiPoint) else ref_pts))
 
     # Find the min value using the distance function with coord parameter
     closest_point = min(ref_pts_, key=functools.partial(shapely.geometry.Point.distance, pt_))
@@ -564,8 +643,8 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
     See also [`GEOM-FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
 
     :param pts: an array (of size (n, 2)) of points
-    :type pts: numpy.ndarray or shapely.geometry.Point or shapely.geometry.MultiPoint or
-        shapely.geometry.LineString
+    :type pts: list or tuple or numpy.ndarray or shapely.geometry.Point or shapely.geometry.MultiPoint
+        or shapely.geometry.LineString
     :param ref_pts: an array (of size (n, 2)) of reference points
     :type ref_pts: numpy.ndarray or shapely.geometry.MultiPoint or list or tuple
     :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
@@ -591,57 +670,67 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
     **Examples**::
 
         >>> from pyhelpers.geom import find_closest_points
+        >>> from pyhelpers._cache import example_dataframe
         >>> from shapely.geometry import LineString, MultiPoint
-        >>> import numpy
 
-        >>> pts_1 = numpy.array([[1.5429, 52.6347],
-        ...                      [1.4909, 52.6271],
-        ...                      [1.4248, 52.63075]])
-        >>> pts_ref = numpy.array([[2.5429, 53.6347],
-        ...                        [2.4909, 53.6271],
-        ...                        [2.4248, 53.63075]])
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> pts_closest = find_closest_points(pts_1, pts_ref, k=1)
-        >>> pts_closest
-        array([[ 2.4248 , 53.63075],
-               [ 2.4248 , 53.63075],
-               [ 2.4248 , 53.63075]])
+        >>> cities = [[-2.9916800, 53.4071991],  # Liverpool
+        ...           [-4.2488787, 55.8609825],  # Glasgow
+        ...           [-1.6131572, 54.9738474]]  # Newcastle
+        >>> ref_cities = example_dataframe().to_numpy()
 
-        >>> pts_closest = find_closest_points(pts_1, pts_ref, k=1, as_geom=True)
-        >>> pts_closest.wkt
-        'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
+        >>> closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1)
+        >>> closest_to_each  # Liverpool: Manchester; Glasgow: Manchester; Newcastle: Leeds
+        array([[-2.2451148, 53.4794892],
+               [-2.2451148, 53.4794892],
+               [-1.5437941, 53.7974185]])
 
-        >>> _, idx = find_closest_points(pts_1, pts_ref, k=1, ret_idx=True)
+        >>> closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
+        >>> closest_to_each.wkt
+        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+
+        >>> _, idx = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, ret_idx=True)
         >>> idx
-        array([2, 2, 2], dtype=int64)
+        array([2, 2, 3], dtype=int64)
 
-        >>> _, _, dist = find_closest_points(pts_1, pts_ref, k=1, ret_idx=True, ret_dist=True)
+        >>> _, _, dist = find_closest_points(cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
         >>> dist
-        array([1.33036206, 1.37094221, 1.41421356])
+        array([0.75005697, 3.11232712, 1.17847198])
 
-        >>> pts_2 = LineString(pts_1)
-        >>> pts_closest = find_closest_points(pts_2, pts_ref, k=1)
-        >>> pts_closest
-        array([[ 2.4248 , 53.63075],
-               [ 2.4248 , 53.63075],
-               [ 2.4248 , 53.63075]])
+        >>> cities_geoms_1 = LineString(cities)
+        >>> closest_to_each = find_closest_points(pts=cities_geoms_1, ref_pts=ref_cities, k=1)
+        >>> closest_to_each
+        array([[-2.2451148, 53.4794892],
+               [-2.2451148, 53.4794892],
+               [-1.5437941, 53.7974185]])
 
-        >>> pts_3 = MultiPoint(pts_1)
-        >>> pts_closest = find_closest_points(pts_3, pts_ref, k=1, as_geom=True)
-        >>> pts_closest.wkt
-        'MULTIPOINT (2.4248 53.63075, 2.4248 53.63075, 2.4248 53.63075)'
+        >>> cities_geoms_2 = MultiPoint(cities)
+        >>> closest_to_each = find_closest_points(cities_geoms_2, ref_cities, k=1, as_geom=True)
+        >>> closest_to_each.wkt
+        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
     """
+
+    ckdtree = _check_dependency(name='scipy.spatial.ckdtree')
 
     if isinstance(ref_pts, np.ndarray):
         ref_pts_ = copy.copy(ref_pts)
     else:
         ref_pts_ = np.concatenate([np.asarray(geom.coords) for geom in ref_pts])
 
-    # noinspection PyArgumentList
-    ref_ckd_tree = scipy.spatial.ckdtree.cKDTree(ref_pts_, **kwargs)
+    ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
 
     if isinstance(pts, np.ndarray):
         pts_ = copy.copy(pts)
+    elif isinstance(pts, (list, tuple)):
+        pts_ = np.asarray(pts)
     else:
         geom_type = pts.__getattribute__('type')
         if geom_type.startswith('Multi'):
@@ -698,19 +787,37 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         >>> from pyhelpers.geom import find_shortest_path
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> pts_arr = example_dataframe().to_numpy()
-        >>> pts_arr
-        array([[530034, 180381],
-               [406689, 286822],
-               [383819, 398052],
-               [582044, 152953]], dtype=int64)
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
 
-        >>> pts_arr_sorted = find_shortest_path(points_sequence=pts_arr)
-        >>> pts_arr_sorted
-        array([[582044, 152953],
-               [530034, 180381],
-               [406689, 286822],
-               [383819, 398052]], dtype=int64)
+        >>> example_df_ = example_df.sample(frac=1, random_state=1)
+        >>> example_df_
+                    Longitude   Latitude
+        City
+        Leeds       -1.543794  53.797418
+        Manchester  -2.245115  53.479489
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+
+        >>> cities = example_df_.to_numpy()
+        >>> cities
+        array([[-1.5437941, 53.7974185],
+               [-2.2451148, 53.4794892],
+               [-0.1276474, 51.5073219],
+               [-1.9026911, 52.4796992]])
+
+        >>> cities_sorted = find_shortest_path(points_sequence=cities)
+        >>> cities_sorted
+        array([[-1.5437941, 53.7974185],
+               [-2.2451148, 53.4794892],
+               [-1.9026911, 52.4796992],
+               [-0.1276474, 51.5073219]])
 
     This example is illustrated below (see :numref:`geom-find_shortest_path-demo`)::
 
@@ -724,14 +831,18 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         >>> gs = mgs.GridSpec(1, 2, figure=fig)
 
         >>> ax1 = fig.add_subplot(gs[:, 0])
-        >>> ax1.scatter(360000, 677200, label='start location')
-        >>> ax1.plot(pts_arr[:, 0], pts_arr[:, 1], label='original')
-        >>> ax1.legend()
+        >>> ax1.plot(cities[:, 0], cities[:, 1], label='original')
+        >>> for city, i, lonlat in zip(example_df_.index, range(len(cities)), cities):
+        ...     ax1.scatter(lonlat[0], lonlat[1])
+        ...     ax1.annotate(city + f' ({i})', xy=lonlat + 0.05)
+        >>> ax1.legend(loc=3)
 
         >>> ax2 = fig.add_subplot(gs[:, 1])
-        >>> ax2.scatter(360000, 677200, label='start location', color='orange')
-        >>> ax2.plot(pts_arr_sorted[:, 0], pts_arr_sorted[:, 1], label='sorted', color='orange')
-        >>> ax2.legend()
+        >>> ax2.plot(cities_sorted[:, 0], cities_sorted[:, 1], label='sorted', color='orange')
+        >>> for city, i, lonlat in zip(example_df.index[::-1], range(len(cities)), cities_sorted):
+        ...     ax2.scatter(lonlat[0], lonlat[1])
+        ...     ax2.annotate(city + f' ({i})', xy=lonlat + 0.05)
+        >>> ax2.legend(loc=3)
 
         >>> plt.tight_layout()
         >>> plt.show()
@@ -742,20 +853,16 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         :width: 85%
 
         An example of sorting a sequence of points given the shortest path.
-
-    .. code-block:: python
-
-        >>> plt.close()
     """
 
     if len(points_sequence) <= 2:
         shortest_path = points_sequence
 
     else:
-        import networkx as nx
-        from sklearn.neighbors import NearestNeighbors
+        nx = _check_dependency(name='networkx')
+        sklearn_neighbors = _check_dependency(name='sklearn.neighbors')
 
-        nn_clf = NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
+        nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
         kn_g = nn_clf.kneighbors_graph()
 
         nx_g = nx.from_scipy_sparse_matrix(kn_g)
@@ -792,13 +899,13 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
     Get the midpoint between two points (applicable for vectorized computation).
 
     :param x1: longitude(s) or easting(s) of a point (an array of points)
-    :type x1: float or int or numpy.ndarray
+    :type x1: float or int or typing.Iterable or numpy.ndarray
     :param y1: latitude(s) or northing(s) of a point (an array of points)
-    :type y1: float or int or numpy.ndarray
+    :type y1: float or int or typing.Iterable or numpy.ndarray
     :param x2: longitude(s) or easting(s) of another point (another array of points)
-    :type x2: float or int or numpy.ndarray
+    :type x2: float or int or typing.Iterable or numpy.ndarray
     :param y2: latitude(s) or northing(s) of another point (another array of points)
-    :type y2: float or int or numpy.ndarray
+    :type y2: float or int or typing.Iterable or numpy.ndarray
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
     :return: the midpoint between ``(x1, y1)`` and ``(x2, y2)``
@@ -810,7 +917,6 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
     **Examples**::
 
         >>> from pyhelpers.geom import get_midpoint
-        >>> import numpy
 
         >>> x_1, y_1 = 1.5429, 52.6347
         >>> x_2, y_2 = 1.4909, 52.6271
@@ -823,8 +929,8 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
         >>> midpt.wkt
         'POINT (1.5169 52.6309)'
 
-        >>> x_1, y_1 = numpy.array([1.5429, 1.4909]), numpy.array([52.6347, 52.6271])
-        >>> x_2, y_2 = numpy.array([2.5429, 2.4909]), numpy.array([53.6347, 53.6271])
+        >>> x_1, y_1 = (1.5429, 1.4909), (52.6347, 52.6271)
+        >>> x_2, y_2 = [2.5429, 2.4909], [53.6347, 53.6271]
 
         >>> midpt = get_midpoint(x_1, y_1, x_2, y_2)
         >>> midpt
@@ -836,7 +942,9 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
         'MULTIPOINT (2.0429 53.1347, 1.9909 53.1271)'
     """
 
-    mid_pts = (x1 + x2) / 2, (y1 + y2) / 2
+    x1_, y1_, x2_, y2_ = map(np.asarray, (x1, y1, x2, y2))
+
+    mid_pts = (x1_ + x2_) / 2, (y1_ + y2_) / 2
 
     if as_geom:
         if all(isinstance(x, np.ndarray) for x in mid_pts):
@@ -964,7 +1072,7 @@ def get_rectangle_centroid(rectangle, as_geom=False):
     :return: coordinate of the rectangle
     :rtype: numpy.ndarray or shapely.geometry.Point
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.geom import get_rectangle_centroid
         >>> from shapely.geometry import Polygon
@@ -1039,13 +1147,16 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
                [-5.85212341, 56.78962341]])
     """
 
-    sides = np.ones(2) * side_length
+    def _rot_mat(theta):
+        return np.array([[np.sin(theta), np.cos(theta)], [-np.cos(theta), np.sin(theta)]])
 
-    rotation_matrix = create_rotation_matrix(np.deg2rad(rotation_theta))
+    rotation_matrix = _rot_mat(np.deg2rad(rotation_theta))
+
+    sides = np.ones(2) * side_length
 
     vertices_ = [
         np.array([ctr_x, ctr_y]) + functools.reduce(
-            np.dot, [rotation_matrix, create_rotation_matrix(-0.5 * np.pi * x), sides / 2])
+            np.dot, [rotation_matrix, _rot_mat(-0.5 * np.pi * x), sides / 2])
         for x in range(4)]
 
     vertices = np.array(vertices_, dtype=np.float64)
@@ -1114,10 +1225,8 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-""" == Geometric data visualisation ========================================================== """
+""" == Geometric data sketching ================================================================ """
 
-
-# Sketch
 
 def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs):
     p = '{' + '0:.{}f'.format(precision) + '}'
@@ -1166,7 +1275,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     **Examples**::
 
         >>> from pyhelpers.geom import sketch_square
+        >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
+
+        >>> mpl_preferences()
 
         >>> c1, c2 = 1, 1
         >>> side_len = 2
@@ -1179,7 +1291,7 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     .. figure:: ../_images/geom-sketch_square-demo-1.*
         :name: geom-sketch_square-demo-1
         :align: center
-        :width: 53%
+        :width: 65%
 
         An example of a sketch of a square, created by the function
         :py:func:`~pyhelpers.geom.sketch_square`.
@@ -1194,22 +1306,17 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
     .. figure:: ../_images/geom-sketch_square-demo-2.*
         :name: geom-sketch_square-demo-2
         :align: center
-        :width: 53%
+        :width: 65%
 
         An example of a sketch of a square rotated 75 degrees anticlockwise about the centre.
-
-    .. code-block:: python
-
-        >>> plt.close(fig='all')
     """
 
-    import matplotlib.pyplot
-    import matplotlib.ticker
+    mpl_plt, mpl_ticker = map(_check_dependency, ['matplotlib.pyplot', 'matplotlib.ticker'])
 
     vertices_ = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
     vertices = np.append(vertices_, [tuple(vertices_[0])], axis=0)
 
-    fig = matplotlib.pyplot.figure(figsize=fig_size)
+    fig = mpl_plt.figure(figsize=fig_size)
     ax = fig.add_subplot(1, 1, 1)  # _, ax = plt.subplots(1, 1, figsize=fig_size)
     ax.plot(ctr_x, ctr_y, 'o', markersize=10)
     annotate_args = _sketch_square_annotate(x=ctr_x, y=ctr_y, fontsize=annot_font_size, **kwargs)
@@ -1229,10 +1336,10 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
 
     ax.axis("equal")
 
-    ax.yaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
-    ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
+    ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
-    matplotlib.pyplot.tight_layout()
+    mpl_plt.tight_layout()
 
     if ret_vertices:
         return vertices
