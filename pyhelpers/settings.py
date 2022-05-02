@@ -6,17 +6,16 @@ import copy
 import os
 import warnings
 
-import numpy as np
-import pandas as pd
+from ._cache import _check_dependency
 
-""" == GDAL ================================================================================== """
+""" == Configurations ========================================================================== """
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
     Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_
-    of `GDAL/OGR`_ drivers.
+    of `GDAL/OGR <https://gdal.org>`_ drivers.
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
@@ -29,9 +28,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
     :param compress_nodes: whether to compress nodes in temporary DB. defaults to ``True``
     :type compress_nodes: bool
 
-    .. _`GDAL/OGR`: https://gdal.org
-
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.settings import gdal_configurations
 
@@ -54,27 +51,27 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
         - `pydriosm Documentation <https://pydriosm.readthedocs.io/en/latest/>`_
     """
 
-    import osgeo.gdal
+    osgeo_gdal = _check_dependency(name='osgeo.gdal')
 
     if reset is False:
         # Max. size (MB) of in-memory temporary file. Defaults to 100.
-        osgeo.gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
+        osgeo_gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
         # If it exceeds that value, it will go to disk.
 
         val_dict = {True: 'YES', False: 'NO'}
 
-        osgeo.gdal.SetConfigOption('OGR_INTERLEAVED_READING', val_dict[interleaved_reading])
-        osgeo.gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', val_dict[custom_indexing])
-        osgeo.gdal.SetConfigOption('OSM_COMPRESS_NODES', val_dict[compress_nodes])
+        osgeo_gdal.SetConfigOption('OGR_INTERLEAVED_READING', val_dict[interleaved_reading])
+        osgeo_gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', val_dict[custom_indexing])
+        osgeo_gdal.SetConfigOption('OSM_COMPRESS_NODES', val_dict[compress_nodes])
 
     elif reset is True:
-        osgeo.gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
-        osgeo.gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
-        osgeo.gdal.SetConfigOption('OSM_COMPRESS_NODES', 'NO')
-        osgeo.gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '100')
+        osgeo_gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
+        osgeo_gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
+        osgeo_gdal.SetConfigOption('OSM_COMPRESS_NODES', 'NO')
+        osgeo_gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '100')
 
 
-""" == Matplotlib ============================================================================ """
+""" == Preferences ============================================================================= """
 
 
 def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, legend_spacing=0.7,
@@ -94,14 +91,14 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
 
-    **Example**::
+    **Examples**::
 
-        >>> import numpy
+        >>> import numpy as np
         >>> import matplotlib.pyplot as plt
 
-        >>> numpy.random.seed(0)
+        >>> np.random.seed(0)
 
-        >>> random_array = numpy.random.rand(1000, 2)
+        >>> random_array = np.random.rand(1000, 2)
         >>> random_array
         array([[0.5488135 , 0.71518937],
                [0.60276338, 0.54488318],
@@ -163,43 +160,40 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
         Resetting the altered parameters to their default values.
     """
 
-    import matplotlib.style
+    mpl, mpl_style = map(_check_dependency, ['matplotlib', 'matplotlib.style'])
 
     if reset is False:
         if fig_style is not None:
-            matplotlib.style.use(style=fig_style)
+            mpl_style.use(style=fig_style)
 
-        matplotlib.rcParams['font.size'] = font_size
+        mpl.rcParams['font.size'] = font_size
         # matplotlib.rcParams['font.weight'] = 'normal'
-        matplotlib.rcParams['legend.labelspacing'] = legend_spacing
+        mpl.rcParams['legend.labelspacing'] = legend_spacing
 
         if font_name:  # Use the font, 'Cambria'
-            import matplotlib.font_manager
+            mpl_font_manager = _check_dependency(name='matplotlib.font_manager')
 
-            if os.path.isfile(matplotlib.font_manager.findfont(font_name)):
+            if os.path.isfile(mpl_font_manager.findfont(font_name)):
                 # Set 'font.family' to 'serif', then matplotlib will use that list
-                matplotlib.rcParams['font.family'] = 'serif'
-                serif_fonts = matplotlib.rcParams['font.serif']
+                mpl.rcParams['font.family'] = 'serif'
+                serif_fonts = mpl.rcParams['font.serif']
                 if font_name not in serif_fonts:
-                    matplotlib.rcParams['font.serif'] = [font_name] + matplotlib.rcParams['font.serif']
+                    mpl.rcParams['font.serif'] = [font_name] + mpl.rcParams['font.serif']
                 else:
                     serif_fonts.insert(0, serif_fonts.pop(serif_fonts.index(font_name)))
-                    matplotlib.rcParams['font.serif'] = serif_fonts
+                    mpl.rcParams['font.serif'] = serif_fonts
 
     else:
-        matplotlib.style.use(style='default')
+        mpl_style.use(style='default')
 
         if reset == 'all':
-            matplotlib.rcParams = matplotlib.rcParamsDefault
+            mpl.rcParams = mpl.rcParamsDefault
 
         elif reset is True:
-            matplotlib.rcParams['font.size'] = 10.0
-            matplotlib.rcParams['legend.labelspacing'] = 0.5
-            matplotlib.rcParams['font.family'] = ['sans-serif']
-            matplotlib.rcParams['font.serif'] = copy.copy(matplotlib.rcParamsDefault['font.serif'])
-
-
-""" == NumPy ================================================================================= """
+            mpl.rcParams['font.size'] = 10.0
+            mpl.rcParams['legend.labelspacing'] = 0.5
+            mpl.rcParams['font.family'] = ['sans-serif']
+            mpl.rcParams['font.serif'] = copy.copy(mpl.rcParamsDefault['font.serif'])
 
 
 def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatter=None, **kwargs):
@@ -207,34 +201,35 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     Alter some default parameters for displaying
     `NumPy arrays <https://numpy.org/doc/stable/reference/generated/numpy.array.html>`_.
 
-    :param reset: whether to reset to the default print options set by `numpy.set_printoptions`_,
+    :param reset: whether to reset to the default print options set by `numpy.set_printoptions()`_,
         defaults to ``False``
     :type reset: bool
     :param precision: number of decimal points,
-        which corresponds to ``precision`` of `numpy.set_printoptions`_, defaults to ``4``
+        which corresponds to ``precision`` of `numpy.set_printoptions()`_, defaults to ``4``
     :type precision: int
     :param line_char: number of characters per line for the purpose of inserting line breaks,
-        which corresponds to ``linewidth`` of `numpy.set_printoptions`_, defaults to ``120``
+        which corresponds to ``linewidth`` of `numpy.set_printoptions()`_, defaults to ``120``
     :type line_char: int
     :param head_tail: number of array items in summary at beginning (head) and end (tail)
-        of each dimension, which corresponds to ``edgeitems`` of `numpy.set_printoptions`_,
+        of each dimension, which corresponds to ``edgeitems`` of `numpy.set_printoptions()`_,
         defaults to ``5``
     :type head_tail: int
-    :param formatter: specified format, which corresponds to ``formatter`` of `numpy.set_printoptions`_,
-        if ``None`` (default), fill the empty decimal places with zeros for the specified ``precision``
+    :param formatter: specified format, which corresponds to ``formatter`` of
+        `numpy.set_printoptions()`_, if ``None`` (default), fill the empty decimal places with zeros
+        for the specified ``precision``
     :type formatter: dict or None
-    :kwargs: [optional] parameters used by `numpy.set_printoptions`_
+    :kwargs: [optional] parameters used by `numpy.set_printoptions()`_
 
-    .. _numpy.set_printoptions:
+    .. _`numpy.set_printoptions()`:
         https://numpy.org/doc/stable/reference/generated/numpy.set_printoptions.html
 
-    **Example**::
+    **Examples**::
 
-        >>> import numpy
+        >>> import numpy as np
 
-        >>> numpy.random.seed(0)
+        >>> np.random.seed(0)
 
-        >>> random_array = numpy.random.rand(100, 100)
+        >>> random_array = np.random.rand(100, 100)
         >>> random_array
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],
@@ -289,22 +284,21 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
                 0.81357508]])
     """
 
+    np_ = _check_dependency(name='numpy')
+
     if reset is False:
         if formatter is None:
             formatter = dict(float=lambda x: "%.{}f".format(precision) % x)
 
-        np.set_printoptions(
+        np_.set_printoptions(
             precision=precision, linewidth=line_char, edgeitems=head_tail, formatter=formatter,
             **kwargs)
 
     elif reset is True:
         # true default linewidth = 75
-        np.set_printoptions(
-            precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np.nan,
-            infstr=np.inf, formatter=None, sign='-', floatmode='maxprec_equal', legacy=False)
-
-
-""" == Pandas ================================================================================ """
+        np_.set_printoptions(
+            precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np_.nan,
+            infstr=np_.inf, formatter=None, sign='-', floatmode='maxprec_equal', legacy=False)
 
 
 def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_asian_text=False,
@@ -317,32 +311,32 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     :param reset: whether to reset all to default settings, defaults to ``False``
     :type reset: bool or str
     :param max_columns: maximum number of columns, which corresponds to ``'display.max_columns'`` for
-        `pandas.set_option`_, defaults to ``100``
+        `pandas.set_option()`_, defaults to ``100``
     :type max_columns: int
     :param max_rows: maximum number of rows, which corresponds to ``'display.max_rows'`` for
-        `pandas.set_option`_, defaults to ``20``
+        `pandas.set_option()`_, defaults to ``20``
     :type max_rows: int
     :param precision: number of decimal places, which corresponds to ``'display.precision'`` for
-        `pandas.set_option`_, defaults to ``4``
+        `pandas.set_option()`_, defaults to ``4``
     :type precision: int
     :param east_asian_text: whether to adjust the display for east asian texts, defaults to ``False``
     :type east_asian_text: bool
     :param ignore_future_warning: whether to ignore/suppress future warnings, defaults to ``True``
     :type ignore_future_warning: bool
 
-    .. _pandas.set_option:
+    .. _`pandas.set_option()`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
 
-    **Example**::
+    **Examples**::
 
-        >>> import numpy
-        >>> import pandas
+        >>> import numpy as np
+        >>> import pandas as pd
 
-        >>> numpy.random.seed(0)
+        >>> np.random.seed(0)
 
-        >>> random_array = numpy.random.rand(100, 100)
+        >>> random_array = np.random.rand(100, 100)
 
-        >>> data_frame = pandas.DataFrame(random_array)
+        >>> data_frame = pd.DataFrame(random_array)
         >>> data_frame
                   0         1         2   ...        97        98        99
         0   0.548814  0.715189  0.602763  ...  0.020108  0.828940  0.004695
@@ -410,9 +404,11 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
         - Default values of all available options can be checked by running `pandas.describe_option()`_
           or ``pandas._config.config._registered_options``
 
-        .. _pandas.describe_option():
+        .. _`pandas.describe_option()`:
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html
     """
+
+    pd_ = _check_dependency(name='pandas')
 
     options = {
         'display.max_columns': max_columns,  # 0
@@ -430,16 +426,15 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
 
     if reset is False:
         for key, val in options.items():
-            pd.set_option(key, val)
+            pd_.set_option(key, val)
 
     elif reset is True:
-        # noinspection PyProtectedMember
-        registered_options = pd._config.config._registered_options
+        registered_options = pd_._config.config._registered_options
 
         for key in options.keys():
-            pd.set_option(key, registered_options[key].defval)
+            pd_.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
         if ignore_future_warning:
             warnings.simplefilter(action='ignore', category=FutureWarning)
-        pd.reset_option('all')
+        pd_.reset_option('all')
