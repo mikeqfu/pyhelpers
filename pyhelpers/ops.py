@@ -6,7 +6,9 @@ import ast
 import collections.abc
 import copy
 import datetime
+import hashlib
 import html.parser
+import importlib
 import inspect
 import itertools
 import json
@@ -25,12 +27,11 @@ import pandas as pd
 import pkg_resources
 import requests
 import requests.adapters
-import scipy.sparse
 import urllib3.util.retry
 
-import pyhelpers._cache
+from ._cache import _check_dependency, _USER_AGENT_STRINGS
 
-""" == General use =========================================================================== """
+""" == General use ============================================================================= """
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -48,7 +49,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
     :return: a response
     :rtype: bool
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import confirmed
 
@@ -82,7 +83,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def get_obj_attr(obj, col_names=None):
+def get_obj_attr(obj, col_names=None, as_dataframe=False):
     """
     Get main attributes of an object.
 
@@ -90,7 +91,9 @@ def get_obj_attr(obj, col_names=None):
     :type obj: object
     :param col_names: a list of column names
     :type col_names: list
-    :return: tabular data of the main attributes of the given object
+    :param as_dataframe: whether to return the data in tabular format, defaults to ``False``
+    :type as_dataframe: bool
+    :return: list or tabular data of the main attributes of the given object
     :rtype: pandas.DataFrame
 
     **Examples**::
@@ -102,9 +105,9 @@ def get_obj_attr(obj, col_names=None):
         Password (postgres@localhost:5432): ***
         Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
-        >>> obj_attr = get_obj_attr(postgres)
+        >>> obj_attr = get_obj_attr(postgres, as_dataframe=True)
         >>> obj_attr.head()
-                  Attribute       Value
+                  attribute       value
         0  DEFAULT_DATABASE    postgres
         1   DEFAULT_DIALECT  postgresql
         2    DEFAULT_DRIVER    psycopg2
@@ -130,15 +133,16 @@ def get_obj_attr(obj, col_names=None):
     """
 
     if col_names is None:
-        col_names = ['Attribute', 'Value']
+        col_names = ['attribute', 'value']
 
     all_attrs = inspect.getmembers(obj, lambda x: not (inspect.isroutine(x)))
 
     attrs = [x for x in all_attrs if not re.match(r'^__?', x[0])]
 
-    attrs_tbl = pd.DataFrame(attrs, columns=col_names)
+    if as_dataframe:
+        attrs = pd.DataFrame(attrs, columns=col_names)
 
-    return attrs_tbl
+    return attrs
 
 
 def eval_dtype(str_val):
@@ -182,7 +186,7 @@ def gps_to_utc(gps_time):
     :return: UTC time
     :rtype: datetime.datetime
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import gps_to_utc
 
@@ -318,9 +322,9 @@ def find_executable(app_name, possibilities=None):
     :param app_name: executable filename of the application that is to be called
     :type app_name: str
     :param possibilities: possible pathnames
-    :type possibilities: list or None
-    :return: pathname of the executable file
-    :rtype: str
+    :type possibilities: list or set or None
+    :return: pathname of the specified executable file and whether it exists
+    :rtype: typing.Tuple[str, bool]
 
     **Examples**::
 
@@ -330,33 +334,143 @@ def find_executable(app_name, possibilities=None):
         >>> python_exe = "python.exe"
         >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
 
-        >>> path_to_python_exe = find_executable(app_name=python_exe, possibilities=possible_paths)
+        >>> path_to_python_exe, python_exe_exists = find_executable(python_exe, possible_paths)
         >>> os.path.relpath(path_to_python_exe)
         'venv\\Scripts\\python.exe'
+        >>> python_exe_exists
+        True
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> path_to_test_exe = find_executable(app_name=text_exe, possibilities=possible_paths)
+        >>> path_to_test_exe, test_exe_exists = find_executable(text_exe, possible_paths)
         >>> path_to_test_exe
         'pyhelpers.exe'
+        >>> test_exe_exists
+        False
     """
 
-    exe = copy.copy(app_name)
+    exe_pathname = copy.copy(app_name)
+    exe_exists = False
 
-    if not os.path.isfile(exe):
-        alt_exe_pathnames = [shutil.which(app_name)]
+    if not os.path.isfile(exe_pathname):
+        alt_exe_pathnames = {shutil.which(app_name)}
         if possibilities is not None:
-            alt_exe_pathnames += possibilities
+            alt_exe_pathnames.update(set(possibilities))
 
-        for exe_pathname in alt_exe_pathnames:
-            if exe_pathname:
-                if os.path.isfile(exe_pathname):
-                    exe = exe_pathname
+        for x in alt_exe_pathnames:
+            if x:
+                if os.path.isfile(x):
+                    exe_pathname = x
+                    exe_exists = True
                     break
 
-    return exe
+    return exe_exists, exe_pathname
 
 
-""" == Basic data manipulation =============================================================== """
+def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
+    """
+    Hash a password using `hashlib.pbkdf2_hmac
+    <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_.
+
+    See also [`OPS-HP-1 <https://nitratine.net/blog/post/how-to-hash-passwords-in-python/>`_].
+
+    :param password: input as a password
+    :type password: str or int or float
+    :param salt: random data; when ``salt=None`` (default), it is generated by `os.urandom()`_,
+        which depends on ``salt_size``;
+        see also [`OPS-HP-2 <https://en.wikipedia.org/wiki/Salt_%28cryptography%29>`_]
+    :type salt: bytes or str
+    :param salt_size: ``size`` of the function `os.urandom()`_, i.e. the size of a random bytestring
+        for cryptographic use; when ``salt_size=None`` (default), it uses ``128``
+    :type salt_size: int or None
+    :param iterations: ``size`` of the function `hashlib.pbkdf2_hmac()`_,
+        i.e. number of iterations of SHA-256; when ``salt_size=None`` (default), it uses ``100000``
+    :type iterations: int or None
+    :param ret_hash: whether to return the salt and key, defaults to ``True``
+    :type ret_hash: bool
+    :param kwargs: [optional] parameters of the function `hashlib.pbkdf2_hmac()`_
+    :return: (only when ``ret_hash=True``) salt and key
+    :rtype: bytes
+
+    .. _`os.urandom()`: https://docs.python.org/3/library/os.html#os.urandom
+    .. _`hashlib.pbkdf2_hmac()`: https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import hash_password, verify_password
+
+        >>> sk = hash_password('test%123', salt_size=16)  # salt and key
+
+        >>> salt_data = sk[:16].hex()
+        >>> key_data = sk[16:].hex()
+
+        >>> verify_password('test%123', salt=salt_data, key=key_data)
+        True
+    """
+
+    if not isinstance(password, (bytes, bytearray)):
+        pwd = str(password).encode('UTF-8')
+    else:
+        pwd = password
+
+    if salt is None:
+        salt_ = os.urandom(128 if salt_size is None else salt_size)
+    else:
+        salt_ = salt.encode() if isinstance(salt, str) else salt
+
+    iterations_ = 100000 if iterations is None else iterations
+
+    key = hashlib.pbkdf2_hmac(
+        hash_name='SHA256', password=pwd, salt=salt_, iterations=iterations_, **kwargs)
+
+    if ret_hash:
+        salt_and_key = salt_ + key
+        return salt_and_key
+
+
+def verify_password(password, salt, key, iterations=None):
+    """
+    Verify a password given salt and key.
+
+    :param password: input as a password
+    :type password: str or int or float
+    :param salt: random data;
+        see also [`OPS-HP-1 <https://en.wikipedia.org/wiki/Salt_%28cryptography%29>`_]
+    :type salt: bytes or str
+    :param key: PKCS#5 password-based key (produced by the function `hashlib.pbkdf2_hmac()`_)
+    :type key: bytes or str
+    :param iterations: ``size`` of the function `hashlib.pbkdf2_hmac()`_,
+        i.e. number of iterations of SHA-256; when ``salt_size=None`` (default), it uses ``100000``
+    :type iterations: int or None
+    :return: whether the input password is correct
+    :rtype: bool
+
+    .. _`hashlib.pbkdf2_hmac()`: https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac
+
+    .. seealso::
+
+        - Examples of the function :py:func:`pyhelpers.ops.hash_password`
+    """
+
+    pwd = str(password).encode('UTF-8') if not isinstance(password, (bytes, bytearray)) else password
+    iterations_ = 100000 if iterations is None else iterations
+
+    def _is_hex(x):
+        try:
+            int(x, 16)
+            return True
+        except ValueError:
+            return False
+
+    key_ = hashlib.pbkdf2_hmac(
+        hash_name='SHA256', password=pwd, salt=bytes.fromhex(salt) if _is_hex(salt) else salt,
+        iterations=iterations_)
+
+    rslt = True if key_ == (bytes.fromhex(key) if _is_hex(key) else key) else False
+
+    return rslt
+
+
+""" == Basic data manipulation ================================================================= """
 
 
 # Iterable
@@ -402,7 +516,7 @@ def split_list_by_size(lst, sub_len):
     :return: a sequence of ``sub_len``-sized sub-lists from ``lst``
     :rtype: typing.Generator[list]
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import split_list_by_size
 
@@ -432,7 +546,7 @@ def split_list(lst, num_of_sub):
     :return: a total of ``num_of_sub`` sub-lists from ``lst``
     :rtype: typing.Generator[list]
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import split_list
 
@@ -728,7 +842,7 @@ def remove_dict_keys(dictionary, *keys):
     :param keys: (a sequence of) any that can be the key of a dictionary
     :type keys: any
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import remove_dict_keys
 
@@ -855,7 +969,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
     :return: position index of the column that contains ``NaN``
     :rtype: typing.Generator[typing.Iterable]
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import detect_nan_for_str_column
         >>> from pyhelpers._cache import example_dataframe
@@ -901,7 +1015,7 @@ def create_rotation_matrix(theta):
     :return: a rotation matrix of shape (2, 2)
     :rtype: numpy.ndarray
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import create_rotation_matrix
 
@@ -931,7 +1045,7 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
     :return: a data frame converted from the ``input_dict``
     :rtype: pandas.DataFrame
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import dict_to_dataframe
 
@@ -967,7 +1081,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
 
     .. _`numpy.load`: https://numpy.org/doc/stable/reference/generated/numpy.load
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import parse_csr_matrix
         >>> from pyhelpers.dir import cd
@@ -999,6 +1113,8 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         True
     """
 
+    scipy_sparse = _check_dependency(name='scipy.sparse')
+
     if verbose:
         print("Loading \"\\{}\"".format(os.path.relpath(path_to_csr)), end=" ... ")
 
@@ -1009,7 +1125,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         indptr = csr_loader['indptr']
         shape = csr_loader['shape']
 
-        csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)
+        csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
 
         print("Done.") if verbose else ""
 
@@ -1173,7 +1289,7 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
-""" == Basic computation ===================================================================== """
+""" == Basic computation ======================================================================= """
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
@@ -1187,7 +1303,7 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
     :return: lower and upper bound
     :rtype: tuple
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import get_extreme_outlier_bounds
         >>> import pandas
@@ -1246,7 +1362,7 @@ def interquartile_range(num_dat):
     :return: interquartile range of ``num_dat``
     :rtype: float
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import interquartile_range
 
@@ -1317,7 +1433,7 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-""" == Graph plotting ======================================================================== """
+""" == Graph plotting ========================================================================== """
 
 
 def cmap_discretisation(cmap, n_colours):
@@ -1338,7 +1454,7 @@ def cmap_discretisation(cmap, n_colours):
     .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
     .. _`matplotlib.cm.get_cmap`: https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import cmap_discretisation
         >>> import matplotlib.cm
@@ -1372,10 +1488,9 @@ def cmap_discretisation(cmap, n_colours):
         >>> plt.close()
     """
 
-    import matplotlib.cm
-    import matplotlib.colors
+    matplotlib_cm, matplotlib_colors = map(_check_dependency, ['matplotlib.cm', 'matplotlib.colors'])
 
-    cmap_ = matplotlib.cm.get_cmap(cmap) if isinstance(cmap, str) else copy.copy(cmap)
+    cmap_ = matplotlib_cm.get_cmap(cmap) if isinstance(cmap, str) else copy.copy(cmap)
 
     colours_i = np.concatenate((np.linspace(0, 1., n_colours), (0., 0., 0., 0.)))
     colours_rgba = cmap_(colours_i)
@@ -1387,7 +1502,7 @@ def cmap_discretisation(cmap, n_colours):
             (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)
         ]
 
-    colour_map = matplotlib.colors.LinearSegmentedColormap(cmap.name + '_%d' % n_colours, c_dict, 1024)
+    colour_map = matplotlib_colors.LinearSegmentedColormap(cmap.name + '_%d' % n_colours, c_dict, 1024)
 
     return colour_map
 
@@ -1475,16 +1590,15 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> plt.close(fig='all')
     """
 
-    import matplotlib.cm
-    import matplotlib.pyplot
+    matplotlib_cm, matplotlib_pyplot = map(_check_dependency, ['matplotlib.cm', 'matplotlib.pyplot'])
 
     cmap = cmap_discretisation(cmap, n_colours)
 
-    mappable = matplotlib.cm.ScalarMappable(cmap=cmap)
+    mappable = matplotlib_cm.ScalarMappable(cmap=cmap)
     mappable.set_array(np.array([]))
     mappable.set_clim(-0.5, n_colours + 0.5)
 
-    colour_bar = matplotlib.pyplot.colorbar(mappable, **kwargs)
+    colour_bar = matplotlib_pyplot.colorbar(mappable, **kwargs)
     colour_bar.set_ticks(np.linspace(0, n_colours, n_colours))
     colour_bar.set_ticklabels(range(n_colours))
 
@@ -1494,7 +1608,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" == Web data extraction =================================================================== """
+""" == Web data extraction ===================================================================== """
 
 
 def is_network_connected():
@@ -1515,7 +1629,12 @@ def is_network_connected():
     host_name = socket.gethostname()
     ip_address = socket.gethostbyname(host_name)
 
-    return False if ip_address == "127.0.0.1" else True
+    if ip_address == '127.0.0.1':
+        connected = False
+    else:
+        connected = True
+
+    return connected
 
 
 def is_url(url, partially=False):
@@ -1623,7 +1742,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
     .. _`requests.head`: https://2.python-requests.org/en/master/api/#requests.head
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import is_downloadable
 
@@ -1672,7 +1791,7 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     .. _`requests.Session`:
         https://2.python-requests.org/en/master/api/#request-sessions
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import init_requests_session
 
@@ -1710,7 +1829,7 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
     :return: a dictionary of user-agent strings for popular browsers
     :rtype: dict
 
-    **Example**::
+    **Examples**::
 
         from pyhelpers.ops import _user_agent_strings
 
@@ -1835,7 +1954,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         # path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
         # json_in = open(path_to_json, mode='r')
         # user_agent_strings = json.loads(json_in.read())
-        user_agent_strings = pyhelpers._cache._USER_AGENT_STRINGS
+        user_agent_strings = _USER_AGENT_STRINGS.copy()
 
     else:
         if verbose:
@@ -1843,7 +1962,9 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
         try:
             user_agent_strings = _user_agent_strings(dump_dat=True)
-            pyhelpers._cache._USER_AGENT_STRINGS = user_agent_strings
+
+            importlib.reload(sys.modules.get('pyhelpers._cache'))
+
             if verbose:
                 print("Done.")
 
@@ -1960,7 +2081,16 @@ def fake_requests_headers(randomized=True, **kwargs):
 
 
 def _download_file_from_url(response, path_to_file):
-    import tqdm
+    """
+    Download an object from a valid URL (and save it as a file).
+
+    :param response: a server's response to an HTTP request
+    :type response: requests.Response
+    :param path_to_file: a path where the downloaded object is saved as, or a filename
+    :type path_to_file: str or os.PathLike[str]
+    """
+
+    tqdm_ = _check_dependency(name='tqdm')
 
     file_size = int(response.headers.get('content-length'))  # Total size in bytes
 
@@ -1970,9 +2100,9 @@ def _download_file_from_url(response, path_to_file):
 
     total_iter = file_size // chunk_size
 
-    progress = tqdm.tqdm(
-        desc=f'"{os.path.relpath(path_to_file)}"', total=total_iter, unit='B',
-        unit_scale=True, unit_divisor=unit_divisor)
+    progress = tqdm_.tqdm(
+        desc=f'"{os.path.relpath(path_to_file)}"', total=total_iter, unit='B', unit_scale=True,
+        unit_divisor=unit_divisor)
 
     contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
     with open(file=path_to_file, mode='wb') as f:
@@ -2030,7 +2160,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     .. _`requests.Session.get()`:
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
 
-    **Example**::
+    **Examples**::
 
         >>> from pyhelpers.ops import download_file_from_url
         >>> from pyhelpers.dir import cd
@@ -2067,12 +2197,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
     .. note::
 
-        - When setting ``verbose`` to be ``True`` (or ``1``), the function relies on `tqdm`_,
-          which is not an essential dependency for installing `pyhelpers>=1.2.15`_.
-          You may need to install `tqdm`_ before proceeding with ``verbose=True`` (or ``verbose=1``).
+        - When ``verbose=True``, the function requires `tqdm`_.
 
         .. _`tqdm`: https://pypi.org/project/tqdm/
-        .. _`pyhelpers>=1.2.15`: https://pypi.org/project/pyhelpers/1.2.15/
     """
 
     path_to_dir = os.path.dirname(path_to_file)
@@ -2088,6 +2215,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                   f"The download is cancelled.")
 
     else:
+        # if verbose:
+        #     _ = _check_dependency(name='tqdm')
+
         if requests_session_args is None:
             requests_session_args = {}
         session = init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
