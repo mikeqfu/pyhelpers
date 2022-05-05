@@ -10,90 +10,238 @@ import gc
 import getpass
 import inspect
 import io
+import itertools
 import tempfile
 
 import pandas as pd
-import pandas.io.parsers
 import sqlalchemy
-import sqlalchemy.engine
 
+from ._cache import _check_dependency
 from .ops import confirmed
 
 
-def _make_database_address(host, port, username, database_name=""):
+def _create_db(cls, confirm_db_creation, verbose):
     """
-    Make a string of a database address.
+    Create a database (if it does not exist) when creating an instance.
 
-    :param host: host name/address of a PostgreSQL server
-    :type host: str
-    :param port: listening port used by PostgreSQL
-    :type port: int or str
-    :param username: username of a PostgreSQL server
-    :type username: str
-    :param database_name: name of a database, defaults to ``""``
-    :type database_name: str or None
-    :return: address of a database
-    :rtype: str
-
-    **Test**::
-
-        >>> from pyhelpers.dbms import _make_database_address
-
-        >>> db_addr = _make_database_address('localhost', 5432, 'postgres', 'postgres')
-        >>> db_addr
-        'postgres:***@localhost:5432/postgres'
+    :param cls: database class
+    :param confirm_db_creation: whether to prompt a confirmation before creating a new database
+        (if the specified database does not exist)
+    :param verbose: whether to print relevant information in console
     """
 
-    database_address = f"{username}:***@{host}:{port}"
+    db_name = cls._database_name(cls.database_name)
 
-    if database_name:
-        database_address += f"/{database_name}"
+    cfm_msg = f"The database {db_name} does not exist. Proceed by creating it\n?"
+    if confirmed(prompt=cfm_msg, confirmation_required=confirm_db_creation):
 
-    return database_address
+        if verbose:
+            print(f"Creating a database: {db_name}", end=" ... ")
+
+        try:
+            cls.engine.execute(f'CREATE DATABASE {db_name};')
+            cls.engine.url = cls.engine.url.set(database=cls.database_name)
+
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            if verbose:
+                print("Failed. {}".format(e))
 
 
-def _get_database_address(db_cls):
+def _create_database(cls, database_name, verbose):
     """
-    Get default database address of a given class in the current module.
+    Create a database.
 
-    :param db_cls: a class representation of a database
-    :type db_cls: object
-    :return: default address of database
-    :rtype: str
-
-    **Test**::
-
-        >>> from pyhelpers.dbms import _get_database_address, PostgreSQL
-
-        >>> db_addr = _get_database_address(db_cls=PostgreSQL)
-        >>> db_addr
-        'None:***@None:None'
+    :param cls: database class
+    :param database_name: name of a database
+    :param verbose: whether to print relevant information in console
     """
 
-    args_spec = inspect.getfullargspec(func=db_cls)
+    if not cls.database_exists(database_name=database_name):
+        db_name = cls._database_name(database_name)
 
-    args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
+        if verbose:
+            print(f"Creating a database: {db_name} ... ", end="")
 
-    database_address = _make_database_address(
-        args_dict['host'], args_dict['port'], args_dict['username'], args_dict['database_name'])
+        cls.disconnect_database()
 
-    return database_address
+        cls.engine.execute(f'CREATE DATABASE {db_name};')
+
+        if verbose:
+            print("Done.")
+
+    else:
+        if verbose:
+            print("The database already exists.")
+
+    cls.connect_database(database_name=database_name)
+
+
+def _drop_database(cls, database_name, confirmation_required, verbose):
+    """
+    Drop/delete a database.
+
+    :param cls: database class
+    :param database_name: name of a database
+    :param confirmation_required: whether to prompt a message for confirmation to proceed
+    :param verbose: whether to print relevant information in console
+    """
+
+    db_name = cls._database_name(database_name)
+
+    if not cls.database_exists(database_name=database_name):
+        if verbose:
+            print(f"The database {db_name} does not exist.")
+
+    else:
+        # address_ = self.address.replace(f"/{db_name}", "")
+        address_ = cls.address.split('/')[0]
+        cfm_msg = f"To drop the database {db_name} from {address_}\n?"
+        if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
+            cls.disconnect_database(database_name=database_name)
+
+            if verbose:
+                if confirmation_required:
+                    log_msg = f"Dropping {db_name}"
+                else:
+                    log_msg = f"Dropping the database {db_name} from {address_}"
+                print(log_msg, end=" ... ")
+
+            try:
+                cls.engine.execute(f'DROP DATABASE {db_name};')
+
+                if verbose:
+                    print("Done.")
+
+            except Exception as e:
+                print("Failed. {}".format(e))
+
+
+def _import_data(cls, data, table_name, schema_name=None, if_exists='fail',
+                 force_replace=False, chunk_size=None, col_type=None, method='multi',
+                 index=False, confirmation_required=True, verbose=False, **kwargs):
+    """
+    Import tabular data into a table.
+
+    :param data: tabular data to be dumped into a database
+    :type data: pandas.DataFrame or pandas.io.parsers.TextFileReader or list or tuple
+    :param table_name: name of a table
+    :type table_name: str
+    :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+        :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
+    :type schema_name: str or None
+    :param if_exists: if the table already exists, to ``'replace'``, ``'append'``
+        or, by default, ``'fail'`` and do nothing but raise a ValueError.
+    :type if_exists: str
+    :param force_replace: whether to force replacing existing table, defaults to ``False``
+    :type force_replace: bool
+    :param chunk_size: the number of rows in each batch to be written at a time, defaults to ``None``
+    :type chunk_size: int or None
+    :param col_type: data types for columns, defaults to ``None``
+    :type col_type: dict or None
+    :param method: method for SQL insertion clause, defaults to ``'multi'``
+
+        - ``None``: uses standard SQL ``INSERT`` clause (one per row);
+        - ``'multi'``: pass multiple values in a single ``INSERT`` clause;
+        - callable (e.g. ``PostgreSQL.psql_insert_copy``)
+          with signature ``(pd_table, conn, keys, data_iter)``.
+
+    :type method: str or None or typing.Callable
+    :param index: whether to dump the index as a column
+    :type index: bool
+    :param confirmation_required: whether to prompt a message for confirmation to proceed,
+        defaults to ``True``
+    :type confirmation_required: bool
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :param kwargs: [optional] parameters of `pandas.DataFrame.to_sql`_
+
+    .. _`pandas.DataFrame.to_sql`:
+        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+    """
+
+    schema_name_ = cls._schema_name(schema_name=schema_name)
+    table_name_ = cls._table_name(table_name=table_name, schema_name=schema_name_)
+
+    if confirmed("To import data into {} at {}\n?".format(table_name_, cls.address),
+                 confirmation_required=confirmation_required):
+
+        inspector = sqlalchemy.inspect(cls.engine)
+        if schema_name_ not in inspector.get_schema_names():
+            cls.create_schema(schema_name=schema_name_, verbose=verbose)
+
+        if cls.table_exists(table_name=table_name, schema_name=schema_name_):
+            if verbose:
+                if_exists_msg = f"The table {table_name_} already exists"
+                if if_exists == 'fail':
+                    if not force_replace:
+                        add_msg = "Use `if_exists='replace'` or `force_replace=True` to update it."
+                        print(if_exists_msg + f". ({add_msg})")
+                        return None
+                elif if_exists == 'replace':
+                    print(if_exists_msg + f" and is replaced.")
+
+                if force_replace:
+                    print("The existing table is forced to be dropped", end=" ... ")
+                    cls.drop_table(
+                        table_name=table_name, schema_name=schema_name_,
+                        confirmation_required=confirmation_required, verbose=verbose)
+                    print("Done.")
+
+        if verbose == 2:
+            if confirmation_required:
+                log_msg = f"Importing the data into the table {table_name_}"
+            else:
+                log_msg = f"Importing data into the table {table_name_} at {cls.address}"
+            print(log_msg, end=" ... ")
+
+        to_sql_args = {
+            'name': table_name,
+            'con': cls.engine,
+            'schema': schema_name_,
+            'if_exists': if_exists,
+            'index': index,
+            'dtype': col_type,
+            'method': method,
+        }
+
+        kwargs.update(to_sql_args)
+
+        pd_parsers = _check_dependency(name='pandas.io.parsers')
+
+        if isinstance(data, (pd_parsers.TextFileReader, list, tuple)):
+            for chunk in data:
+                chunk.to_sql(**kwargs)
+                del chunk
+                gc.collect()
+
+        else:
+            kwargs.update({'chunksize': chunk_size})
+            data.to_sql(**kwargs)
+            gc.collect()
+
+        if verbose == 2:
+            print("Done.")
+
+
+""" == Databases =============================================================================== """
 
 
 class PostgreSQL:
     """
-    A class for basic communication with a `PostgreSQL`_ server.
+    A class for basic communication with `PostgreSQL`_ databases.
 
     .. _`PostgreSQL`: https://www.postgresql.org/
     """
 
     #: Default dialect.
-    #: The system that SQLAlchemy uses to communicate with PostgreSQL; see also
-    #: [`DBMS-P-SP-1 <https://docs.sqlalchemy.org/en/13/dialects/postgresql.html>`_]
+    #: The dialect that SQLAlchemy uses to communicate with PostgreSQL; see also
+    #: [`DBMS-PS-1 <https://docs.sqlalchemy.org/dialects/postgresql.html>`_]
     DEFAULT_DIALECT = 'postgresql'
-    #: Default name of database driver
+    #: Default name of database driver.
     DEFAULT_DRIVER = 'psycopg2'
-
     #: Default host name/address (by installation of PostgreSQL).
     DEFAULT_HOST = 'localhost'
     #: Default listening port used by PostgreSQL.
@@ -111,41 +259,38 @@ class PostgreSQL:
         """
         :param host: host name/address of a PostgreSQL server,
             e.g. ``'localhost'`` or ``'127.0.0.1'`` (default by installation of PostgreSQL);
-            if ``host=None`` (default), it is initialized as ``'localhost'``
+            when ``host=None`` (default), it is initialized as ``'localhost'``
         :type host: str or None
-        :param port: listening port used by PostgreSQL;
-            if ``port=None`` (default), initialized as ``5432`` (default by installation of PostgreSQL)
+        :param port: listening port used by PostgreSQL; when ``port=None`` (default),
+            it is initialized as ``5432`` (default by installation of PostgreSQL)
         :type port: int or None
-        :param username: username of a PostgreSQL server; if ``username=None`` (default),
-            initialized as ``'postgres'`` (default by installation of PostgreSQL)
+        :param username: username of a PostgreSQL server; when ``username=None`` (default),
+            it is initialized as ``'postgres'`` (default by installation of PostgreSQL)
         :type username: str or None
-        :param password: user password; if ``password=None`` (default),
+        :param password: user password; when ``password=None`` (default),
             it is required to mannually type in the correct password to connect the PostgreSQL server
         :type password: str or int or None
-        :param database_name: name of a database; if ``database=None`` (default),
-            initialized as ``'postgres'`` (default by installation of PostgreSQL)
+        :param database_name: name of a database; when ``database=None`` (default),
+            it is initialized as ``'postgres'`` (default by installation of PostgreSQL)
         :type database_name: str or None
         :param confirm_db_creation: whether to prompt a confirmation before creating a new database
             (if the specified database does not exist), defaults to ``False``
         :type confirm_db_creation: bool
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``True``
+        :param verbose: whether to print relevant information in console, defaults to ``True``
         :type verbose: bool or int
 
         :ivar str host: host name/address
         :ivar str port: listening port used by PostgreSQL
         :ivar str username: username
         :ivar str database_name: name of a database
-        :ivar dict database_info: basic information about the server/database being connected
-        :ivar sqlalchemy.engine.URL url: PostgreSQL database URL; see also [`DBMS-P-SP-2`_]
+        :ivar dict credentials: basic information about the server/database being connected
         :ivar str address: representation of the database address
-        :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ engine class; see also [`DBMS-P-SP-3`_]
+        :ivar sqlalchemy.engine.Engine engine: `SQLAlchemy`_ connectable engine to a PostgreSQL server;
+            see also [`DBMS-PS-2`_]
 
-        .. _`DBMS-P-SP-1`:
+        .. _`DBMS-PS-1`:
             https://docs.sqlalchemy.org/en/latest/dialects/postgresql.html
-        .. _`DBMS-P-SP-2`:
-            https://docs.sqlalchemy.org/en/latest/core/engines.html#postgresql
-        .. _`DBMS-P-SP-3`:
+        .. _`DBMS-PS-2`:
             https://docs.sqlalchemy.org/en/latest/core/connections.html#sqlalchemy.engine.Engine
         .. _`SQLAlchemy`:
             https://www.sqlalchemy.org/
@@ -166,7 +311,7 @@ class PostgreSQL:
             >>> # Connect a database 'testdb' (which will be created if it does not exist)
             >>> testdb = PostgreSQL(database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.address
@@ -189,7 +334,7 @@ class PostgreSQL:
 
             >>> example_proxy = ExampleProxyObj(database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> example_proxy.address
@@ -206,68 +351,181 @@ class PostgreSQL:
             'postgres'
         """
 
-        self.host = self.DEFAULT_HOST if host is None else str(host)
-        self.port = self.DEFAULT_PORT if port is None else int(port)
-        self.username = self.DEFAULT_USERNAME if username is None else str(username)
+        _ = _check_dependency(name='psycopg2')
+
+        self.host = copy.copy(self.DEFAULT_HOST) if host is None else str(host)
+        self.port = copy.copy(self.DEFAULT_PORT) if port is None else int(port)
+        self.username = copy.copy(self.DEFAULT_USERNAME) if username is None else str(username)
+
+        self.credentials = {
+            'drivername': '+'.join([self.DEFAULT_DIALECT, self.DEFAULT_DRIVER]),
+            'host': self.host,
+            'port': self.port,
+            'username': self.username,
+            'database': self.DEFAULT_DATABASE,
+        }
 
         if password is None:
             pwd = getpass.getpass(f'Password ({self.username}@{self.host}:{self.port}): ')
         else:
             pwd = str(password)
 
-        self.database_name = self.DEFAULT_DATABASE if database_name is None else str(database_name)
-
-        self.database_info = {
-            'drivername': '+'.join([self.DEFAULT_DIALECT, self.DEFAULT_DRIVER]),
-            'host': self.host,
-            'port': self.port,
-            'username': self.username,
-            'password': pwd,
-            'database': self.database_name,
-        }
         # The typical form of the URL: backend+driver://username:password@host:port/database
-        self.url = sqlalchemy.engine.URL.create(**self.database_info)
+        url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd)
+        self.engine = sqlalchemy.create_engine(url=url, isolation_level='AUTOCOMMIT')
 
-        if self.database_name != self.DEFAULT_DATABASE:
-            self.engine = sqlalchemy.create_engine(
-                url=self.url.set(database=self.DEFAULT_DATABASE), isolation_level='AUTOCOMMIT')
-            db_exists = self.engine.execute(
-                f"SELECT EXISTS("
-                f"SELECT datname FROM pg_catalog.pg_database "
-                f"WHERE datname='{self.database_name}');").fetchone()[0]
+        if database_name is None or database_name == self.DEFAULT_DATABASE:
+            self.database_name = copy.copy(self.DEFAULT_DATABASE)
+            reconnect_db = False
         else:
-            db_exists = True
+            self.database_name = self.credentials['database'] = str(database_name)
+            if database_name in self.get_database_names():
+                self.engine.url = self.engine.url.set(database=self.database_name)
+            else:  # the database doesn't exist
+                _create_db(self, confirm_db_creation=confirm_db_creation, verbose=verbose)
+            reconnect_db = True
 
-        if not db_exists:  # The database doesn't exist
-            cfm_msg = f"The database \"{self.database_name}\" does not exist. Proceed by creating it\n?"
-            if confirmed(prompt=cfm_msg, confirmation_required=confirm_db_creation):
-                if verbose:
-                    print(f"Creating a database: \"{self.database_name}\"", end=" ... ")
-                try:
-                    self.engine.execute(f'CREATE DATABASE "{self.database_name}";')
-                    self.engine.dispose()
-                    if verbose:
-                        print("Done.")
-                except Exception as e:
-                    if verbose:
-                        print("Failed. {}".format(e))
-
-        # self.address = _make_database_address(host_, port_, username_, database_name_)
-        self.address = self.url.render_as_string(hide_password=True).split('//')[1]
+        # self.address = make_database_address(self.host, self.port, self.username, self.database_name)
+        self.address = self.engine.url.render_as_string(hide_password=True).split('//')[1]
         if verbose:
             print("Connecting {}".format(self.address), end=" ... ")
 
         try:  # Create a SQLAlchemy connectable
-            self.engine = sqlalchemy.create_engine(url=self.url, isolation_level='AUTOCOMMIT')
+            if reconnect_db:
+                self.engine = sqlalchemy.create_engine(url=self.engine.url, isolation_level='AUTOCOMMIT')
+            test_conn = self.engine.connect()
+            test_conn.close()
+            del test_conn
             if verbose:
                 print("Successfully.")
         except Exception as e:
             print("Failed. {}".format(e))
-        # self.connection = self.engine.raw_connection()
+
+    def _database_name(self, database_name=None):
+        """
+        Format a database name.
+
+        :param database_name: database name as an input, defaults to ``None``
+        :type database_name: str or None
+        :return: a database name
+        :rtype: str
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+
+            >>> postgres = PostgreSQL()
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+            >>> postgres._database_name()
+            '"postgres"'
+            >>> postgres._database_name(database_name='testdb')
+            '"testdb"'
+        """
+
+        db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
+        database_name_ = f'"{db_name}"'
+
+        return database_name_
+
+    def _schema_name(self, schema_name=None):
+        """
+        Get a schema name.
+
+        :param schema_name: schema name as an input, defaults to ``None``
+        :type schema_name: str or None
+        :return: a schema name
+        :rtype: str
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+
+            >>> postgres = PostgreSQL()
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+            >>> postgres._schema_name()
+            'public'
+            >>> postgres._schema_name(schema_name='test_schema')
+            'test_schema'
+        """
+
+        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
+
+        return schema_name_
+
+    def _table_name(self, table_name, schema_name=None):
+        """
+        Get a formatted table name.
+
+        :param table_name: table name as an input
+        :type table_name: str
+        :param schema_name: schema name as an input, defaults to ``None``
+        :type schema_name: str or None
+        :return: a formatted table name, which is used in a SQL query statement
+        :rtype: str
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+
+            >>> postgres = PostgreSQL()
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+            >>> postgres._table_name(table_name='test_table')
+            '"public"."test_table"'
+            >>> postgres._table_name(table_name='test_table', schema_name='test_schema')
+            '"test_schema"."test_table"'
+        """
+
+        schema_name_ = self._schema_name(schema_name=schema_name)
+        table_name_ = f'"{schema_name_}"."{table_name}"'
+
+        return table_name_
+
+    def get_database_names(self, names_only=True):
+        """
+        Get names of all existing databases.
+
+        :param names_only: whether to return only the names of the databases, defaults to ``True``
+        :type names_only: bool
+        :return: names of all existing databases
+        :rtype: list or pandas.DataFrame
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+
+            >>> # Connect the default database 'postgres'
+            >>> # postgres = PostgreSQL('localhost', 5432, 'postgres', database_name='postgres')
+            >>> postgres = PostgreSQL()
+            Password (postgres@localhost:5432): ***
+            Connecting postgres:***@localhost:5432/postgres ... Successfully.
+
+            >>> postgres.get_database_names()
+            ['template1',
+             'template0',
+             'postgis_32_sample',
+             'postgres']
+        """
+
+        conn = self.engine.connect(close_with_result=True)
+        rslt = conn.execute('SELECT datname FROM pg_database;')
+
+        db_names = rslt.fetchall()
+        if names_only:
+            database_names = list(itertools.chain(*db_names))
+        else:
+            database_names = pd.DataFrame(db_names)
+
+        return database_names
 
     def database_exists(self, database_name=None):
         """
-        Check whether a database exists in the currently-connected server.
+        Check whether a database exists.
 
         :param database_name: name of a database, defaults to ``None``
         :type database_name: str or None
@@ -280,11 +538,11 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Check whether the database "testdb" exists now
-            >>> testdb.database_exists('testdb')
+            >>> testdb.database_exists(database_name='testdb')  # testdb.database_exists()
             True
             >>> testdb.database_name
             'testdb'
@@ -296,27 +554,28 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
 
             >>> # Check again whether the database "testdb" still exists now
-            >>> testdb.database_exists('testdb')
+            >>> testdb.database_exists(database_name='testdb')
             False
             >>> testdb.database_name
             'postgres'
         """
 
-        db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
+        db_name = self.database_name if database_name is None else str(database_name)
 
-        result = self.engine.execute(
+        conn = self.engine.connect(close_with_result=True)
+        rslt = conn.execute(
             f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{db_name}');")
+        db_exists = bool(rslt.fetchone()[0])
 
-        return result.fetchone()[0]
+        return db_exists
 
     def create_database(self, database_name, verbose=False):
         """
-        Create a database in the currently-connected server.
+        Create a database.
 
         :param database_name: name of a database
         :type database_name: str
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
 
         **Examples**::
@@ -325,7 +584,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
             >>> testdb.database_name
             'testdb'
@@ -352,30 +611,16 @@ class PostgreSQL:
             'postgres'
         """
 
-        if not self.database_exists(database_name=database_name):
-            if verbose:
-                print("Creating a database: \"{}\" ... ".format(database_name), end="")
-
-            self.disconnect_database()
-            self.engine.execute('CREATE DATABASE "{}";'.format(database_name))
-
-            if verbose:
-                print("Done.")
-
-        else:
-            if verbose:
-                print("The database already exists.")
-
-        self.connect_database(database_name=database_name)
+        _create_database(self, database_name=database_name, verbose=verbose)
 
     def connect_database(self, database_name=None, verbose=False):
         """
-        Establish a connection to a database in the currently-connected server.
+        Establish a connection to a database.
 
         :param database_name: name of a database;
             when ``database_name=None`` (default), the database name is input manually
         :type database_name: str or None
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -385,7 +630,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.connect_database(verbose=True)
@@ -411,21 +656,21 @@ class PostgreSQL:
 
         if database_name is not None:
             self.database_name = str(database_name)
-            self.address = _make_database_address(
-                self.host, self.port, self.username, self.database_name)
+            self.address = make_database_address(
+                host=self.host, port=self.port, username=self.username,
+                database_name=self.database_name)
 
             if verbose:
                 print(f"Connecting {self.address}", end=" ... ")
 
             try:
-                self.database_info['database'] = self.database_name
-                self.url = sqlalchemy.engine.URL.create(**self.database_info)
+                self.credentials['database'] = self.database_name
+                url = self.engine.url.set(database=self.database_name)
 
-                if not self.database_exists(self.database_name):
+                if not self.database_exists(database_name=self.database_name):
                     self.create_database(database_name=self.database_name)
 
-                self.engine = sqlalchemy.create_engine(self.url, isolation_level='AUTOCOMMIT')
-                # self.connection = self.engine.raw_connection()
+                self.engine = sqlalchemy.create_engine(url, isolation_level='AUTOCOMMIT')
 
                 if verbose:
                     print("Successfully.")
@@ -439,7 +684,7 @@ class PostgreSQL:
 
     def get_database_size(self, database_name=None):
         """
-        Get the size of a database in the currently-connected server.
+        Get the size of a database.
 
         :param database_name: name of a database;
             if ``database_name=None`` (default), the function returns the size of the
@@ -454,7 +699,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
             >>> testdb.get_database_size()
             '8553 kB'
@@ -462,7 +707,7 @@ class PostgreSQL:
             >>> testdb.DEFAULT_DATABASE
             'postgres'
             >>> testdb.get_database_size(database_name=testdb.DEFAULT_DATABASE)
-            '8577 kB'
+            '8609 kB'
 
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
@@ -480,12 +725,14 @@ class PostgreSQL:
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
-        Kill the connection to a database in the currently-connected server.
+        Disconnect a database.
+
+        See also [`DBMS-PS-DD-1 <https://stackoverflow.com/questions/17449420/>`_].
 
         :param database_name: name of database to disconnect from;
             if ``database_name=None`` (default), disconnect the current database.
         :type database_name: str or None
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -494,7 +741,7 @@ class PostgreSQL:
             >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -519,13 +766,12 @@ class PostgreSQL:
         try:
             self.connect_database(database_name=self.DEFAULT_DATABASE)
 
-            self.engine.execute(
-                'REVOKE CONNECT ON DATABASE "{}" FROM PUBLIC, postgres;'.format(db_name))
+            self.engine.execute(f'REVOKE CONNECT ON DATABASE "{db_name}" FROM public, postgres;')
 
             self.engine.execute(
-                'SELECT pg_terminate_backend(pid) '
-                'FROM pg_stat_activity '
-                'WHERE datname = \'{}\' AND pid <> pg_backend_pid();'.format(db_name))
+                f"SELECT pg_terminate_backend(pid) "
+                f"FROM pg_stat_activity "
+                f"WHERE datname = '{db_name}' AND pid <> pg_backend_pid();")
 
             if verbose:
                 print("Done.")
@@ -535,7 +781,7 @@ class PostgreSQL:
 
     def disconnect_all_others(self):
         """
-        Kill connections to all other databases in the currently-connected server.
+        Kill connections to all databases except the currently-connected one.
 
         **Examples**::
 
@@ -543,7 +789,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.database_name
@@ -565,7 +811,7 @@ class PostgreSQL:
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
-        Delete/drop a database from the currently-connected server.
+        Delete/drop a database.
 
         :param database_name: database to be disconnected;
             if ``database_name=None`` (default), drop the database being currently currented
@@ -573,7 +819,7 @@ class PostgreSQL:
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -600,34 +846,9 @@ class PostgreSQL:
             'postgres'
         """
 
-        db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
-
-        if not self.database_exists(database_name=db_name):
-            if verbose:
-                print("The database \"{}\" does not exist.".format(db_name))
-
-        else:
-            # address_ = self.address.replace(f"/{db_name}", "")
-            address_ = self.address.split('/')[0]
-            cfm_msg = "To drop the database \"{}\" from {}\n?".format(db_name, address_)
-            if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
-                self.disconnect_database(db_name)
-
-                if verbose:
-                    if confirmation_required:
-                        log_msg = "Dropping \"{}\"".format(db_name)
-                    else:
-                        log_msg = "Dropping the database \"{}\" from {}".format(db_name, address_)
-                    print(log_msg, end=" ... ")
-
-                try:
-                    self.engine.execute('DROP DATABASE "{}"'.format(db_name))
-
-                    if verbose:
-                        print("Done.")
-
-                except Exception as e:
-                    print("Failed. {}".format(e))
+        _drop_database(
+            self, database_name=database_name, confirmation_required=confirmation_required,
+            verbose=verbose)
 
     def _msg_for_multi_items(self, item_names, desc):
         """
@@ -646,7 +867,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> schema_name = 'points'
@@ -694,7 +915,7 @@ class PostgreSQL:
 
     def schema_exists(self, schema_name):
         """
-        Check whether a schema exists in the currently-connected database.
+        Check whether a schema exists.
 
         :param schema_name: name of a schema
         :type schema_name: str
@@ -707,7 +928,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.schema_exists('public')
@@ -725,17 +946,17 @@ class PostgreSQL:
         result = self.engine.execute(
             "SELECT EXISTS("
             "SELECT schema_name FROM information_schema.schemata "
-            "WHERE schema_name='{}');".format(schema_name))
+            "WHERE schema_name='{}');".format(self._schema_name(schema_name=schema_name)))
 
         return result.fetchone()[0]
 
     def create_schema(self, schema_name, verbose=False):
         """
-        Create a schema in the currently-connected database.
+        Create a schema.
 
         :param schema_name: name of a schema
         :type schema_name: str
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -745,7 +966,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> test_schema_name = 'test_schema'
@@ -762,12 +983,14 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        if not self.schema_exists(schema_name=schema_name):
+        schema_name_ = self._schema_name(schema_name=schema_name)
+
+        if not self.schema_exists(schema_name=schema_name_):
             if verbose:
-                print("Creating a schema: \"{}\" ... ".format(schema_name), end="")
+                print("Creating a schema: \"{}\" ... ".format(schema_name_), end="")
 
             try:
-                self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name))
+                self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name_))
                 if verbose:
                     print("Done.")
             except Exception as e:
@@ -776,16 +999,15 @@ class PostgreSQL:
         else:
             print("The schema \"{}\" already exists.".format(schema_name))
 
-    def list_schema_names(self, include_all=False, names_only=True, verbose=False):
+    def get_schema_names(self, include_all=False, names_only=True, verbose=False):
         """
-        List the names of schemas in the currently-connected database.
+        Get the names of existing schemas.
 
         :param include_all: whether to list all the available schemas, defaults to ``False``
         :type include_all: bool
-        :param names_only: whether to return a list of schema names only, defaults to ``True``
+        :param names_only: whether to return only the names of the schema names, defaults to ``True``
         :type names_only: bool
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
         :return: schema names
         :rtype: list or pandas.DataFrame or None
@@ -796,13 +1018,13 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
-            >>> testdb.list_schema_names()
+            >>> testdb.get_schema_names()
             ['public']
 
-            >>> testdb.list_schema_names(include_all=True, names_only=False)
+            >>> testdb.get_schema_names(include_all=True, names_only=False)
                       schema_name  schema_id      role
             0  information_schema      13388  postgres
             1          pg_catalog         11  postgres
@@ -811,28 +1033,34 @@ class PostgreSQL:
 
             >>> testdb.drop_schema(schema_names='public', verbose=True)
             To drop the schema "public" from postgres:***@localhost:5432/testdb
-            ? [No]|Yes: >? yes
+            ? [No]|Yes: yes
             Dropping "public" ... Done.
 
-            >>> testdb.list_schema_names()  # None
+            >>> testdb.get_schema_names()  # None
 
-            >>> testdb.list_schema_names(verbose=True)
+            >>> testdb.get_schema_names(verbose=True)
             No schema exists in the currently-connected database "testdb".
+
+            >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
         """
 
         condition = ""
         # Note: Use '%%' for '%' in SQL statements, as '%' in Python is used for string formatting
         if not include_all:
-            condition = "WHERE nspname NOT IN ('information_schema', 'pg_catalog') " \
+            condition = " WHERE nspname NOT IN ('information_schema', 'pg_catalog') " \
                         "AND nspname NOT LIKE 'pg_toast%%' " \
                         "AND nspname NOT LIKE 'pg_temp%%' "
 
         query = f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s " \
-                f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner " \
+                f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner" \
                 f"{condition}" \
                 f"ORDER BY s.nspname;"
 
-        rslt = self.engine.execute(query)
+        conn = self.engine.connect(close_with_result=True)
+        rslt = conn.execute(query)
 
         schema_info_ = rslt.fetchall()
         if not schema_info_:
@@ -841,23 +1069,23 @@ class PostgreSQL:
                 print(f"No schema exists in the currently-connected database \"{self.database_name}\".")
 
         else:
-            schema_info = pd.DataFrame(schema_info_, columns=['schema_name', 'schema_id', 'role'])
-
             if names_only:
-                schema_info = schema_info['schema_name'].to_list()
+                schema_info = [x[0] for x in schema_info_]
+            else:
+                schema_info = pd.DataFrame(schema_info_, columns=['schema_name', 'schema_id', 'role'])
 
         return schema_info
 
     def drop_schema(self, schema_names, confirmation_required=True, verbose=False):
         """
-        Delete/drop one or multiple schemas from the currently-connected database.
+        Delete/drop one or multiple schemas.
 
         :param schema_names: name of one schema, or names of multiple schemas
         :type schema_names: str or typing.Iterable[str]
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -867,7 +1095,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> new_schema_names = ['points', 'lines', 'polygons']
@@ -944,7 +1172,7 @@ class PostgreSQL:
 
     def table_exists(self, table_name, schema_name=None):
         """
-        Check whether a table exists in the currently-connected database.
+        Check whether a table exists.
 
         :param table_name: name of a table
         :type table_name: str
@@ -960,7 +1188,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> tbl_name = 'points'
@@ -984,18 +1212,20 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
+        schema_name_ = self._schema_name(schema_name=schema_name)
 
-        res = self.engine.execute(
-            "SELECT EXISTS("
-            "SELECT * FROM information_schema.tables "
-            "WHERE table_schema='{}' AND table_name='{}');".format(schema_name_, table_name))
+        rslt = self.engine.execute(
+            f"SELECT EXISTS("
+            f"SELECT * FROM information_schema.tables "
+            f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');")
 
-        return res.fetchone()[0]
+        result = rslt.fetchone()[0]
+
+        return result
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False):
         """
-        Create a table in the currently-connected database.
+        Create a table.
 
         :param table_name: name of a table
         :type table_name: str
@@ -1004,7 +1234,7 @@ class PostgreSQL:
         :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
             :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
 
@@ -1016,7 +1246,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> tbl_name = 'test_table'
@@ -1028,6 +1258,7 @@ class PostgreSQL:
             >>> testdb.table_exists(table_name=tbl_name)
             True
 
+            >>> # Get information about all columns of the table "public"."test_table"
             >>> test_tbl_col_info = testdb.get_column_info(table_name=tbl_name, as_dict=False)
             >>> test_tbl_col_info
                                         column_0      column_1
@@ -1076,6 +1307,11 @@ class PostgreSQL:
             generation_expression           None          None
             is_updatable                     YES           YES
 
+            >>> # Get data types of all columns of the table "public"."test_table"
+            >>> test_tbl_dtypes = testdb.get_column_dtype(table_name=tbl_name)
+            >>> test_tbl_dtypes
+            {'col_name_1': 'integer', 'col_name_2': 'text'}
+
             >>> # Drop the table "public"."test_table"
             >>> testdb.drop_table(table_name=tbl_name, verbose=True)
             To drop the table "public"."test_table" from postgres:***@localhost:5432/testdb
@@ -1089,22 +1325,21 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
-        table_ = '"{schema}"."{table}"'.format(schema=schema_name_, table=table_name)
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-        if self.table_exists(table_name=table_name, schema_name=schema_name_):
+        if self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
-                print("The table {} already exists.".format(table_))
+                print(f"The table {table_name_} already exists.")
 
         else:
-            if not self.schema_exists(schema_name_):
-                self.create_schema(schema_name=schema_name_, verbose=False)
+            if not self.schema_exists(schema_name):
+                self.create_schema(schema_name=schema_name, verbose=False)
 
             try:
                 if verbose:
-                    print("Creating a table: {} ... ".format(table_), end="")
+                    print(f"Creating a table: {table_name_} ... ", end="")
 
-                self.engine.execute('CREATE TABLE {} ({});'.format(table_, column_specs))
+                self.engine.execute(f'CREATE TABLE {table_name_} ({column_specs});')
 
                 if verbose:
                     print("Done.")
@@ -1114,7 +1349,7 @@ class PostgreSQL:
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Get information about columns of a table in the currently-connected database.
+        Get information about columns of a table.
 
         :param table_name: name of a table
         :type table_name: str
@@ -1131,7 +1366,7 @@ class PostgreSQL:
             - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
+        schema_name_ = self._schema_name(schema_name=schema_name)
 
         column_info = self.engine.execute(
             "SELECT * FROM information_schema.columns "
@@ -1147,15 +1382,57 @@ class PostgreSQL:
 
         return info_tbl
 
-    def list_table_names(self, schema_name=None, verbose=False):
+    def get_column_dtype(self, table_name, column_names=None, schema_name=None):
         """
-        List the names of all tables in a schema in the currently-connected database.
+        Get information about data types of all or specific columns of a table.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param column_names: (list of) column name(s);
+            when ``column_names=None`` (default), all available columns are included
+        :type column_names: str or list or None
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
+        :return: data types of all or specific columns of a table
+        :rtype: dict or None
+
+        .. seealso::
+
+            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
+        """
+
+        schema_name_ = self._schema_name(schema_name=schema_name)
+
+        col_names_query = ''  # if column_names is None (default)
+        if isinstance(column_names, str):
+            col_names_query = f" AND column_name = '{column_names}'"
+        elif isinstance(column_names, list):
+            if len(column_names) == 1:
+                col_names_query = f" AND column_name = '{column_names[0]}'"
+            else:
+                col_names_query = f" AND column_name IN {tuple(column_names)}"
+
+        query = \
+            f"SELECT column_name, data_type FROM information_schema.columns " \
+            f"WHERE table_name = '{table_name}' AND table_schema = '{schema_name_}'{col_names_query};"
+
+        column_dtypes_ = self.engine.execute(query).fetchall()
+
+        if len(column_dtypes_) > 0:
+            column_dtypes = dict(column_dtypes_)
+        else:
+            column_dtypes = None
+
+        return column_dtypes
+
+    def get_table_names(self, schema_name=None, verbose=False):
+        """
+        Get the names of all tables in a schema.
 
         :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
             :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
         :type schema_name: str or None
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
         :return: a list of table names
         :rtype: list or None
@@ -1166,14 +1443,14 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
-            >>> lst_tbl_names = testdb.list_table_names()
+            >>> lst_tbl_names = testdb.get_table_names()
             >>> lst_tbl_names
             []
 
-            >>> lst_tbl_names = testdb.list_table_names(schema_name='testdb', verbose=True)
+            >>> lst_tbl_names = testdb.get_table_names(schema_name='testdb', verbose=True)
             The schema "testdb" does not exist.
 
             >>> # Create a new table named "test_table" in the schema "testdb"
@@ -1182,7 +1459,7 @@ class PostgreSQL:
             >>> testdb.create_table(table_name=new_tbl_name, column_specs=col_spec, verbose=True)
             Creating a table: "public"."test_table" ... Done.
 
-            >>> lst_tbl_names = testdb.list_table_names(schema_name='public')
+            >>> lst_tbl_names = testdb.get_table_names(schema_name='public')
             >>> lst_tbl_names
             ['test_table']
 
@@ -1193,7 +1470,7 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
+        schema_name_ = self._schema_name(schema_name=schema_name)
 
         if not self.schema_exists(schema_name=schema_name_):
             if verbose:
@@ -1223,8 +1500,7 @@ class PostgreSQL:
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
 
         **Examples**::
@@ -1233,7 +1509,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Create a new table named "test_table" in the schema "testdb"
@@ -1254,7 +1530,7 @@ class PostgreSQL:
             ? [No]|Yes: yes
             Moving "public"."test_table" to "test_schema" ... Done.
 
-            >>> lst_tbl_names = testdb.list_table_names(schema_name='test_schema')
+            >>> lst_tbl_names = testdb.get_table_names(schema_name='test_schema')
             >>> lst_tbl_names
             ['test_table']
 
@@ -1293,9 +1569,213 @@ class PostgreSQL:
             except Exception as e:
                 print("Failed. {}".format(e))
 
+    def null_text_to_empty_string(self, table_name, column_names=None, schema_name=None):
+        """
+        Convert null values (in text columns) to empty strings.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param column_names: (list of) column name(s);
+            when ``column_names=None`` (default), all available columns are included
+        :type column_names: str or list or None
+        :param schema_name: name of a schema
+        :type schema_name: str
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+            >>> from pyhelpers._cache import example_dataframe
+
+            >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Creating a database: [testdb] ... Done.
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> dat = example_dataframe()
+            >>> dat.Longitude = dat.Longitude.astype(str)
+            >>> dat.loc['London', 'Longitude'] = None
+            >>> dat
+                         Longitude   Latitude
+            City
+            London            None  51.507322
+            Birmingham  -1.9026911  52.479699
+            Manchester  -2.2451148  53.479489
+            Leeds       -1.5437941  53.797418
+
+            >>> tbl_name = 'test_table'
+
+            >>> testdb.import_data(data=dat, table_name=tbl_name, index=True, verbose=True)
+            To import data into "public"."test_table" at postgres:***@localhost:5432/postgres
+            ? [No]|Yes: yes
+
+            >>> testdb.table_exists(table_name=tbl_name)
+            True
+
+            >>> testdb.get_column_dtype(table_name=tbl_name)
+            {'City': 'text', 'Longitude': 'text', 'Latitude': 'double precision'}
+
+        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-1.*
+            :name: dbms-postgresql-null_text_to_empty_string-demo-1
+            :align: center
+            :width: 55%
+
+            The table "*test_table*" in the database "*testdb*".
+
+        .. code-block:: python
+
+            >>> # Replace the 'null' value with an empty string
+            >>> testdb.null_text_to_empty_string(table_name=tbl_name)
+
+        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-2.*
+            :name: dbms-postgresql-null_text_to_empty_string-demo-2
+            :align: center
+            :width: 55%
+
+            The table "*test_table*" in the database "*testdb*"
+            (after converting 'null' to empty string).
+
+        .. code-block:: python
+
+            >>> # Delete the database "testdb"
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+        """
+
+        column_dtypes = self.get_column_dtype(
+            table_name=table_name, column_names=column_names, schema_name=schema_name)
+        text_columns = [k for k, v in column_dtypes.items() if v == 'text']
+
+        if len(text_columns) > 0:
+            tbl = self._table_name(table_name=table_name, schema_name=schema_name)
+            cols_query = ', '.join(f'"{x}"=COALESCE("{x}", \'\')' for x in text_columns)
+
+            self.engine.execute(f'UPDATE {tbl} SET {cols_query};')
+
+    def add_primary_keys(self, primary_keys, table_name, schema_name=None):
+        """
+        Add a primary key or multiple primary keys to a table.
+
+        :param primary_keys: (list of) primary key(s)
+        :type primary_keys: str or list or None
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema, defaults to ``None``
+        :type schema_name: str or None
+
+        .. seealso::
+
+            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.get_primary_keys`.
+        """
+
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+        if primary_keys is not None:
+            # If any null values in 'text' columns, replace null values with empty strings
+            self.null_text_to_empty_string(
+                table_name=table_name, column_names=primary_keys, schema_name=schema_name)
+
+            pri_keys = [primary_keys] if isinstance(primary_keys, str) else copy.copy(primary_keys)
+
+            if len(pri_keys) == 1:
+                primary_keys_ = '("{}")'.format(pri_keys[0])
+            else:
+                primary_keys_ = str(tuple(pri_keys)).replace("'", '"')
+
+            self.engine.execute(f'ALTER TABLE {table_name_} ADD PRIMARY KEY {primary_keys_};')
+
+    def get_primary_keys(self, table_name, schema_name=None, names_only=True):
+        """
+        Get the primary keys of a table.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema, defaults to ``None``
+        :type schema_name: str or None
+        :param names_only: whether to return only the names of the primary keys, defaults to ``True``
+        :type names_only: bool
+        :return: primary key(s) of the given table
+        :rtype: list or pandas.DataFrame
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+            >>> from pyhelpers._cache import example_dataframe
+
+            >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Creating a database: [testdb] ... Done.
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> dat = example_dataframe()
+            >>> dat
+                        Longitude   Latitude
+            City
+            London      -0.127647  51.507322
+            Birmingham  -1.902691  52.479699
+            Manchester  -2.245115  53.479489
+            Leeds       -1.543794  53.797418
+
+            >>> tbl_name = 'test_table'
+
+            >>> testdb.import_data(data=dat, table_name=tbl_name, index=True, verbose=True)
+            To import data into "public"."test_table" at postgres:***@localhost:5432/postgres
+            ? [No]|Yes: yes
+
+            >>> pri_keys = testdb.get_primary_keys(table_name=tbl_name)
+            >>> pri_keys
+            []
+
+            >>> testdb.add_primary_keys(primary_keys='City', table_name=tbl_name)
+
+        The "*test_table*" is illustrated in :numref:`dbms-postgresql-get_primary_keys-demo` below:
+
+        .. figure:: ../_images/dbms-postgresql-get_primary_keys-demo.*
+            :name: dbms-postgresql-get_primary_keys-demo
+            :align: center
+            :width: 55%
+
+            The table "*test_table*" (with a primary key) in the database.
+
+        .. code-block:: python
+
+            >>> pri_keys = testdb.get_primary_keys(table_name=tbl_name)
+            >>> pri_keys
+            ['City']
+            >>> pri_keys = testdb.get_primary_keys(table_name=tbl_name, names_only=False)
+            >>> pri_keys
+              key_column data_type
+            0       City      text
+
+            >>> # Delete the database "testdb"
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+        """
+
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+        postgres_query = \
+            f"SELECT a.attname AS key_column, format_type(a.atttypid, a.atttypmod) AS data_type " \
+            f"FROM pg_index i " \
+            f"JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) " \
+            f"WHERE i.indrelid = '{table_name_}'::regclass AND i.indisprimary;"
+
+        result = self.engine.execute(postgres_query)
+        primary_keys_ = result.fetchall()
+
+        if names_only:
+            primary_keys = [x[0] for x in primary_keys_]  # list(zip(*primary_keys_))[0]
+        else:
+            primary_keys = pd.DataFrame(primary_keys_)
+
+        return primary_keys
+
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
         """
-        Delete/drop a table from the currently-connected database.
+        Delete/drop a table.
 
         :param table_name: name of a table
         :type table_name: str
@@ -1305,8 +1785,7 @@ class PostgreSQL:
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
 
         .. seealso::
@@ -1314,10 +1793,9 @@ class PostgreSQL:
             - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
-        table_name_ = '"{}"."{}"'.format(schema_name_, table_name)
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-        if not self.table_exists(table_name=table_name, schema_name=schema_name_):
+        if not self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
                 print("The table {} does not exist.".format(table_name_))
 
@@ -1333,7 +1811,7 @@ class PostgreSQL:
                     print(log_msg, end=" ... ")
 
                 try:
-                    self.engine.execute('DROP TABLE "{}"."{}" CASCADE;'.format(schema_name_, table_name))
+                    self.engine.execute('DROP TABLE {} CASCADE;'.format(table_name_))
 
                     if verbose:
                         print("Done.")
@@ -1342,13 +1820,13 @@ class PostgreSQL:
                     print("Failed. {}".format(e))
 
     @staticmethod
-    def psql_insert_copy(sql_table, sql_db_engine, column_name_list, data_iter):
+    def psql_insert_copy(sql_table, sql_db_engine, column_names, data_iter):
         """
         A callable using PostgreSQL COPY clause for executing inserting data.
 
         :param sql_table: pandas.io.sql.SQLTable
         :param sql_db_engine: `sqlalchemy.engine.Connection`_ or `sqlalchemy.engine.Engine`_
-        :param column_name_list: (list of str) column names
+        :param column_names: (list of str) column names
         :param data_iter: iterable that iterates the values to be inserted
 
         .. _`sqlalchemy.engine.Connection`:
@@ -1359,7 +1837,7 @@ class PostgreSQL:
         .. note::
 
             This function is copied and slightly modified from the source code available at
-            [`DBMS-P-PIC-1
+            [`DBMS-PS-PIC-1
             <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_].
         """
 
@@ -1369,7 +1847,7 @@ class PostgreSQL:
         csv_writer.writerows(data_iter)
         io_buffer.seek(0)
 
-        sql_column_names = ', '.join('"{}"'.format(k) for k in column_name_list)
+        sql_column_names = ', '.join('"{}"'.format(k) for k in column_names)
         sql_table_name = '"{}"."{}"'.format(sql_table.schema, sql_table.name)
 
         sql_query = 'COPY {} ({}) FROM STDIN WITH CSV'.format(sql_table_name, sql_column_names)
@@ -1379,11 +1857,11 @@ class PostgreSQL:
                     force_replace=False, chunk_size=None, col_type=None, method='multi',
                     index=False, confirmation_required=True, verbose=False, **kwargs):
         """
-        Import tabular data into a table in the currently-connected database.
+        Import tabular data into a table.
 
-        See also [`DBMS-P-DD-1
+        See also [`DBMS-PS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_]
-        and [`DBMS-P-DD-2
+        and [`DBMS-PS-ID-2
         <https://www.postgresql.org/docs/current/sql-copy.html/>`_].
 
         :param data: tabular data to be dumped into a database
@@ -1415,7 +1893,7 @@ class PostgreSQL:
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs, 
+        :param verbose: whether to print relevant information in console as the function runs,
             defaults to ``False``
         :type verbose: bool or int
         :param kwargs: [optional] parameters of `pandas.DataFrame.to_sql`_
@@ -1428,68 +1906,17 @@ class PostgreSQL:
             - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
-        table_ = '"{}"."{}"'.format(schema_name_, table_name)
-
-        if confirmed("To import data into {} at {}\n?".format(table_, self.address),
-                     confirmation_required=confirmation_required):
-
-            inspector = sqlalchemy.inspect(self.engine)
-            if schema_name_ not in inspector.get_schema_names():
-                self.create_schema(schema_name=schema_name_, verbose=verbose)
-            # if not data.empty:
-            #   There may be a need to change column types
-
-            if self.table_exists(table_name=table_name, schema_name=schema_name_):
-                if if_exists == 'replace' and verbose:
-                    print("The table {} already exists and is replaced.".format(table_))
-
-                if force_replace and verbose:
-                    print("The existing table is forced to be dropped", end=" ... ")
-                    self.drop_table(
-                        table_name=table_name, schema_name=schema_name_,
-                        confirmation_required=confirmation_required, verbose=verbose)
-                    print("Done.")
-
-            if verbose == 2:
-                if confirmation_required:
-                    log_msg = "Importing the data into the table {}".format(table_)
-                else:
-                    log_msg = "Importing data into the table {} at {}".format(table_, self.address)
-                print(log_msg, end=" ... ")
-
-            to_sql_args = {
-                'name': table_name,
-                'con': self.engine,
-                'schema': schema_name_,
-                'if_exists': if_exists,
-                'index': index,
-                'dtype': col_type,
-                'method': method,
-            }
-
-            kwargs.update(to_sql_args)
-
-            if isinstance(data, (pandas.io.parsers.TextFileReader, list, tuple)):
-                for chunk in data:
-                    chunk.to_sql(**kwargs)
-                    del chunk
-                    gc.collect()
-
-            else:
-                kwargs.update({'chunksize': chunk_size})
-                data.to_sql(**kwargs)
-                gc.collect()
-
-            if verbose == 2:
-                print("Done.")
+        _import_data(
+            self, data, table_name, schema_name=schema_name, if_exists=if_exists,
+            force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
+            index=index, confirmation_required=confirmation_required, verbose=verbose, **kwargs)
 
     def read_table(self, table_name, schema_name=None, condition=None, chunk_size=None, sorted_by=None,
                    **kwargs):
         """
-        Read data from a table in the currently-connected database.
+        Read data from a table.
 
-        See also [`DBMS-P-RT-1 <https://stackoverflow.com/questions/24408557/>`_].
+        See also [`DBMS-PS-RT-1 <https://stackoverflow.com/questions/24408557/>`_].
 
         :param table_name: name of a table
         :type table_name: str
@@ -1503,11 +1930,12 @@ class PostgreSQL:
         :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted,
             defaults to ``None``
         :type sorted_by: str or None
-        :param kwargs: [optional] parameters of `pandas.read_sql`_
+        :param kwargs: [optional] parameters of the method
+            :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query` or the function `pandas.read_sql()`_
         :return: data frame from the specified table
         :rtype: pandas.DataFrame
 
-        .. _`pandas.read_sql`:
+        .. _`pandas.read_sql()`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
 
         .. seealso::
@@ -1515,15 +1943,19 @@ class PostgreSQL:
             - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
         """
 
-        schema_name_ = copy.copy(self.DEFAULT_SCHEMA) if schema_name is None else str(schema_name)
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
         if condition:
             assert isinstance(condition, str), "'condition' must be 'str' type."
-            sql_query = 'SELECT * FROM "{}"."{}" {};'.format(schema_name_, table_name, condition)
+            sql_query = 'SELECT * FROM {} {}'.format(table_name_, condition)
         else:
-            sql_query = 'SELECT * FROM "{}"."{}";'.format(schema_name_, table_name)
+            sql_query = 'SELECT * FROM {}'.format(table_name_)
 
-        table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+        # noinspection PyBroadException
+        try:
+            table_data = self.read_sql_query(sql_query=sql_query, chunksize=chunk_size, **kwargs)
+        except Exception:
+            table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
 
         if sorted_by and isinstance(sorted_by, str):
             table_data.sort_values(sorted_by, inplace=True, ignore_index=True)
@@ -1536,9 +1968,9 @@ class PostgreSQL:
         Read table data by SQL query (recommended for large table).
 
         See also
-        [`DBMS-P-RSQ-1 <https://towardsdatascience.com/f31cd7f707ab>`_],
-        [`DBMS-P-RSQ-2 <https://docs.python.org/3/library/tempfile.html>`_] and
-        [`DBMS-P-RSQ-3 <https://docs.python.org/3/library/io.html>`_].
+        [`DBMS-PS-RSQ-1 <https://towardsdatascience.com/f31cd7f707ab>`_],
+        [`DBMS-PS-RSQ-2 <https://docs.python.org/3/library/tempfile.html>`_] and
+        [`DBMS-PS-RSQ-3 <https://docs.python.org/3/library/io.html>`_].
 
         :param sql_query: a SQL query to be executed
         :type sql_query: str
@@ -1582,59 +2014,67 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
+            Creating a database: [testdb] ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Create an example dataframe
-            >>> dat = example_dataframe()
-            >>> dat
-                        Easting  Northing
-            London       530034    180381
-            Birmingham   406689    286822
-            Manchester   383819    398052
-            Leeds        582044    152953
+            >>> example_df = example_dataframe()
+            >>> example_df
+                        Longitude   Latitude
+            City
+            London      -0.127647  51.507322
+            Birmingham  -1.902691  52.479699
+            Manchester  -2.245115  53.479489
+            Leeds       -1.543794  53.797418
 
             >>> table = 'England'
             >>> schema = 'points'
 
             >>> # Import the data into a table named "points"."England"
-            >>> testdb.import_data(dat, table, schema, if_exists='replace', index=True, verbose=2)
+            >>> testdb.import_data(example_df, table, schema, index=True, verbose=2)
             To import data into "points"."England" at postgres:***@localhost:5432/testdb
             ? [No]|Yes: yes
             Creating a schema: "points" ... Done.
             Importing the data into the table "points"."England" ... Done.
 
+        The table "*points*"."*England*" is illustrated in
+        :numref:`dbms-postgresql-get_primary_keys-demo` below:
+
+        .. figure:: ../_images/dbms-postgresql-read_sql_query-demo.*
+            :name: dbms-postgresql-read_sql_query-demo
+            :align: center
+            :width: 80%
+
+            The table "*points*"."*England*" in the database "*testdb*".
+
+        .. code-block:: python
+
             >>> rslt = testdb.table_exists(table_name=table, schema_name=schema)
-            >>> print("The table \"{}\".\"{}\" exists? {}.".format(schema, table, rslt))
+            >>> print(f"The table \"{schema}\".\"{table}\" exists? {rslt}.")
             The table "points"."England" exists? True.
 
-            >>> dat_ret = testdb.read_table(table_name=table, schema_name=schema, index_col='index')
-            >>> dat_ret
-                        Easting  Northing
-            index
-            London       530034    180381
-            Birmingham   406689    286822
-            Manchester   383819    398052
-            Leeds        582044    152953
-
-            >>> dat_ret.index.name = None
-            >>> dat_ret
-                        Easting  Northing
-            London       530034    180381
-            Birmingham   406689    286822
-            Manchester   383819    398052
-            Leeds        582044    152953
+            >>> example_df_ret = testdb.read_table(table, schema_name=schema, index_col='City')
+            >>> example_df_ret
+                        Longitude   Latitude
+            City
+            London      -0.127647  51.507322
+            Birmingham  -1.902691  52.479699
+            Manchester  -2.245115  53.479489
+            Leeds       -1.543794  53.797418
 
             >>> # Alternatively, read the data by a SQL query statement
             >>> sql_qry = f'SELECT * FROM "{schema}"."{table}"'
-            >>> dat_ret_alt = testdb.read_sql_query(sql_query=sql_qry, index_col='index')
-            >>> dat_ret_alt.index.name = None
-            >>> dat_ret_alt
-                        Easting  Northing
-            London       530034    180381
-            Birmingham   406689    286822
-            Manchester   383819    398052
-            Leeds        582044    152953
+            >>> example_df_ret_alt = testdb.read_sql_query(sql_query=sql_qry, index_col='City')
+            >>> example_df_ret_alt
+                        Longitude   Latitude
+            City
+            London      -0.127647  51.507322
+            Birmingham  -1.902691  52.479699
+            Manchester  -2.245115  53.479489
+            Leeds       -1.543794  53.797418
+
+            >>> example_df_ret.equals(example_df_ret_alt)
+            True
 
             >>> # Delete the table "points"."England"
             >>> testdb.drop_table(table_name=table, schema_name=schema, verbose=True)
@@ -1659,19 +2099,19 @@ class PostgreSQL:
 
         .. code-block:: python
 
-            >>> import datetime
+            import datetime
+            import pandas as pd
 
-            >>> sql_qry = 'SELECT * FROM "table_name" '
-            ...           'WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
+            sql_qry = 'SELECT * FROM "table_name" '
+                      'WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
 
-            >>> params = {'d_start': datetime.datetime.today(), 'd_end': datetime.datetime.today()}
+            params = {'d_start': datetime.datetime.today(), 'd_end': datetime.datetime.today()}
 
-            >>> data_frame = pandas.read_sql(sql=sql_qry, con=testdb.engine, params=params)
+            data_frame = pd.read_sql(sql=sql_qry, con=testdb.engine, params=params)
         """
 
-        methods = ('tempfile', 'stringio', 'spooled')
-        ast_msg = "The argument `method` must be one of {'%s', '%s', '%s'}" % methods
-        assert method in methods, ast_msg
+        valid_methods = {'tempfile', 'stringio', 'spooled'}
+        assert method in valid_methods, f"The argument `method` must be one of {valid_methods}."
 
         if tempfile_kwargs is None:
             tempfile_kwargs = {}
@@ -1694,7 +2134,7 @@ class PostgreSQL:
             stringio_kwargs.update({'initial_value': '', 'newline': '\n'})
             csv_temp = io.StringIO(**stringio_kwargs)
 
-        else:  # method == 'spooled_tempfile': using tempfile.SpooledTemporaryFile
+        else:  # method == 'spooled': using tempfile.SpooledTemporaryFile
             # Data would be spooled in memory until its size > max_spooled_size
             tempfile_kwargs.update({'max_size': max_size_spooled * 10 ** 9})
             csv_temp = tempfile.SpooledTemporaryFile(**tempfile_kwargs)
@@ -1705,16 +2145,78 @@ class PostgreSQL:
 
         # Get a cursor
         connection = self.engine.raw_connection()
-        cur = connection.cursor()
-        cur.copy_expert(copy_sql, csv_temp)
-        # Rewind the file handle using seek() in order to read the data back from it
-        csv_temp.seek(0)
-        # Read data from temporary csv
-        table_data = pandas.read_csv(csv_temp, **kwargs)
-        # Close the temp file
-        csv_temp.close()
+        cursor = connection.cursor()
+        cursor.copy_expert(copy_sql, csv_temp)
 
-        cur.close()  # Close the cursor
+        csv_temp.seek(0)  # Rewind the file handle using seek() in order to read the data back from it
+
+        table_data = pd.read_csv(csv_temp, **kwargs)  # Read data from temporary csv
+
+        csv_temp.close()  # Close the temp file
+        cursor.close()  # Close the cursor
         connection.close()  # Close the connection
 
         return table_data
+
+
+""" == Database tools/utilities ================================================================ """
+
+
+def make_database_address(host, port, username, database_name=""):
+    """
+    Make a string of a database address.
+
+    :param host: host name/address of a PostgreSQL server
+    :type host: str
+    :param port: listening port used by PostgreSQL
+    :type port: int or str
+    :param username: username of a PostgreSQL server
+    :type username: str
+    :param database_name: name of a database, defaults to ``""``
+    :type database_name: str or None
+    :return: address of a database
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.dbms import make_database_address
+
+        >>> db_addr = make_database_address('localhost', 5432, 'postgres', 'postgres')
+        >>> db_addr
+        'postgres:***@localhost:5432/postgres'
+    """
+
+    database_address = f"{username}:***@{host}:{port}"
+
+    if database_name:
+        database_address += f"/{database_name}"
+
+    return database_address
+
+
+def get_default_database_address(db_cls):
+    """
+    Get default database address of a given class in the current module.
+
+    :param db_cls: a class representation of a database
+    :type db_cls: object
+    :return: default address of database
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.dbms import get_default_database_address, PostgreSQL
+
+        >>> db_addr = get_default_database_address(db_cls=PostgreSQL)
+        >>> db_addr
+        'None:***@None:None'
+    """
+
+    args_spec = inspect.getfullargspec(func=db_cls)
+
+    args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
+
+    database_address = make_database_address(
+        args_dict['host'], args_dict['port'], args_dict['username'], args_dict['database_name'])
+
+    return database_address
