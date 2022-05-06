@@ -16,6 +16,7 @@ import math
 import os
 import random
 import re
+import secrets
 import shutil
 import socket
 import sys
@@ -1882,13 +1883,14 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
     user_agent_strings = {}
     for browser_name in browser_names_:
         url = resource_url + f'?name={browser_name.replace(" ", "+")}'
-        response = urllib.request.urlopen(url=url)
-        text = response.read().decode('utf-8')
 
-        fua_parser = _FakeUserAgentParser()
-        fua_parser.feed(text)
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req) as response:
+            text = response.read().decode('utf-8')
+            fua_parser = _FakeUserAgentParser()
+            fua_parser.feed(text)
 
-        user_agent_strings[browser_name] = list(set(fua_parser.data))
+            user_agent_strings[browser_name] = list(set(fua_parser.data))
 
     if dump_dat:
         path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
@@ -2031,7 +2033,7 @@ def get_user_agent_string(fancy=None, **kwargs):
         kwargs.update({'flattened': True})
         user_agent_strings = load_user_agent_strings(**kwargs)
 
-    user_agent_string = random.choice(user_agent_strings)
+    user_agent_string = secrets.choice(user_agent_strings)
 
     return user_agent_string
 
