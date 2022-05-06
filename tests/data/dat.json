@@ -1,18 +1,18 @@
 {
     "London": {
-        "Easting": 530034,
-        "Northing": 180381
+        "Longitude": -0.1276474,
+        "Latitude": 51.5073219
     },
     "Birmingham": {
-        "Easting": 406689,
-        "Northing": 286822
+        "Longitude": -1.9026911,
+        "Latitude": 52.4796992
     },
     "Manchester": {
-        "Easting": 383819,
-        "Northing": 398052
+        "Longitude": -2.2451148,
+        "Latitude": 53.4794892
     },
     "Leeds": {
-        "Easting": 582044,
-        "Northing": 152953
+        "Longitude": -1.5437941,
+        "Latitude": 53.7974185
     }
 }
