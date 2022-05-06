@@ -8,8 +8,8 @@ dir
     :no-members:
     :no-inherited-members:
 
-Change directories
-------------------
+Directory navigation
+--------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -20,7 +20,7 @@ Change directories
     cdd
     cd_data
 
-Validate directories
+Directory validation
 --------------------
 
 .. autosummary::
@@ -30,8 +30,8 @@ Validate directories
     is_dir
     validate_dir
 
-Delete directories
-------------------
+Directory removal
+-----------------
 
 .. autosummary::
     :toctree: _generated/

@@ -22,6 +22,8 @@ General use
     parse_size
     get_number_of_chunks
     find_executable
+    hash_password
+    verify_password
 
 Basic data manipulation
 -----------------------

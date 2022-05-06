@@ -8,8 +8,8 @@ text
     :no-members:
     :no-inherited-members:
 
-Basic processing of textual data
---------------------------------
+Textual data preprocessing
+--------------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -20,18 +20,8 @@ Basic processing of textual data
     extract_words1upper
     numeral_english_to_arabic
 
-Comparison of textual data
---------------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    find_matched_str
-    find_similar_str
-
-Basic computation of textual data
----------------------------------
+Textual data computation
+------------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -43,11 +33,13 @@ Basic computation of textual data
     euclidean_distance_between_texts
     cosine_similarity_between_texts
 
-Conversion of text files
-------------------------
+
+Textual data comparison
+-----------------------
 
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
-    convert_md_to_rst
+    find_matched_str
+    find_similar_str

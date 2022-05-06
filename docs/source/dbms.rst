@@ -8,9 +8,23 @@ dbms
     :no-members:
     :no-inherited-members:
 
-.. rubric:: PostgreSQL
+Databases
+---------
+
 .. autosummary::
     :toctree: _generated/
     :template: class.rst
 
     PostgreSQL
+    MSSQL
+
+Database tools/utilities
+------------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    make_database_address
+    get_default_database_address
+    mssql_to_postgresql

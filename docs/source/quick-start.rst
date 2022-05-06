@@ -425,7 +425,7 @@ Before we move on, let's delete again the Pickle file (i.e. ``path_to_pickle``) 
 
 .. note::
 
-    - In the module :py:mod:`~pyhelpers.store`, some functions such as :py:func:`~pyhelpers.store.save_spreadsheet` and :py:func:`~pyhelpers.store.save_multiple_spreadsheets` may require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are NOT essential dependencies for the installation of `pyhelpers`_. We could install them as needed via an appropriate method such as ``pip install``.
+    - In the module :py:mod:`~pyhelpers.store`, some functions such as :py:func:`~pyhelpers.store.save_spreadsheet` and :py:func:`~pyhelpers.store.save_spreadsheets` may require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are NOT essential dependencies for the installation of `pyhelpers`_. We could install them as needed via an appropriate method such as ``pip install``.
 
 .. _openpyxl: https://pypi.org/project/openpyxl/
 .. _XlsxWriter: https://pypi.org/project/XlsxWriter/
@@ -448,29 +448,36 @@ The module :py:mod:`pyhelpers.geom` can assist us in manipulating geometric and 
     >>> from pyhelpers.geom import osgb36_to_wgs84
 
     >>> # To convert coordinate of a single point (530034, 180381):
-    >>> easting, northing = 530034, 180381  # London
+    >>> easting, northing = 530039.558844, 180371.680166  # London
 
     >>> longitude, latitude = osgb36_to_wgs84(easting, northing)  # Longitude and latitude
     >>> (longitude, latitude)
-    (-0.12772400574286916, 51.50740692743041)
+    (-0.12764738750268856, 51.507321895400686)
 
 We could also use the function to convert an array of OSGB36 coordinates:
 
 .. code-block:: python
 
-    >>> xy_array = np.array([(530034, 180381),   # London
-    ...                      (406689, 286822),   # Birmingham
-    ...                      (383819, 398052),   # Manchester
-    ...                      (582044, 152953)],  # Leeds
-    ...                     dtype=np.int64)
+    >>> from pyhelpers._cache import example_dataframe
+
+    >>> example_df = example_dataframe(osgb36=True)
+    >>> example_df
+                      Easting       Northing
+    City
+    London      530039.558844  180371.680166
+    Birmingham  406705.887014  286868.166642
+    Manchester  383830.039036  398113.055831
+    Leeds       430147.447354  433553.327117
+
+    >>> xy_array = example_df.to_numpy()
     >>> eastings, northings = xy_array.T
 
     >>> lonlat_array = osgb36_to_wgs84(eastings, northings, as_array=True)
     >>> lonlat_array
-    array([[-0.12772401, 51.50740693],
-           [-1.90294064, 52.47928436],
-           [-2.24527795, 53.47894006],
-           [ 0.60693267, 51.24669501]])
+    array([[-0.12764739, 51.50732190],
+           [-1.90269109, 52.47969920],
+           [-2.24511479, 53.47948920],
+           [-1.54379409, 53.79741850]])
 
 Similarly, we can convert from the (longitude, latitude) back to (easting, northing) by using the function :py:func:`~pyhelpers.geom.wgs84_to_osgb36`:
 
@@ -482,10 +489,10 @@ Similarly, we can convert from the (longitude, latitude) back to (easting, north
 
     >>> xy_array_ = wgs84_to_osgb36(longitudes, latitudes, as_array=True)
     >>> xy_array_
-    array([[530034.00088084, 180380.99951018],
-           [406689.00082267, 286821.99957672],
-           [383819.00081883, 398051.99967237],
-           [582044.00090117, 152952.99950009]])
+    array([[530039.55972534, 180371.67967567],
+           [406705.88783629, 286868.16621896],
+           [383830.03985454, 398113.05550332],
+           [430147.44820845, 433553.32682598]])
 
 .. note::
 
@@ -495,7 +502,7 @@ Check whether ``xy_array_`` is almost equal to ``xy_array``:
 
 .. code-block:: python
 
-    >>> eq_res = np.array_equal(xy_array, np.round(xy_array_))
+    >>> eq_res = np.array_equal(np.round(xy_array, 2), np.round(xy_array_, 2))
     >>> print(f'`xy_array_` is almost equal to `xy_array`? {eq_res}')
     `xy_array_` is almost equal to `xy_array`? True
 
@@ -655,7 +662,7 @@ Setting the parameter ``confirmation_required=False`` can allow us to delete the
 
 
 
-.. _tutorial-sql-examples:
+.. _tutorial-dbms-examples:
 
 Work with a PostgreSQL server
 =============================
@@ -676,7 +683,7 @@ The class :py:class:`~pyhelpers.dbms.PostgreSQL`, for example, could assist us i
     >>> from pyhelpers.dbms import PostgreSQL
 
 
-.. _tutorial-sql-examples-connect-db:
+.. _tutorial-dbms-examples-connect-db:
 
 Connect to a database
 ---------------------
@@ -689,21 +696,21 @@ Now, we can create an instance of the class :py:class:`~pyhelpers.dbms.PostgreSQ
     - If the specified ``database_name`` does not exist, it will be automatically created along with the class instantiation.
     - If we prefer not to specify explicitly the parameter ``password``, we could just leave it. In that case, we will be asked to type in the password manually when instantiating the class.
 
-For example, let's create an instance named ``pgdb``, and we'd like to establish a connection with a database named "*pyhelpers_tutorial*", which is hosted at the default PostgreSQL server:
+For example, let's create an instance named ``postgres``, and we'd like to establish a connection with a database named "*pyhelpers_tutorial*", which is hosted at the default PostgreSQL server:
 
 .. code-block:: python
 
-    >>> pgdb = PostgreSQL(database_name="pyhelpers_tutorial")
+    >>> postgres = PostgreSQL(database_name="pyhelpers_tutorial")
     Password (postgres@localhost:5432): ***
     Creating a database: "pyhelpers_tutorial" ... Done.
     Connecting postgres:***@localhost:5432/pyhelpers_tutorial ... Successfully.
 
-We can use `pgAdmin`_ - the most popular graphical management tool for PostgreSQL - to check whether the database "*pyhelpers_tutorial*" exists now in the Databases tree of the default server, as illustrated in :numref:`tutorial-sql-examples-db-1`:
+We can use `pgAdmin`_ - the most popular graphical management tool for PostgreSQL - to check whether the database "*pyhelpers_tutorial*" exists now in the Databases tree of the default server, as illustrated in :numref:`tutorial-dbms-examples-db-1`:
 
 .. _`pgAdmin`: https://www.pgadmin.org/
 
-.. figure:: _images/tutorial-sql-examples-db-1.png
-    :name: tutorial-sql-examples-db-1
+.. figure:: _images/tutorial-dbms-examples-db-1.png
+    :name: tutorial-dbms-examples-db-1
     :align: center
     :width: 60%
 
@@ -713,24 +720,24 @@ Alternatively, we could also use the method :py:meth:`~pyhelpers.dbms.PostgreSQL
 
 .. code-block:: python
 
-    >>> res = pgdb.database_exists("pyhelpers_tutorial")
+    >>> res = postgres.database_exists("pyhelpers_tutorial")
     >>> print(f'The database "pyhelpers_tutorial" exists? {res}')
     The database "pyhelpers_tutorial" exists? True
 
-    >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
+    >>> print(f'We are currently connected to the database "{postgres.database_name}".')
     We are now connected with the database "pyhelpers_tutorial".
 
 In the same server, we can create multiple databases. For example, let's now create another database named "*pyhelpers_tutorial_alt*" by using the method :py:meth:`~pyhelpers.dbms.PostgreSQL.create_database`:
 
 .. code-block:: python
 
-    >>> pgdb.create_database("pyhelpers_tutorial_alt", verbose=True)
+    >>> postgres.create_database("pyhelpers_tutorial_alt", verbose=True)
     Creating a database: "pyhelpers_tutorial_alt" ... Done.
 
-As we can see in :numref:`tutorial-sql-examples-db-2`, the database "*pyhelpers_tutorial_alt*" has now been added to the default *Databases* tree:
+As we can see in :numref:`tutorial-dbms-examples-db-2`, the database "*pyhelpers_tutorial_alt*" has now been added to the default *Databases* tree:
 
-.. figure:: _images/tutorial-sql-examples-db-2.png
-    :name: tutorial-sql-examples-db-2
+.. figure:: _images/tutorial-dbms-examples-db-2.png
+    :name: tutorial-dbms-examples-db-2
     :align: center
     :width: 60%
 
@@ -738,31 +745,31 @@ As we can see in :numref:`tutorial-sql-examples-db-2`, the database "*pyhelpers_
 
 .. note::
 
-    - When a new database is created, the instance ``pgdb`` disconnects the currently-connected database and connect to the new one.
+    - When a new database is created, the instance ``postgres`` disconnects the currently-connected database and connect to the new one.
 
 Check whether "*pyhelpers_tutorial_alt*" is the database being connected now:
 
 .. code-block:: python
 
-    >>> res = pgdb.database_exists("pyhelpers_tutorial_alt")
+    >>> res = postgres.database_exists("pyhelpers_tutorial_alt")
     >>> print(f'The database "pyhelpers_tutorial_alt" exists? {res}')
     The database "pyhelpers_tutorial_alt" exists? True
 
-    >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
+    >>> print(f'We are currently connected to the database "{postgres.database_name}".')
     We are now connected with the database "pyhelpers_tutorial_alt".
 
 To connect again to "*pyhelpers_tutorial*", we can use the method :py:meth:`~pyhelpers.dbms.PostgreSQL.connect_database`:
 
 .. code-block:: python
 
-    >>> pgdb.connect_database("pyhelpers_tutorial", verbose=True)
+    >>> postgres.connect_database("pyhelpers_tutorial", verbose=True)
     Connecting postgres:***@localhost:5432/pyhelpers_tutorial ... Successfully.
 
-    >>> print(f'We are currently connected to the database "{pgdb.database_name}".')
+    >>> print(f'We are currently connected to the database "{postgres.database_name}".')
     We are now connected with the database "pyhelpers_tutorial".
 
 
-.. _tutorial-sql-examples-import-data:
+.. _tutorial-dbms-examples-import-data:
 
 Import data into a database
 ---------------------------
@@ -771,15 +778,15 @@ With the established connection to the database, we can use the method :py:meth:
 
 .. code-block:: python
 
-    >>> pgdb.import_data(data_frame, table_name="df_table", if_exists='replace', verbose=2)
+    >>> postgres.import_data(data=data_frame, table_name="df_table", verbose=2)
     To import data into "public"."df_table" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
     Importing the data into the table "public"."df_table" ... Done.
 
-We should now be able to see the table in pgAdmin, as illustrated in :numref:`tutorial-sql-examples-df_table`:
+We should now be able to see the table in pgAdmin, as illustrated in :numref:`tutorial-dbms-examples-df_table`:
 
-.. figure:: _images/tutorial-sql-examples-df_table.png
-    :name: tutorial-sql-examples-df_table
+.. figure:: _images/tutorial-dbms-examples-df_table.png
+    :name: tutorial-dbms-examples-df_table
     :align: center
     :width: 60%
 
@@ -789,27 +796,27 @@ The method :py:meth:`~pyhelpers.dbms.PostgreSQL.import_data` relies on the metho
 
 .. _`pandas.DataFrame.to_sql()`: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
-Let's now try to import the same data into a table named "*df_table_alt*" by setting ``method=pgdb.psql_insert_copy``:
+Let's now try to import the same data into a table named "*df_table_alt*" by setting ``method=postgres.psql_insert_copy``:
 
 .. code-block:: python
 
-    >>> pgdb.import_data(data_frame, table_name="df_table_alt", method=pgdb.psql_insert_copy,
-    ...                  verbose=2)
+    >>> postgres.import_data(
+    ...     data=data_frame, table_name="df_table_alt", method=postgres.psql_insert_copy, verbose=2)
     To import data into "public"."df_table_alt" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
     Importing the data into the table "public"."df_table_alt" ... Done.
 
-In pgAdmin, we can see the table has been added to the *Tables* list, as illustrated in :numref:`tutorial-sql-examples-df_table_alt`:
+In pgAdmin, we can see the table has been added to the *Tables* list, as illustrated in :numref:`tutorial-dbms-examples-df_table_alt`:
 
-.. figure:: _images/tutorial-sql-examples-df_table_alt.png
-    :name: tutorial-sql-examples-df_table_alt
+.. figure:: _images/tutorial-dbms-examples-df_table_alt.png
+    :name: tutorial-dbms-examples-df_table_alt
     :align: center
     :width: 60%
 
     The table *"public"."df_table_alt"*.
 
 
-.. _tutorial-sql-examples-fetch-data:
+.. _tutorial-dbms-examples-fetch-data:
 
 Fetch data from a database
 --------------------------
@@ -818,17 +825,17 @@ To retrieve the imported data, we can use the method :py:meth:`~pyhelpers.dbms.P
 
 .. code-block:: python
 
-    >>> df_retrieval_1 = pgdb.read_table("df_table")
+    >>> df_retrieval_1 = postgres.read_table(table_name="df_table")
 
     >>> res = df_retrieval_1.equals(data_frame)
-    >>> print("`df_retrieval_1` is equal to `data_frame`? {}".format(res))
+    >>> print(f"`df_retrieval_1` is equal to `data_frame`? {res}")
     `df_retrieval_1` is equal to `data_frame`? True
 
 Alternatively, we can also use the method :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`, which serves as a more flexible way of reading/querying data. It takes PostgreSQL statements, and could be much faster when the queried table is fairly large. Let's try this method to fetch the same data from the table "*df_table_alt*":
 
 .. code-block:: python
 
-    >>> df_retrieval_2 = pgdb.read_sql_query(sql_query='SELECT * FROM public.df_table_alt')
+    >>> df_retrieval_2 = postgres.read_sql_query(sql_query='SELECT * FROM "public"."df_table_alt"')
 
     >>> res = df_retrieval_2.round(8).equals(df_retrieval_1.round(8))
     >>> print(f"`df_retrieval_2` is equal to `df_retrieval_1`? {res}")
@@ -839,7 +846,7 @@ Alternatively, we can also use the method :py:meth:`~pyhelpers.dbms.PostgreSQL.r
     - For the method :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`, any PostgreSQL statement that is passed to the parameter ``sql_query`` should NOT end with ``';'``.
 
 
-.. _tutorial-sql-examples-drop-data:
+.. _tutorial-dbms-examples-drop-data:
 
 Drop data
 ---------
@@ -850,7 +857,7 @@ We can delete/drop a table (e.g. "*df_table*") by using the method :py:meth:`~py
 
 .. code-block:: python
 
-    >>> pgdb.drop_table(table_name="df_table", verbose=True)
+    >>> postgres.drop_table(table_name="df_table", verbose=True)
     To drop the table "public"."df_table" from postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
     Dropping "public"."df_table" ... Done.
@@ -860,13 +867,13 @@ To delete/drop a database, we can use the method :py:meth:`~pyhelpers.dbms.Postg
 .. code-block:: python
 
     >>> # Drop "pyhelpers_tutorial" (i.e. the currently connected database)
-    >>> pgdb.drop_database(verbose=True)
+    >>> postgres.drop_database(verbose=True)
     To drop the database "pyhelpers_tutorial" from postgres:***@localhost:5432
     ? [No]|Yes: yes
     Dropping "pyhelpers_tutorial" ... Done.
 
     >>> # Drop "pyhelpers_tutorial_alt"
-    >>> pgdb.drop_database(database_name="pyhelpers_tutorial_alt", verbose=True)
+    >>> postgres.drop_database(database_name="pyhelpers_tutorial_alt", verbose=True)
     To drop the database "pyhelpers_tutorial_alt" from postgres:***@localhost:5432
     ? [No]|Yes: yes
     Dropping "pyhelpers_tutorial_alt" ... Done.
@@ -875,7 +882,7 @@ Check which database is the one being currently connected:
 
 .. code-block:: python
 
-    >>> print("We are currently connected with the database \"{}\".".format(pgdb.database_name))
+    >>> print(f"We are currently connected with the database \"{postgres.database_name}\".")
     We are currently connected with the database "postgres".
 
 Now we have removed all the databases created above, and restored the PostgreSQL server to its original status.

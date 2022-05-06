@@ -8,8 +8,8 @@ store
     :no-members:
     :no-inherited-members:
 
-Save data
----------
+Data saving
+-----------
 
 .. autosummary::
     :toctree: _generated/
@@ -17,7 +17,7 @@ Save data
 
     save_pickle
     save_spreadsheet
-    save_multiple_spreadsheets
+    save_spreadsheets
     save_json
     save_joblib
     save_feather
@@ -26,8 +26,8 @@ Save data
     save_web_page_as_pdf
     save_data
 
-Load data
----------
+Data loading
+------------
 
 .. autosummary::
     :toctree: _generated/
@@ -35,14 +35,14 @@ Load data
 
     load_pickle
     load_csv
-    load_multiple_spreadsheets
+    load_spreadsheets
     load_json
     load_joblib
     load_feather
     load_data
 
-Uncompress data
----------------
+File decompression
+------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -51,11 +51,12 @@ Uncompress data
     unzip
     seven_zip
 
-Convert data
-------------
+File conversion
+---------------
 
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
+    markdown_to_rst
     xlsx_to_csv

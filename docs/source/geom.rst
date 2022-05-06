@@ -8,8 +8,8 @@ geom
     :no-members:
     :no-inherited-members:
 
-Geometric transformation
-------------------------
+Geometric data transformation
+-----------------------------
 
 .. rubric:: Geometric type
 .. autosummary::
@@ -34,8 +34,8 @@ Geometric transformation
     drop_axis
     project_point_to_line
 
-Geometry calculation
---------------------
+Geometric data computation
+--------------------------
 
 .. rubric:: Distance
 .. autosummary::
@@ -60,10 +60,9 @@ Geometry calculation
     get_square_vertices
     get_square_vertices_calc
 
-Geometric data visualisation
-----------------------------
+Geometric data sketching
+------------------------
 
-.. rubric:: Sketch
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
