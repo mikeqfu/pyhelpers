@@ -321,7 +321,7 @@ class PostgreSQL:
             >>> # Connect a database 'testdb' (which will be created if it does not exist)
             >>> testdb = PostgreSQL(database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.address
@@ -344,7 +344,7 @@ class PostgreSQL:
 
             >>> example_proxy = ExampleProxyObj(database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> example_proxy.address
@@ -548,7 +548,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Check whether the database "testdb" exists now
@@ -594,7 +594,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
             >>> testdb.database_name
             'testdb'
@@ -640,7 +640,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.connect_database(verbose=True)
@@ -709,7 +709,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
             >>> testdb.get_database_size()
             '8553 kB'
@@ -751,7 +751,7 @@ class PostgreSQL:
             >>> from pyhelpers.dbms import PostgreSQL
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
@@ -799,7 +799,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.database_name
@@ -877,7 +877,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> schema_name = 'points'
@@ -938,7 +938,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.schema_exists('public')
@@ -976,7 +976,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> test_schema_name = 'test_schema'
@@ -1028,7 +1028,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> testdb.get_schema_names()
@@ -1105,7 +1105,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> new_schema_names = ['points', 'lines', 'polygons']
@@ -1198,7 +1198,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> tbl_name = 'points'
@@ -1256,7 +1256,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> tbl_name = 'test_table'
@@ -1453,7 +1453,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> lst_tbl_names = testdb.get_table_names()
@@ -1519,7 +1519,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Create a new table named "test_table" in the schema "testdb"
@@ -1598,7 +1598,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> dat = example_dataframe()
@@ -1715,7 +1715,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> dat = example_dataframe()
@@ -1921,57 +1921,6 @@ class PostgreSQL:
             force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
             index=index, confirmation_required=confirmation_required, verbose=verbose, **kwargs)
 
-    def read_table(self, table_name, schema_name=None, condition=None, chunk_size=None, sorted_by=None,
-                   **kwargs):
-        """
-        Read data from a table.
-
-        See also [`DBMS-PS-RT-1 <https://stackoverflow.com/questions/24408557/>`_].
-
-        :param table_name: name of a table
-        :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
-        :type schema_name: str
-        :param condition: defaults to ``None``
-        :type condition: str or None
-        :param chunk_size: number of rows to include in each chunk, defaults to ``None``
-        :type chunk_size: int or None
-        :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted,
-            defaults to ``None``
-        :type sorted_by: str or None
-        :param kwargs: [optional] parameters of the method
-            :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query` or the function `pandas.read_sql()`_
-        :return: data frame from the specified table
-        :rtype: pandas.DataFrame
-
-        .. _`pandas.read_sql()`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
-
-        .. seealso::
-
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
-        """
-
-        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
-
-        if condition:
-            assert isinstance(condition, str), "'condition' must be 'str' type."
-            sql_query = 'SELECT * FROM {} {}'.format(table_name_, condition)
-        else:
-            sql_query = 'SELECT * FROM {}'.format(table_name_)
-
-        # noinspection PyBroadException
-        try:
-            table_data = self.read_sql_query(sql_query=sql_query, chunksize=chunk_size, **kwargs)
-        except Exception:
-            table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
-
-        if sorted_by and isinstance(sorted_by, str):
-            table_data.sort_values(sorted_by, inplace=True, ignore_index=True)
-
-        return table_data
-
     def read_sql_query(self, sql_query, method='tempfile', max_size_spooled=1, delimiter=',',
                        tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
         """
@@ -2024,7 +1973,7 @@ class PostgreSQL:
 
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
-            Creating a database: [testdb] ... Done.
+            Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
 
             >>> # Create an example dataframe
@@ -2063,6 +2012,7 @@ class PostgreSQL:
             >>> print(f"The table \"{schema}\".\"{table}\" exists? {rslt}.")
             The table "points"."England" exists? True.
 
+            >>> # Retrieve the data using the method .read_table()
             >>> example_df_ret = testdb.read_table(table, schema_name=schema, index_col='City')
             >>> example_df_ret
                         Longitude   Latitude
@@ -2165,6 +2115,71 @@ class PostgreSQL:
         csv_temp.close()  # Close the temp file
         cursor.close()  # Close the cursor
         connection.close()  # Close the connection
+
+        return table_data
+
+    def _unique_rsq_args(self):
+        """
+        Get names of arguments that are exclusive to the method
+        :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`.
+
+        :return: names of arguments exclusive to :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`
+        :rtype: dict
+        """
+
+        rsq_args = map(lambda x: inspect.getfullargspec(x).args, (self.read_sql_query, pd.read_csv))
+        rsq_args_spec = set(itertools.chain(*rsq_args))
+
+        read_sql_args = set(inspect.getfullargspec(func=pd.read_sql).args)
+
+        return rsq_args_spec - read_sql_args
+
+    def read_table(self, table_name, schema_name=None, conditions=None, chunk_size=None, sorted_by=None,
+                   **kwargs):
+        """
+        Read data from a table.
+
+        See also [`DBMS-PS-RT-1 <https://stackoverflow.com/questions/24408557/>`_].
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
+        :type schema_name: str
+        :param conditions: defaults to ``None``
+        :type conditions: str or None
+        :param chunk_size: number of rows to include in each chunk, defaults to ``None``
+        :type chunk_size: int or None
+        :param sorted_by: name(s) of a column (or columns) by which the retrieved data is sorted,
+            defaults to ``None``
+        :type sorted_by: str or None
+        :param kwargs: [optional] parameters of the method
+            :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query` or the function `pandas.read_sql()`_
+        :return: data frame from the specified table
+        :rtype: pandas.DataFrame
+
+        .. _`pandas.read_sql()`:
+            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
+
+        .. seealso::
+
+            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
+        """
+
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+        sql_query = f'SELECT * FROM {table_name_}'
+        if conditions:
+            assert isinstance(conditions, str), "'condition' must be 'str' type."
+            sql_query += (' ' + conditions)
+
+        if bool(set(kwargs.keys()).intersection(self._unique_rsq_args())):
+            table_data = self.read_sql_query(sql_query=sql_query, chunksize=chunk_size, **kwargs)
+        else:
+            table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+
+        if sorted_by:
+            table_data.sort_values(sorted_by, inplace=True, ignore_index=True)
 
         return table_data
 
