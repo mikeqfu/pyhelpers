@@ -330,7 +330,7 @@ def drop_axis(geom, axis='z', as_array=False):
                 [3., 4.]]])
     """
 
-    geom_obj = shapely.ops.transform(func=eval(f'_drop_{axis}'), geom=geom)
+    geom_obj = shapely.ops.transform(func=globals()[f'_drop_{axis}'], geom=geom)
 
     if as_array:
         sim_typ = ('Point', 'LineString')
