@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 sys.path.insert(0, os.path.abspath('../../pyhelpers/data'))
 
 # == Project information ===========================================================================
-from pyhelpers import __affiliation__, __author__, __copyright__, __description__, __package__, \
+from pyhelpers import __affiliation__, __author__, __copyright__, __description__, __pkgname__, \
     __project__, __version__
 
 # General information about the project:
@@ -118,7 +118,7 @@ latex_engine = 'pdflatex'
 # Grouping the document tree into LaTeX files:
 latex_documents = [
     ('index',  # source start file
-     __package__ + '.tex',  # target name
+     __pkgname__ + '.tex',  # target name
      __project__ + ' Documentation',  # title
      __author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]

@@ -1,3 +1,7 @@
+"""
+Package initialization.
+"""
+
 import datetime
 import json
 
@@ -7,7 +11,7 @@ with open(pkg_resources.resource_filename(__name__, "data/metadata.json"), mode=
     metadata = json.load(metadata_file)
 
 __project__ = metadata['Project']
-__package__ = metadata['Package']
+__pkgname__ = metadata['Package']
 
 __author__ = metadata['Author']
 __affiliation__ = metadata['Affiliation']

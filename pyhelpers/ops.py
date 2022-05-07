@@ -1128,7 +1128,8 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
 
         csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
         return csr_mat
 
@@ -1882,15 +1883,10 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
 
     user_agent_strings = {}
     for browser_name in browser_names_:
-        url = resource_url + f'?name={browser_name.replace(" ", "+")}'
-
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req) as response:
-            text = response.read().decode('utf-8')
-            fua_parser = _FakeUserAgentParser()
-            fua_parser.feed(text)
-
-            user_agent_strings[browser_name] = list(set(fua_parser.data))
+        response = requests.get(url=resource_url + f'?name={browser_name.replace(" ", "+")}')
+        fua_parser = _FakeUserAgentParser()
+        fua_parser.feed(response.text)
+        user_agent_strings[browser_name] = list(set(fua_parser.data))
 
     if dump_dat:
         path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")

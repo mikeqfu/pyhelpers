@@ -5,7 +5,6 @@ Saving, loading and other relevant operations of file-like objects.
 import copy
 import csv
 import io
-import json
 import operator
 import os
 import pathlib
@@ -220,7 +219,9 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
         pickle_out = open(path_to_pickle, mode='wb')
         pickle.dump(pickle_data, pickle_out, **kwargs)
         pickle_out.close()
-        print("Done.") if verbose else ""
+
+        if verbose:
+            print("Done.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
@@ -308,10 +309,12 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         else:
             raise AssertionError('File extension must be ".txt", ".csv", ".xlsx" or ".xls"')
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e.args[0])) if verbose else ""
+        if verbose:
+            print("Failed. {}.".format(e.args[0]))
 
 
 def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w', index=False,
@@ -426,13 +429,16 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
         except Exception as e:
             print("Failed. {}".format(e))
 
-    print("") if verbose else ""
+    if verbose:
+        print("")
+
     for sheet_data, sheet_name in zip(spreadsheets_data, sheet_names):
         # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
-        print("\t'{}'".format(sheet_name), end=" ... ") if verbose else ""
+        if verbose:
+            print("\t'{}'".format(sheet_name), end=" ... ")
 
         if (sheet_name in cur_sheet_names) and confirmation_required:
-            if_sheet_exists = input(f"This sheet already exists; [pass]|new|replace: ")
+            if_sheet_exists = input("This sheet already exists; [pass]|new|replace: ")
             if if_sheet_exists != 'pass':
                 excel_writer.if_sheet_exists = if_sheet_exists
                 print("\t\t", end="")
@@ -540,7 +546,8 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
             with open(path_to_json, mode='w') as json_out:
                 mod.dump(json_data, json_out, **kwargs)
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
@@ -614,7 +621,9 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
         joblib_ = _check_dependency(name='joblib')
 
         joblib_.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
-        print("Done.") if verbose else ""
+
+        if verbose:
+            print("Done.")
 
     except Exception as e:
         print("Failed. {}.".format(e))
@@ -1306,15 +1315,18 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     workbook_dat = []
 
     for sheet_name in sheet_names:
-        print("\t'{}'.".format(sheet_name), end=" ... ") if verbose else ""
+        if verbose:
+            print("\t'{}'.".format(sheet_name), end=" ... ")
 
         try:
             sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
-            print("Done.") if verbose else ""
+            if verbose:
+                print("Done.")
 
         except Exception as e:
             sheet_dat = None
-            print("Failed. {}.".format(e)) if verbose else ""
+            if verbose:
+                print("Failed. {}.".format(e))
 
         workbook_dat.append(sheet_dat)
 
@@ -1393,7 +1405,8 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
             with open(path_to_json, mode='r') as json_in:
                 json_data = mod.load(json_in, **kwargs)
 
-        print("Done.") if verbose else ""
+        if verbose:
+            print("Done.")
 
         return json_data
 
@@ -1449,9 +1462,10 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
     _check_loading_path(path_to_file=path_to_joblib, verbose=verbose)
 
     try:
-        # noinspection PyUnresolvedReferences
         joblib_data = joblib_.load(filename=path_to_joblib, **kwargs)
-        print("Done.") if verbose else ""
+
+        if verbose:
+            print("Done.")
 
         return joblib_data
 
@@ -1867,7 +1881,11 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
     :type pandoc_exe: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `pypandoc.convert_file <https://github.com/bebraw/pypandoc>`_
+    :param kwargs: [optional] parameters of `subprocess.run`_ (when ``method=None``) or
+        `pypandoc.convert_file`_ (when ``method='pypandoc'``)
+
+    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`pypandoc.convert_file`: https://github.com/NicklasTegner/pypandoc#usage
 
     **Examples**::
 
@@ -1915,6 +1933,7 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
 
         else:
             py_pandoc = _check_dependency(name='pypandoc')
+
             rslt = py_pandoc.convert_file(
                 str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
 
@@ -1925,11 +1944,11 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
                 print("Done.")
             elif ret_code == -1:
                 print(
-                    f"Failed."
-                    f"\n\"Pandoc\" is required to proceed with `method=None`; "
-                    f"however, it is not found on this device."
-                    f"\nInstall it (https://pandoc.org/) and then try again; "
-                    f"or, try instead `method='pypandoc'`")
+                    "Failed."
+                    "\n\"Pandoc\" is required to proceed with `method=None`; "
+                    "however, it is not found on this device."
+                    "\nInstall it (https://pandoc.org/) and then try again; "
+                    "or, try instead `method='pypandoc'`")
             else:
                 print("Failed.")
 
@@ -1938,7 +1957,7 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
 
 
 def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replace', vbscript=None,
-                sheet_name='1', ret_null=False, verbose=False):
+                sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
 
@@ -1970,11 +1989,13 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
     :return: the pathname of the generated CSV file or None, when ``method=None``;
         `io.StringIO`_ buffer, when ``method='xlsx2csv'``
     :rtype: str or _io.StringIO or None
+    :param kwargs: [optional] parameters of the function `subprocess.run`_
 
     .. _`tempfile.NamedTemporaryFile`:
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
     .. _`xlsx2csv`: https://github.com/dilshod/xlsx2csv
     .. _`io.StringIO`: https://docs.python.org/3/library/io.html#io.StringIO
+    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
@@ -2029,7 +2050,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
         if platform.system() == 'Linux':
             command_args = ["wine"] + command_args
 
-        rslt = subprocess.run(command_args)
+        rslt = subprocess.run(command_args, **kwargs)
         ret_code = rslt.returncode
 
         if verbose:
