@@ -37,3 +37,8 @@ Cite as
 #######
 
 Qian Fu, 2020. PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/87a9eedff50147fbb3dbd6ca3f15ce3f
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/gh/mikeqfu/pyhelpers?utm_source=github.com&utm_medium=referral&utm_content=mikeqfu/pyhelpers&utm_campaign=Badge_Grade_Settings
