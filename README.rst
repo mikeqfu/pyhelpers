@@ -2,7 +2,7 @@
 PyHelpers
 #########
 
-|PyPI| |Python| |License| |Downloads| |DOI|
+|PyPI| |Python| |License| |Documentation| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=yellow&label=PyPI
     :alt: PyPI - Release
@@ -13,9 +13,9 @@ PyHelpers
 .. |License| image:: https://img.shields.io/pypi/l/pyhelpers?label=License
     :alt: License for PyHelpers
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-.. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?label=Downloads
-    :alt: PyPI - Downloads
-    :target: https://pypistats.org/packages/pyhelpers
+.. |Documentation| image:: https://img.shields.io/readthedocs/pyhelpers?label=Docs
+    :alt: PyHelpers Documentation
+    :target: https://pyhelpers.readthedocs.io/en/latest/
 .. |DOI| image:: https://zenodo.org/badge/173177909.svg
     :alt: Zenodo - DOI
     :target: https://zenodo.org/badge/latestdoi/173177909
@@ -25,7 +25,7 @@ PyHelpers is an open-source Python package designed as a lite toolkit for facili
 Resources
 #########
 
-- `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_
+- `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_ [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_]
 - `Bug Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
 
 License
