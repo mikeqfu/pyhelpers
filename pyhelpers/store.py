@@ -779,13 +779,15 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
 
             command_args = [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf]
             rslt = subprocess.run(command_args, **kwargs)
+            ret_code = rslt.returncode
 
-            if rslt.returncode != 0:
+            if ret_code != 0:
                 command_args = [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf]
                 rslt = subprocess.run(command_args, **kwargs)
+                ret_code = rslt.returncode
 
             if verbose:
-                print("Done." if rslt.returncode == 0 else "Failed.")
+                print("Done." if ret_code == 0 else "Failed.")
 
         except Exception as e:
             print("An error occurred: {}.".format(e))
