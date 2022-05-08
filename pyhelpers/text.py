@@ -2,8 +2,7 @@
 Manipulation of textual data.
 """
 
-import collections.abc
-import copy
+import collections
 import re
 import string
 
@@ -389,6 +388,16 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
     return docs_tf_idf
 
 
+def _vectorize_text(*txt):
+    txt_ = [
+        re.compile(r"\w+").findall(x.lower()) if isinstance(x, str) else [x_.lower() for x_ in x]
+        for x in txt]
+    doc_words = set().union(*txt_)
+
+    for x in txt_:
+        yield [x.count(word) for word in doc_words]
+
+
 def euclidean_distance_between_texts(txt1, txt2):
     """
     Compute Euclidean distance of two sentences.
@@ -408,20 +417,10 @@ def euclidean_distance_between_texts(txt1, txt2):
 
         >>> euclidean_distance = euclidean_distance_between_texts(txt_1, txt_2)
         >>> euclidean_distance
-        2.6457513110645907
+        2.449489742783178
     """
 
-    if isinstance(txt1, str) and isinstance(txt2, str):
-        doc_words = set(txt1.split() + txt2.split())
-
-    else:
-        assert isinstance(txt1, list), isinstance(txt2, list)
-        doc_words = set(txt1 + txt2)
-
-    s1_count, s2_count = [], []
-    for word in doc_words:
-        s1_count.append(txt1.count(word))
-        s2_count.append(txt2.count(word))
+    s1_count, s2_count = list(_vectorize_text(txt1, txt2))
 
     # ed = np.sqrt(np.sum((np.array(s1_count) - np.array(s2_count)) ** 2))
     ed = np.linalg.norm(np.array(s1_count) - np.array(s2_count))
@@ -451,26 +450,14 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
         >>> cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
         >>> cos_sim
-        0.6963106238227914
+        0.25
 
         >>> cos_dist = cosine_similarity_between_texts(txt_1, txt_2, cosine_distance=True)
         >>> cos_dist  # 1 - cos_sim
-        0.3036893761772086
+        0.75
     """
 
-    if isinstance(txt1, str) and isinstance(txt2, str):
-        doc_words = set(txt1.split() + txt2.split())
-
-    else:
-        assert isinstance(txt1, list), isinstance(txt2, list)
-        doc_words = set(txt1 + txt2)
-
-    s1_count, s2_count = [], []
-    for word in doc_words:
-        s1_count.append(txt1.count(word))
-        s2_count.append(txt2.count(word))
-
-    s1_count, s2_count = np.array(s1_count), np.array(s2_count)
+    s1_count, s2_count = map(np.array, _vectorize_text(txt1, txt2))
 
     similarity = np.dot(s1_count, s2_count)
     cos_similarity = np.divide(similarity, np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
@@ -586,7 +573,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
     assert method in ('difflib', 'fuzzywuzzy', None), \
         "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
 
-    m = len(lookup_list) if n is None else copy.copy(n)
+    m = len(lookup_list) if n is None else n
 
     if method in {'difflib', None}:
         difflib_ = _check_dependency(name='difflib')
