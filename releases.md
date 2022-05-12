@@ -1,5 +1,20 @@
 ### Release history
 
+#### **[1.3.3](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.3)**
+
+(*12 May 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.3.2...1.3.3) since [1.3.2](https://pypi.org/project/pyhelpers/1.3.2/):**
+
+- Improved the following class/functions with bug fixes:
+  - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/989b64b154fee576068dd445146c9bfe575221e6) in the module [dbms](https://github.com/mikeqfu/pyhelpers/blob/85b09c37acc0d0aa96fd2e80e406d537d0a14490/pyhelpers/dbms.py);
+  - [save_data()](https://github.com/mikeqfu/pyhelpers/commit/43cbe93f274389996848c3e7463e821c33775d32) and [save_svg_as_emf()](https://github.com/mikeqfu/pyhelpers/commit/7a617d0c1239c6cb75b4d43ab4567a46301e4bef) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/85b09c37acc0d0aa96fd2e80e406d537d0a14490/pyhelpers/store.py);
+  - [delete_dir()](https://github.com/mikeqfu/pyhelpers/commit/6aef421d6ab724983ac59678b37aae5a6dd3e6a0) in the module [dir](https://github.com/mikeqfu/pyhelpers/blob/85b09c37acc0d0aa96fd2e80e406d537d0a14490/pyhelpers/dir.py);
+  - [euclidean_distance_between_texts()](https://github.com/mikeqfu/pyhelpers/commit/a6a0910b1b175ce6a4bb60321d691443f4ca5aaa#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R401) and [cosine_similarity_between_texts()](https://github.com/mikeqfu/pyhelpers/commit/a6a0910b1b175ce6a4bb60321d691443f4ca5aaa#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127R431) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/85b09c37acc0d0aa96fd2e80e406d537d0a14490/pyhelpers/text.py).
+- Add a new class [MSSQL](https://github.com/mikeqfu/pyhelpers/commit/f2ab9928c413d16630fd898ee49a8dcb2f10fd76) to the module [dbms](https://github.com/mikeqfu/pyhelpers/blob/85b09c37acc0d0aa96fd2e80e406d537d0a14490/pyhelpers/dbms.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.3.3 documentation](https://pyhelpers.readthedocs.io/en/1.3.3/).**
+
 <br/>
 
 #### **[1.3.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.2)**
