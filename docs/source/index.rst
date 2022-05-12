@@ -4,20 +4,23 @@ PyHelpers
 
 .. only:: html
 
-    |PyPI| |Python| |License| |Downloads| |DOI|
+    |PyPI| |Python| |Documentation| |License| |Codacy grade| |DOI|
 
-    .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?color=yellow&label=PyPI
+    .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers
         :alt: PyPI - Release
         :target: https://pypi.org/project/pyhelpers/
-    .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers?label=Python
+    .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers
         :alt: Python version
         :target: https://docs.python.org/3/
-    .. |License| image:: https://img.shields.io/pypi/l/pyhelpers?label=License
+    .. |Documentation| image:: https://img.shields.io/readthedocs/pyhelpers
+        :alt: PyHelpers Documentation
+        :target: https://pyhelpers.readthedocs.io/en/latest/
+    .. |License| image:: https://img.shields.io/pypi/l/pyhelpers
         :alt: License for PyHelpers
         :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-    .. |Downloads| image:: https://img.shields.io/pypi/dm/pyhelpers?label=Downloads
-        :alt: PyPI - Downloads
-        :target: https://pypistats.org/packages/pyhelpers
+    .. |Codacy grade| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
+        :alt: Codacy grade for PyHelpers
+        :target: https://www.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mikeqfu/pyhelpers&amp;utm_campaign=Badge_Grade
     .. |DOI| image:: https://zenodo.org/badge/173177909.svg
         :alt: Zenodo - DOI
         :target: https://zenodo.org/badge/latestdoi/173177909
