@@ -1,5 +1,5 @@
 alabaster==0.7.12
-anyio==3.5.0
+anyio==3.6.1
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
 asttokens==2.0.5
@@ -46,7 +46,7 @@ jupyter-client==7.3.1
 jupyter-console==6.4.3
 jupyter-core==4.10.0
 jupyter-server==1.17.0
-jupyterlab==3.4.1
+jupyterlab==3.4.2
 jupyterlab-pygments==0.2.2
 jupyterlab-server==2.13.0
 jupyterlab-widgets==1.1.0
@@ -110,7 +110,7 @@ requests==2.27.1
 requests-toolbelt==0.9.1
 rfc3986==2.0.0
 rich==12.4.1
-scikit-learn==1.0.2
+scikit-learn==1.1.0
 scipy==1.8.0
 Send2Trash==1.8.0
 Shapely==1.8.2
