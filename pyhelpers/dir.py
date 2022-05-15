@@ -1,6 +1,4 @@
-"""
-Manipulation of directories and/or file paths.
-"""
+"""Manipulation of directories and/or file paths."""
 
 import collections.abc
 import copy
@@ -13,7 +11,10 @@ import pkg_resources
 from ._cache import _check_rel_pathname
 from .ops import confirmed
 
-""" == Directory navigation ==================================================================== """
+
+# ==================================================================================================
+# Directory navigation
+# ==================================================================================================
 
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
@@ -232,7 +233,9 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     return path
 
 
-""" == Directory validation ==================================================================== """
+# ==================================================================================================
+# Directory validation
+# ==================================================================================================
 
 
 def is_dir(path_to_dir):
@@ -321,7 +324,9 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     return data_dir_
 
 
-""" == Directory removal ======================================================================= """
+# ==================================================================================================
+# Directory removal
+# ==================================================================================================
 
 
 def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):

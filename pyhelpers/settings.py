@@ -1,6 +1,4 @@
-"""
-Settings of working environment.
-"""
+"""Settings of working environment."""
 
 import copy
 import os
@@ -8,7 +6,10 @@ import warnings
 
 from ._cache import _check_dependency
 
-""" == Configurations ========================================================================== """
+
+# ==================================================================================================
+# Configurations
+# ==================================================================================================
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=True,
@@ -71,7 +72,9 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
         osgeo_gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', '100')
 
 
-""" == Preferences ============================================================================= """
+# ==================================================================================================
+# Preferences
+# ==================================================================================================
 
 
 def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, legend_spacing=0.7,

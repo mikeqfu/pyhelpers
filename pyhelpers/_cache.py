@@ -1,6 +1,4 @@
-"""
-Cache.
-"""
+"""Cached functions and constants."""
 
 import copy
 import importlib

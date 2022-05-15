@@ -1,6 +1,4 @@
-"""
-Manipulation of textual data.
-"""
+"""Manipulation of textual data."""
 
 import collections
 import re
@@ -10,7 +8,10 @@ import numpy as np
 
 from ._cache import _check_dependency, _ENGLISH_WRITTEN_NUMBERS
 
-""" == Textual data preprocessing ============================================================== """
+
+# ==================================================================================================
+# Textual data preprocessing
+# ==================================================================================================
 
 
 def get_acronym(text, only_capitals=False, capitals_in_words=False):
@@ -191,7 +192,9 @@ def numeral_english_to_arabic(x):
     return result + current
 
 
-""" == Textual data computation ================================================================ """
+# ==================================================================================================
+# Textual data computation
+# ==================================================================================================
 
 
 def count_words(raw_txt):
@@ -468,7 +471,9 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-""" == Textual data comparison ================================================================= """
+# ==================================================================================================
+# Textual data comparison
+# ==================================================================================================
 
 
 def find_matched_str(x, lookup_list):

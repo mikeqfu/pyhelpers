@@ -1,6 +1,4 @@
-"""
-Configuration file for the Sphinx documentation builder.
-"""
+"""Configuration file for the Sphinx documentation builder."""
 
 # == Path setup ====================================================================================
 import os

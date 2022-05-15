@@ -1,6 +1,4 @@
-"""
-Manipulation of geometric/geographical data.
-"""
+"""Manipulation of geometric/geographical data."""
 
 import collections.abc
 import copy
@@ -14,8 +12,10 @@ import shapely.ops
 
 from ._cache import _check_dependency
 
-""" == Geometric data transformation =========================================================== """
 
+# ==================================================================================================
+# Geometric data transformation
+# ==================================================================================================
 
 # Geometric type
 
@@ -438,8 +438,9 @@ def project_point_to_line(point, line, drop_dimension=None):
     return point_, line_
 
 
-""" == Geometric data computation ============================================================== """
-
+# ==================================================================================================
+# Geometric data computation
+# ==================================================================================================
 
 # Distance
 
@@ -1225,7 +1226,9 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     return vertices
 
 
-""" == Geometric data sketching ================================================================ """
+# ==================================================================================================
+# Geometric data sketching
+# ==================================================================================================
 
 
 def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs):

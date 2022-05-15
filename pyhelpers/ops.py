@@ -1,6 +1,4 @@
-"""
-Miscellaneous operations.
-"""
+"""Miscellaneous operations."""
 
 import ast
 import collections.abc
@@ -32,7 +30,10 @@ import urllib3.util.retry
 
 from ._cache import _check_dependency, _USER_AGENT_STRINGS
 
-""" == General use ============================================================================= """
+
+# ==================================================================================================
+# General use
+# ==================================================================================================
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -471,7 +472,9 @@ def verify_password(password, salt, key, iterations=None):
     return rslt
 
 
-""" == Basic data manipulation ================================================================= """
+# ==================================================================================================
+# Basic data manipulation
+# ==================================================================================================
 
 
 # Iterable
@@ -1291,7 +1294,9 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
-""" == Basic computation ======================================================================= """
+# ==================================================================================================
+# Basic computation
+# ==================================================================================================
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
@@ -1435,7 +1440,9 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
     return closest_date
 
 
-""" == Graph plotting ========================================================================== """
+# ==================================================================================================
+# Graph plotting
+# ==================================================================================================
 
 
 def cmap_discretisation(cmap, n_colours):
@@ -1610,7 +1617,9 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     return colour_bar
 
 
-""" == Web data extraction ===================================================================== """
+# ==================================================================================================
+# Web data extraction
+# ==================================================================================================
 
 
 def is_network_connected():
@@ -1822,6 +1831,41 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     return session
 
 
+class _FakeUserAgentParser(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.recording = 0
+        self.data = []
+
+    def error(self, message):
+        pass
+
+    def handle_starttag(self, tag, attrs):
+        if tag != 'a':
+            return
+
+        if self.recording:
+            self.recording += 1
+            return
+
+        if tag == 'a':
+            for name, link in attrs:
+                if name == 'href' and link.startswith('/index.php?id='):
+                    break
+                else:
+                    return
+            self.recording = 1
+
+    def handle_endtag(self, tag):
+        if tag == 'a' and self.recording:
+            self.recording -= 1
+
+    def handle_data(self, data):
+        if self.recording:
+            self.data.append(data.strip())
+
+
 def _user_agent_strings(browser_names=None, dump_dat=True):
     """
     Get a dictionary of user-agent strings for popular browsers.
@@ -1839,40 +1883,6 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         list(uas.keys())
         # ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
     """
-
-    class _FakeUserAgentParser(html.parser.HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.reset()
-            self.recording = 0
-            self.data = []
-
-        def error(self, message):
-            pass
-
-        def handle_starttag(self, tag, attrs):
-            if tag != 'a':
-                return
-
-            if self.recording:
-                self.recording += 1
-                return
-
-            if tag == 'a':
-                for name, link in attrs:
-                    if name == 'href' and link.startswith('/index.php?id='):
-                        break
-                    else:
-                        return
-                self.recording = 1
-
-        def handle_endtag(self, tag):
-            if tag == 'a' and self.recording:
-                self.recording -= 1
-
-        def handle_data(self, data):
-            if self.recording:
-                self.data.append(data.strip())
 
     if browser_names is None:
         browser_names_ = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']

@@ -1,6 +1,4 @@
-"""
-Saving, loading and other relevant operations of file-like objects.
-"""
+"""Saving, loading and other relevant operations of file-like objects."""
 
 import copy
 import csv
@@ -164,7 +162,9 @@ def _set_index(df, index=None):
     return data
 
 
-""" == Save data =============================================================================== """
+# ==================================================================================================
+# Save data
+# ==================================================================================================
 
 
 # Pickle files
@@ -1112,7 +1112,9 @@ def save_data(data, path_to_file, warning=True, **kwargs):
             save_pickle(data, path_to_file, **kwargs)
 
 
-""" == Load data =============================================================================== """
+# ==================================================================================================
+# Load data
+# ==================================================================================================
 
 
 def load_pickle(path_to_pickle, verbose=False, **kwargs):
@@ -1676,7 +1678,9 @@ def load_data(path_to_file, warning=True, **kwargs):
     return data
 
 
-""" == Uncompress data ========================================================================= """
+# ==================================================================================================
+# Uncompress data
+# ==================================================================================================
 
 
 def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
@@ -1858,7 +1862,9 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
               "however, it is not found on this device.\nInstall it and then try again.")
 
 
-""" == Convert data ============================================================================ """
+# ==================================================================================================
+# Convert data
+# ==================================================================================================
 
 
 def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbose=False, **kwargs):
