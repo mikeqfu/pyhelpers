@@ -12,14 +12,14 @@ PyHelpers
     .. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers
         :alt: Python version
         :target: https://docs.python.org/3/
-    .. |Documentation| image:: https://img.shields.io/readthedocs/pyhelpers
-        :alt: PyHelpers Documentation
-        :target: https://pyhelpers.readthedocs.io/en/latest/
+    .. |Documentation| image:: https://readthedocs.org/projects/pyhelpers/badge/?version=latest
+        :alt: Documentation status
+        :target: https://pyhelpers.readthedocs.io/en/latest/?badge=latest
     .. |License| image:: https://img.shields.io/pypi/l/pyhelpers
-        :alt: License for PyHelpers
+        :alt: License
         :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
     .. |Codacy grade| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
-        :alt: Codacy grade for PyHelpers
+        :alt: Codacy grade (Code quality)
         :target: https://www.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mikeqfu/pyhelpers&amp;utm_campaign=Badge_Grade
     .. |DOI| image:: https://zenodo.org/badge/173177909.svg
         :alt: Zenodo - DOI
