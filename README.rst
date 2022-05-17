@@ -25,11 +25,10 @@ PyHelpers
 
 PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL).
 
-Resources
-#########
+Documentation
+#############
 
-- `Documentation <https://pyhelpers.readthedocs.io/en/latest/>`_ [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_]
-- `Bug Tracker <https://github.com/mikeqfu/pyhelpers/issues>`_
+The PyHelpers documentation is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
 
 License
 #######
