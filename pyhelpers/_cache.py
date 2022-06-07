@@ -34,31 +34,49 @@ _OPTIONAL_DEPENDENCY = {
 }
 
 
-def _check_dependency(name):
+def _check_dependency(name, package=None):
     """
     Import optional dependency package.
 
-    :param name: name of a package as an optional dependency of pyhelpers
+    :param name: name of a package/module as an optional dependency of pyhelpers
     :type name: str
+    :param package: [optional] name of a package that contains the module specified by ``name``,
+        defaults to ``None``
+    :type package: str or None
 
-    **Examples**::
+    **Tests**::
 
-        _check_dependency(dependency='psycopg2')
+        >>> from pyhelpers._cache import _check_dependency
 
-        _check_dependency(dependency='pyodbc')
+        >>> psycopg2_ = _check_dependency(name='psycopg2')
+        >>> psycopg2_.__name__
+        'psycopg2'
+
+        >>> pyodbc_ = _check_dependency(name='pyodbc')
+        >>> pyodbc_.__name__
+        'pyodbc'
+
+        >>> gdal_ = _check_dependency(name='gdal', package='osgeo')
+        >>> gdal_.__name__
+        'osgeo.gdal'
     """
 
     import_name = name.replace('-', '_')
+    if package is None:
+        pkg_name = None
+    else:
+        pkg_name = package.replace('-', '_')
+        import_name = '.' + import_name
 
     if import_name in sys.modules:  # The optional dependency has already been imported
         return sys.modules.get(import_name)
 
     # elif (package_spec := importlib.util.find_spec(import_name)) is not None:
-    elif importlib.util.find_spec(import_name) is not None:
+    elif importlib.util.find_spec(name=import_name, package=pkg_name) is not None:
         # import_package = importlib.util.module_from_spec(package_spec)
         # sys.modules[import_name] = import_package
         # package_spec.loader.exec_module(import_package)
-        return importlib.import_module(import_name)
+        return importlib.import_module(name=import_name, package=pkg_name)
 
     else:
         if import_name in _OPTIONAL_DEPENDENCY:
@@ -72,6 +90,28 @@ def _check_dependency(name):
 
 
 def _check_rel_pathname(pathname):
+    """
+    Check for the relative pathname (if a pathname is within the current working directory).
+
+    :param pathname: pathname
+    :type pathname: str or os.PathLike[str]
+    :return: relative pathname of the input ``pathname`` if it is within the current working directory;
+        otherwise, a copy of the input
+    :rtype: str
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _check_rel_pathname
+        >>> from pyhelpers.dir import cd
+
+        >>> _check_rel_pathname(".")
+        '.'
+        >>> _check_rel_pathname(cd())
+        '.'
+        >>> _check_rel_pathname("C:\\Program Files")
+        'C:\\Program Files'
+    """
+
     try:
         pathname_ = os.path.relpath(pathname)
     except ValueError:
