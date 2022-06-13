@@ -369,8 +369,7 @@ To delete the directory `"pyhelpers_tutorial\"` (and all contained within it), w
 
     >>> # Delete the directory "pyhelpers_tutorial\"
     >>> delete_dir(path_to_dir, verbose=True)
-    The directory "pyhelpers_tutorial\" is not empty.
-    Confirmed to delete it
+    To delete the directory "pyhelpers_tutorial\" (Not empty)
     ? [No]|Yes: yes
     Deleting "pyhelpers_tutorial\" ... Done.
 
@@ -418,8 +417,7 @@ Before we move on, let's delete again the Pickle file (i.e. ``path_to_pickle``) 
 .. code-block:: python
 
     >>> delete_dir(path_to_dir, verbose=True)
-    The directory "pyhelpers_tutorial\" is not empty.
-    Confirmed to delete it
+    To delete the directory "pyhelpers_tutorial\" (Not empty)
     ? [No]|Yes: yes
     Deleting "pyhelpers_tutorial\" ... Done.
 
