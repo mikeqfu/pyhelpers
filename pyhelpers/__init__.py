@@ -5,6 +5,8 @@ import json
 
 import pkg_resources
 
+from . import dbms, dir, geom, ops, settings, store, text
+
 with open(pkg_resources.resource_filename(__name__, "data/metadata.json"), mode='r') as metadata_file:
     metadata = json.load(metadata_file)
 
@@ -21,3 +23,13 @@ __copyright__ = f'2019-{datetime.datetime.now().year}, {__author__}'
 
 __version__ = metadata['Version']
 __license__ = metadata['License']
+
+__all__ = [
+    'dbms',
+    'dir',
+    'geom',
+    'ops',
+    'settings',
+    'store',
+    'text',
+]
