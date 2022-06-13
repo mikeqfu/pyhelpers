@@ -1,5 +1,17 @@
 ### Release history
 
+#### **[1.4.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.0)**
+
+(*13 June 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.3.4...1.4.0) since [1.3.4](https://pypi.org/project/pyhelpers/1.3.4/):**
+
+- Renamed the module [dir](https://github.com/mikeqfu/pyhelpers/blob/b2e9d9fa50b2947263d93d1a3e995d39866e4a39/pyhelpers/dir.py) to [dirs](https://github.com/mikeqfu/pyhelpers/blob/48e8e07f8554bc16fa161ecfd8e14468323654e3/pyhelpers/dirs.py) (to avoid a possible redefinition of, or any potential conflict with, the Python built-in function [dir()](https://docs.python.org/3/library/functions.html#dir)).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.0 documentation](https://pyhelpers.readthedocs.io/en/1.4.0/).**
+
+<br/>
+
 #### **[1.3.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.4)**
 
 (*13 June 2022*)
