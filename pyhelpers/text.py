@@ -483,7 +483,7 @@ def find_matched_str(x, lookup_list):
     :param x: a string-type variable
     :type x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: typing.List[str] or typing.Tuple[str] or typing.Sequence[str]
+    :type lookup_list: typing.Iterable
     :return: a generator containing all that are matched with ``x``
     :rtype: typing.Generator or None
 
@@ -515,6 +515,45 @@ def find_matched_str(x, lookup_list):
                 yield y
 
 
+def _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs):
+    difflib_ = _check_dependency(name='difflib')
+
+    x_, lookup_dict = x.lower(), {y.lower(): y for y in lookup_list}
+
+    if ignore_punctuation:
+        x_ = remove_punctuation(x_)
+        lookup_dict = {remove_punctuation(k): v for k, v in lookup_dict.items()}
+
+    sim_str_ = difflib_.get_close_matches(word=x_, possibilities=lookup_dict.keys(), n=n, **kwargs)
+
+    if not sim_str_:
+        sim_str = None
+    elif len(sim_str_) == 1:
+        sim_str = lookup_dict[sim_str_[0]]
+    else:
+        sim_str = [lookup_dict[k] for k in sim_str_]
+
+    return sim_str
+
+
+def _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs):
+    fuzzywuzzy_fuzz = _check_dependency(name='fuzzywuzzy.fuzz')
+
+    lookup_list_ = list(lookup_list)
+
+    l_distances = [fuzzywuzzy_fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list_]
+
+    if sum(l_distances) == 0:
+        sim_str = None
+    else:
+        if n == 1:
+            sim_str = lookup_list_[l_distances.index(max(l_distances))]
+        else:
+            sim_str = [lookup_list_[i] for i in np.argsort(l_distances)[::-1]][:n]
+
+    return sim_str
+
+
 def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='difflib', **kwargs):
     """
     From among a sequence of strings, find ``n`` ones that are similar to ``x``.
@@ -522,7 +561,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
     :param x: a string-type variable
     :type x: str
     :param lookup_list: a sequence of strings for lookup
-    :type lookup_list: typing.List[str] or typing.Tuple[str] or typing.Sequence[str]
+    :type lookup_list: typing.Iterable
     :param n: number of similar strings to return, defaults to ``1``;
         if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
     :type n: int or None
@@ -531,12 +570,12 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         - if ``method='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``method='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type method: str or None
+    :type method: str or types.FunctionType
 
     :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
     :type ignore_punctuation: bool
-    :param kwargs: [optional] parameters of `difflib.get_close_matches`_ or
-        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``processor``
+    :param kwargs: [optional] parameters (e.g. ``cutoff=0.6``) of `difflib.get_close_matches`_ or
+        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``method``
     :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str or list or None
 
@@ -544,6 +583,15 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
     .. _`fuzzywuzzy.fuzz.token_set_ratio`:
         https://github.com/seatgeek/fuzzywuzzy
+
+    .. note::
+
+        - By default, the function uses the built-in module
+          `difflib <https://docs.python.org/3/library/difflib.html>`_; when we set the parameter
+          ``method='fuzzywuzzy'``, the function then relies on
+          `FuzzyWuzzy <https://pypi.org/project/fuzzywuzzy/>`_, which is not an essential dependency
+          for installing pyhelpers. We could however use ``pip`` (or ``conda``) to install it first
+          separately.
 
     **Examples**::
 
@@ -560,51 +608,50 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         ...               'Wessex',
         ...               'Western']
 
-        >>> str_similar = find_similar_str(x='angle', lookup_list=lookup_lst)
-        >>> str_similar
+        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst)
+        >>> y
         'Anglia'
-        >>> str_similar = find_similar_str(x='angle', lookup_list=lookup_lst, method='fuzzywuzzy')
-        >>> str_similar
+        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, n=2)
+        >>> y
+        ['Anglia', 'Wales']
+
+        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, method='fuzzywuzzy')
+        >>> y
         'Anglia'
+        >>> y = find_similar_str('angle', lookup_lst, n=2, method='fuzzywuzzy')
+        >>> y
+        ['Anglia', 'Wales']
 
-        >>> str_similar = find_similar_str(x='x', lookup_list=lookup_lst)
-        >>> str_similar  # None
-
-        >>> str_similar = find_similar_str(x='x', lookup_list=lookup_lst, method='fuzzywuzzy')
-        >>> str_similar
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst)
+        >>> y is None
+        True
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, cutoff=0.25)
+        >>> y
         'Wessex'
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, cutoff=0.25)
+        >>> y
+        'Wessex'
+
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, method='fuzzywuzzy')
+        >>> y
+        'Wessex'
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, method='fuzzywuzzy')
+        >>> y
+        ['Wessex', 'Western']
     """
 
-    assert method in ('difflib', 'fuzzywuzzy', None), \
-        "Options for `processor` include \"difflib\" and \"fuzzywuzzy\"."
+    methods = {'difflib', 'fuzzywuzzy', None}
+    assert method in methods or callable(method), \
+        "Invalid input: `method`. Valid options can include {}.".format(methods)
 
-    m = len(lookup_list) if n is None else n
-
-    if method in {'difflib', None}:
-        difflib_ = _check_dependency(name='difflib')
-
-        x_, lookup_dict = x.lower(), {y.lower(): y for y in lookup_list}
-
-        if ignore_punctuation:
-            x_ = remove_punctuation(x_)
-            lookup_dict = {remove_punctuation(k): v for k, v in lookup_dict.items()}
-
-        sim_str_ = difflib_.get_close_matches(word=x_, possibilities=lookup_dict.keys(), n=m, **kwargs)
-
-        sim_str = None if not sim_str_ else lookup_dict[sim_str_[0]]
+    if method == 'difflib' or method is None:
+        sim_str = _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs)
 
     elif method == 'fuzzywuzzy':
-        fuzzywuzzy_fuzz = _check_dependency(name='fuzzywuzzy.fuzz')
+        sim_str = _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs)
 
-        l_distances = [fuzzywuzzy_fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list]
-
-        if sum(l_distances) == 0:
-            sim_str = None
-        else:
-            if m == 1:
-                sim_str = lookup_list[l_distances.index(max(l_distances))]
-            else:
-                sim_str = [lookup_list[i] for i in np.argsort(l_distances)[::-1]][:m]
+    elif callable(method):
+        sim_str = method(x, lookup_list, **kwargs)
 
     else:
         sim_str = None
