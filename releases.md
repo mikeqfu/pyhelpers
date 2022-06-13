@@ -1,5 +1,20 @@
 ### Release history
 
+#### **[1.3.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.4)**
+
+(*13 June 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.3.3...1.3.4) since [1.3.3](https://pypi.org/project/pyhelpers/1.3.3/):**
+
+- Enabled [direct access](https://github.com/mikeqfu/pyhelpers/commit/756e613b7fffdd0a808de8d7c2e362b8829ac1c1) to all modules through importing *pyhelpers*, and all functions/classes in each module through importing *pyhelpers.<module_name>*.
+- Improved the following function/class (with bug fixes):
+  - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/3e012426a6018d38d273196f1d2c043a34c33756) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/b2e9d9fa50b2947263d93d1a3e995d39866e4a39/pyhelpers/text.py);
+  - [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/7e2797de9345dc18aced8229126a6b2af766c78c) in the module [dbms](https://github.com/mikeqfu/pyhelpers/blob/b2e9d9fa50b2947263d93d1a3e995d39866e4a39/pyhelpers/dbms.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.3.4 documentation](https://pyhelpers.readthedocs.io/en/1.3.4/).**
+
+<br/>
+
 #### **[1.3.3](https://github.com/mikeqfu/pyhelpers/releases/tag/1.3.3)**
 
 (*12 May 2022*)
