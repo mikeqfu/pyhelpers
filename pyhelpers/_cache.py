@@ -102,7 +102,7 @@ def _check_rel_pathname(pathname):
     **Tests**::
 
         >>> from pyhelpers._cache import _check_rel_pathname
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> _check_rel_pathname(".")
         '.'

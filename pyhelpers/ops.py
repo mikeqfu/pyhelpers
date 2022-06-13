@@ -1088,7 +1088,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.ops import parse_csr_matrix
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> import numpy
         >>> import scipy.sparse
 
@@ -2171,7 +2171,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     **Examples**::
 
         >>> from pyhelpers.ops import download_file_from_url
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from PIL import Image
         >>> import os
 

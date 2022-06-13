@@ -5,7 +5,7 @@ import json
 
 import pkg_resources
 
-from . import dbms, dir, geom, ops, settings, store, text
+from . import dbms, dirs, geom, ops, settings, store, text
 
 with open(pkg_resources.resource_filename(__name__, "data/metadata.json"), mode='r') as metadata_file:
     metadata = json.load(metadata_file)
@@ -26,7 +26,7 @@ __license__ = metadata['License']
 
 __all__ = [
     'dbms',
-    'dir',
+    'dirs',
     'geom',
     'ops',
     'settings',

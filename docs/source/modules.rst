@@ -9,7 +9,7 @@ The current release includes the following modules, with each containing a numbe
 .. autosummary::
 
     settings
-    dir
+    dirs
     ops
     store
     geom
@@ -21,7 +21,7 @@ The current release includes the following modules, with each containing a numbe
     :hidden:
 
     settings
-    dir
+    dirs
     ops
     store
     geom

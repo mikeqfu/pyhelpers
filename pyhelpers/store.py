@@ -39,7 +39,7 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
     **Tests**::
 
         >>> from pyhelpers.store import _check_path_to_file
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> file_path = cd()
         >>> try:
@@ -186,7 +186,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import save_pickle
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
 
         >>> pickle_dat = 1
@@ -266,7 +266,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
     **Examples**::
 
         >>> from pyhelpers.store import save_spreadsheet
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
 
         >>> # Get an example dataframe
@@ -348,7 +348,7 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
     **Examples**::
 
         >>> from pyhelpers.store import save_spreadsheets
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
 
         >>> dat1 = example_dataframe()  # Get an example dataframe
@@ -482,7 +482,7 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import save_json
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
         >>> import json
 
@@ -572,7 +572,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import save_joblib
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
         >>> import numpy as np
 
@@ -651,7 +651,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
     **Examples**::
 
         >>> from pyhelpers.store import save_feather
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
 
         >>> feather_dat = example_dataframe()  # Get an example dataframe
@@ -720,7 +720,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     **Examples**::
 
         >>> from pyhelpers.store import save_svg_as_emf
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
 
@@ -822,7 +822,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     **Examples**::
 
         >>> from pyhelpers.store import save_fig
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
 
@@ -909,7 +909,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
     **Examples**::
 
         >>> from pyhelpers.store import save_web_page_as_pdf
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> import subprocess
 
         >>> pdf_pathname = cd("tests\\documents", "pyhelpers.pdf")
@@ -1020,7 +1020,7 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import save_data
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
 
         >>> data_dir = cd("tests\\data")
@@ -1139,7 +1139,7 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import load_pickle
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> pickle_pathname = cd("tests\\data", "dat.pickle")
         >>> pickle_dat = load_pickle(pickle_pathname, verbose=True)
@@ -1197,7 +1197,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     **Examples**::
 
         >>> from pyhelpers.store import load_csv
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> csv_pathname = cd("tests\\data", "dat.csv")
         >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
@@ -1283,7 +1283,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     **Examples**::
 
         >>> from pyhelpers.store import load_spreadsheets
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> dat_dir = cd("tests\\data")
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
@@ -1379,7 +1379,7 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import load_json
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> json_path = cd("tests\\data", "dat.json")
         >>> json_dat = load_json(json_path, verbose=True)
@@ -1440,7 +1440,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import load_joblib
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> joblib_pathname = cd("tests\\data", "dat.joblib")
         >>> joblib_dat = load_joblib(joblib_pathname, verbose=True)
@@ -1507,7 +1507,7 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import load_feather
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> feather_path = cd("tests\\data", "dat.feather")
         >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
@@ -1582,7 +1582,7 @@ def load_data(path_to_file, warning=True, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import load_data
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> data_dir = cd("tests\\data")
 
@@ -1702,7 +1702,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.store import unzip
-        >>> from pyhelpers.dir import cd, delete_dir
+        >>> from pyhelpers.dirs import cd, delete_dir
 
         >>> zip_file_path = cd("tests\\data", "zipped.zip")
 
@@ -1776,7 +1776,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     **Examples**::
 
         >>> from pyhelpers.store import seven_zip
-        >>> from pyhelpers.dir import cd, delete_dir
+        >>> from pyhelpers.dirs import cd, delete_dir
 
         >>> zip_file_pathname = cd("tests\\data", "zipped.zip")
 
@@ -1898,7 +1898,7 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
     **Examples**::
 
         >>> from pyhelpers.store import markdown_to_rst
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
 
         >>> dat_dir = cd("tests\\documents")
 
@@ -2008,7 +2008,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
     **Examples**::
 
         >>> from pyhelpers.store import xlsx_to_csv, load_csv
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> import os
 
         >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")

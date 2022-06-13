@@ -222,16 +222,16 @@ Similarly, the function :py:func:`~pyhelpers.settings.pd_preferences` also offer
 
 
 
-.. _tutorial-dir-examples:
+.. _tutorial-dirs-examples:
 
 Specify a directory or a file path
 ==================================
 
-The module :py:mod:`pyhelpers.dir` offers to assist with manipulating folders/directories. For example, the function :py:func:`~pyhelpers.dir.cd` returns an absolute path to the current working directory or, if specified, to a subdirectory or a file any level deep from the current working directory:
+The module :py:mod:`pyhelpers.dirs` offers to assist with manipulating folders/directories. For example, the function :py:func:`~pyhelpers.dirs.cd` returns an absolute path to the current working directory or, if specified, to a subdirectory or a file any level deep from the current working directory:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import cd
+    >>> from pyhelpers.dirs import cd
     >>> import os
 
     >>> cwd = cd()  # The current working directory
@@ -274,7 +274,7 @@ If the directory ``"pyhelpers_tutorial\"`` does not exist, we could set the para
     >>> print(f'The directory "{rel_dir_path}\\" exists? {os.path.exists(path_to_dir)}')
     The directory "pyhelpers_tutorial\" exists? True
 
-When we specify a sequence of names (in order with a filename being the last), the function :py:func:`~pyhelpers.dir.cd` would assume that all the names prior to the filename are folder names, which specify a path to the file. For example, let's specify a path to a file named ``"quick_start.dat"``:
+When we specify a sequence of names (in order with a filename being the last), the function :py:func:`~pyhelpers.dirs.cd` would assume that all the names prior to the filename are folder names, which specify a path to the file. For example, let's specify a path to a file named ``"quick_start.dat"``:
 
 .. code-block:: python
 
@@ -289,7 +289,7 @@ When we specify a sequence of names (in order with a filename being the last), t
     >>> print(rel_file_path)
     pyhelpers_tutorial\quick_start.dat
 
-If any of the folders/subfolders of a specified path does not exist, setting ``mkdir=True`` should enable the function :py:func:`~pyhelpers.dir.cd` to create all the missing ones along the path. For example, let's specify a data directory, named ``"data"``, which is contained within the folder ``"pyhelpers_tutorial"``:
+If any of the folders/subfolders of a specified path does not exist, setting ``mkdir=True`` should enable the function :py:func:`~pyhelpers.dirs.cd` to create all the missing ones along the path. For example, let's specify a data directory, named ``"data"``, which is contained within the folder ``"pyhelpers_tutorial"``:
 
 .. code-block:: python
 
@@ -301,11 +301,11 @@ If any of the folders/subfolders of a specified path does not exist, setting ``m
     >>> print(rel_data_dir)
     pyhelpers_tutorial\data
 
-We can use the function :py:func:`~pyhelpers.dir.is_dir` to examine whether ``data_dir`` (or ``rel_data_dir``) specifies a path (or a relative path) to a directory:
+We can use the function :py:func:`~pyhelpers.dirs.is_dir` to examine whether ``data_dir`` (or ``rel_data_dir``) specifies a path (or a relative path) to a directory:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import is_dir
+    >>> from pyhelpers.dirs import is_dir
 
     >>> # Check whether `rel_data_dir` specifies a (relative) path to a directory
     >>> print(f'`rel_data_dir` specifies a directory pathname? {is_dir(rel_data_dir)}')
@@ -315,7 +315,7 @@ We can use the function :py:func:`~pyhelpers.dir.is_dir` to examine whether ``da
     >>> print(f'The directory "{rel_data_dir}\\" exists? {os.path.exists(rel_data_dir)}')
     The directory "pyhelpers_tutorial\data\" exists? False
 
-.. _tutorial-dir-pickle-pathname:
+.. _tutorial-dirs-pickle-pathname:
 
 For another example, let's specify a path to a Pickle file, named ``"dat.pickle"``, in the directory ``"pyhelpers_tutorial\data\"``:
 
@@ -361,11 +361,11 @@ Let's now set the parameter ``mkdir`` to be ``True``:
 
 [See also the example of `saving data as a Pickle file <#tutorial-store-saving-dataframe>`_.]
 
-To delete the directory `"pyhelpers_tutorial\"` (and all contained within it), we can use the function :py:func:`~pyhelpers.dir.delete_dir`:
+To delete the directory `"pyhelpers_tutorial\"` (and all contained within it), we can use the function :py:func:`~pyhelpers.dirs.delete_dir`:
 
 .. code-block:: python
 
-    >>> from pyhelpers.dir import delete_dir
+    >>> from pyhelpers.dirs import delete_dir
 
     >>> # Delete the directory "pyhelpers_tutorial\"
     >>> delete_dir(path_to_dir, verbose=True)
@@ -389,7 +389,7 @@ The module :py:mod:`pyhelpers.store` can facilitate tasks such as saving our dat
 
 .. _tutorial-store-saving-dataframe:
 
-For example, we could save the ``data_frame`` that has been created in the [Preparation](#tutorial-preparation) section as a `Pickle`_ file by using the functions :py:func:`~pyhelpers.store.save_pickle` and retrieve it later by using :py:func:`~pyhelpers.store.load_pickle`. Firstly, let's save ``data_frame`` to ``path_to_pickle``, which has been specified in the :ref:`Specify a directory or a file path<tutorial-dir-pickle-pathname>` section:
+For example, we could save the ``data_frame`` that has been created in the [Preparation](#tutorial-preparation) section as a `Pickle`_ file by using the functions :py:func:`~pyhelpers.store.save_pickle` and retrieve it later by using :py:func:`~pyhelpers.store.load_pickle`. Firstly, let's save ``data_frame`` to ``path_to_pickle``, which has been specified in the :ref:`Specify a directory or a file path<tutorial-dirs-pickle-pathname>` section:
 
 .. code-block:: python
 
@@ -636,7 +636,7 @@ Now let's have a look at the downloaded image file by using `Pillow`_:
 .. _`Jupyter Notebook`: https://jupyter.org/
 .. _`IPython.display.Image`: https://ipython.readthedocs.io/en/stable/api/generated/IPython.display.html#IPython.display.Image
 
-To delete ``"pyhelpers_tutorial\"`` and the download directory ``"pyhelpers_tutorial\images\"``, again, we can use the function :py:func:`~pyhelpers.dir.delete_dir`:
+To delete ``"pyhelpers_tutorial\"`` and the download directory ``"pyhelpers_tutorial\images\"``, again, we can use the function :py:func:`~pyhelpers.dirs.delete_dir`:
 
 .. code-block:: python
 

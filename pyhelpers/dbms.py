@@ -25,7 +25,7 @@ import sqlalchemy
 import sqlalchemy.dialects
 
 from ._cache import _check_dependency
-from .dir import cd, validate_dir
+from .dirs import cd, validate_dir
 from .ops import confirmed
 from .store import save_data
 

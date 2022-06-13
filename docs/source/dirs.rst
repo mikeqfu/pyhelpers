@@ -1,9 +1,9 @@
-dir
-===
+dirs
+====
 
-.. py:module:: pyhelpers.dir
+.. py:module:: pyhelpers.dirs
 
-.. automodule:: pyhelpers.dir
+.. automodule:: pyhelpers.dirs
     :noindex:
     :no-members:
     :no-inherited-members:
