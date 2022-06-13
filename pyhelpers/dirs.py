@@ -37,7 +37,7 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd
+        >>> from pyhelpers.dirs import cd
         >>> import os
         >>> import pathlib
 
@@ -91,7 +91,7 @@ def go_from_altered_cwd(dir_name, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import go_from_altered_cwd
+        >>> from pyhelpers.dirs import go_from_altered_cwd
         >>> import os
 
         >>> cwd = os.getcwd()
@@ -145,7 +145,7 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cdd, delete_dir
+        >>> from pyhelpers.dirs import cdd, delete_dir
         >>> import os
 
         >>> path_to_dat_dir = cdd()
@@ -206,7 +206,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd_data
+        >>> from pyhelpers.dirs import cd_data
         >>> import os
 
         >>> path_to_dat_dir = cd_data("tests", mkdir=False)
@@ -249,7 +249,7 @@ def is_dir(path_to_dir):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd, is_dir
+        >>> from pyhelpers.dirs import cd, is_dir
 
         >>> x = "tests"
         >>> is_dir(x)
@@ -286,7 +286,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dir import validate_dir
+        >>> from pyhelpers.dirs import validate_dir
         >>> import os
 
         >>> dat_dir = validate_dir()
@@ -348,7 +348,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
 
     **Tests**::
 
-        >>> from pyhelpers.dir import cd, _delete_dir
+        >>> from pyhelpers.dirs import cd, _delete_dir
         >>> import os
 
         >>> dir_path = cd("test_dir", mkdir=True)
@@ -422,7 +422,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
     **Examples**::
 
-        >>> from pyhelpers.dir import cd, delete_dir
+        >>> from pyhelpers.dirs import cd, delete_dir
         >>> import os
 
         >>> test_dirs = []
