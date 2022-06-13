@@ -204,7 +204,7 @@ def _import_data(cls, data, table_name, schema_name=None, if_exists='fail',
             if confirmation_required:
                 log_msg = f"Importing the data into the table {table_name_}"
             else:
-                log_msg = f"Importing data into the table {table_name_} at {cls.address}"
+                log_msg = f"Importing data into the table {table_name_}\n\tat {cls.address}"
             print(log_msg, end=" ... ")
 
         to_sql_args = {
@@ -1375,7 +1375,8 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
+            - Examples for the method
+              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
         """
 
         schema_name_ = self._schema_name(schema_name=schema_name)
@@ -1410,7 +1411,8 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
+            - Examples for the method
+              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
         """
 
         schema_name_ = self._schema_name(schema_name=schema_name)
@@ -1660,10 +1662,10 @@ class PostgreSQL:
         text_columns = [k for k, v in column_dtypes.items() if v == 'text']
 
         if len(text_columns) > 0:
-            tbl = self._table_name(table_name=table_name, schema_name=schema_name)
             cols_query = ', '.join(f'"{x}"=COALESCE("{x}", \'\')' for x in text_columns)
+            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-            self.engine.execute(f'UPDATE {tbl} SET {cols_query};')
+            self.engine.execute(f'UPDATE {table_name_} SET {cols_query};')
 
     def add_primary_keys(self, primary_keys, table_name, schema_name=None):
         """
@@ -1678,10 +1680,9 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.get_primary_keys`.
+            - Examples for the method
+              :meth:`PostgreSQL.get_primary_keys()<pyhelpers.dbms.PostgreSQL.get_primary_keys>`.
         """
-
-        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
         if primary_keys is not None:
             # If any null values in 'text' columns, replace null values with empty strings
@@ -1694,6 +1695,8 @@ class PostgreSQL:
                 primary_keys_ = '("{}")'.format(pri_keys[0])
             else:
                 primary_keys_ = str(tuple(pri_keys)).replace("'", '"')
+
+            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
             self.engine.execute(f'ALTER TABLE {table_name_} ADD PRIMARY KEY {primary_keys_};')
 
@@ -1802,7 +1805,8 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.create_table`.
+            - Examples for the method
+              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -1915,7 +1919,8 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
+            - Examples for the method
+              :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`.
         """
 
         _import_data(
@@ -2165,7 +2170,8 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.PostgreSQL.read_sql_query`.
+            - Examples for the method
+              :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -3613,7 +3619,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.MSSQL.read_table`.
+            - Examples for the method :meth:`MSSQL.read_table()<pyhelpers.dbms.MSSQL.read_table>`.
         """
 
         if index is True:
@@ -3671,7 +3677,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.MSSQL.read_table`.
+            - Examples for the method :meth:`MSSQL.read_table()<pyhelpers.dbms.MSSQL.read_table>`.
         """
 
         col_names = [column_names] if isinstance(column_names, str) else copy.copy(column_names)
@@ -3797,7 +3803,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.MSSQL.import_data`.
+            - Examples for the method :meth:`MSSQL.import_data()<pyhelpers.dbms.MSSQL.import_data>`.
         """
 
         if column_names is None:
@@ -3866,7 +3872,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :py:meth:`pyhelpers.dbms.MSSQL.create_table`.
+            - Examples for the method :meth:`MSSQL.create_table()<pyhelpers.dbms.MSSQL.create_table>`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
