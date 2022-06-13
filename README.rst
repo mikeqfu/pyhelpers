@@ -28,7 +28,20 @@ PyHelpers is an open-source Python package designed as a lite toolkit for facili
 Documentation
 #############
 
-The PyHelpers documentation is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
+The PyHelpers documentation (including detailed examples and a quick-start tutorial) is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
+
+Installation
+############
+
+To install the latest release of pyhelpers from `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://pip.pypa.io/en/stable/cli/pip/>`_:
+
+.. code-block:: console
+
+    pip install --upgrade pyhelpers
+
+.. note::
+
+    For more information, please also refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
 
 License
 #######
@@ -38,4 +51,19 @@ PyHelpers is licensed under `GNU General Public License v3 <https://github.com/m
 Cite as
 #######
 
-Qian Fu, 2020. PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
+Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
+
+.. code-block::
+
+    @software{qian_fu_pyhelpers_4017438,
+      author       = {Qian Fu},
+      title        = {{PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks}},
+      year         = 2020,
+      publisher    = {Zenodo},
+      doi          = {10.5281/zenodo.4017438},
+      url          = {https://doi.org/10.5281/zenodo.4017438}
+    }
+
+.. note::
+
+    Please also refer to the export options from `Zenodo <https://doi.org/10.5281/zenodo.4017438>`_ to reference the specific version as appropriate when using PyHelpers.
