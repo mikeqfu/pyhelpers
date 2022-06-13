@@ -35,13 +35,11 @@ Installation
 
 To install the latest release of pyhelpers from `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://pip.pypa.io/en/stable/cli/pip/>`_:
 
-.. code-block:: console
+.. code-block:: bash
 
     pip install --upgrade pyhelpers
 
-.. note::
-
-    For more information, please also refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
+**Note:** For more information, please also refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
 
 License
 #######
@@ -53,17 +51,15 @@ Cite as
 
 Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
 
-.. code-block::
+.. code-block:: bibtex
 
     @software{qian_fu_pyhelpers_4017438,
-      author       = {Qian Fu},
-      title        = {{PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks}},
-      year         = 2020,
-      publisher    = {Zenodo},
-      doi          = {10.5281/zenodo.4017438},
-      url          = {https://doi.org/10.5281/zenodo.4017438}
+      author    = {Qian Fu},
+      title     = {{PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks}},
+      year      = 2020,
+      publisher = {Zenodo},
+      doi       = {10.5281/zenodo.4017438},
+      url       = {https://doi.org/10.5281/zenodo.4017438}
     }
 
-.. note::
-
-    Please also refer to the export options from `Zenodo <https://doi.org/10.5281/zenodo.4017438>`_ to reference the specific version as appropriate when using PyHelpers.
+**Note:** Please also refer to the export options from `Zenodo <https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True>`_ to reference the specific version as appropriate when using PyHelpers.
