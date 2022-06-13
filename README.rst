@@ -55,7 +55,8 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
 
     @software{qian_fu_pyhelpers_4017438,
       author    = {Qian Fu},
-      title     = {{PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks}},
+      title     = {{PyHelpers: an open-source toolkit for facilitating
+                    Python users' data manipulation tasks}},
       year      = 2020,
       publisher = {Zenodo},
       doi       = {10.5281/zenodo.4017438},
