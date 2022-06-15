@@ -551,12 +551,8 @@ By default, the function relies on `difflib`_ - a Python built-in module - to pe
 
 .. note::
 
-    - The package `FuzzyWuzzy`_ is NOT an essential dependency for the installation of pyhelpers>=`1.3.0`_. We need to install it (e.g. via ``pip install``) to make the function run successfully with setting ``method='fuzzywuzzy'``.
-    - In previous versions of pyhelpers (i.e. <=`1.2.14`_), optional values for the parameter ``method`` include ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been replaced with ``'difflib'`` since `1.2.15`_.
-
-.. _`1.3.0`: https://pypi.org/project/pyhelpers/1.3.0/
-.. _`1.2.14`: https://pypi.org/project/pyhelpers/1.2.14/
-.. _`1.2.15`: https://pypi.org/project/pyhelpers/1.2.15/
+    - The package `FuzzyWuzzy`_ is NOT an essential dependency for the installation of pyhelpers>=1.3.0. We need to install it (e.g. via ``pip install``) to make the function run successfully with setting ``method='fuzzywuzzy'``.
+    - In previous versions of pyhelpers (i.e. pyhelpers<=1.2.14), optional values for the parameter ``method`` include ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been replaced with ``'difflib'`` since pyhelpers 1.2.15.
 
 
 
@@ -593,7 +589,7 @@ The parameter ``verbose`` is by default ``False``. If we set ``verbose=True``, t
 
 .. note::
 
-    - When ``verbose=True`` (or ``verbose=1``), the function requires an open-source package `tqdm`_, which is NOT an essential dependency for installing pyhelpers>=`1.2.15`_. We can just install the dependency package via ``pip install`` to make the function run successfully.
+    - When ``verbose=True`` (or ``verbose=1``), the function requires an open-source package `tqdm`_, which is NOT an essential dependency for installing pyhelpers>=1.2.15. We can just install the dependency package via ``pip install`` to make the function run successfully.
 
 .. _`tqdm`: https://pypi.org/project/tqdm/
 
