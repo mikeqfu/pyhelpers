@@ -108,7 +108,7 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
     :return: geographic Cartesian coordinate (Easting, Northing) or (X, Y)
-    :rtype: tuple
+    :rtype: tuple or numpy.ndarry
 
     .. _`pyproj.Transformer.transform`:
         https://pyproj4.github.io/pyproj/stable/api/transformer.html?
@@ -185,7 +185,7 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
     :return: geographic coordinate (Longitude, Latitude)
-    :rtype: tuple
+    :rtype: tuple or numpy.ndarry
 
     .. _`pyproj.Transformer.transform`:
         https://pyproj4.github.io/pyproj/stable/api/transformer.html?
