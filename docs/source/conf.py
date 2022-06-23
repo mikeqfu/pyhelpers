@@ -156,7 +156,7 @@ latex_maketitle = r'''
         \textbf{\Large {{Last updated:}}} \Large \MonthYearFormat\today \par
         
         \vspace{30mm}
-        \Large \textcopyright \space Copyright %s \par
+        \large \textcopyright \space Copyright %s \par
 
     \end{titlepage}
     \restoregeometry
