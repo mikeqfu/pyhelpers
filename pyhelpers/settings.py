@@ -12,7 +12,7 @@ from ._cache import _check_dependency
 # ==================================================================================================
 
 
-def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=True,
+def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
     Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_
@@ -20,8 +20,8 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
 
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
-    :param max_tmpfile_size: maximum size of the temporary file, defaults to ``5000``
-    :type max_tmpfile_size: int
+    :param max_tmpfile_size: maximum size of the temporary file, defaults to ``None``
+    :type max_tmpfile_size: int or None
     :param interleaved_reading: whether to enable interleaved reading, defaults to ``True``
     :type interleaved_reading: bool
     :param custom_indexing: whether to enable custom indexing, defaults to ``False``
@@ -55,8 +55,10 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
     osgeo_gdal = _check_dependency(name='osgeo.gdal')
 
     if reset is False:
+        max_tmpfile_size_ = 5000 if max_tmpfile_size is None else max_tmpfile_size
+
         # Max. size (MB) of in-memory temporary file. Defaults to 100.
-        osgeo_gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size))
+        osgeo_gdal.SetConfigOption('OSM_MAX_TMPFILE_SIZE', str(max_tmpfile_size_))
         # If it exceeds that value, it will go to disk.
 
         val_dict = {True: 'YES', False: 'NO'}
@@ -77,12 +79,14 @@ def gdal_configurations(reset=False, max_tmpfile_size=5000, interleaved_reading=
 # ==================================================================================================
 
 
-def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, legend_spacing=0.7,
-                    fig_style=None):
+def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font_size=13,
+                    legend_spacing=0.7, fig_style=None):
     """
     Alter some `Matplotlib parameters
     <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_.
 
+    :param backend: specify the backend used for rendering and GUI integration, defaults to ``None``
+    :type backend: str or None
     :param font_name: name of a font to be used, defaults to ``'Times New Roman'``
     :type font_name: None or str
     :param font_size: font size, defaults to ``13``
@@ -164,6 +168,9 @@ def mpl_preferences(reset=False, font_name='Times New Roman', font_size=13, lege
     """
 
     mpl, mpl_style = map(_check_dependency, ['matplotlib', 'matplotlib.style'])
+
+    if backend:
+        mpl.use(backend=backend)
 
     if reset is False:
         if fig_style is not None:
