@@ -6,5 +6,6 @@
     "Email": "q.fu@bham.ac.uk",
     "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
     "Version": "1.4.0",
-    "License": "GPLv3+"
+    "License": "GPLv3+",
+    "First release": "September 2019"
 }
