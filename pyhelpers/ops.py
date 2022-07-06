@@ -703,7 +703,10 @@ def update_dict(dictionary, updates, inplace=False):
 
     for key, val in updates.items():
         if isinstance(val, collections.abc.Mapping) or isinstance(val, dict):
-            updated_dict[key] = update_dict(dictionary.get(key, {}), val)
+            try:
+                updated_dict[key] = update_dict(dictionary.get(key, {}), val)
+            except TypeError:
+                updated_dict.update({key: val})
 
         elif isinstance(val, list):
             updated_dict[key] = (updated_dict.get(key, []) + val)
