@@ -1,4 +1,6 @@
-### Release history
+### Changelog / Release notes
+
+<br/>
 
 #### **[1.4.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.0)**
 
