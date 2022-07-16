@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 # == Project information ===========================================================================
 from pyhelpers import __affiliation__, __author__, __copyright__, __description__, __pkgname__, \
-    __project__, __version__
+    __project__, __version__, __first_release_date__
 
 # General information about the project:
 project = __project__
@@ -123,7 +123,7 @@ latex_documents = [
      ),
 ]
 
-affiliation_school, affiliation_univ = __affiliation__.split(', ')
+affil_school, affil_univ = __affiliation__.split(', ')
 
 # Custom title page:
 latex_maketitle = r'''
@@ -140,20 +140,18 @@ latex_maketitle = r'''
         \vspace{5mm}
         \textit{\Large {{%s}}} \par
         \vspace{5mm}
-        \textbf{\textit{\LARGE {{Release %s}}}} \par
+        \LARGE \textbf{\textit{{Release %s}}} \par
 
         \vspace{45mm}
         \LARGE \textbf{{%s}} \par
+        \Large \textit{{%s}} \par
+        \Large \textit{{%s}} \par
 
-        \vspace{5mm}
-        \textit{\Large {{%s}}} \par
-        \textit{\Large {{%s}}} \par
-
-        \vspace{35mm}
-        \textbf{\Large {{First release:}}} \Large {{September 2019}} \par
-        \textbf{\Large {{Last updated:}}} \Large \MonthYearFormat\today \par
+        \vspace{50mm}
+        \Large {{First release:}} \large \textbf{{%s}} \par
+        \Large {{Last updated:}} \large \textbf{{\MonthYearFormat\today}} \par
         
-        \vspace{30mm}
+        \vspace{20mm}
         \large \textcopyright \space Copyright %s \par
 
     \end{titlepage}
@@ -180,13 +178,15 @@ latex_maketitle = r'''
 
     \clearpage
     \pagenumbering{arabic}
-    ''' % (__project__,
-           __description__.rstrip('.'),
-           release,
-           __author__,
-           affiliation_school,
-           affiliation_univ,
-           __copyright__)
+    ''' % (
+    project,
+    __description__.rstrip('.'),
+    release,
+    __author__,
+    affil_school,
+    affil_univ,
+    __first_release_date__,
+    copyright)
 
 latex_preamble = r'''
     \setlength{\headheight}{14pt}
