@@ -1880,11 +1880,11 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
 
     **Examples**::
 
-        from pyhelpers.ops import _user_agent_strings
+        >>> from pyhelpers.ops import _user_agent_strings
 
-        uas = _user_agent_strings()
-        list(uas.keys())
-        # ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+        >>> uas = _user_agent_strings()
+        >>> list(uas.keys())
+        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
     """
 
     if browser_names is None:
