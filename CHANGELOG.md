@@ -2,6 +2,20 @@
 
 <br/>
 
+#### **[1.4.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.1)**
+
+(*17 July 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.0...1.4.1) since [1.4.0](https://pypi.org/project/pyhelpers/1.4.0/):**
+
+- Improved the following functions (with bug fixes):
+  - [update_dict()](https://github.com/mikeqfu/pyhelpers/commit/f7f8e65dd90282d4bfe2b5c286be0c5d10deafd1) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/418df28afa37cf18afc9b91de011400762b063f2/pyhelpers/ops.py);
+  - [gdal_configurations()](https://github.com/mikeqfu/pyhelpers/commit/d6b2cdfb53627d7dfceaa2e7fd1b742a5c75eea8#diff-8e1ccefca5009c849b1e96129b63e9dc483acfa1049605b6872c49e549d71793R15) and [mpl_preferences()](https://github.com/mikeqfu/pyhelpers/commit/d6b2cdfb53627d7dfceaa2e7fd1b742a5c75eea8#diff-8e1ccefca5009c849b1e96129b63e9dc483acfa1049605b6872c49e549d71793R82) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/418df28afa37cf18afc9b91de011400762b063f2/pyhelpers/settings.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.1 documentation](https://pyhelpers.readthedocs.io/en/1.4.1/).**
+
+<br/>
+
 #### **[1.4.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.0)**
 
 (*13 June 2022*)
