@@ -23,12 +23,7 @@ PyHelpers
     :alt: Zenodo - DOI
     :target: https://zenodo.org/badge/latestdoi/173177909
 
-PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL).
-
-Documentation
-#############
-
-The PyHelpers documentation (including detailed examples and a quick-start tutorial) is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
+PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL and Microsoft SQL Server).
 
 Installation
 ############
@@ -39,7 +34,12 @@ To install the latest release of pyhelpers from `PyPI <https://pypi.org/project/
 
     pip install --upgrade pyhelpers
 
-**Note:** For more information, please also refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
+For more information, please refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
+
+Documentation
+#############
+
+The full PyHelpers documentation (including detailed examples and a quick-start tutorial) is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
 
 License
 #######
