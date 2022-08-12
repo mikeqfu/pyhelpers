@@ -554,7 +554,7 @@ def _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs):
     return sim_str
 
 
-def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='difflib', **kwargs):
+def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='difflib', **kwargs):
     """
     From among a sequence of strings, find ``n`` ones that are similar to ``x``.
 
@@ -565,17 +565,17 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
     :param n: number of similar strings to return, defaults to ``1``;
         if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
     :type n: int or None
-    :param method: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
+    :param engine: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
 
-        - if ``method='difflib'``, the function relies on `difflib.get_close_matches`_
-        - if ``method='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if ``engine='difflib'``, the function relies on `difflib.get_close_matches`_
+        - if ``engine='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type method: str or types.FunctionType
+    :type engine: str or types.FunctionType
 
     :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
     :type ignore_punctuation: bool
     :param kwargs: [optional] parameters (e.g. ``cutoff=0.6``) of `difflib.get_close_matches`_ or
-        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``method``
+        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``engine``
     :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str or list or None
 
@@ -588,7 +588,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
 
         - By default, the function uses the built-in module
           `difflib <https://docs.python.org/3/library/difflib.html>`_; when we set the parameter
-          ``method='fuzzywuzzy'``, the function then relies on
+          ``engine='fuzzywuzzy'``, the function then relies on
           `FuzzyWuzzy <https://pypi.org/project/fuzzywuzzy/>`_, which is not an essential dependency
           for installing pyhelpers. We could however use ``pip`` (or ``conda``) to install it first
           separately.
@@ -615,10 +615,10 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         >>> y
         ['Anglia', 'Wales']
 
-        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, method='fuzzywuzzy')
+        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='fuzzywuzzy')
         >>> y
         'Anglia'
-        >>> y = find_similar_str('angle', lookup_lst, n=2, method='fuzzywuzzy')
+        >>> y = find_similar_str('angle', lookup_lst, n=2, engine='fuzzywuzzy')
         >>> y
         ['Anglia', 'Wales']
 
@@ -632,26 +632,26 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, method='diffl
         >>> y
         'Wessex'
 
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, method='fuzzywuzzy')
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzzywuzzy')
         >>> y
         'Wessex'
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, method='fuzzywuzzy')
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzzywuzzy')
         >>> y
         ['Wessex', 'Western']
     """
 
     methods = {'difflib', 'fuzzywuzzy', None}
-    assert method in methods or callable(method), \
-        "Invalid input: `method`. Valid options can include {}.".format(methods)
+    assert engine in methods or callable(engine), \
+        "Invalid input: `engine`. Valid options can include {}.".format(methods)
 
-    if method == 'difflib' or method is None:
+    if engine == 'difflib' or engine is None:
         sim_str = _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs)
 
-    elif method == 'fuzzywuzzy':
+    elif engine == 'fuzzywuzzy':
         sim_str = _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs)
 
-    elif callable(method):
-        sim_str = method(x, lookup_list, **kwargs)
+    elif callable(engine):
+        sim_str = engine(x, lookup_list, **kwargs)
 
     else:
         sim_str = None
