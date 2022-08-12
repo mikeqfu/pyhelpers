@@ -1078,7 +1078,7 @@ def save_data(data, path_to_file, warning=True, **kwargs):
 
     path_to_file_ = path_to_file.lower()
 
-    if path_to_file_.endswith(".pickle"):
+    if path_to_file_.endswith((".pkl", ".pickle")):
         save_pickle(data, path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
@@ -1087,10 +1087,10 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     elif path_to_file_.endswith(".json"):
         save_json(data, path_to_file, **kwargs)
 
-    elif path_to_file_.endswith(".joblib"):
+    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
         save_joblib(data, path_to_file, **kwargs)
 
-    elif path_to_file_.endswith(".feather"):
+    elif path_to_file_.endswith((".fea", ".feather")):
         save_feather(data, path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".pdf"):
