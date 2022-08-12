@@ -2,7 +2,7 @@ alabaster==0.7.12
 anyio==3.6.1
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
-asttokens==2.0.5
+asttokens==2.0.7
 attrs==22.1.0
 Babel==2.10.3
 backcall==0.2.0
@@ -39,7 +39,7 @@ jedi==0.18.1
 Jinja2==3.1.2
 joblib==1.1.0
 json5==0.9.9
-jsonschema==4.9.0
+jsonschema==4.9.1
 jupyter==1.0.0
 jupyter-client==7.3.4
 jupyter-console==6.4.4
@@ -49,7 +49,7 @@ jupyterlab==3.4.5
 jupyterlab-pygments==0.2.2
 jupyterlab-server==2.15.0
 jupyterlab-widgets==1.1.1
-keyring==23.7.0
+keyring==23.8.2
 kiwisolver==1.4.4
 lxml==4.9.1
 MarkupSafe==2.1.1
@@ -93,15 +93,15 @@ pyrsistent==0.18.1
 python-dateutil==2.8.2
 python-Levenshtein==0.12.2
 python-rapidjson==1.8
-pytz==2022.1
+pytz==2022.2
 pywin32==304
 pywin32-ctypes==0.2.0
 pywinpty==2.0.5
 pyxlsb==1.0.9
-pyzmq==23.2.0
+pyzmq==23.2.1
 qtconsole==5.3.1
-QtPy==2.1.0
-readme-renderer==35.0
+QtPy==2.2.0
+readme-renderer==36.0
 regex==2022.7.25
 requests==2.28.1
 requests-toolbelt==0.9.1
