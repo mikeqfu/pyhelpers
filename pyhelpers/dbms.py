@@ -1433,6 +1433,7 @@ class PostgreSQL:
         column_dtypes_ = self.engine.execute(query).fetchall()
 
         if len(column_dtypes_) > 0:
+            # noinspection PyTypeChecker
             column_dtypes = dict(column_dtypes_)
         else:
             column_dtypes = None

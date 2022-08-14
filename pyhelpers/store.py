@@ -48,15 +48,15 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
         ...     print(e)
         The input for `path_to_file` may not be a file path.
 
-        >>> file_path = cd("test_store.py")
+        >>> file_path = cd("pyhelpers.pdf")
         >>> _check_path_to_file(file_path, verbose=True)
         >>> print("Passed.")
-        Saving "test_store.py" ... Pass.
+        Saving "pyhelpers.pdf" ... Passed.
 
-        >>> file_path = cd("tests", "test_store.py")
+        >>> file_path = cd("tests\\documents", "pyhelpers.pdf")
         >>> _check_path_to_file(file_path, verbose=True)
         >>> print("Passed.")
-        Updating "test_store.py" at "tests\\" ... Passed.
+        Saving "pyhelpers.pdf" to "tests\\" ... Passed.
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
@@ -105,6 +105,27 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
 
 
 def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
+    """
+    Check about loading a file from a specified pathname.
+
+    :param path_to_file: path where a file is saved
+    :type path_to_file: str or pathlib.Path
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool or int
+    :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
+    :type verbose_end: str
+
+    **Tests**::
+
+        >>> from pyhelpers.store import _check_loading_path
+        >>> from pyhelpers.dirs import cd
+
+        >>> file_path = cd("test_func.py")
+        >>> _check_loading_path(file_path, verbose=True)
+        >>> print("Passed.")
+        Loading "test_func.py" ... Passed.
+    """
+
     if verbose:
         rel_pathname = _check_rel_pathname(path_to_file)
         print("Loading \"{}\"".format(rel_pathname), end=verbose_end)
@@ -146,6 +167,47 @@ def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
 
 
 def _set_index(df, index=None):
+    """
+    Set index of a dataframe.
+
+    :param df: any dataframe
+    :type df: pandas.DataFrame
+    :param index: column index or a list of column indices, defaults to ``None``;
+        when ``index=None``, set the first column to be the index if the column name is an empty string
+    :type index: int or list or None
+    :return: an updated dataframe
+    :rtype: pandas.DataFrame
+
+    **Tests**::
+
+        >>> from pyhelpers.store import _set_index
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> example_df.equals(_set_index(example_df))
+        True
+
+        >>> example_df_ = _set_index(example_df, index=0)
+        >>> example_df_
+                    Latitude
+        Longitude
+        -0.127647  51.507322
+        -1.902691  52.479699
+        -2.245115  53.479489
+        -1.543794  53.797418
+
+        >>> example_df.iloc[:, 0].to_list() == example_df_.index.to_list()
+        True
+    """
+
     data = df.copy()
 
     if index is None:
@@ -224,7 +286,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e))
+        print("Failed. {}".format(e))
 
 
 # Spreadsheets
@@ -314,7 +376,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
 
     except Exception as e:
         if verbose:
-            print("Failed. {}.".format(e.args[0]))
+            print("Failed. {}".format(e.args[0]))
 
 
 def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w', index=False,
@@ -421,7 +483,7 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
             if sheet_name_ in sheet_names:
                 msg_ = "Done."
             else:
-                msg_ = "saved as '{}' ... Done. ".format(sheet_name_)
+                msg_ = "saved as '{}' ... Done.".format(sheet_name_)
 
             if verbose:
                 print(msg_)
@@ -452,7 +514,7 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
 
 # JSON files
 
-def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
+def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
@@ -460,15 +522,15 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
     :type path_to_json: str or os.PathLike[str]
-    :param method: an open-source module used for JSON serialization, options include
+    :param engine: an open-source module used for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
-    :type method: str or None
+    :type engine: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `json.dump()`_ (if ``method=None``),
-        `orjson.dumps()`_ (if ``method='orjson'``), `ujson.dump()`_ (if ``method='ujson'``) or
-        `rapidjson.dump()`_ (if ``method='rapidjson'``)
+    :param kwargs: [optional] parameters of `json.dump()`_ (if ``engine=None``),
+        `orjson.dumps()`_ (if ``engine='orjson'``), `ujson.dump()`_ (if ``engine='ujson'``) or
+        `rapidjson.dump()`_ (if ``engine='rapidjson'``)
 
     .. _`json module`: https://docs.python.org/3/library/json.html
     .. _`UltraJSON`: https://pypi.org/project/ujson/
@@ -514,13 +576,13 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
-        >>> save_json(json_dat, json_pathname, method='orjson', verbose=True)
+        >>> save_json(json_dat, json_pathname, engine='orjson', verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
-        >>> save_json(json_dat, json_pathname, method='ujson', indent=4, verbose=True)
+        >>> save_json(json_dat, json_pathname, engine='ujson', indent=4, verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
-        >>> save_json(json_dat, json_pathname, method='rapidjson', indent=4, verbose=True)
+        >>> save_json(json_dat, json_pathname, engine='rapidjson', indent=4, verbose=True)
         Updating "dat.json" at "tests\\data\\" ... Done.
 
     .. seealso::
@@ -528,17 +590,17 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
         - Examples for the function :py:func:`pyhelpers.store.load_json`.
     """
 
-    if method is not None:
-        valid_methods = {'ujson', 'orjson', 'rapidjson'}
-        assert method in valid_methods, f"`method` must be on one of {valid_methods}"
-        mod = _check_dependency(name=method)
+    if engine is not None:
+        valid_engines = {'ujson', 'orjson', 'rapidjson'}
+        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
+        mod = _check_dependency(name=engine)
     else:
         mod = sys.modules.get('json')
 
     _check_path_to_file(path_to_json, verbose=verbose, ret_info=False)
 
     try:
-        if method == 'orjson':
+        if engine == 'orjson':
             with open(path_to_json, mode='wb') as json_out:
                 json_out.write(mod.dumps(json_data, **kwargs))
 
@@ -550,7 +612,7 @@ def save_json(json_data, path_to_json, method=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e))
+        print("Failed. {}".format(e))
 
 
 # Joblib
@@ -626,7 +688,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}.".format(e))
+        print("Failed. {}".format(e))
 
 
 # Feather files
@@ -691,7 +753,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
 
     except Exception as e:
         if verbose:
-            print("Failed. {}.".format(e))
+            print("Failed. {}".format(e))
 
 
 # Images
@@ -873,7 +935,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
     except Exception as e:
         if verbose:
-            print("Failed. {}.".format(e))
+            print("Failed. {}".format(e))
 
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
@@ -1330,7 +1392,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
         except Exception as e:
             sheet_dat = None
             if verbose:
-                print("Failed. {}.".format(e))
+                print("Failed. {}".format(e))
 
         workbook_dat.append(sheet_dat)
 
@@ -1344,21 +1406,21 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     return workbook_data
 
 
-def load_json(path_to_json, method=None, verbose=False, **kwargs):
+def load_json(path_to_json, engine=None, verbose=False, **kwargs):
     """
     Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
     :type path_to_json: str or os.PathLike[str]
-    :param method: an open-source Python package for JSON serialization, options include
+    :param engine: an open-source Python package for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
-    :type method: str or None
+    :type engine: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `json.load()`_ (if ``method=None``),
-        `orjson.loads()`_ (if ``method='orjson'``), `ujson.load()`_ (if ``method='ujson'``) or
-        `rapidjson.load()`_ (if ``method='rapidjson'``)
+    :param kwargs: [optional] parameters of `json.load()`_ (if ``engine=None``),
+        `orjson.loads()`_ (if ``engine='orjson'``), `ujson.load()`_ (if ``engine='ujson'``) or
+        `rapidjson.load()`_ (if ``engine='rapidjson'``)
     :return: data retrieved from the specified path ``path_to_json``
     :rtype: dict
 
@@ -1391,17 +1453,17 @@ def load_json(path_to_json, method=None, verbose=False, **kwargs):
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
     """
 
-    if method is not None:
-        valid_methods = {'ujson', 'orjson', 'rapidjson'}
-        assert method in valid_methods, f"`method` must be on one of {valid_methods}"
-        mod = _check_dependency(name=method)
+    if engine is not None:
+        valid_engines = {'ujson', 'orjson', 'rapidjson'}
+        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
+        mod = _check_dependency(name=engine)
     else:
         mod = sys.modules.get('json')
 
     _check_loading_path(path_to_file=path_to_json, verbose=verbose)
 
     try:
-        if method == 'orjson':
+        if engine == 'orjson':
             with open(path_to_json, mode='rb') as json_in:
                 json_data = mod.loads(json_in.read(), **kwargs)
 
@@ -1597,8 +1659,8 @@ def load_data(path_to_file, warning=True, **kwargs):
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
 
-        >>> dat_pathname = cd(data_dir, "dat.pickle")
-        >>> csv_dat = load_data(path_to_file=dat_pathname, verbose=True)
+        >>> dat_pathname = cd(data_dir, "dat.csv")
+        >>> csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
         Loading "tests\\data\\dat.csv" ... Done.
         >>> csv_dat
                     Longitude   Latitude
@@ -1867,7 +1929,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 # ==================================================================================================
 
 
-def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbose=False, **kwargs):
+def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbose=False, **kwargs):
     """
     Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
     to a `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
@@ -1880,17 +1942,17 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
     :type path_to_md: str
     :param path_to_rst: path where a reStructuredText file is saved
     :type path_to_rst: str
-    :param method: method used for performing the conversion, defaults to ``None``;
+    :param engine: engine/module used for performing the conversion, defaults to ``None``;
         an alternative option is ``'pypandoc'``
-    :type method: None or str
+    :type engine: None or str
     :param pandoc_exe: absolute path to the executable "pandoc.exe", defaults to ``None``;
         when ``pandoc_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\Pandoc\\\\pandoc.exe*"
     :type pandoc_exe: str or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `subprocess.run`_ (when ``method=None``) or
-        `pypandoc.convert_file`_ (when ``method='pypandoc'``)
+    :param kwargs: [optional] parameters of `subprocess.run`_ (when ``engine=None``) or
+        `pypandoc.convert_file`_ (when ``engine='pypandoc'``)
 
     .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     .. _`pypandoc.convert_file`: https://github.com/NicklasTegner/pypandoc#usage
@@ -1927,7 +1989,7 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
         print(msg, end=" ... ")
 
     try:
-        if method is None:
+        if engine is None:
             if pandoc_exists:
                 # subprocess.run(
                 #     f'"{pandoc_exe_}" "{abs_md_path}" -f markdown -t rst -s -o "{abs_rst_path}"')
@@ -1953,10 +2015,10 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
             elif ret_code == -1:
                 print(
                     "Failed."
-                    "\n\"Pandoc\" is required to proceed with `method=None`; "
+                    "\n\"Pandoc\" is required to proceed with `engine=None`; "
                     "however, it is not found on this device."
                     "\nInstall it (https://pandoc.org/) and then try again; "
-                    "or, try instead `method='pypandoc'`")
+                    "or, try instead `engine='pypandoc'`")
             else:
                 print("Failed.")
 
@@ -1964,7 +2026,7 @@ def markdown_to_rst(path_to_md, path_to_rst, method=None, pandoc_exe=None, verbo
         print("An error occurred: {}".format(e))
 
 
-def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replace', vbscript=None,
+def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
@@ -1980,22 +2042,22 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
         the target CSV file is generated at the same directory where the source Excel spreadsheet is;
         otherwise, it could also be a specific pathname
     :type csv_pathname: str or None
-    :param method: method used for converting .xlsx/.xls to .csv;
-        when ``method=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
-        when ``method='xlsx2csv'``, the function would rely on `xlsx2csv`_
-    :type method: str or None
+    :param engine: engine used for converting .xlsx/.xls to .csv;
+        when ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
+        when ``engine='xlsx2csv'``, the function would rely on `xlsx2csv`_
+    :type engine: str or None
     :param if_exists: how to proceed if the target ``csv_pathname`` exists, defaults to ``'replace'``
     :type if_exists: str
     :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
     :type vbscript: str or None
     :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
     :type sheet_name: str
-    :param ret_null: whether to return something depending on the specified ``method``,
+    :param ret_null: whether to return something depending on the specified ``engine``,
         defaults to ``False``
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :return: the pathname of the generated CSV file or None, when ``method=None``;
-        `io.StringIO`_ buffer, when ``method='xlsx2csv'``
+    :return: the pathname of the generated CSV file or None, when ``engine=None``;
+        `io.StringIO`_ buffer, when ``engine='xlsx2csv'``
     :rtype: str or _io.StringIO or None
     :param kwargs: [optional] parameters of the function `subprocess.run`_
 
@@ -2035,7 +2097,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
             rel_path = copy.copy(xlsx_pathname)
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
-    if method is None:
+    if engine is None:
 
         if vbscript is None:
             vbscript = pkg_resources.resource_filename(__name__, "data/xlsx2csv.vbs")
@@ -2067,7 +2129,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, method=None, if_exists='replac
         if not ret_null and ret_code == 0:
             return csv_pathname_
 
-    elif method == 'xlsx2csv':
+    elif engine == 'xlsx2csv':
         xlsx_to_csv_ = _check_dependency(name='xlsx2csv')
 
         buffer = io.StringIO()

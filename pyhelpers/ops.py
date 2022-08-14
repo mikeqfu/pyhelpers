@@ -1092,22 +1092,19 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
 
         >>> from pyhelpers.ops import parse_csr_matrix
         >>> from pyhelpers.dirs import cd
-        >>> import numpy
-        >>> import scipy.sparse
+        >>> from scipy.sparse import csr_matrix, save_npz
 
-        >>> data_ = numpy.array([1, 2, 3, 4, 5, 6])
-        >>> indices_ = numpy.array([0, 2, 2, 0, 1, 2])
-        >>> indptr_ = numpy.array([0, 2, 3, 6])
+        >>> data_ = [1, 2, 3, 4, 5, 6]
+        >>> indices_ = [0, 2, 2, 0, 1, 2]
+        >>> indptr_ = [0, 2, 3, 6]
 
-        >>> csr_m = scipy.sparse.csr_matrix((data_, indices_, indptr_), shape=(3, 3))
+        >>> csr_m = csr_matrix((data_, indices_, indptr_), shape=(3, 3))
         >>> csr_m
         <3x3 sparse matrix of type '<class 'numpy.int32'>'
             with 6 stored elements in Compressed Sparse Row format>
 
         >>> path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
-        >>> numpy.savez_compressed(path_to_csr_npz, indptr=csr_m.indptr,
-        ...                        indices=csr_m.indices, data=csr_m.data,
-        ...                        shape=csr_m.shape)
+        >>> save_npz(path_to_csr_npz, csr_m)
 
         >>> parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
         Loading "\\tests\\data\\csr_mat.npz" ... Done.
