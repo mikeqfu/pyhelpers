@@ -1245,12 +1245,13 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     :type index: str or int or list or None
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `csv.reader`_
+    :param kwargs: [optional] parameters of `csv.reader()`_ or `pandas.read_csv()`_
     :return: data retrieved from the specified path ``path_to_csv``
     :rtype: pandas.DataFrame or None
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
-    .. _`csv.reader`: https://docs.python.org/3/library/pickle.html#pickle.load
+    .. _`csv.reader()`: https://docs.python.org/3/library/pickle.html#pickle.load
+    .. _`pandas.read_csv()`: https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
 
     .. note::
 
@@ -1311,6 +1312,11 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
 
         if verbose:
             print("Done.")
+
+        return csv_data
+
+    except TypeError:
+        csv_data = pd.read_csv(path_to_csv, index_col=index, **kwargs)
 
         return csv_data
 
