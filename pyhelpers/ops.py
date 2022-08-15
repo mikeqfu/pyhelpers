@@ -943,6 +943,7 @@ def merge_dicts(*dicts):
         >>> dict_1 = merged_dict
         >>> dict_2 = {'b': 2, 'c': 4, 'd': [5, 6]}
         >>> merged_dict = merge_dicts(dict_1, dict_2)
+        >>> merged_dict
         {'a': 1, 'b': 2, 'c': [[3, 4], 4], 'd': [5, 6]}
     """
 

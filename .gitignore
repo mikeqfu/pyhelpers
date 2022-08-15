@@ -13,7 +13,11 @@ venv/
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
-# Testing
+# Unit test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
 .pytest_cache/
 
 # PyHelpers
@@ -22,4 +26,5 @@ tests/*
 !tests/data/
 !tests/documents/
 !tests/images/
+!tests/*.py
 .pypirc
