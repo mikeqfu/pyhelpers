@@ -123,7 +123,7 @@ latex_documents = [
      ),
 ]
 
-affil_school, affil_univ = __affiliation__.split(', ')
+affil_centre, affil_school, affil_univ = __affiliation__.split(', ')
 
 # Custom title page:
 latex_maketitle = r'''
@@ -144,6 +144,7 @@ latex_maketitle = r'''
 
         \vspace{45mm}
         \LARGE \textbf{{%s}} \par
+        \Large \textit{{%s}} \par
         \Large \textit{{%s}} \par
         \Large \textit{{%s}} \par
 
@@ -183,6 +184,7 @@ latex_maketitle = r'''
     __description__.rstrip('.'),
     release,
     __author__,
+    affil_centre,
     affil_school,
     affil_univ,
     __first_release_date__,
