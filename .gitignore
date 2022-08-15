@@ -13,6 +13,9 @@ venv/
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+# Testing
+.pytest_cache/
+
 # PyHelpers
 .idea
 tests/*
