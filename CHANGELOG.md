@@ -2,6 +2,21 @@
 
 <br/>
 
+#### **[1.4.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.2)**
+
+(*15 August 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.1...1.4.2) since [1.4.1](https://pypi.org/project/pyhelpers/1.4.1/):**
+
+- Renamed the parameter `method` to `engine` for the following functions:
+  - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/fcbdb567fe8036cfa7bfe6d482813680145420e3) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/3183819823fa105924ae465e8f4f354a6de7cc34/pyhelpers/text.py);
+  - [save_json()](https://github.com/mikeqfu/pyhelpers/commit/417967c04c3534ddda35db96340ead6f051ac61b#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L455-R517), [load_json()](https://github.com/mikeqfu/pyhelpers/commit/417967c04c3534ddda35db96340ead6f051ac61b#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L1347-R1409), [markdown_to_rst()](https://github.com/mikeqfu/pyhelpers/commit/417967c04c3534ddda35db96340ead6f051ac61b#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L1870-R1932) and [xlsx_to_csv()](https://github.com/mikeqfu/pyhelpers/commit/417967c04c3534ddda35db96340ead6f051ac61b#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L1967-R2029) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/3183819823fa105924ae465e8f4f354a6de7cc34/pyhelpers/store.py).
+- Improved the functions [save_data()](https://github.com/mikeqfu/pyhelpers/commit/d57fa7f80a2b4f37bc80c986b5ec01ae6a6d7166), [load_csv()](https://github.com/mikeqfu/pyhelpers/commit/e3834f81b39bdc2e8c6f68085bf812e1541f43c8), [load_data()](https://github.com/mikeqfu/pyhelpers/commit/78889395cfbc6f133298aa1fe0daa06f21c85bac) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/3183819823fa105924ae465e8f4f354a6de7cc34/pyhelpers/store.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.2 documentation](https://pyhelpers.readthedocs.io/en/1.4.2/).**
+
+<br/>
+
 #### **[1.4.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.1)**
 
 (*17 July 2022*)
