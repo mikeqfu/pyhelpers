@@ -1711,7 +1711,7 @@ def load_data(path_to_file, warning=True, **kwargs):
 
     path_to_file_ = path_to_file.lower()
 
-    if path_to_file_.endswith(".pickle"):
+    if path_to_file_.endswith((".pkl", ".pickle")):
         data = load_pickle(path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".csv", ".txt")):
@@ -1723,10 +1723,10 @@ def load_data(path_to_file, warning=True, **kwargs):
     elif path_to_file_.endswith(".json"):
         data = load_json(path_to_file, **kwargs)
 
-    elif path_to_file_.endswith(".joblib"):
+    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
         data = load_joblib(path_to_file, **kwargs)
 
-    elif path_to_file_.endswith(".feather"):
+    elif path_to_file_.endswith((".fea", ".feather")):
         data = load_feather(path_to_file, **kwargs)
 
     else:
