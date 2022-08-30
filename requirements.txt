@@ -4,10 +4,10 @@ gdal==3.4.3
 jupyter==1.0.0
 jupyterlab==3.4.5
 matplotlib==3.5.3
-networkx==2.8.5
+networkx==2.8.6
 nltk==3.7
 openpyxl==3.0.10
-orjson==3.7.12
+orjson==3.8.0
 pandas==1.4.3
 pdfkit==1.0.0
 pip-chill==1.0.1
@@ -21,7 +21,7 @@ python-levenshtein==0.12.2
 python-rapidjson==1.8
 pyxlsb==1.0.9
 scikit-learn==1.1.2
-shapely==1.8.2
+shapely==1.8.4
 sphinx-copybutton==0.5.0
 sphinx-rtd-theme==1.0.0
 sqlalchemy==1.4.40
