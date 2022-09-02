@@ -2,8 +2,10 @@
 
 import collections.abc
 import copy
+import errno
 import os
 import pathlib
+import re
 import shutil
 
 import pkg_resources
@@ -240,9 +242,12 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
 
 def is_dir(path_to_dir):
     """
-    Check whether a directory-like string is a directory name.
+    Check whether a directory-like string is a (valid) directory name.
 
-    :param path_to_dir: name of a directory
+    See also [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and
+    [`DIRS-IVD-2 <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
+
+    :param path_to_dir: pathname of a directory
     :type path_to_dir: str or bytes
     :return: whether the input is a path-like string that describes a directory name
     :rtype: bool
@@ -264,10 +269,30 @@ def is_dir(path_to_dir):
         True
     """
 
-    if os.path.dirname(path_to_dir):
-        return True
-    else:
+    try:
+        root_dirname_, pathname_ = os.path.splitdrive(path_to_dir)
+
+        root_dirname = root_dirname_ if root_dirname_ else '.'
+        root_dirname += os.path.sep
+
+        for pathname_part in re.split(r'[\\/]', pathname_):
+            try:
+                os.lstat(root_dirname + pathname_part)
+            except OSError as exc:
+                if hasattr(exc, 'winerror'):
+                    if exc.winerror == 123:  # ERROR_INVALID_NAME
+                        return False
+                elif exc.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
+                    return False
+
+    except TypeError:
         return False
+
+    else:
+        if os.path.dirname(path_to_dir):
+            return True
+        else:
+            return False
 
 
 def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
