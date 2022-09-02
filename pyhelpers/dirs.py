@@ -96,15 +96,27 @@ def go_from_altered_cwd(dir_name, **kwargs):
         >>> from pyhelpers.dirs import go_from_altered_cwd
         >>> import os
 
-        >>> cwd = os.getcwd()
-        >>> cwd
+        >>> init_cwd = os.getcwd()
+        >>> init_cwd
         '<cwd>'
 
-        >>> # If the current working directory has been altered to "<cwd>\\test", and
-        >>> # we'd like to set it to be "<cwd>\\target"
-        >>> a_cwd = go_from_altered_cwd(dir_name="target")
-        >>> a_cwd
-        '<cwd>\\target'
+        >>> # Change the current working directory to "/new_cwd"
+        >>> new_cwd = "\\new_cwd"
+        >>> os.mkdir(new_cwd)
+        >>> os.chdir(new_cwd)
+
+        >>> # Get the full path to a folder named "tests"
+        >>> path_to_tests = go_from_altered_cwd(dir_name="tests")
+        >>> path_to_tests
+        '<new_cwd>\\tests'
+
+        >>> # Get the full path to a directory one level above the current working directory
+        >>> path_to_tests_ = go_from_altered_cwd(dir_name="\\tests")
+        >>> path_to_tests_ == os.path.join(os.path.dirname(os.getcwd()), "tests")
+        True
+
+        >>> os.chdir(init_cwd)
+        >>> os.rmdir(new_cwd)
     """
 
     dir_name_ = dir_name.decode() if isinstance(dir_name, bytes) else dir_name
@@ -214,7 +226,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
         >>> path_to_dat_dir = cd_data("tests", mkdir=False)
 
         >>> os.path.relpath(path_to_dat_dir)
-        'src\\pyhelpers\\data\\tests'
+        'pyhelpers\\data\\tests'
     """
 
     data_dir_ = data_dir.decode() if isinstance(data_dir, bytes) else str(data_dir)
