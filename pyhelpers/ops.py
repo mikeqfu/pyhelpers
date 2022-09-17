@@ -991,7 +991,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         Manchester   383819    398052
         Leeds        582044    152953
 
-        >>> dat.loc['Leeds', 'Northing'] = None
+        >>> dat.loc['Leeds', 'Latitude'] = None
         >>> dat
                     Easting  Northing
         City
@@ -1161,24 +1161,24 @@ def swap_cols(array, c1, c2, as_list=False):
         >>> from pyhelpers.ops import swap_cols
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> example_arr = example_dataframe().to_numpy(dtype=int)
+        >>> example_arr = example_dataframe(osgb36=True).to_numpy(dtype=int)
         >>> example_arr
-        array([[530034, 180381],
-               [406689, 286822],
-               [383819, 398052],
-               [582044, 152953]])
+        array([[530039, 180371],
+               [406705, 286868],
+               [383830, 398113],
+               [430147, 433553]])
 
         >>> # Swap the 0th and 1st columns
         >>> new_arr = swap_cols(example_arr, c1=0, c2=1)
         >>> new_arr
-        array([[180381, 530034],
-               [286822, 406689],
-               [398052, 383819],
-               [152953, 582044]])
+        array([[180371, 530039],
+               [286868, 406705],
+               [398113, 383830],
+               [433553, 430147]])
 
         >>> new_list = swap_cols(example_arr, c1=0, c2=1, as_list=True)
         >>> new_list
-        [[180381, 530034], [286822, 406689], [398052, 383819], [152953, 582044]]
+        [[180371, 530039], [286868, 406705], [398113, 383830], [433553, 430147]]
     """
 
     array_ = array.copy()
@@ -1210,24 +1210,24 @@ def swap_rows(array, r1, r2, as_list=False):
         >>> from pyhelpers.ops import swap_rows
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> example_arr = example_dataframe().to_numpy(dtype=int)
+        >>> example_arr = example_dataframe(osgb36=True).to_numpy(dtype=int)
         >>> example_arr
-        array([[530034, 180381],
-               [406689, 286822],
-               [383819, 398052],
-               [582044, 152953]])
+        array([[406705, 286868],
+               [530039, 180371],
+               [383830, 398113],
+               [430147, 433553]])
 
         >>> # Swap the 0th and 1st rows
         >>> new_arr = swap_rows(example_arr, r1=0, r2=1)
         >>> new_arr
-        array([[406689, 286822],
-               [530034, 180381],
-               [383819, 398052],
-               [582044, 152953]])
+        array([[406705, 286868],
+               [530039, 180371],
+               [383830, 398113],
+               [430147, 433553]])
 
         >>> new_list = swap_rows(example_arr, r1=0, r2=1, as_list=True)
         >>> new_list
-        [[406689, 286822], [530034, 180381], [383819, 398052], [582044, 152953]]
+        [[406705, 286868], [530039, 180371], [383830, 398113], [430147, 433553]]
     """
 
     array_ = array.copy()
@@ -1259,24 +1259,24 @@ def np_shift(array, step, fill_value=np.nan):
         >>> from pyhelpers.ops import np_shift
         >>> from pyhelpers._cache import example_dataframe
 
-        >>> arr = example_dataframe().to_numpy()
+        >>> arr = example_dataframe(osgb36=True).to_numpy()
         >>> arr
-        array([[530034, 180381],
-               [406689, 286822],
-               [383819, 398052],
-               [582044, 152953]], dtype=int64)
+        array([[530039.5588445, 180371.6801655],
+               [406705.8870136, 286868.1666422],
+               [383830.0390357, 398113.0558309],
+               [430147.4473539, 433553.3271173]])
 
         >>> np_shift(arr, step=-1)
-        array([[406689., 286822.],
-               [383819., 398052.],
-               [582044., 152953.],
-               [    nan,     nan]])
+        array([[406705.8870136, 286868.1666422],
+               [383830.0390357, 398113.0558309],
+               [430147.4473539, 433553.3271173],
+               [           nan,            nan]])
 
         >>> np_shift(arr, step=1, fill_value=0)
         array([[     0,      0],
-               [530034, 180381],
-               [406689, 286822],
-               [383819, 398052]], dtype=int64)
+               [530039, 180371],
+               [406705, 286868],
+               [383830, 398113]])
     """
 
     result = np.empty_like(array, dtype=type(fill_value))  # np.zeros_like(array)
@@ -1608,7 +1608,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     mappable.set_array(np.array([]))
     mappable.set_clim(-0.5, n_colours + 0.5)
 
-    colour_bar = matplotlib_pyplot.colorbar(mappable, **kwargs)
+    colour_bar = matplotlib_pyplot.colorbar(mappable=mappable, **kwargs)
     colour_bar.set_ticks(np.linspace(0, n_colours, n_colours))
     colour_bar.set_ticklabels(range(n_colours))
 
@@ -1833,11 +1833,13 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
 
 
 class _FakeUserAgentParser(html.parser.HTMLParser):
-    def __init__(self):
+
+    def __init__(self, browser_name):
         super().__init__()
         self.reset()
         self.recording = 0
         self.data = []
+        self.browser_name = browser_name
 
     def error(self, message):
         pass
@@ -1852,7 +1854,7 @@ class _FakeUserAgentParser(html.parser.HTMLParser):
 
         if tag == 'a':
             for name, link in attrs:
-                if name == 'href' and link.startswith('/index.php?id='):
+                if name == 'href' and link.startswith(f'/{self.browser_name}') and link.endswith('.php'):
                     break
                 else:
                     return
@@ -1894,12 +1896,14 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
 
     user_agent_strings = {}
     for browser_name in browser_names_:
-        response = requests.get(url=resource_url + f'?name={browser_name.replace(" ", "+")}')
-        fua_parser = _FakeUserAgentParser()
+        # url = resource_url.replace('useragentstring.php', browser_name.replace(" ", "+") + '/')
+        url = resource_url + f'?name={browser_name.replace(" ", "+")}'
+        response = requests.get(url=url)
+        fua_parser = _FakeUserAgentParser(browser_name=browser_name)
         fua_parser.feed(response.text)
         user_agent_strings[browser_name] = list(set(fua_parser.data))
 
-    if dump_dat:
+    if dump_dat and all(user_agent_strings.values()):
         path_to_json = pkg_resources.resource_filename(__name__, "data\\user-agent-strings.json")
 
         json_out = open(path_to_json, mode='w')
