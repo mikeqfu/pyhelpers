@@ -1,4 +1,4 @@
-"""Test text.py"""
+"""Test the module :mod:`~pyhelpers.text`."""
 
 import pytest
 

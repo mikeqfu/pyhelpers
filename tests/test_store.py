@@ -1,13 +1,16 @@
-"""Test store.py"""
+"""Test the module :mod:`~pyhelpers.store`."""
 
 import json
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytest
 
 from pyhelpers._cache import example_dataframe
 from pyhelpers.dirs import cd
+from pyhelpers.settings import mpl_preferences
 
 
 def test__check_path_to_file(capfd):
@@ -115,40 +118,26 @@ def test_save_spreadsheets(capfd):
     dat2 = dat1.T
 
     dat = [dat1, dat2]
-    dat_sheets = ['TestSheet1', 'TestSheet2']
-    dat_pathname = cd("tests\\data", "dat.xlsx")
+    sheets = ['TestSheet1', 'TestSheet2']
+    pathname = cd("tests\\data", "dat.xlsx")
 
-    save_spreadsheets(dat, dat_sheets, dat_pathname, index=True, verbose=True)
+    msg_1 = 'Updating "dat.xlsx" at "tests\\data\\" ... \n' \
+            '\t\'TestSheet1\' ... Done.\n' \
+            '\t\'TestSheet2\' ... Done.\n'
+
+    save_spreadsheets(dat, pathname, sheets, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Updating "dat.xlsx" at "tests\\data\\" ... \n' \
-                  '\t\'TestSheet1\' ... Done.\n' \
-                  '\t\'TestSheet2\' ... Done.\n'
+    assert out == msg_1
 
-    save_spreadsheets(
-        dat, dat_sheets, dat_pathname, mode='a', index=True, verbose=True,
-        confirmation_required=False, if_sheet_exists='new')
+    save_spreadsheets(dat, pathname, sheets, mode='a', if_sheet_exists='replace', verbose=True)
+    out, err = capfd.readouterr()
+    assert out == msg_1
+
+    save_spreadsheets(dat, pathname, sheets, mode='a', if_sheet_exists='new', verbose=True)
     out, err = capfd.readouterr()
     assert out == 'Updating "dat.xlsx" at "tests\\data\\" ... \n' \
                   '\t\'TestSheet1\' ... saved as \'TestSheet11\' ... Done.\n' \
                   '\t\'TestSheet2\' ... saved as \'TestSheet21\' ... Done.\n'
-
-    save_spreadsheets(
-        dat, dat_sheets, dat_pathname, mode='a', index=True, confirmation_required=False,
-        verbose=True)
-    out, err = capfd.readouterr()
-    assert out == 'Updating "dat.xlsx" at "tests\\data\\" ... \n' \
-                  '\t\'TestSheet1\' ... Failed. ' \
-                  'Sheet \'TestSheet1\' already exists and if_sheet_exists is set to \'error\'.\n' \
-                  '\t\'TestSheet2\' ... Failed. ' \
-                  'Sheet \'TestSheet2\' already exists and if_sheet_exists is set to \'error\'.\n'
-
-    save_spreadsheets(
-        dat, dat_sheets, dat_pathname, mode='a', index=True, if_sheet_exists='replace',
-        confirmation_required=False, verbose=True)
-    out, err = capfd.readouterr()
-    assert out == 'Updating "dat.xlsx" at "tests\\data\\" ... \n' \
-                  '\t\'TestSheet1\' ... Done.\n' \
-                  '\t\'TestSheet2\' ... Done.\n'
 
 
 def test_save_json(capfd):
@@ -217,10 +206,6 @@ def test_save_feather(capfd):
 
 def test_save_svg_as_emf(capfd):
     from pyhelpers.store import save_svg_as_emf
-    from pyhelpers.settings import mpl_preferences
-    import matplotlib.pyplot as plt
-
-    img_dir = cd("tests\\images")
 
     mpl_preferences()
 
@@ -229,52 +214,132 @@ def test_save_svg_as_emf(capfd):
     plt.plot([x[0], y[0]], [x[1], y[1]])
     # plt.show()
 
-    svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
+    svg_file_pathname = cd("tests\\images", "store-save_fig-demo.svg")
     plt.savefig(svg_file_pathname)  # Save the figure as a .svg file
 
-    emf_file_pathname = cd(img_dir, "store-save_fig-demo.emf")
+    emf_file_pathname = cd("tests\\images", "store-save_fig-demo.emf")
     save_svg_as_emf(svg_file_pathname, emf_file_pathname, verbose=True)
     out, err = capfd.readouterr()
     assert out == 'Updating "store-save_fig-demo.emf" at "tests\\images\\" ... Done.\n'
 
     plt.close()
 
+    mpl_preferences(reset=True)
+
+
+def test_save_fig(capfd):
+    from pyhelpers.store import save_fig
+
+    mpl_preferences()
+
+    x, y = (1, 1), (2, 2)
+
+    plt.figure()
+    plt.plot([x[0], y[0]], [x[1], y[1]])
+
+    img_dir = cd("tests\\images")
+
+    png_file_pathname = cd(img_dir, "store-save_fig-demo.png")
+
+    save_fig(png_file_pathname, dpi=600, verbose=True)
+    out, err = capfd.readouterr()
+    assert out == 'Updating "store-save_fig-demo.png" at "tests\\images\\" ... Done.\n'
+
+    svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
+    save_fig(svg_file_pathname, dpi=600, verbose=True, conv_svg_to_emf=True)
+    out, err = capfd.readouterr()
+    assert out == 'Updating "store-save_fig-demo.svg" at "tests\\images\\" ... Done.\n' \
+                  'Updating "store-save_fig-demo.emf" at "tests\\images\\" ... Done.\n'
+
+    plt.close()
+
+    mpl_preferences(reset=True)
+
+
+# def test_save_web_page_as_pdf(capfd):
+#     from pyhelpers.store import save_web_page_as_pdf
+#
+#     pdf_pathname = cd("tests\\documents", "pyhelpers.pdf")
+#     web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
+#
+#     save_web_page_as_pdf(web_page_url, pdf_pathname, verbose=True)
+#     out, err = capfd.readouterr()
+#     assert out.startswith('Updating "pyhelpers.pdf"')
+
+
+def test_load_spreadsheets(capfd):
+    from pyhelpers.store import load_spreadsheets
+
+    dat_dir = cd("tests\\data")
+    path_to_xlsx = cd(dat_dir, "dat.xlsx")
+
+    wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
+    out, err = capfd.readouterr()
+    assert 'Loading "tests\\data\\dat.xlsx" ... \n' in out
+    assert isinstance(wb_data, dict)
+
+    wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
+    assert isinstance(wb_data, list)
+    assert all(isinstance(x, pd.DataFrame) for x in wb_data)
+
 
 def test_load_data(capfd):
     from pyhelpers.store import load_data
 
-    data_dir = cd("tests\\data")
+    data_dir = "tests\\data"
 
     dat_pathname = cd(data_dir, "dat.pickle")
     pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Loading "tests\\data\\dat.pickle" ... Done.\n'
+    assert out == f'Loading "{data_dir}\\dat.pickle" ... Done.\n'
     assert pickle_dat.equals(example_dataframe())
 
     dat_pathname = cd(data_dir, "dat.csv")
     csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Loading "tests\\data\\dat.csv" ... Done.\n'
+    assert out == f'Loading "{data_dir}\\dat.csv" ... Done.\n'
     assert csv_dat.astype('float').equals(example_dataframe())
 
     dat_pathname = cd(data_dir, "dat.json")
     json_dat = load_data(path_to_file=dat_pathname, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Loading "tests\\data\\dat.json" ... Done.\n'
+    assert out == f'Loading "{data_dir}\\dat.json" ... Done.\n'
     assert list(json_dat.keys()) == example_dataframe().index.to_list()
 
     dat_pathname = cd(data_dir, "dat.feather")
     feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Loading "tests\\data\\dat.feather" ... Done.\n'
+    assert out == f'Loading "{data_dir}\\dat.feather" ... Done.\n'
     assert feather_dat.equals(example_dataframe())
 
     dat_pathname = cd(data_dir, "dat.joblib")
     joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
     out, err = capfd.readouterr()
-    assert out == 'Loading "tests\\data\\dat.joblib" ... Done.\n'
+    assert out == f'Loading "{data_dir}\\dat.joblib" ... Done.\n'
     np.random.seed(0)
     assert np.array_equal(joblib_dat, np.random.rand(100, 100))
+
+
+def test_unzip(capfd):
+    from pyhelpers.store import unzip
+
+    zip_file_path = cd("tests\\data", "zipped.zip")
+
+    unzip(path_to_zip_file=zip_file_path, verbose=True)
+
+    out, err = capfd.readouterr()
+    assert out == 'Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.\n'
+
+
+def test_seven_zip(capfd):
+    from pyhelpers.store import seven_zip
+
+    zip_file_pathname = cd("tests\\data", "zipped.zip")
+
+    seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
+
+    out, err = capfd.readouterr()
+    assert out.startswith('\r\n7-Zip')
 
 
 def test_markdown_to_rst(capfd):

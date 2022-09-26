@@ -1,4 +1,4 @@
-"""Test dirs.py"""
+"""Test the module :mod:`~pyhelpers.dirs`."""
 
 import os
 import pathlib
