@@ -686,7 +686,7 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
         >>> cities = [[-2.9916800, 53.4071991],  # Liverpool
         ...           [-4.2488787, 55.8609825],  # Glasgow
         ...           [-1.6131572, 54.9738474]]  # Newcastle
-        >>> ref_cities = example_dataframe().to_numpy()
+        >>> ref_cities = example_df.to_numpy()
 
         >>> closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1)
         >>> closest_to_each  # Liverpool: Manchester; Glasgow: Manchester; Newcastle: Leeds
@@ -719,7 +719,7 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
         'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
     """
 
-    ckdtree = _check_dependency(name='scipy.spatial.ckdtree')
+    ckdtree = _check_dependency(name='scipy.spatial')
 
     if isinstance(ref_pts, np.ndarray):
         ref_pts_ = copy.copy(ref_pts)
@@ -866,7 +866,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
         kn_g = nn_clf.kneighbors_graph()
 
-        nx_g = nx.from_scipy_sparse_matrix(kn_g)
+        nx_g = nx.from_scipy_sparse_array(kn_g)
 
         possible_paths = [list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence))]
 
@@ -1036,7 +1036,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
 
         >>> geometric_midpoint = get_geometric_midpoint_calc(pt_1, pt_2, as_geom=True)
         >>> geometric_midpoint.wkt
-        'POINT (1.516897742074818 52.6309028455831)'
+        'POINT (1.5168977420748175 52.630902845583094)'
 
     .. seealso::
 
@@ -1082,7 +1082,7 @@ def get_rectangle_centroid(rectangle, as_geom=False):
 
         >>> rect_cen = get_rectangle_centroid(rectangle=rectangle_obj)
         >>> rect_cen
-        array([0.5, 0.5])
+        array([[0.5, 0.5]])
     """
 
     if isinstance(rectangle, np.ndarray):
