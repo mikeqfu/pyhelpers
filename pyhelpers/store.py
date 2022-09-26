@@ -379,8 +379,8 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
             print("Failed. {}".format(e.args[0]))
 
 
-def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode='w', index=False,
-                      confirmation_required=True, verbose=False, **kwargs):
+def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode='w',
+                      if_sheet_exists=None, verbose=False, **kwargs):
     """
     Save data to a multi-sheet `Microsoft Excel`_ file.
 
@@ -388,24 +388,24 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
 
     :param spreadsheets_data: a sequence of pandas.DataFrame
     :type spreadsheets_data: list or tuple or iterable
-    :param sheet_names: all sheet names of an Excel workbook
-    :type sheet_names: list or tuple or iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
     :type path_to_spreadsheet: str or os.PathLike[str]
+    :param sheet_names: all sheet names of an Excel workbook
+    :type sheet_names: list or tuple or iterable
     :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
-    :param index: whether to include the index as a column, defaults to ``False``
-    :type index: bool
-    :param confirmation_required: whether to prompt a message for confirmation to proceed,
-        defaults to ``True``
-    :type confirmation_required: bool
+    :param if_sheet_exists: indicate the behaviour when trying to write to an existing sheet;
+        see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_
+    :type if_sheet_exists: None or str
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
-    :param kwargs: [optional] parameters of `pandas.ExcelWriter`_
+    :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
-    .. _pandas.ExcelWriter:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
+    .. _`pandas.ExcelWriter`:
+        https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html
+    .. _`pandas.DataFrame.to_excel`:
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
 
     **Examples**::
 
@@ -429,67 +429,44 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
         Latitude   51.507322   52.479699   53.479489  53.797418
 
         >>> dat = [dat1, dat2]
-        >>> dat_sheets = ['TestSheet1', 'TestSheet2']
-        >>> dat_pathname = cd("tests\\data", "dat.xlsx")
+        >>> sheets = ['TestSheet1', 'TestSheet2']
+        >>> pathname = cd("tests\\data", "dat.xlsx")
 
-        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, index=True, verbose=True)
+        >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.xlsx" to "tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
 
-        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True, verbose=True)
+        >>> save_spreadsheets(dat, pathname, sheets, mode='a', verbose=True)
         Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
 
-        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
-        ...                   confirmation_required=False, verbose=True)
-        Updating "dat.xlsx" at "tests\\dataz\" ...
-            'TestSheet1' ... Failed. Sheet 'TestSheet1' already exists and if_sheet_exists is se ...
-            'TestSheet2' ... Failed. Sheet 'TestSheet2' already exists and if_sheet_exists is se ...
-
-        >>> save_spreadsheets(dat, dat_sheets, dat_pathname, mode='a', index=True,
-        ...                   confirmation_required=False, verbose=True, if_sheet_exists='replace')
+        >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='replace', verbose=True)
         Updating "dat.xlsx" at "tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
+
+        >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='new', verbose=True)
+        Updating "dat.xlsx" at "tests\\data\\" ...
+            'TestSheet1' ... saved as 'TestSheet12' ... Done.
+            'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert path_to_spreadsheet.endswith(".xlsx") or path_to_spreadsheet.endswith(".xls")
+    assert path_to_spreadsheet.endswith((".xlsx", ".xls"))
 
     _check_path_to_file(path_to_spreadsheet, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_spreadsheet) and mode == 'a':
-        excel_file = pd.ExcelFile(path_or_buffer=path_to_spreadsheet)
-        cur_sheet_names = excel_file.sheet_names
-        excel_file.close()
+        with pd.ExcelFile(path_or_buffer=path_to_spreadsheet) as f:
+            cur_sheet_names = f.sheet_names
     else:
         cur_sheet_names = []
 
     engine = 'openpyxl' if mode == 'a' else None
-    excel_writer = pd.ExcelWriter(path=path_to_spreadsheet, engine=engine, mode=mode, **kwargs)
-
-    def _write_excel():
-        try:
-            sheet_data.to_excel(excel_writer, sheet_name=sheet_name, index=index)
-
-            try:
-                sheet_name_ = excel_writer.sheets[sheet_name].get_name()
-            except AttributeError:
-                sheet_name_ = excel_writer.sheets[sheet_name].title
-
-            if sheet_name_ in sheet_names:
-                msg_ = "Done."
-            else:
-                msg_ = "saved as '{}' ... Done.".format(sheet_name_)
-
-            if verbose:
-                print(msg_)
-
-        except Exception as e:
-            print("Failed. {}".format(e))
+    writer = pd.ExcelWriter(path=path_to_spreadsheet, engine=engine, mode=mode)
 
     if verbose:
         print("")
@@ -499,17 +476,35 @@ def save_spreadsheets(spreadsheets_data, sheet_names, path_to_spreadsheet, mode=
         if verbose:
             print("\t'{}'".format(sheet_name), end=" ... ")
 
-        if (sheet_name in cur_sheet_names) and confirmation_required:
-            if_sheet_exists = input("This sheet already exists; [pass]|new|replace: ")
-            if if_sheet_exists != 'pass':
-                excel_writer.if_sheet_exists = if_sheet_exists
-                print("\t\t", end="")
-                # suffix_msg = "(Note that a suffix has been added to the sheet name.)"
-                _write_excel()
-        else:
-            _write_excel()
+        if sheet_name in cur_sheet_names:
+            if if_sheet_exists is None:
+                if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
+            else:
+                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}
+                if_sheet_exists_ = copy.copy(if_sheet_exists)
 
-    excel_writer.close()
+            if if_sheet_exists_ != 'pass':
+                writer._if_sheet_exists = if_sheet_exists_
+
+        try:
+            sheet_data.to_excel(excel_writer=writer, sheet_name=sheet_name, **kwargs)
+
+            if writer._if_sheet_exists == 'new':
+                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
+                prefix = "\t\t" if if_sheet_exists is None else ""
+                add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
+            else:
+                add_msg = "Done."
+
+            if verbose:
+                print(add_msg)
+
+            cur_sheet_names = list(writer.sheets.keys())
+
+        except Exception as e:
+            print(f"Failed. {e}")
+
+    writer.close()
 
 
 # JSON files
