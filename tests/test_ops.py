@@ -3,6 +3,7 @@
 import datetime
 import os
 import typing
+import warnings
 
 import matplotlib.cm
 import matplotlib.pyplot as plt
@@ -360,20 +361,27 @@ def test_find_closest_date():
 def test_cmap_discretisation():
     from pyhelpers.ops import cmap_discretisation
 
-    cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
-    assert cm_accent.name == 'Accent_5'
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+
+        cm_accent = cmap_discretisation(matplotlib.cm.get_cmap('Accent'), n_colours=5)
+        assert cm_accent.name == 'Accent_5'
 
 
 def test_colour_bar_index():
     from pyhelpers.ops import colour_bar_index
 
+    matplotlib.use('TkAgg')
+
     plt.figure(figsize=(2, 6))
 
-    cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5, labels=list('abcde'))
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
 
-    cbar.ax.tick_params(labelsize=14)
+        cbar = colour_bar_index(cmap=matplotlib.cm.get_cmap('Accent'), n_colours=5, labels=list('abcde'))
+        cbar.ax.tick_params(labelsize=14)
 
-    plt.close(fig='all')
+        plt.close(fig='all')
 
 
 def test_is_network_connected():
