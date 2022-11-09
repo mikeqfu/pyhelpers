@@ -2027,6 +2027,38 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
         print("An error occurred: {}".format(e))
 
 
+def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **kwargs):
+    """
+    Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file
+    using VBScript.
+
+    Reference: https://stackoverflow.com/questions/1858195/.
+
+    :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
+    :type xlsx_pathname: str
+    :param csv_pathname_: pathname of a CSV format file;
+    :type csv_pathname_: str or None
+    :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
+    :type sheet_name: str
+    :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
+    :type vbscript: str or None
+    :param kwargs: [optional] parameters of the function `subprocess.run`_
+    :return: code for the result of running the VBScript
+    :rtype: int
+
+    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    """
+
+    command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name]
+    if platform.system() == 'Linux':
+        command_args = ["wine"] + command_args
+
+    rslt = subprocess.run(command_args, **kwargs)
+    ret_code = rslt.returncode
+
+    return ret_code
+
+
 def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
@@ -2034,7 +2066,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
-    :param xlsx_pathname: pathname of an Excel spreasheet (in the format of .xlsx)
+    :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
     :type xlsx_pathname: str
     :param csv_pathname: pathname of a CSV format file;
         when ``csv_pathname=None`` (default),
@@ -2057,10 +2089,10 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         defaults to ``False``
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool or int
+    :param kwargs: [optional] parameters of the function `subprocess.run`_
     :return: the pathname of the generated CSV file or None, when ``engine=None``;
         `io.StringIO`_ buffer, when ``engine='xlsx2csv'``
     :rtype: str or _io.StringIO or None
-    :param kwargs: [optional] parameters of the function `subprocess.run`_
 
     .. _`tempfile.NamedTemporaryFile`:
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
@@ -2079,8 +2111,8 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx)
         >>> os.path.exists(path_to_temp_csv)
         True
-
-        >>> load_csv(path_to_temp_csv, index=0)
+        >>> data = load_csv(path_to_temp_csv, index=0)
+        >>> data
                      Longitude    Latitude
         City
         London      -0.1276474  51.5073219
@@ -2088,7 +2120,23 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
 
-        >>> os.remove(path_to_temp_csv)  # Remove the temporary CSV file
+        >>> # Set `engine='xlsx2csv'`
+        >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv')
+        >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
+        >>> data_ = load_csv(temp_csv_buffer, index=0)
+        >>> data_
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> data.astype('float16').equals(data_.astype('float16'))
+        True
+
+        >>> # Remove the temporary CSV file
+        >>> os.remove(path_to_temp_csv)
     """
 
     if verbose:
@@ -2096,10 +2144,10 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             rel_path = os.path.relpath(xlsx_pathname)
         except ValueError:
             rel_path = copy.copy(xlsx_pathname)
+
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if engine is None:
-
         if vbscript is None:
             vbscript = pkg_resources.resource_filename(__name__, "data/xlsx2csv.vbs")
 
@@ -2117,12 +2165,9 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             elif if_exists == 'pass':
                 return csv_pathname_
 
-        command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name]
-        if platform.system() == 'Linux':
-            command_args = ["wine"] + command_args
-
-        rslt = subprocess.run(command_args, **kwargs)
-        ret_code = rslt.returncode
+        ret_code = _xlsx_to_csv(
+            xlsx_pathname=xlsx_pathname, csv_pathname_=csv_pathname_, sheet_name=sheet_name,
+            vbscript=vbscript, **kwargs)
 
         if verbose:
             print("Done." if ret_code == 0 else "Failed.")
@@ -2131,12 +2176,12 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             return csv_pathname_
 
     elif engine == 'xlsx2csv':
-        xlsx_to_csv_ = _check_dependency(name='xlsx2csv')
+        xlsx2csv = _check_dependency(name='xlsx2csv')
 
         buffer = io.StringIO()
         try:
-            xlsx_to_csv_.Xlsx2csv(
-                xlsx_pathname, outputencoding="utf-8", sheet_name=sheet_name).convert(buffer)
+            xlsx2csv.Xlsx2csv(
+                xlsxfile=xlsx_pathname, sheet_name=sheet_name, outputencoding="utf-8").convert(buffer)
             buffer.seek(0)
 
             if verbose:
@@ -2145,6 +2190,5 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             return buffer
 
         except Exception as e:
-            if verbose:
-                print("Failed. {}".format(e))
+            print("Failed. {}".format(e))
             buffer.close()

@@ -367,12 +367,13 @@ def test_xlsx_to_csv(capfd):
     path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx)
     assert os.path.exists(path_to_temp_csv)
 
-    dat = load_csv(path_to_temp_csv, index=0)
-    assert dat.astype('float16').equals(example_dataframe().astype('float16'))
+    data = load_csv(path_to_temp_csv, index=0)
+    assert data.astype('float16').equals(example_dataframe().astype('float16'))
+    os.remove(path_to_temp_csv)
 
-    path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv')
-    dat = load_csv(path_to_temp_csv, index=0)
-    assert dat.astype('float16').equals(example_dataframe().astype('float16'))
+    temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv')
+    data = load_csv(temp_csv_buffer, index=0)
+    assert data.astype('float16').equals(example_dataframe().astype('float16'))
 
 
 if __name__ == '__main__':
