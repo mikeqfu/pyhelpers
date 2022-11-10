@@ -1,5 +1,7 @@
 """Test the module :mod:`~pyhelpers.geom`."""
 
+import functools
+
 import numpy as np
 import pytest
 import shapely.geometry
@@ -15,21 +17,25 @@ def test_transform_geom_point_type():
     pt1 = example_df.loc['London'].values  # array([-0.1276474, 51.5073219])
     pt2 = example_df.loc['Birmingham'].values  # array([-1.9026911, 52.4796992])
 
+    ref_rslt_1 = ['POINT (-0.1276474 51.5073219)', 'POINT (-1.9026911 52.4796992)']
+    ref_rslt_2 = [np.array([-0.1276474, 51.5073219]), np.array([-1.9026911, 52.4796992])]
+
     geom_points = [x.wkt for x in transform_geom_point_type(pt1, pt2)]
-    assert geom_points == ['POINT (-0.1276474 51.5073219)', 'POINT (-1.9026911 52.4796992)']
+    assert geom_points == ref_rslt_1
 
     geom_points = list(transform_geom_point_type(pt1, pt2, as_geom=False))
-    assert np.array_equal(
-        geom_points, [np.array([-0.1276474, 51.5073219]), np.array([-1.9026911, 52.4796992])])
+    assert np.array_equal(geom_points, ref_rslt_2)
 
     pt1, pt2 = map(shapely.geometry.Point, (pt1, pt2))
 
     geom_points = [x.wkt for x in transform_geom_point_type(pt1, pt2)]
-    assert geom_points == ['POINT (-0.1276474 51.5073219)', 'POINT (-1.9026911 52.4796992)']
+    assert geom_points == ref_rslt_1
 
     geom_points = list(transform_geom_point_type(pt1, pt2, as_geom=False))
-    assert np.array_equal(
-        geom_points, [np.array([-0.1276474, 51.5073219]), np.array([-1.9026911, 52.4796992])])
+    assert np.array_equal(geom_points, ref_rslt_2)
+
+    geom_points_ = transform_geom_point_type(shapely.geometry.Point([1, 2, 3]), as_geom=False)
+    assert np.array_equal(list(geom_points_), [(1.0, 2.0, 3.0)])
 
 
 def test_wgs84_to_osgb36():
@@ -125,10 +131,17 @@ def test_project_point_to_line():
     from pyhelpers.geom import project_point_to_line
 
     pt = shapely.geometry.Point([399297, 655095, 43])
-    ls = shapely.geometry.LineString([[399299, 655091, 42], [399295, 655099, 42]])
-
+    ls = shapely.geometry.LineString([[399299, 655091, 42], [399299, 655091, 42]])
     _, pt_proj = project_point_to_line(point=pt, line=ls)
-    assert pt_proj.wkt == 'POINT Z (399297 655095 42)'
+    assert pt_proj.wkt == 'POINT Z (399299 655091 42)'
+
+    pt = shapely.geometry.Point([399297, 655095, 43])
+    ls_ = shapely.geometry.LineString([[399299, 655091, 42], [399295, 655099, 42], [399295, 655107, 42]])
+    _, pt_proj = project_point_to_line(point=pt, line=ls_)
+    assert pt_proj.wkt == 'POINT Z (399297.9411764706 655095.2352941176 42)'
+
+    _, pt_proj = project_point_to_line(point=pt, line=ls_, drop_dimension='z')
+    assert pt_proj.wkt == 'POINT (399297.9411764706 655095.2352941176)'
 
 
 def test_calc_distance_on_unit_sphere():
@@ -137,9 +150,16 @@ def test_calc_distance_on_unit_sphere():
     example_df = example_dataframe()
 
     london, birmingham = example_df.loc[['London', 'Birmingham']].values
-
     arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
     assert arc_len_in_miles == 101.10431101941569
+
+    leeds, manchester = map(shapely.geometry.Point, example_df.loc[['Leeds', 'Manchester']].values)
+    arc_len_in_miles = calc_distance_on_unit_sphere(leeds, manchester)
+    assert arc_len_in_miles == 36.175811917161276
+
+    with pytest.raises(Exception) as err:
+        calc_distance_on_unit_sphere([1], [2], verbose=True)
+        assert isinstance(err.value.__cause__, IndexError)
 
 
 def test_calc_hypotenuse_distance():
@@ -163,52 +183,84 @@ def test_find_closest_point():
     example_df = example_dataframe()
 
     # Find the city closest to London
-    london = example_df.loc['London'].values
+    london = [example_df.loc['London'].values, shapely.geometry.Point(example_df.loc['London'])]
     ref_cities = example_df.loc['Birmingham':, :].values
-    closest_to_london = find_closest_point(pt=london, ref_pts=ref_cities)
-    assert closest_to_london.wkt == 'POINT (-1.9026911 52.4796992)'
+    for x in london:
+        closest_to_london = find_closest_point(pt=x, ref_pts=ref_cities)
+        assert closest_to_london.wkt == 'POINT (-1.9026911 52.4796992)'
 
     # Find the city closest to Leeds
     leeds = example_df.loc['Leeds'].values
-    ref_cities = example_df.loc[:'Manchester', :].values
-    closest_to_leeds = find_closest_point(pt=leeds, ref_pts=ref_cities)
-    assert closest_to_leeds.wkt == 'POINT (-2.2451148 53.4794892)'
+    ref_cities_ = example_df.loc[:'Manchester', :].values
+    ref_cities = [ref_cities_, shapely.geometry.MultiPoint(ref_cities_)]
+    for y in ref_cities:
+        closest_to_leeds = find_closest_point(pt=leeds, ref_pts=y)
+        assert closest_to_leeds.wkt == 'POINT (-2.2451148 53.4794892)'
 
-    closest_to_leeds = find_closest_point(pt=leeds, ref_pts=ref_cities, as_geom=False)
-    assert np.array_equal(closest_to_leeds, np.array([-2.2451148, 53.4794892]))
+        closest_to_leeds = find_closest_point(pt=leeds, ref_pts=y, as_geom=False)
+        assert np.array_equal(closest_to_leeds, np.array([-2.2451148, 53.4794892]))
+
+    ref_cities = shapely.geometry.Point(ref_cities_[0])
+    closest_to_leeds = find_closest_point(pt=leeds, ref_pts=ref_cities)
+    assert closest_to_leeds.wkt == ref_cities.wkt
 
 
 def test_find_closest_points():
     from pyhelpers.geom import find_closest_points
 
+    cities_1 = [(-2.9916800, 53.4071991), (-4.2488787, 55.8609825), (-1.6131572, 54.9738474)]
+    cities_2 = np.array(cities_1)
+    cities_3 = shapely.geometry.LineString(cities_1)
+    cities_4 = shapely.geometry.MultiLineString([cities_3, cities_3])
+    cities_5 = shapely.geometry.Polygon(cities_1)
+    cities_6 = shapely.geometry.MultiPolygon([cities_5, cities_5])
+    cities_7 = shapely.geometry.GeometryCollection([cities_3, cities_4, cities_5, cities_6])
+
     example_df = example_dataframe()
+    ref_cities_1 = example_df.to_numpy()
+    ref_cities_2 = shapely.geometry.MultiPoint(ref_cities_1)
 
-    cities = [[-2.9916800, 53.4071991], [-4.2488787, 55.8609825], [-1.6131572, 54.9738474]]
-    ref_cities = example_df.to_numpy()
+    ref_rslt = np.array([(-2.2451148, 53.4794892), (-2.2451148, 53.4794892), (-1.5437941, 53.7974185)])
+    ref_rslt_ = 'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
 
-    closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1)
-    x1 = np.array([[-2.2451148, 53.4794892], [-2.2451148, 53.4794892], [-1.5437941, 53.7974185]])
-    assert np.array_equal(closest_to_each, x1)
+    ref_dist = np.array([0.75005697, 3.11232712, 1.17847198])
 
-    closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
-    assert closest_to_each.wkt == \
-           'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+    rslt = find_closest_points(pts=cities_1, ref_pts=ref_cities_1)
+    assert np.array_equal(rslt, ref_rslt)
 
-    _, idx = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, ret_idx=True)
+    rslt = find_closest_points(pts=cities_1, ref_pts=ref_cities_2)
+    assert np.array_equal(rslt, ref_rslt)
+
+    rslt = find_closest_points(pts=cities_2, ref_pts=ref_cities_2)
+    assert np.array_equal(rslt, ref_rslt)
+
+    rslt = find_closest_points(pts=cities_3, ref_pts=ref_cities_1)
+    assert np.array_equal(np.round(rslt, 7), ref_rslt)
+
+    rslt = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, as_geom=True)
+    assert rslt.wkt == ref_rslt_
+
+    rslt = find_closest_points(pts=cities_4, ref_pts=ref_cities_1, as_geom=True, unique=True)
+    assert rslt.wkt == ref_rslt_
+
+    rslt = find_closest_points(pts=cities_5, ref_pts=ref_cities_1, as_geom=True, unique=True)
+    assert rslt.wkt == ref_rslt_
+
+    rslt = find_closest_points(pts=cities_6, ref_pts=ref_cities_1, as_geom=True, unique=True)
+    assert rslt.wkt == ref_rslt_
+
+    rslt = find_closest_points(pts=cities_7, ref_pts=ref_cities_2, as_geom=True, unique=True)
+    assert rslt.wkt == ref_rslt_
+
+    _, idx = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, ret_idx=True)
     assert np.array_equal(idx, np.array([2, 2, 3], dtype=np.int64))
 
-    _, _, dist = find_closest_points(cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
-    assert np.array_equal(np.round(dist, 8), np.array([0.75005697, 3.11232712, 1.17847198]))
+    _, dist = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, ret_dist=True)
+    assert np.array_equal(np.round(dist, 8), ref_dist)
 
-    cities_geoms_1 = shapely.geometry.LineString(cities)
-    closest_to_each = find_closest_points(pts=cities_geoms_1, ref_pts=ref_cities, k=1)
-    x2 = np.array([[-2.2451148, 53.4794892], [-2.2451148, 53.4794892], [-1.5437941, 53.7974185]])
-    assert np.array_equal(np.round(closest_to_each, 7), x2)
-
-    cities_geoms_2 = shapely.geometry.MultiPoint(cities)
-    closest_to_each = find_closest_points(cities_geoms_2, ref_cities, k=1, as_geom=True)
-    assert closest_to_each.wkt == \
-           'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+    _, idx, dist = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, ret_idx=True, ret_dist=True)
+    assert np.array_equal(idx, np.array([2, 2, 3], dtype=np.int64))
+    assert np.array_equal(np.round(dist, 8), ref_dist)
 
 
 def test_find_shortest_path():
@@ -218,12 +270,21 @@ def test_find_shortest_path():
     example_df_ = example_df.sample(frac=1, random_state=1)
     cities = example_df_.to_numpy()
 
-    cities_sorted = find_shortest_path(points_sequence=cities)
+    cities_sorted_1 = find_shortest_path(points_sequence=cities)
     cities_sorted_ = np.array([[-1.5437941, 53.7974185],
                                [-2.2451148, 53.4794892],
                                [-1.9026911, 52.4796992],
                                [-0.1276474, 51.5073219]])
-    assert np.array_equal(cities_sorted, cities_sorted_)
+    assert np.array_equal(cities_sorted_1, cities_sorted_)
+
+    cities_sorted_2, min_dist = find_shortest_path(
+        points_sequence=cities, as_geom=True, ret_dist=True)
+    assert 'LINESTRING' in cities_sorted_2.wkt
+    assert np.round(min_dist, 1) == 5.8
+
+    cities_ = cities[:2]
+    cities_sorted = find_shortest_path(points_sequence=cities_)
+    assert np.array_equal(cities_, cities_sorted)
 
 
 def test_get_midpoint():
@@ -274,13 +335,24 @@ def test_get_geometric_midpoint_calc():
     assert isinstance(geometric_midpoint, shapely.geometry.Point)
 
 
-def test_get_rectangle_centroid():
+@pytest.mark.parametrize('as_geom', [False, True])
+def test_get_rectangle_centroid(as_geom):
     from pyhelpers.geom import get_rectangle_centroid
 
-    rectangle_obj = shapely.geometry.Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
+    coords_1 = [[0, 0], [0, 1], [1, 1], [1, 0]]
+    rect_objs = [shapely.geometry.Polygon(coords_1), np.array(coords_1)]
+    rect_cen_rslt = map(functools.partial(get_rectangle_centroid, as_geom=as_geom), rect_objs)
 
-    rect_cen = get_rectangle_centroid(rectangle=rectangle_obj)
-    assert np.array_equal(rect_cen, np.array([[0.5, 0.5]]))
+    for x in rect_cen_rslt:
+        if as_geom:
+            assert isinstance(x, shapely.geometry.Point)
+            assert x.wkt == 'POINT (0.5 0.5)'
+        else:
+            assert np.array_equal(x, np.array([0.5, 0.5]))
+
+    coords_2 = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
+    rect_objs_2 = get_rectangle_centroid(rectangle=coords_2)
+    assert np.array_equal(rect_objs_2, np.array([1., 1.]))
 
 
 def test_get_square_vertices():
@@ -326,13 +398,14 @@ def test_get_square_vertices_calc():
 def test_sketch_square():
     from pyhelpers.geom import sketch_square
 
-    c1, c2 = 1, 1
-    side_len = 2
+    func_args = {'ctr_x': 1, 'ctr_y': 1, 'side_length': 2, 'annotation': True, 'ret_vertices': True}
 
-    sketch_vertices = sketch_square(
-        c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5), ret_vertices=True)
+    sketch_vtx = sketch_square(rotation_theta=0, **func_args)
     assert np.array_equal(
-        np.round(sketch_vertices), np.array([[0., 0.], [0., 2.], [2., 2.], [2., 0.], [0., 0.]]))
+        np.round(sketch_vtx), np.array([[0., 0.], [0., 2.], [2., 2.], [2., 0.], [0., 0.]]))
+
+    sketch_vtx = sketch_square(rotation_theta=75, **func_args)
+    assert np.array_equal(sketch_vtx[0], sketch_vtx[-1])
 
 
 if __name__ == '__main__':

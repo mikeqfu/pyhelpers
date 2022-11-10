@@ -17,7 +17,7 @@ from ._cache import _check_dependency
 # Geometric data transformation
 # ==================================================================================================
 
-# Geometric type
+# -- Geometric type --------------------------------------------------------------------------------
 
 def transform_geom_point_type(*pts, as_geom=True):
     """
@@ -77,23 +77,30 @@ def transform_geom_point_type(*pts, as_geom=True):
         ...     print(x)
         (-0.1276474, 51.5073219)
         (-1.9026911, 52.4796992)
+
+        >>> geom_points_ = transform_geom_point_type(Point([1, 2, 3]), as_geom=False)
+        >>> for x in geom_points_:
+        ...     print(x)
+        (1.0, 2.0, 3.0)
     """
 
     for pt in pts:
         if isinstance(pt, shapely.geometry.Point):
-            pt_ = copy.copy(pt) if as_geom else ((pt.x, pt.y, pt.z) if pt.has_z else (pt.x, pt.y))
+            if not as_geom:
+                if pt.has_z:
+                    pt = (pt.x, pt.y, pt.z)
+                else:
+                    pt = (pt.x, pt.y)
 
         elif isinstance(pt, collections.abc.Iterable):
             assert len(list(pt)) <= 3
-            pt_ = shapely.geometry.Point(pt) if as_geom else copy.copy(pt)
+            if as_geom:
+                pt = shapely.geometry.Point(pt)
 
-        else:
-            pt_ = pt
-
-        yield pt_
+        yield pt
 
 
-# Coordinate system
+# -- Coordinate system -----------------------------------------------------------------------------
 
 def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     """
@@ -166,16 +173,17 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     # if all(isinstance(coords, pd.Series) for coords in (latitude, longitude)):
     #     xy_data = tuple(map(pd.Series, xy_data))
     if as_array:
-        xy_data = np.asarray(xy_data).T
+        xy_data = np.array(xy_data).T
 
     return xy_data
 
 
 def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     """
-    Convert British national grid
-    (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_)
-    to latitude and longitude (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_).
+    Convert British national grid (`OSGB36`_) to latitude and longitude (`WGS84`_).
+
+    .. _`OSGB36`: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
+    .. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
 
     :param eastings: Easting (X), eastward-measured distance (or the x-coordinate)
     :type eastings: int or float or typing.Iterable[int, float]
@@ -238,12 +246,12 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     # if all(isinstance(coords, pd.Series) for coords in (eastings, northings)):
     #     lonlat_data = tuple(map(pd.Series, lonlat_data))
     if as_array:
-        lonlat_data = np.asarray(lonlat_data).T
+        lonlat_data = np.array(lonlat_data).T
 
     return lonlat_data
 
 
-# Dimension / Projection
+# -- Dimension / Projection ------------------------------------------------------------------------
 
 def _drop_z(x, y, _):
     return x, y
@@ -338,9 +346,8 @@ def drop_axis(geom, axis='z', as_array=False):
             geom_obj = np.array(geom_obj.coords)
         elif geom_obj.type.startswith('Multi'):
             geom_obj = np.array(
-                [np.asarray(g.coords) if g.type in sim_typ else np.asarray(g.exterior.coords)
-                 for g in geom_obj.geoms]
-            )
+                [np.array(g.coords) if g.type in sim_typ else np.array(g.exterior.coords)
+                 for g in geom_obj.geoms])
         else:
             geom_obj = np.array(geom_obj.exterior.coords)
 
@@ -417,23 +424,18 @@ def project_point_to_line(point, line, drop_dimension=None):
 
     else:
         if drop_dimension is not None:
-            assert drop_dimension in ('x', 'y', 'z')
-            func = globals()['_drop_{}'.format(drop_dimension)]
-            point_, line_ = shapely.ops.transform(func, point), shapely.ops.transform(func, line)
+            assert drop_dimension in {'x', 'y', 'z'}, "`drop_dimension` must be one of {'x', 'y', 'z'}."
+            point_, line_ = map(functools.partial(drop_axis, axis=drop_dimension), [point, line])
         else:
-            point_, line_ = copy.copy(point), copy.copy(line)
+            point_, line_ = map(copy.copy, [point, line])
 
-        x = np.array(point_.coords[0])
-
-        u = np.array(line_.coords[0])
-        v = np.array(line_.coords[len(line_.coords) - 1])
+        x, u, v = map(
+            np.array, [point_.coords[0], line_.coords[0], line_.coords[len(line_.coords) - 1]])
 
         n = v - u
         n /= np.linalg.norm(n, 2)
 
-        p = u + n * np.dot(x - u, n)
-
-        line_ = shapely.geometry.Point(p)
+        line_ = shapely.geometry.Point(u + n * np.dot(x - u, n))
 
     return point_, line_
 
@@ -442,9 +444,9 @@ def project_point_to_line(point, line, drop_dimension=None):
 # Geometric data computation
 # ==================================================================================================
 
-# Distance
+# -- Distance --------------------------------------------------------------------------------------
 
-def calc_distance_on_unit_sphere(pt1, pt2):
+def calc_distance_on_unit_sphere(pt1, pt2, verbose=False):
     """
     Calculate distance between two points.
 
@@ -452,6 +454,9 @@ def calc_distance_on_unit_sphere(pt1, pt2):
     :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
     :param pt2: another point
     :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
+    :param verbose: whether to print relevant information in console as the function runs,
+        defaults to ``False``
+    :type verbose: bool or int
     :return: distance (in miles) between ``pt1`` and ``pt2`` (relative to the earth's radius)
     :rtype: float
 
@@ -477,7 +482,6 @@ def calc_distance_on_unit_sphere(pt1, pt2):
         Leeds       -1.543794  53.797418
 
         >>> london, birmingham = example_df.loc[['London', 'Birmingham']].values
-
         >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
         >>> arc_len_in_miles
         101.10431101941569
@@ -490,7 +494,8 @@ def calc_distance_on_unit_sphere(pt1, pt2):
         try:
             pt1_, pt2_ = map(shapely.geometry.Point, (pt1, pt2))
         except Exception as e:
-            print(e)
+            if verbose:
+                print(e)
             return None
     else:
         pt1_, pt2_ = map(copy.copy, (pt1, pt2))
@@ -563,6 +568,100 @@ def calc_hypotenuse_distance(pt1, pt2):
     return hypot_dist
 
 
+def get_coordinates_as_array(geom_obj, unique=False):
+    """
+    Get an array of coordinates of the input geometry object.
+
+    :param geom_obj: geometry object
+    :type geom_obj: numpy.ndarray or list or tuple or typing.Iterable or
+        shapely.geometry.Point or
+        shapely.geometry.MultiPoint or
+        shapely.geometry.LineString or
+        shapely.geometry.MultiLineString or
+        shapely.geometry.Polygon or
+        shapely.geometry.MultiPolygon or
+        shapely.geometry.GeometryCollection
+    :param unique: whether to remove duplicated points, defaults to ``False``
+    :type unique: bool
+    :return: an array of coordinates
+    :rtype: numpy.ndarray
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import get_coordinates_as_array
+        >>> from pyhelpers._cache import example_dataframe
+        >>> from shapely.geometry import Polygon, MultiPoint, MultiPolygon, GeometryCollection
+        >>> from numpy import array_equal
+
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> geom_obj_1 = example_df.to_numpy()
+        >>> geom_coords_1 = get_coordinates_as_array(geom_obj=geom_obj_1)
+        >>> geom_coords_1
+        array([[-0.1276474, 51.5073219],
+               [-1.9026911, 52.4796992],
+               [-2.2451148, 53.4794892],
+               [-1.5437941, 53.7974185]])
+
+        >>> geom_obj_2 = Polygon(example_df.to_numpy())
+        >>> geom_coords_2 = get_coordinates_as_array(geom_obj=geom_obj_2, unique=True)
+        >>> array_equal(geom_coords_2, geom_coords_1)
+        True
+
+        >>> geom_obj_3 = MultiPoint(example_df.to_numpy())
+        >>> geom_coords_3 = get_coordinates_as_array(geom_obj=geom_obj_3)
+        >>> array_equal(geom_coords_3, geom_coords_1)
+        True
+
+        >>> geom_obj_4 = MultiPolygon([geom_obj_2, geom_obj_2])
+        >>> geom_coords_4 = get_coordinates_as_array(geom_obj=geom_obj_4, unique=True)
+        >>> array_equal(geom_coords_4, geom_coords_1)
+        True
+
+        >>> geom_obj_5 = GeometryCollection([geom_obj_2, geom_obj_3, geom_obj_4])
+        >>> geom_coords_5 = get_coordinates_as_array(geom_obj=geom_obj_5, unique=True)
+        >>> array_equal(geom_coords_5, geom_coords_1)
+        True
+    """
+
+    if isinstance(geom_obj, np.ndarray):
+        coords = geom_obj
+
+    elif isinstance(geom_obj, (list, tuple)):
+        coords = np.array(geom_obj)
+
+    else:
+        geom_type = geom_obj.geom_type
+        if 'Collection' in geom_type:
+            temp = [get_coordinates_as_array(x) for x in geom_obj.__getattribute__('geoms')]
+            coords = np.concatenate(temp)
+
+        elif geom_type.startswith('Multi'):
+            if 'Polygon' in geom_type:
+                coords = np.vstack([np.array(x.exterior.coords) for x in geom_obj.geoms])
+            else:
+                coords = np.vstack([np.array(x.coords) for x in geom_obj.geoms])
+        else:
+            if 'Polygon' in geom_type:
+                coords = np.array(geom_obj.exterior.coords)
+            else:
+                coords = np.array(geom_obj.coords)
+
+    if unique:
+        # coords = np.unique(coords)
+        _, idx = np.unique(coords, axis=0, return_index=True)
+        coords = coords[np.sort(idx)]
+
+    return coords
+
+
 def find_closest_point(pt, ref_pts, as_geom=True):
     """
     Find the closest point of the given point to a list of points.
@@ -570,7 +669,14 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     :param pt: (longitude, latitude)
     :type pt: tuple or list or shapely.geometry.Point
     :param ref_pts: a sequence of reference (tuple/list of length 2) points
-    :type ref_pts: typing.Iterable or shapely.geometry.base.BaseGeometry
+    :type ref_pts: typing.Iterable or numpy.ndarray or list or tuple or
+        shapely.geometry.Point or
+        shapely.geometry.MultiPoint or
+        shapely.geometry.LineString or
+        shapely.geometry.MultiLineString or
+        shapely.geometry.Polygon or
+        shapely.geometry.MultiPolygon or
+        shapely.geometry.GeometryCollection
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``True``
     :type as_geom: bool
     :return: the point closest to ``pt``
@@ -618,11 +724,10 @@ def find_closest_point(pt, ref_pts, as_geom=True):
         pt_ = pt
 
     if not isinstance(ref_pts, typing.Iterable):
-        ref_pts_ = shapely.geometry.MultiPoint(ref_pts.coords)
+        ref_pts_ = shapely.geometry.MultiPoint([ref_pts]).geoms
     else:
         ref_pts_ = (
-            shapely.geometry.Point(x) if not isinstance(x, shapely.geometry.Point) else x
-            for x in (ref_pts.geoms if isinstance(ref_pts, shapely.geometry.MultiPoint) else ref_pts))
+            shapely.geometry.Point(x) for x in get_coordinates_as_array(geom_obj=ref_pts, unique=True))
 
     # Find the min value using the distance function with coord parameter
     closest_point = min(ref_pts_, key=functools.partial(shapely.geometry.Point.distance, pt_))
@@ -636,22 +741,35 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     return closest_point
 
 
-def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_idx=False,
-                        ret_dist=False, **kwargs):
+def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False, ret_dist=False,
+                        **kwargs):
     """
     Find the closest points from a list of reference points (applicable for vectorized computation).
 
     See also [`GEOM-FCPB-1 <https://gis.stackexchange.com/questions/222315>`_].
 
     :param pts: an array (of size (n, 2)) of points
-    :type pts: list or tuple or numpy.ndarray or shapely.geometry.Point or shapely.geometry.MultiPoint
-        or shapely.geometry.LineString
+    :type pts: numpy.ndarray or list or tuple or typing.Iterable or
+        shapely.geometry.Point or
+        shapely.geometry.MultiPoint or
+        shapely.geometry.LineString or
+        shapely.geometry.MultiLineString or
+        shapely.geometry.Polygon or
+        shapely.geometry.MultiPolygon or
+        shapely.geometry.GeometryCollection
     :param ref_pts: an array (of size (n, 2)) of reference points
-    :type ref_pts: numpy.ndarray or shapely.geometry.MultiPoint or list or tuple
+    :type ref_pts: numpy.ndarray or list or tuple or
+        shapely.geometry.Point or
+        shapely.geometry.MultiPoint or
+        shapely.geometry.LineString or
+        shapely.geometry.MultiLineString or
+        shapely.geometry.Polygon or
+        shapely.geometry.MultiPolygon or
+        shapely.geometry.GeometryCollection
     :param k: (up to) the ``k``-th nearest neighbour(s), defaults to ``1``
     :type k: int or list
-    :param unique_pts: whether to remove duplicated points, defaults to ``False``
-    :type unique_pts: bool
+    :param unique: whether to remove duplicated points, defaults to ``False``
+    :type unique: bool
     :param as_geom: whether to return `shapely.geometry.Point`_, defaults to ``False``
     :type as_geom: bool
     :param ret_idx: whether to return indices of the closest points in ``ref_pts``, defaults to ``False``
@@ -721,39 +839,16 @@ def find_closest_points(pts, ref_pts, k=1, unique_pts=False, as_geom=False, ret_
 
     ckdtree = _check_dependency(name='scipy.spatial')
 
-    if isinstance(ref_pts, np.ndarray):
-        ref_pts_ = copy.copy(ref_pts)
-    else:
-        ref_pts_ = np.concatenate([np.asarray(geom.coords) for geom in ref_pts])
+    pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
     ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
-
-    if isinstance(pts, np.ndarray):
-        pts_ = copy.copy(pts)
-    elif isinstance(pts, (list, tuple)):
-        pts_ = np.asarray(pts)
-    else:
-        geom_type = pts.__getattribute__('type')
-        if geom_type.startswith('Multi'):
-            if geom_type.endswith('Point'):
-                pts_ = np.vstack([np.asarray(x.coords) for x in pts.geoms])
-            else:
-                pts_ = np.concatenate([np.asarray(x.coords) for x in pts.geoms])
-        else:
-            pts_ = np.asarray(pts.coords)
-
-    if unique_pts:
-        _, tmp_idx = np.unique(pts_, axis=0, return_index=True)
-        pts_ = pts_[np.sort(tmp_idx)]
-
-    # noinspection PyUnresolvedReferences
     distances, indices = ref_ckd_tree.query(x=pts_, k=k)  # returns (distance, index)
 
     closest_points_ = [ref_pts_[i] for i in indices]
     if as_geom:
         closest_points = shapely.geometry.MultiPoint(closest_points_)
     else:
-        closest_points = np.asarray(closest_points_)
+        closest_points = np.array(closest_points_)
 
     if ret_idx and ret_dist:
         closest_points = closest_points, indices, distances
@@ -893,7 +988,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     return shortest_path
 
 
-# Locating
+# -- Locating --------------------------------------------------------------------------------------
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
@@ -943,7 +1038,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
         'MULTIPOINT (2.0429 53.1347, 1.9909 53.1271)'
     """
 
-    x1_, y1_, x2_, y2_ = map(np.asarray, (x1, y1, x2, y2))
+    x1_, y1_, x2_, y2_ = map(np.array, (x1, y1, x2, y2))
 
     mid_pts = (x1_ + x2_) / 2, (y1_ + y2_) / 2
 
@@ -1067,7 +1162,8 @@ def get_rectangle_centroid(rectangle, as_geom=False):
     Get coordinates of the centroid of a rectangle
 
     :param rectangle: polygon or multipolygon geometry object
-    :type rectangle: numpy.ndarray or shapely.geometry.Polygon or shapely.geometry.MultiPolygon
+    :type rectangle: list or tuple or numpy.ndarray or shapely.geometry.Polygon or
+        shapely.geometry.MultiPolygon
     :param as_geom: whether to return a shapely.geometry object
     :type as_geom: bool
     :return: coordinate of the rectangle
@@ -1077,32 +1173,56 @@ def get_rectangle_centroid(rectangle, as_geom=False):
 
         >>> from pyhelpers.geom import get_rectangle_centroid
         >>> from shapely.geometry import Polygon
+        >>> import numpy
 
-        >>> rectangle_obj = Polygon([[0, 0], [0, 1], [1, 1], [1, 0]])
+        >>> vtx_coords = [[0, 0], [0, 1], [1, 1], [1, 0]]
 
-        >>> rect_cen = get_rectangle_centroid(rectangle=rectangle_obj)
+        >>> rect_obj = Polygon(vtx_coords)
+        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
         >>> rect_cen
-        array([[0.5, 0.5]])
+        array([0.5, 0.5])
+
+        >>> rect_obj = numpy.array(vtx_coords)
+        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
+        >>> rect_cen
+        array([0.5, 0.5])
+
+        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj, as_geom=True)
+        >>> type(rect_cen)
+        shapely.geometry.point.Point
+        >>> rect_cen.wkt
+        'POINT (0.5 0.5)'
+
+        >>> vtx_coords_ = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
+
     """
 
-    if isinstance(rectangle, np.ndarray):
+    if isinstance(rectangle, (np.ndarray, list, tuple)):
         try:
-            rectangle_geom = shapely.geometry.Polygon(rectangle)
+            rectangle_ = shapely.geometry.Polygon(rectangle)
         except (ValueError, AttributeError):
-            rectangle_geom = shapely.geometry.MultiPolygon(rectangle)
+            try:
+                rectangle_ = shapely.geometry.MultiPolygon(rectangle)
+            except AttributeError:
+                rectangle_ = shapely.geometry.MultiPolygon(
+                    shapely.geometry.Polygon(x) for x in rectangle)
 
-        ll_lon, ll_lat, ur_lon, ur_lat = rectangle_geom.bounds
-
-        rec_centroid = np.array([np.round((ur_lon + ll_lon) / 2, 4), np.round((ll_lat + ur_lat) / 2, 4)])
-
-        if as_geom:
-            rec_centroid = shapely.geometry.Point(rec_centroid)
+        # ll_lon, ll_lat, ur_lon, ur_lat = rectangle_.bounds
+        #
+        # rec_centroid_ = map(
+        #     functools.partial(np.round, decimals=4), [(ur_lon + ll_lon) / 2, (ll_lat + ur_lat) / 2])
+        # rec_centroid = np.array(list(rec_centroid_))
+        #
+        # if as_geom:
+        #     rec_centroid = shapely.geometry.Point(rec_centroid)
 
     else:
-        rec_centroid = rectangle.centroid
+        rectangle_ = copy.copy(rectangle)
 
-        if not as_geom:
-            rec_centroid = np.array(rec_centroid.coords)
+    rec_centroid = rectangle_.centroid
+
+    if not as_geom:
+        rec_centroid = np.array(rec_centroid.coords[0])
 
     return rec_centroid
 
@@ -1246,8 +1366,8 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
     return kwargs
 
 
-def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=False,
-                  annot_font_size=12, fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
+def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False, annot_font_size=12,
+                  fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
     """
     Sketch a square given its centre point, four vertices and rotation angle (in degree).
 
@@ -1316,7 +1436,8 @@ def sketch_square(ctr_x, ctr_y, side_length=None, rotation_theta=0, annotation=F
 
     mpl_plt, mpl_ticker = map(_check_dependency, ['matplotlib.pyplot', 'matplotlib.ticker'])
 
-    vertices_ = get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta)
+    vertices_ = get_square_vertices(
+        ctr_x=ctr_x, ctr_y=ctr_y, side_length=side_length, rotation_theta=rotation_theta)
     vertices = np.append(vertices_, [tuple(vertices_[0])], axis=0)
 
     fig = mpl_plt.figure(figsize=fig_size)
