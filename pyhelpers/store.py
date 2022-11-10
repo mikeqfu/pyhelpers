@@ -286,7 +286,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 # Spreadsheets
@@ -375,8 +375,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
             print("Done.")
 
     except Exception as e:
-        if verbose:
-            print("Failed. {}".format(e.args[0]))
+        print(f"Failed. {e.args[0]}")
 
 
 def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode='w',
@@ -607,7 +606,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 # Joblib
@@ -683,7 +682,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 # Feather files
@@ -747,8 +746,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
             print("Done.")
 
     except Exception as e:
-        if verbose:
-            print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 # Images
@@ -824,12 +822,14 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     assert abs_svg_path.suffix.lower() == ".svg"
 
     if inkscape_exists:
-        if verbose:
-            if abs_emf_path.exists():
-                msg = f"Updating \"{abs_emf_path.name}\" at \"{os.path.relpath(abs_emf_path.parent)}\\\""
-            else:
-                msg = f"Saving the {abs_svg_path.suffix} file as \"{os.path.relpath(abs_emf_path)}\""
-            print(msg, end=" ... ")
+        # if verbose:
+        #     if abs_emf_path.exists():
+        #         msg = f"Updating \"{abs_emf_path.name}\" at " \
+        #               f"\"{os.path.relpath(abs_emf_path.parent)}\\\""
+        #     else:
+        #         msg = f"Saving the {abs_svg_path.suffix} file as \"{os.path.relpath(abs_emf_path)}\""
+        #     print(msg, end=" ... ")
+        _check_path_to_file(abs_emf_path, verbose=verbose)
 
         try:
             abs_emf_path.parent.mkdir(exist_ok=True)
@@ -844,10 +844,13 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
                 ret_code = rslt.returncode
 
             if verbose:
-                print("Done." if ret_code == 0 else "Failed.")
+                if ret_code == 0:
+                    print("Done.")
+                else:
+                    print("Failed.", end=" ")
 
         except Exception as e:
-            print("An error occurred: {}.".format(e))
+            print(e)
 
     else:
         if verbose:
@@ -929,8 +932,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
             print("Done.")
 
     except Exception as e:
-        if verbose:
-            print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
@@ -1032,8 +1034,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
                 print("Failed. Check if the URL is available.")
 
         except Exception as e:
-            if verbose:
-                print("Failed. {}".format(e), end="")
+            print(f"Failed. {e}")
 
     else:
         print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
@@ -1042,7 +1043,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
 
 # A comprehensive function
 
-def save_data(data, path_to_file, warning=True, **kwargs):
+def save_data(data, path_to_file, err_warning=True, confirmation_required=True, **kwargs):
     """
     Save data to a file of a specific format.
 
@@ -1052,8 +1053,11 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     :type data: any
     :param path_to_file: pathname of a file that stores the ``data``
     :type path_to_file: str or os.PathLike[str]
-    :param warning: whether to show a warning messages, defaults to ``True``
-    :type warning: bool
+    :param err_warning: whether to show a warning message if any unknown error occurs, 
+        defaults to ``True``
+    :type err_warning: bool
+    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
+    :type confirmation_required: bool
     :param kwargs: [optional] parameters of one of the following functions:
         :py:func:`~pyhelpers.store.save_pickle`,
         :py:func:`~pyhelpers.store.save_spreadsheet`,
@@ -1136,37 +1140,37 @@ def save_data(data, path_to_file, warning=True, **kwargs):
     path_to_file_ = path_to_file.lower()
 
     if path_to_file_.endswith((".pkl", ".pickle")):
-        save_pickle(data, path_to_file, **kwargs)
+        save_pickle(data, path_to_pickle=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        save_spreadsheet(data, path_to_file, **kwargs)
+        save_spreadsheet(data, path_to_spreadsheet=path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".json"):
-        save_json(data, path_to_file, **kwargs)
+        save_json(data, path_to_json=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        save_joblib(data, path_to_file, **kwargs)
+        save_joblib(data, path_to_joblib=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".fea", ".feather")):
-        save_feather(data, path_to_file, **kwargs)
+        save_feather(data, path_to_feather=path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".pdf"):
         if is_url(data) or os.path.isfile(data):
-            save_web_page_as_pdf(data, path_to_file_, **kwargs)
+            save_web_page_as_pdf(data, path_to_pdf=path_to_file_, **kwargs)
 
     elif path_to_file_.endswith(
             ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
              '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
-        save_fig(path_to_file, **kwargs)
+        save_fig(path_to_fig_file=path_to_file, **kwargs)
 
     else:
-        if warning:
+        if err_warning:
             warnings.warn(
                 "The specified file format (extension) is not recognisable by "
                 "`pyhelpers.store.save_data`.")
 
-        if confirmed("To save the data as a .pickle file\n?"):
-            save_pickle(data, path_to_file, **kwargs)
+        if confirmed("To save the data as a pickle file\n?", confirmation_required):
+            save_pickle(data, path_to_pickle=path_to_file, **kwargs)
 
 
 # ==================================================================================================
@@ -1222,12 +1226,14 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         return pickle_data
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **kwargs):
     """
-    Load data from a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
+    Load data from a `CSV`_ file.
+
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
 
     :param path_to_csv: path where a `CSV`_ file is saved
     :type path_to_csv: str or os.PathLike[str]
@@ -1316,7 +1322,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         return csv_data
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
@@ -1392,8 +1398,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
 
         except Exception as e:
             sheet_dat = None
-            if verbose:
-                print("Failed. {}".format(e))
+            print(f"Failed. {e}")
 
         workbook_dat.append(sheet_dat)
 
@@ -1478,7 +1483,7 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
         return json_data
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 def load_joblib(path_to_joblib, verbose=False, **kwargs):
@@ -1537,7 +1542,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         return joblib_data
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
@@ -1608,10 +1613,10 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
         return feather_data
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
-def load_data(path_to_file, warning=True, **kwargs):
+def load_data(path_to_file, err_warning=True, **kwargs):
     """
     Load data from a file.
 
@@ -1619,8 +1624,9 @@ def load_data(path_to_file, warning=True, **kwargs):
         supported file formats include
         `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_
     :type path_to_file: str or os.PathLike[str]
-    :param warning: whether to show a warning messages, defaults to ``True``
-    :type warning: bool
+    :param err_warning: whether to show a warning message if any unknown error occurs, 
+        defaults to ``True``
+    :type err_warning: bool
     :param kwargs: [optional] parameters of one of the following functions:
         :py:func:`~pyhelpers.store.load_pickle`,
         :py:func:`~pyhelpers.store.load_csv`,
@@ -1733,7 +1739,7 @@ def load_data(path_to_file, warning=True, **kwargs):
     else:
         data = None
 
-        if warning:
+        if err_warning:
             warnings.warn(
                 "The specified file format (extension) is not recognisable by "
                 "`pyhelpers.store.load_data`.")
@@ -1813,7 +1819,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print("Failed. {}".format(e))
+        print(f"Failed. {e}")
 
 
 def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None, **kwargs):
@@ -2108,8 +2114,9 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
 
         >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")
 
-        >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx)
-        >>> os.path.exists(path_to_temp_csv)
+        >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
+        Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        >>> os.path.isfile(path_to_temp_csv)
         True
         >>> data = load_csv(path_to_temp_csv, index=0)
         >>> data
@@ -2121,7 +2128,8 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         Leeds       -1.5437941  53.7974185
 
         >>> # Set `engine='xlsx2csv'`
-        >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv')
+        >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
+        Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
         >>> data_ = load_csv(temp_csv_buffer, index=0)
         >>> data_
@@ -2190,5 +2198,5 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             return buffer
 
         except Exception as e:
-            print("Failed. {}".format(e))
+            print(f"Failed. {e}")
             buffer.close()
