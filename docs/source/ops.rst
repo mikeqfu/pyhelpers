@@ -21,6 +21,7 @@ General use
     gps_to_utc
     parse_size
     get_number_of_chunks
+    get_relative_path
     find_executable
     hash_password
     verify_password

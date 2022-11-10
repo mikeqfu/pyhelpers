@@ -64,7 +64,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
     if confirmation_required:
         if prompt is None:
-            prompt_ = "Confirmed? "
+            prompt_ = "Confirmed?"
         else:
             prompt_ = copy.copy(prompt)
 
@@ -281,7 +281,7 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     :type file_or_obj: str
     :param chunk_size_limit: the minimum limit of file size (in mebibyte i.e. MiB, or megabyte, i.e. MB)
         above which the function counts how many chunks there could be, defaults to ``50``;
-    :type chunk_size_limit: int
+    :type chunk_size_limit: int or float or None
     :param binary: whether to use binary (i.e. factorized by 1024) representation, defaults to ``True``;
         if ``binary=False``, use the decimal (or metric) representation (i.e. factorized by 10 ** 3)
     :type binary: bool
@@ -310,12 +310,50 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 
     file_size_in_mb = round(size / (factor ** 2), 1)
 
-    if chunk_size_limit and file_size_in_mb > chunk_size_limit:
-        number_of_chunks = math.ceil(file_size_in_mb / chunk_size_limit)
+    if chunk_size_limit:
+        if file_size_in_mb > chunk_size_limit:
+            number_of_chunks = math.ceil(file_size_in_mb / chunk_size_limit)
+        else:
+            number_of_chunks = 1
     else:
         number_of_chunks = None
 
     return number_of_chunks
+
+
+def get_relative_path(pathname):
+    """
+    Get the relative or absolute path of ``pathname`` to the current working directory.
+
+    :param pathname: pathname (of a file or a directory)
+    :type pathname: str or os.PathLike[str]
+    :return: the relative or absolute path of ``path_to_file`` to the current working directory
+    :rtype: str or os.PathLike[str]
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_relative_path
+        >>> import os
+
+        >>> rel_pathname = get_relative_path(pathname="")
+        >>> rel_pathname
+        ''
+        >>> rel_pathname = get_relative_path(pathname=os.path.join(os.getcwd(), "tests"))
+        >>> rel_pathname
+        'tests'
+
+        >>> # On Windows OS
+        >>> rel_pathname = get_relative_path(pathname="C:/Windows")
+        >>> rel_pathname
+        "C:/Windows"
+    """
+
+    try:
+        rel_path = os.path.relpath(pathname)
+    except ValueError:
+        rel_path = copy.copy(pathname)
+
+    return rel_path
 
 
 def find_executable(app_name, possibilities=None):
@@ -1122,7 +1160,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     scipy_sparse = _check_dependency(name='scipy.sparse')
 
     if verbose:
-        print("Loading \"\\{}\"".format(os.path.relpath(path_to_csr)), end=" ... ")
+        print("Loading \"\\{}\"".format(get_relative_path(path_to_csr)), end=" ... ")
 
     try:
         csr_loader = np.load(path_to_csr, **kwargs)
@@ -2136,7 +2174,7 @@ def _download_file_from_url(response, path_to_file):
     total_iter = file_size // chunk_size
 
     progress = tqdm_.tqdm(
-        desc=f'"{os.path.relpath(path_to_file)}"', total=total_iter, unit='B', unit_scale=True,
+        desc=f'"{get_relative_path(path_to_file)}"', total=total_iter, unit='B', unit_scale=True,
         unit_divisor=unit_divisor)
 
     contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
