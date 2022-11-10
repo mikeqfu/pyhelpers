@@ -218,7 +218,7 @@ def test_find_matched_str():
 
 
 def test_find_similar_str():
-    from pyhelpers.text import find_similar_str
+    from pyhelpers.text import find_similar_str, _find_str_by_fuzzywuzzy
 
     lookup_lst = [
         'Anglia',
@@ -253,6 +253,18 @@ def test_find_similar_str():
     assert y == 'Wessex'
     y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzzywuzzy')
     assert y == ['Wessex', 'Western']
+
+    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine='fuzzywuzzy')
+    assert y is None
+
+    y = find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=_find_str_by_fuzzywuzzy)
+    assert y == 'Anglia'
+
+    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine=_find_str_by_fuzzywuzzy)
+    assert y is None
+
+    with pytest.raises(Exception):
+        find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=str)
 
 
 if __name__ == '__main__':

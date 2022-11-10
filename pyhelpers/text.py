@@ -88,11 +88,8 @@ def remove_punctuation(x, rm_whitespace=True):
 
     x_ = re.sub(r'[^\w\s]', ' ', x)
 
-    # noinspection PyBroadException
-    try:
-        y = x_.translate(str.maketrans('', '', string.punctuation))
-    except Exception:
-        y = ''.join(y_ for y_ in x_ if y_ not in string.punctuation)
+    # y = ''.join(y_ for y_ in x_ if y_ not in string.punctuation)
+    y = x_.translate(str.maketrans('', '', string.punctuation))
 
     z = y.strip()
 
@@ -515,7 +512,30 @@ def find_matched_str(x, lookup_list):
                 yield y
 
 
-def _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs):
+def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs):
+    """
+    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates
+    by using `difflib <https://docs.python.org/3/library/difflib.html>`_.
+
+    :param x: a string-type variable
+    :type x: str
+    :param lookup_list: a sequence of strings for lookup
+    :type lookup_list: typing.Iterable
+    :param n: number of similar strings to return, defaults to ``1``;
+        when ``n=None``, the function returns a sorted ``lookup_list``
+        (in the descending order of similarity)
+    :type n: int or None
+    :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
+        defaults to ``True``
+    :type ignore_punctuation: bool
+    :param kwargs: [optional] parameters of `difflib.get_close_matches`_
+    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :rtype: str or list or None
+
+    .. _`difflib.get_close_matches`:
+        https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
+    """
+
     difflib_ = _check_dependency(name='difflib')
 
     x_, lookup_dict = x.lower(), {y.lower(): y for y in lookup_list}
@@ -536,7 +556,49 @@ def _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs):
     return sim_str
 
 
-def _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs):
+def _find_str_by_fuzzywuzzy(x, lookup_list, n=1, **kwargs):
+    """
+    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates
+    by using `FuzzyWuzzy <https://pypi.org/project/fuzzywuzzy/>`_.
+
+    :param x: a string-type variable
+    :type x: str
+    :param lookup_list: a sequence of strings for lookup
+    :type lookup_list: typing.Iterable
+    :param n: number of similar strings to return, defaults to ``1``;
+        when ``n=None``, the function returns a sorted ``lookup_list``
+        (in the descending order of similarity)
+    :type n: int or None
+    :param kwargs: [optional] parameters of `fuzzywuzzy.fuzz.token_set_ratio`_
+    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :rtype: str or list or None
+
+    .. _`fuzzywuzzy.fuzz.token_set_ratio`: https://github.com/seatgeek/fuzzywuzzy
+
+    **Tests**::
+
+        >>> from pyhelpers.text import _find_str_by_fuzzywuzzy
+
+        >>> lookup_lst = ['Anglia',
+        ...               'East Coast',
+        ...               'East Midlands',
+        ...               'North and East',
+        ...               'London North Western',
+        ...               'Scotland',
+        ...               'South East',
+        ...               'Wales',
+        ...               'Wessex',
+        ...               'Western']
+
+        >>> y = _find_str_by_fuzzywuzzy(x='angle', lookup_list=lookup_lst, n=1)
+        >>> y
+        'Anglia'
+
+        >>> y = _find_str_by_fuzzywuzzy(x='123', lookup_list=lookup_lst, n=1)
+        >>> y is None
+        True
+    """
+
     fuzzywuzzy_fuzz = _check_dependency(name='fuzzywuzzy.fuzz')
 
     lookup_list_ = list(lookup_list)
@@ -556,25 +618,26 @@ def _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs):
 
 def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='difflib', **kwargs):
     """
-    From among a sequence of strings, find ``n`` ones that are similar to ``x``.
+    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates.
 
     :param x: a string-type variable
     :type x: str
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: typing.Iterable
     :param n: number of similar strings to return, defaults to ``1``;
-        if ``n=None``, the function returns a sorted ``lookup_list`` (in descending order of similarity)
+        when ``n=None``, the function returns a sorted ``lookup_list``
+        (in the descending order of similarity)
     :type n: int or None
+    :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
+        defaults to ``True``
+    :type ignore_punctuation: bool
     :param engine: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
 
         - if ``engine='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``engine='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type engine: str or types.FunctionType
-
-    :param ignore_punctuation: whether to ignore puctuations in the search for similar texts
-    :type ignore_punctuation: bool
-    :param kwargs: [optional] parameters (e.g. ``cutoff=0.6``) of `difflib.get_close_matches`_ or
+    :type engine: str or typing.Callable
+    :param kwargs: [optional] parameters of `difflib.get_close_matches`_ (e.g. ``cutoff=0.6``) or
         `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``engine``
     :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str or list or None
@@ -642,7 +705,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
 
     methods = {'difflib', 'fuzzywuzzy', None}
     assert engine in methods or callable(engine), \
-        "Invalid input: `engine`. Valid options can include {}.".format(methods)
+        f"Invalid input: `engine`. Valid options can include {methods}."
 
     if engine == 'difflib' or engine is None:
         sim_str = _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs)
@@ -650,10 +713,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
     elif engine == 'fuzzywuzzy':
         sim_str = _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs)
 
-    elif callable(engine):
-        sim_str = engine(x, lookup_list, **kwargs)
-
     else:
-        sim_str = None
+        sim_str = engine(x, lookup_list, **kwargs)
 
     return sim_str
