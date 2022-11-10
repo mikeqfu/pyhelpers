@@ -2,7 +2,6 @@
 
 import copy
 import os
-import warnings
 
 from ._cache import _check_dependency
 
@@ -445,6 +444,4 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
             pd_.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
-        if ignore_future_warning:
-            warnings.simplefilter(action='ignore', category=FutureWarning)
-        pd_.reset_option('all')
+        pd_.reset_option('all', silent=ignore_future_warning)
