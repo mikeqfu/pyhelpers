@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import tempfile
 import typing
 import warnings
 
@@ -15,6 +16,25 @@ from scipy.sparse import csr_matrix, save_npz
 
 from pyhelpers._cache import example_dataframe
 from pyhelpers.dirs import cd
+
+
+def test_confirmed(monkeypatch):
+    from pyhelpers.ops import confirmed
+
+    assert confirmed(confirmation_required=False)
+
+    monkeypatch.setattr('builtins.input', lambda _: "Yes")
+    assert confirmed()
+
+    monkeypatch.setattr('builtins.input', lambda _: "")
+    assert not confirmed()
+
+    monkeypatch.setattr('builtins.input', lambda _: "no")
+    assert not confirmed(resp=True)
+
+    prompt = "Testing if the function works?"
+    monkeypatch.setattr('builtins.input', lambda _: "Yes")
+    assert confirmed(prompt=prompt, resp=False)
 
 
 def test_eval_dtype(capfd):
@@ -46,6 +66,38 @@ def test_parse_size():
     assert parse_size(size='123.45 MiB', binary=False) == 129446707
     assert parse_size(size=129446707, precision=2) == '123.45 MiB'
     assert parse_size(size=129446707, binary=False, precision=2) == '129.45 MB'
+
+
+@pytest.mark.parametrize('chunk_size_limit', [0, None, 1, 0.1])
+def test_get_number_of_chunks(chunk_size_limit):
+    from pyhelpers.ops import get_number_of_chunks
+
+    temp_file_ = tempfile.NamedTemporaryFile()
+    temp_file_path = temp_file_.name + ".txt"
+    with open(temp_file_path, 'w') as f:
+        f.write(", ".join(map(str, range(10 ** 5))))
+
+    number_of_chunks = get_number_of_chunks(temp_file_path, chunk_size_limit=chunk_size_limit)
+    if chunk_size_limit:
+        assert number_of_chunks >= 1
+    else:
+        assert number_of_chunks is None
+
+    os.remove(temp_file_path)
+
+
+def test_get_relative_path():
+    from pyhelpers.ops import get_relative_path
+
+    rel_pathname = get_relative_path(pathname="")
+    assert rel_pathname == ''
+
+    rel_pathname = get_relative_path(pathname=os.path.join(os.getcwd(), "tests"))
+    assert rel_pathname == 'tests'
+
+    # On Windows OS
+    rel_pathname = get_relative_path(pathname="C:/Windows")
+    assert rel_pathname == "C:/Windows"
 
 
 def test_hash_password():
@@ -453,31 +505,30 @@ def test_get_user_agent_string():
     _ = get_user_agent_string(fancy='Chrome')
 
 
-def test_fake_requests_headers():
+@pytest.mark.parametrize('randomized', [False, True])
+def test_fake_requests_headers(randomized):
     from pyhelpers.ops import fake_requests_headers
 
-    fake_headers_1 = fake_requests_headers()
-    assert 'user-agent' in fake_headers_1
-
-    fake_headers_2 = fake_requests_headers(randomized=False)
-    assert 'user-agent' in fake_headers_2
+    fake_headers_ = fake_requests_headers(randomized=randomized)
+    assert 'user-agent' in fake_headers_
 
 
 def test_download_file_from_url(capfd):
     from pyhelpers.ops import download_file_from_url
 
     logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-    path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
+    # path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
+    path_to_img_ = tempfile.NamedTemporaryFile()
+    path_to_img = path_to_img_.name + ".png"
 
     # Download the .png file
-    download_file_from_url(logo_url, path_to_img)
-
-    # If download is successful, check again:
-    assert os.path.exists(path_to_img)
-
     download_file_from_url(logo_url, path_to_img, verbose=True)
+    out, _ = capfd.readouterr()
 
-    assert os.path.exists(path_to_img)
+    assert os.path.isfile(path_to_img)
+
+    os.remove(path_to_img_.name)
+    os.remove(path_to_img)
 
 
 if __name__ == '__main__':
