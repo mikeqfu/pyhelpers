@@ -2,6 +2,27 @@
 
 <br/>
 
+#### **[1.4.3](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.3)**
+
+(*11 November 2022*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.2...1.4.3) since [1.4.2](https://pypi.org/project/pyhelpers/1.4.2/):**
+
+- Improved the following functions (with bug fixes):
+  - [is_dir()](https://github.com/mikeqfu/pyhelpers/commit/b85f82929a2ebb65d21f9f264acbba077558c94d) in the module [dirs](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/dirs.py);
+  - [find_closest_point()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L566), [find_closest_points()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R744), [project_point_to_line()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L353),  [transform_geom_point_type()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L22) and [find_shortest_path()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L769) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/geom.py);
+  - [load_user_agent_strings()](https://github.com/mikeqfu/pyhelpers/commit/61ae56587aca0a8f06e3dfbb2bcacee27622af04), [cmap_discretisation()](https://github.com/mikeqfu/pyhelpers/commit/dc2f70c65e8a09106e70d381a22a234afe246c64#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1449) and [colour_bar_index()](https://github.com/mikeqfu/pyhelpers/commit/dc2f70c65e8a09106e70d381a22a234afe246c64#diff-9266f224c0227114f50836ba656288a96bd7cca831301fe025c5a7cf9f4ab45aL1520) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/ops.py);
+  - [pd_preferences()](https://github.com/mikeqfu/pyhelpers/commit/92b3c1f2e5203076800b9f7d7f991310ae6cf836) in the module [settings](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/settings.py);
+  - [save_spreadsheets()](https://github.com/mikeqfu/pyhelpers/commit/38bd7e3675e17e1864c7731b08fe065d8ceb0216) and [xlsx_to_csv()](https://github.com/mikeqfu/pyhelpers/commit/fb92561a090a161e14fcce64eeb90772ffc066e4) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/store.py);
+  - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/d39e7ad04bc77ec84d0f371e9fa77b741baec618#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127L557) and [remove_punctuation()](https://github.com/mikeqfu/pyhelpers/commit/d39e7ad04bc77ec84d0f371e9fa77b741baec618#diff-07b6d8c6102940f884435a3670eb5007494d5c51b4deb718ba79c3b267825127L63) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/text.py).
+- Added the following new functions: 
+  - [get_coordinates_as_array()](https://github.com/mikeqfu/pyhelpers/commit/896f8c3980f3a60bd485b7b1a5abc1a95d4b8eaa#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8R571-R662) to the module [geom](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/geom.py);
+  - [get_relative_path()](https://github.com/mikeqfu/pyhelpers/commit/f5d0fb15521648ff4c526d3ed9575bfb9d9d0e7e) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/0acb1e1f15096820e2ed1ed892c0634450c60cea/pyhelpers/ops.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.3 documentation](https://pyhelpers.readthedocs.io/en/1.4.3/).**
+
+<br/>
+
 #### **[1.4.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.2)**
 
 (*15 August 2022*)
