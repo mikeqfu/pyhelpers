@@ -2,6 +2,18 @@
 
 <br/>
 
+#### **[1.4.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.4)**
+
+(*3 January 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.3...1.4.4) since [1.4.3](https://pypi.org/project/pyhelpers/1.4.3/):**
+
+- Improved a few functions in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/7ae9c172e940afea457f2ab7495980463173f6e5/pyhelpers/geom.py) (as per warnings by Shapely 2.0), including [drop_axis()](https://github.com/mikeqfu/pyhelpers/commit/5d3eac8904d5a56c0af2a78129377d357a4a712c#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L342-R352), [project_point_to_line()](https://github.com/mikeqfu/pyhelpers/commit/5d3eac8904d5a56c0af2a78129377d357a4a712c#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L420-R426), [get_coordinates_as_array()](https://github.com/mikeqfu/pyhelpers/commit/5d3eac8904d5a56c0af2a78129377d357a4a712c#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L634-R646), [find_closest_point()](https://github.com/mikeqfu/pyhelpers/commit/5d3eac8904d5a56c0af2a78129377d357a4a712c#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L717-R737) and [get_rectangle_centroid()](https://github.com/mikeqfu/pyhelpers/commit/5d3eac8904d5a56c0af2a78129377d357a4a712c#diff-dc4a0e4af0eb0e5a833d868a38bde78a7c5736be4021d9ddf03b97c6f0cc8af8L1175-R1214).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.4 documentation](https://pyhelpers.readthedocs.io/en/1.4.4/).**
+
+<br/>
+
 #### **[1.4.3](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.3)**
 
 (*11 November 2022*)
