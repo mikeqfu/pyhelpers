@@ -24,7 +24,7 @@ pyxlsb==1.0.10
 scikit-learn==1.2.0
 shapely==2.0.0
 sphinx-copybutton==0.5.1
-sphinx-rtd-theme==0.5.1
+sphinx-rtd-theme==1.1.1
 sqlalchemy==1.4.45
 twine==4.0.2
 ujson==5.6.0
