@@ -342,11 +342,11 @@ def drop_axis(geom, axis='z', as_array=False):
 
     if as_array:
         sim_typ = ('Point', 'LineString')
-        if geom_obj.type in sim_typ:
+        if geom_obj.geom_type in sim_typ:
             geom_obj = np.array(geom_obj.coords)
-        elif geom_obj.type.startswith('Multi'):
+        elif geom_obj.geom_type.startswith('Multi'):
             geom_obj = np.array(
-                [np.array(g.coords) if g.type in sim_typ else np.array(g.exterior.coords)
+                [np.array(g.coords) if g.geom_type in sim_typ else np.array(g.exterior.coords)
                  for g in geom_obj.geoms])
         else:
             geom_obj = np.array(geom_obj.exterior.coords)
@@ -420,7 +420,7 @@ def project_point_to_line(point, line, drop_dimension=None):
     """
 
     if line.length == 0:
-        point_, line_ = point, shapely.geometry.Point(line.coords)
+        point_, line_ = point, shapely.geometry.Point(set(line.coords))
 
     else:
         if drop_dimension is not None:
@@ -634,11 +634,13 @@ def get_coordinates_as_array(geom_obj, unique=False):
     if isinstance(geom_obj, np.ndarray):
         coords = geom_obj
 
-    elif isinstance(geom_obj, (list, tuple)):
+    elif isinstance(geom_obj, typing.Iterable):  # (list, tuple)
         coords = np.array(geom_obj)
 
     else:
+        assert isinstance(geom_obj, shapely.geometry.base.BaseGeometry)
         geom_type = geom_obj.geom_type
+
         if 'Collection' in geom_type:
             temp = [get_coordinates_as_array(x) for x in geom_obj.__getattribute__('geoms')]
             coords = np.concatenate(temp)
@@ -717,17 +719,19 @@ def find_closest_point(pt, ref_pts, as_geom=True):
         array([-2.2451148, 53.4794892])
     """
 
-    if not isinstance(pt, shapely.geometry.Point):
+    if isinstance(pt, shapely.geometry.Point):
+        pt_ = pt
+    else:
         assert len(pt) <= 3
         pt_ = shapely.geometry.Point(pt)
-    else:
-        pt_ = pt
 
-    if not isinstance(ref_pts, typing.Iterable):
-        ref_pts_ = shapely.geometry.MultiPoint([ref_pts]).geoms
-    else:
+    if isinstance(ref_pts, shapely.geometry.MultiPoint):
+        ref_pts_ = ref_pts.geoms
+    elif isinstance(ref_pts, typing.Iterable):
         ref_pts_ = (
             shapely.geometry.Point(x) for x in get_coordinates_as_array(geom_obj=ref_pts, unique=True))
+    else:
+        ref_pts_ = shapely.geometry.MultiPoint([ref_pts]).geoms
 
     # Find the min value using the distance function with coord parameter
     closest_point = min(ref_pts_, key=functools.partial(shapely.geometry.Point.distance, pt_))
@@ -1175,14 +1179,14 @@ def get_rectangle_centroid(rectangle, as_geom=False):
         >>> from shapely.geometry import Polygon
         >>> import numpy
 
-        >>> vtx_coords = [[0, 0], [0, 1], [1, 1], [1, 0]]
+        >>> coords_1 = [[0, 0], [0, 1], [1, 1], [1, 0]]
 
-        >>> rect_obj = Polygon(vtx_coords)
+        >>> rect_obj = Polygon(coords_1)
         >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
         >>> rect_cen
         array([0.5, 0.5])
 
-        >>> rect_obj = numpy.array(vtx_coords)
+        >>> rect_obj = numpy.array(coords_1)
         >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
         >>> rect_cen
         array([0.5, 0.5])
@@ -1193,29 +1197,18 @@ def get_rectangle_centroid(rectangle, as_geom=False):
         >>> rect_cen.wkt
         'POINT (0.5 0.5)'
 
-        >>> vtx_coords_ = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
+        >>> coords_2 = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
+
+        >>> rect_cen = get_rectangle_centroid(rectangle=coords_2)
 
     """
 
-    if isinstance(rectangle, (np.ndarray, list, tuple)):
+    if isinstance(rectangle, typing.Iterable):  # (np.ndarray, list, tuple)
         try:
             rectangle_ = shapely.geometry.Polygon(rectangle)
-        except (ValueError, AttributeError):
-            try:
-                rectangle_ = shapely.geometry.MultiPolygon(rectangle)
-            except AttributeError:
-                rectangle_ = shapely.geometry.MultiPolygon(
-                    shapely.geometry.Polygon(x) for x in rectangle)
-
-        # ll_lon, ll_lat, ur_lon, ur_lat = rectangle_.bounds
-        #
-        # rec_centroid_ = map(
-        #     functools.partial(np.round, decimals=4), [(ur_lon + ll_lon) / 2, (ll_lat + ur_lat) / 2])
-        # rec_centroid = np.array(list(rec_centroid_))
-        #
-        # if as_geom:
-        #     rec_centroid = shapely.geometry.Point(rec_centroid)
-
+        except (TypeError, ValueError, AttributeError):
+            rectangle_ = shapely.geometry.MultiPolygon(shapely.geometry.Polygon(x) for x in rectangle)
+            rectangle_ = rectangle_.convex_hull
     else:
         rectangle_ = copy.copy(rectangle)
 
