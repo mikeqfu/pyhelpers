@@ -204,7 +204,7 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
 
 def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
-    Get the full pathname of a directory (or file) under ``dat_dir`` of a package.
+    Get the full pathname of a directory (or file) under ``data_dir`` of a package.
 
     :param subdir: name of directory or names of directories (and/or a filename)
     :type subdir: str or os.PathLike[str] or bytes or os.Path[bytes]
