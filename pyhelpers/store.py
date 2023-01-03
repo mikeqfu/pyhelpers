@@ -85,7 +85,7 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
         msg_fmt = "{} \"{}\""
 
     if verbose:
-        if os.path.isfile(abs_path_to_file):
+        if os.path.exists(abs_path_to_file):
             status_msg, prep = "Updating", "at"
         else:
             status_msg, prep = "Saving", "to"
@@ -1053,7 +1053,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     :type data: any
     :param path_to_file: pathname of a file that stores the ``data``
     :type path_to_file: str or os.PathLike[str]
-    :param err_warning: whether to show a warning message if any unknown error occurs, 
+    :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
     :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
