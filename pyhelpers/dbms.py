@@ -524,10 +524,10 @@ class PostgreSQL:
              'postgres']
         """
 
-        conn = self.engine.connect(close_with_result=True)
-        rslt = conn.execute('SELECT datname FROM pg_database;')
+        with self.engine.connect() as connection:
+            result = connection.execute('SELECT datname FROM pg_database;')
 
-        db_names = rslt.fetchall()
+        db_names = result.fetchall()
         if names_only:
             database_names = list(itertools.chain(*db_names))
         else:
@@ -574,10 +574,11 @@ class PostgreSQL:
 
         db_name = self.database_name if database_name is None else str(database_name)
 
-        conn = self.engine.connect(close_with_result=True)
-        rslt = conn.execute(
-            f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{db_name}');")
-        db_exists = bool(rslt.fetchone()[0])
+        with self.engine.connect() as connection:
+            result = connection.execute(
+                f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{db_name}');")
+
+        db_exists = bool(result.fetchone()[0])
 
         return db_exists
 
@@ -1066,15 +1067,14 @@ class PostgreSQL:
                         "AND nspname NOT LIKE 'pg_toast%%' " \
                         "AND nspname NOT LIKE 'pg_temp%%' "
 
-        query = f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s " \
-                f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner" \
-                f"{condition}" \
-                f"ORDER BY s.nspname;"
+        with self.engine.connect() as connection:
+            query = f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s " \
+                    f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner" \
+                    f"{condition}" \
+                    f"ORDER BY s.nspname;"
+            result = connection.execute(query)
 
-        conn = self.engine.connect(close_with_result=True)
-        rslt = conn.execute(query)
-
-        schema_info_ = rslt.fetchall()
+        schema_info_ = result.fetchall()
         if not schema_info_:
             schema_info = None
             if verbose:
@@ -1226,12 +1226,12 @@ class PostgreSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        rslt = self.engine.execute(
+        result_ = self.engine.execute(
             f"SELECT EXISTS("
             f"SELECT * FROM information_schema.tables "
             f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');")
 
-        result = rslt.fetchone()[0]
+        result = result_.fetchone()[0]
 
         return result
 
@@ -1492,13 +1492,13 @@ class PostgreSQL:
                 print("The schema \"{}\" does not exist.".format(schema_name_))
 
         else:
-            rslt = self.engine.execute(
+            result_ = self.engine.execute(
                 "SELECT table_name FROM information_schema.tables "
                 "WHERE table_schema='{}' AND table_type='BASE TABLE';".format(schema_name_))
 
-            temp_list = rslt.fetchall()
+            result = result_.fetchall()
 
-            table_list = [x[0] for x in temp_list]
+            table_list = [x[0] for x in result]
 
             return table_list
 
@@ -2336,13 +2336,12 @@ class MSSQL:
         try:
             if reconnect_db:
                 self.engine = sqlalchemy.create_engine(url=self.engine.url, isolation_level='AUTOCOMMIT')
-            test_conn = self.engine.connect()
-            test_conn.close()
-            del test_conn
+            with self.engine.connect() as test_conn:
+                test_conn.close()
             if verbose:
                 print("Successfully.")
         except Exception as e:
-            print("Failed. {}".format(e))
+            print(f"Failed. {e}.")
 
     def _database_name(self, database_name=None):
         """
@@ -2573,7 +2572,7 @@ class MSSQL:
             >>> db_conn.closed
             True
 
-            >>> db_conn = mssql.create_connection(close_with_result=True)
+            >>> db_conn = mssql.create_connection()
             >>> db_conn.should_close_with_result
             True
             >>> db_conn.closed
@@ -2661,10 +2660,10 @@ class MSSQL:
              'msdb']
         """
 
-        conn = self.engine.connect(close_with_result=True)
-        rslt = conn.execute('SELECT name, database_id, create_date FROM sys.databases;')
+        with self.engine.connect() as connection:
+            result = connection.execute('SELECT name, database_id, create_date FROM sys.databases;')
 
-        db_names = rslt.fetchall()
+        db_names = result.fetchall()
         if names_only:
             database_names = [x[0] for x in db_names]
         else:
@@ -2712,15 +2711,15 @@ class MSSQL:
 
         # noinspection PyBroadException
         try:
-            rslt = self.engine.execute(
+            result_ = self.engine.execute(
                 f"IF (EXISTS (SELECT name FROM master.sys.databases WHERE name='{db_name}')) "
                 f"SELECT 1 ELSE SELECT 0")
         except Exception:
-            rslt = self.engine.execute(
+            result_ = self.engine.execute(
                 f"SELECT COUNT(*) FROM master.sys.databases "
                 f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
 
-        result = bool(rslt.fetchone()[0])
+        result = bool(result_.fetchone()[0])
 
         return result
 
@@ -2968,11 +2967,11 @@ class MSSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        rslt = self.engine.execute(
+        result_ = self.engine.execute(
             f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') "
             f"SELECT 1 ELSE SELECT 0")
 
-        result = bool(rslt.fetchone()[0])
+        result = bool(result_.fetchone()[0])
 
         return result
 
@@ -3165,13 +3164,13 @@ class MSSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        rslt = self.engine.execute(
+        result_ = self.engine.execute(
             f"IF (EXISTS ("
             f"SELECT * FROM INFORMATION_SCHEMA.TABLES "
             f"WHERE TABLE_SCHEMA = '{schema_name_}' AND TABLE_NAME = '{table_name}'))"
             f"SELECT 1 ELSE SELECT 0")
 
-        result = bool(rslt.fetchone()[0])
+        result = bool(result_.fetchone()[0])
 
         return result
 
@@ -3236,10 +3235,10 @@ class MSSQL:
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-        conn = self.engine.connect(close_with_result=True)
-        rslt = conn.execute(f'SELECT COUNT(*) FROM {table_name_};')
+        with self.engine.connect() as connection:
+            result = connection.execute(f'SELECT COUNT(*) FROM {table_name_};')
 
-        row_count = rslt.fetchone()[0]
+        row_count = result.fetchone()[0]
 
         return row_count
 
