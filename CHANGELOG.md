@@ -2,6 +2,18 @@
 
 <br/>
 
+#### **[1.4.5](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.5)**
+
+(*9 January 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.4...1.4.5) since [1.4.4](https://pypi.org/project/pyhelpers/1.4.4/):**
+
+- Improved the classes [PostgreSQL](https://github.com/mikeqfu/pyhelpers/commit/6787602820b000bb92803761dad24879ac171fc2#diff-402d385f94d69cd9596a357c63ccdf2d12f55165339af5d3c1bd554fb5a5e146L527-R1501) and [MSSQL](https://github.com/mikeqfu/pyhelpers/commit/6787602820b000bb92803761dad24879ac171fc2#diff-402d385f94d69cd9596a357c63ccdf2d12f55165339af5d3c1bd554fb5a5e146L2339-R3241) in the module [dbms](https://github.com/mikeqfu/pyhelpers/blob/6602ace1cf7c04731970c01e01c0ad29f45a4b62/pyhelpers/dbms.py) (for migrating to SQLAlchemy 2.0).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.5 documentation](https://pyhelpers.readthedocs.io/en/1.4.5/).**
+
+<br/>
+
 #### **[1.4.4](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.4)**
 
 (*3 January 2023*)
