@@ -1494,7 +1494,7 @@ def cmap_discretisation(cmap, n_colours):
 
     :param cmap: a colormap instance,
         e.g. built-in `colormaps`_ that is accessible via `matplotlib.cm.get_cmap`_
-    :type cmap: matplotlib.colors.ListedColormap
+    :type cmap: matplotlib.colors.ListedColormap or matplotlib.colors.LinearSegmentedColormap
     :param n_colours: number of colours
     :type n_colours: int
     :return: a discrete colormap from (the continuous) ``cmap``
@@ -1550,7 +1550,6 @@ def cmap_discretisation(cmap, n_colours):
         except TypeError:
             cmap_ = mpl_cm.get_cmap(cmap)
     else:
-        assert isinstance(cmap, mpl_colors.ListedColormap)
         cmap_ = copy.copy(cmap)
 
     colours_i = np.concatenate((np.linspace(0, 1., n_colours), (0., 0., 0., 0.)))
