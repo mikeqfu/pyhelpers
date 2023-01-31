@@ -3,6 +3,7 @@
 import collections.abc
 import copy
 import functools
+import os
 import typing
 
 import numpy as np
@@ -846,7 +847,8 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
     ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
-    distances, indices = ref_ckd_tree.query(x=pts_, k=k)  # returns (distance, index)
+    n_workers = os.cpu_count() - 1
+    distances, indices = ref_ckd_tree.query(x=pts_, k=k, workers=n_workers)  # returns (distance, index)
 
     closest_points_ = [ref_pts_[i] for i in indices]
     if as_geom:
