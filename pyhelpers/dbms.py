@@ -30,6 +30,11 @@ from .ops import confirmed
 from .store import save_data
 
 
+def _print_failure_msg(e):
+    e_ = f"{e}"
+    print(f"Failed. " + e_ if e_.endswith(".") else f"{e_}.")
+
+
 def _create_db(cls, confirm_db_creation, verbose):
     """
     Create a database (if it does not exist) when creating an instance.
@@ -49,15 +54,15 @@ def _create_db(cls, confirm_db_creation, verbose):
             print(f"Creating a database: {db_name}", end=" ... ")
 
         try:
-            cls.engine.execute(f'CREATE DATABASE {db_name};')
-            cls.engine.url = cls.engine.url.set(database=cls.database_name)
+            with cls.engine.connect() as connection:
+                connection.execute(sqlalchemy.text(f'CREATE DATABASE {db_name};'))
+                cls.engine.url = cls.engine.url.set(database=cls.database_name)
 
             if verbose:
                 print("Done.")
 
         except Exception as e:
-            if verbose:
-                print("Failed. {}".format(e))
+            _print_failure_msg(e=e)
 
 
 def _create_database(cls, database_name, verbose):
@@ -77,7 +82,9 @@ def _create_database(cls, database_name, verbose):
 
         cls.disconnect_database()
 
-        cls.engine.execute(f'CREATE DATABASE {db_name};')
+        with cls.engine.connect() as connection:
+            query = sqlalchemy.text(f'CREATE DATABASE {db_name};')
+            connection.execute(query)
 
         if verbose:
             print("Done.")
@@ -120,13 +127,15 @@ def _drop_database(cls, database_name, confirmation_required, verbose):
                 print(log_msg, end=" ... ")
 
             try:
-                cls.engine.execute(f'DROP DATABASE {db_name};')
+                with cls.engine.connect() as connection:
+                    query = sqlalchemy.text(f'DROP DATABASE {db_name};')
+                    connection.execute(query)
 
                 if verbose:
                     print("Done.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e=e)
 
 
 def _import_data(cls, data, table_name, schema_name=None, if_exists='fail',
@@ -411,7 +420,7 @@ class PostgreSQL:
             if verbose:
                 print("Successfully.")
         except Exception as e:
-            print("Failed. {}".format(e))
+            _print_failure_msg(e=e)
 
     def _database_name(self, database_name=None):
         """
@@ -518,14 +527,12 @@ class PostgreSQL:
             Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
             >>> postgres.get_database_names()
-            ['template1',
-             'template0',
-             'postgis_32_sample',
-             'postgres']
+            ['postgres', 'template1', 'template0', 'osmdb_test', 'postgis_32_sample']
         """
 
         with self.engine.connect() as connection:
-            result = connection.execute('SELECT datname FROM pg_database;')
+            query = sqlalchemy.text('SELECT datname FROM pg_database;')
+            result = connection.execute(query)
 
         db_names = result.fetchall()
         if names_only:
@@ -575,8 +582,9 @@ class PostgreSQL:
         db_name = self.database_name if database_name is None else str(database_name)
 
         with self.engine.connect() as connection:
-            result = connection.execute(
+            query = sqlalchemy.text(
                 f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{db_name}');")
+            result = connection.execute(query)
 
         db_exists = bool(result.fetchone()[0])
 
@@ -689,7 +697,7 @@ class PostgreSQL:
                     print("Successfully.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
         else:
             if verbose:
@@ -720,7 +728,7 @@ class PostgreSQL:
             >>> testdb.DEFAULT_DATABASE
             'postgres'
             >>> testdb.get_database_size(database_name=testdb.DEFAULT_DATABASE)
-            '8609 kB'
+            '8577 kB'
 
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
@@ -728,11 +736,13 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        db_name = 'current_database()' if database_name is None else '\'{}\''.format(database_name)
+        db_name = 'current_database()' if database_name is None else f'\'{database_name}\''
 
-        sql_query = 'SELECT pg_size_pretty(pg_database_size({})) AS size;'.format(db_name)
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(f'SELECT pg_size_pretty(pg_database_size({db_name})) AS size;')
+            result = connection.execute(query)
 
-        db_size = self.engine.execute(sql_query).fetchone()[0]
+        db_size = result.fetchone()[0]
 
         return db_size
 
@@ -779,12 +789,15 @@ class PostgreSQL:
         try:
             self.connect_database(database_name=self.DEFAULT_DATABASE)
 
-            self.engine.execute(f'REVOKE CONNECT ON DATABASE "{db_name}" FROM public, postgres;')
+            with self.engine.connect() as connection:
+                s1 = sqlalchemy.text(f'REVOKE CONNECT ON DATABASE "{db_name}" FROM public, postgres;')
+                connection.execute(s1)
 
-            self.engine.execute(
-                f"SELECT pg_terminate_backend(pid) "
-                f"FROM pg_stat_activity "
-                f"WHERE datname = '{db_name}' AND pid <> pg_backend_pid();")
+                s2 = sqlalchemy.text(
+                    f"SELECT pg_terminate_backend(pid) "
+                    f"FROM pg_stat_activity "
+                    f"WHERE datname = '{db_name}' AND pid <> pg_backend_pid();")
+                connection.execute(s2)
 
             if verbose:
                 print("Done.")
@@ -819,8 +832,10 @@ class PostgreSQL:
         """
 
         # self.connect_database(database_name='postgres')
-        self.engine.execute(
-            'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid();')
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid();')
+            connection.execute(query)
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
@@ -956,12 +971,16 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        result = self.engine.execute(
-            "SELECT EXISTS("
-            "SELECT schema_name FROM information_schema.schemata "
-            "WHERE schema_name='{}');".format(self._schema_name(schema_name=schema_name)))
+        schema_name_ = self._schema_name(schema_name=schema_name)
+        query = sqlalchemy.text(
+            f"SELECT EXISTS("
+            f"SELECT schema_name FROM information_schema.schemata WHERE schema_name='{schema_name_}');")
 
-        return result.fetchone()[0]
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+        result_ = result.fetchone()[0]
+
+        return result_
 
     def create_schema(self, schema_name, verbose=False):
         """
@@ -1003,11 +1022,13 @@ class PostgreSQL:
                 print("Creating a schema: \"{}\" ... ".format(schema_name_), end="")
 
             try:
-                self.engine.execute('CREATE SCHEMA IF NOT EXISTS "{}";'.format(schema_name_))
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name_}";')
+                    connection.execute(query)
                 if verbose:
                     print("Done.")
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e=e)
 
         else:
             print("The schema \"{}\" already exists.".format(schema_name))
@@ -1065,13 +1086,14 @@ class PostgreSQL:
         if not include_all:
             condition = " WHERE nspname NOT IN ('information_schema', 'pg_catalog') " \
                         "AND nspname NOT LIKE 'pg_toast%%' " \
-                        "AND nspname NOT LIKE 'pg_temp%%' "
+                        "AND nspname NOT LIKE 'pg_temp%%'"
 
         with self.engine.connect() as connection:
-            query = f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s " \
-                    f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner" \
-                    f"{condition}" \
-                    f"ORDER BY s.nspname;"
+            query = sqlalchemy.text(
+                f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s "
+                f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner"
+                f"{condition} "
+                f"ORDER BY s.nspname;")
             result = connection.execute(query)
 
         schema_info_ = result.fetchall()
@@ -1174,7 +1196,9 @@ class PostgreSQL:
 
                     try:
                         # schema_ = ('%s, ' * (len(schemas) - 1) + '%s') % tuple(schemas)
-                        self.engine.execute('DROP SCHEMA "{}" CASCADE;'.format(schema))
+                        with self.engine.connect() as connection:
+                            query = sqlalchemy.text(f'DROP SCHEMA "{schema}" CASCADE;')
+                            connection.execute(query)
 
                         if verbose:
                             print("Done.")
@@ -1226,10 +1250,12 @@ class PostgreSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        result_ = self.engine.execute(
-            f"SELECT EXISTS("
-            f"SELECT * FROM information_schema.tables "
-            f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');")
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"SELECT EXISTS("
+                f"SELECT * FROM information_schema.tables "
+                f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');")
+            result_ = connection.execute(query)
 
         result = result_.fetchone()[0]
 
@@ -1351,13 +1377,15 @@ class PostgreSQL:
                 if verbose:
                     print(f"Creating a table: {table_name_} ... ", end="")
 
-                self.engine.execute(f'CREATE TABLE {table_name_} ({column_specs});')
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
+                    connection.execute(query)
 
                 if verbose:
                     print("Done.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
@@ -1381,11 +1409,13 @@ class PostgreSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        column_info = self.engine.execute(
-            "SELECT * FROM information_schema.columns "
-            "WHERE table_schema='{}' AND table_name='{}';".format(schema_name_, table_name))
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"SELECT * FROM information_schema.columns "
+                f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}';")
+            column_info = connection.execute(query)
 
-        keys, values = column_info.keys(), column_info.fetchall()
+        keys, values = list(column_info.keys()), column_info.fetchall()
         idx = ['column_{}'.format(x) for x in range(len(values))]
 
         info_tbl = pd.DataFrame(values, index=idx, columns=keys).T
@@ -1426,11 +1456,14 @@ class PostgreSQL:
             else:
                 col_names_query = f" AND column_name IN {tuple(column_names)}"
 
-        query = \
-            f"SELECT column_name, data_type FROM information_schema.columns " \
-            f"WHERE table_name = '{table_name}' AND table_schema = '{schema_name_}'{col_names_query};"
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"SELECT column_name, data_type FROM information_schema.columns "
+                f"WHERE table_name = '{table_name}' "
+                f"AND table_schema = '{schema_name_}'{col_names_query};")
+            result = connection.execute(query)
 
-        column_dtypes_ = self.engine.execute(query).fetchall()
+        column_dtypes_ = result.fetchall()
 
         if len(column_dtypes_) > 0:
             # noinspection PyTypeChecker
@@ -1489,12 +1522,14 @@ class PostgreSQL:
 
         if not self.schema_exists(schema_name=schema_name_):
             if verbose:
-                print("The schema \"{}\" does not exist.".format(schema_name_))
+                print(f"The schema \"{schema_name_}\" does not exist.")
 
         else:
-            result_ = self.engine.execute(
-                "SELECT table_name FROM information_schema.tables "
-                "WHERE table_schema='{}' AND table_type='BASE TABLE';".format(schema_name_))
+            with self.engine.connect() as connection:
+                query = sqlalchemy.text(
+                    f"SELECT table_name FROM information_schema.tables "
+                    f"WHERE table_schema='{schema_name_}' AND table_type='BASE TABLE';")
+                result_ = connection.execute(query)
 
             result = result_.fetchall()
 
@@ -1556,7 +1591,7 @@ class PostgreSQL:
             Dropping "testdb" ... Done.
         """
 
-        table_name_ = '"{}"."{}"'.format(schema_name, table_name)
+        table_name_ = f'"{schema_name}"."{table_name}"'
 
         cfm_msg = f"To move the table \"{table_name}\" " \
                   f"from the schema \"{schema_name}\" to \"{new_schema_name}\"\n?"
@@ -1575,14 +1610,15 @@ class PostgreSQL:
                 print(log_msg, end=" ... ")
 
             try:
-                self.engine.execute(
-                    'ALTER TABLE {} SET SCHEMA "{}";'.format(table_name_, new_schema_name))
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'ALTER TABLE {table_name_} SET SCHEMA "{new_schema_name}";')
+                    connection.execute(query)
 
                 if verbose:
                     print("Done.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
     def null_text_to_empty_string(self, table_name, column_names=None, schema_name=None):
         """
@@ -1666,7 +1702,9 @@ class PostgreSQL:
             cols_query = ', '.join(f'"{x}"=COALESCE("{x}", \'\')' for x in text_columns)
             table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-            self.engine.execute(f'UPDATE {table_name_} SET {cols_query};')
+            with self.engine.connect() as connection:
+                query = sqlalchemy.text(f'UPDATE {table_name_} SET {cols_query};')
+                connection.execute(query)
 
     def add_primary_keys(self, primary_keys, table_name, schema_name=None):
         """
@@ -1697,9 +1735,10 @@ class PostgreSQL:
             else:
                 primary_keys_ = str(tuple(pri_keys)).replace("'", '"')
 
-            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
-
-            self.engine.execute(f'ALTER TABLE {table_name_} ADD PRIMARY KEY {primary_keys_};')
+            with self.engine.connect() as connection:
+                table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+                query = sqlalchemy.text(f'ALTER TABLE {table_name_} ADD PRIMARY KEY {primary_keys_};')
+                connection.execute(query)
 
     def get_primary_keys(self, table_name, schema_name=None, names_only=True):
         """
@@ -1773,13 +1812,16 @@ class PostgreSQL:
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-        postgres_query = \
+        query_ = \
             f"SELECT a.attname AS key_column, format_type(a.atttypid, a.atttypmod) AS data_type " \
             f"FROM pg_index i " \
             f"JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) " \
             f"WHERE i.indrelid = '{table_name_}'::regclass AND i.indisprimary;"
 
-        result = self.engine.execute(postgres_query)
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(query_)
+            result = connection.execute(query)
+
         primary_keys_ = result.fetchall()
 
         if names_only:
@@ -1828,13 +1870,15 @@ class PostgreSQL:
                     print(log_msg, end=" ... ")
 
                 try:
-                    self.engine.execute('DROP TABLE {} CASCADE;'.format(table_name_))
+                    with self.engine.connect() as connection:
+                        query = sqlalchemy.text(f'DROP TABLE {table_name_} CASCADE;')
+                        connection.execute(query)
 
                     if verbose:
                         print("Done.")
 
                 except Exception as e:
-                    print("Failed. {}".format(e))
+                    _print_failure_msg(e)
 
     @staticmethod
     def psql_insert_copy(sql_table, sql_db_engine, column_names, data_iter):
@@ -2111,25 +2155,28 @@ class PostgreSQL:
         copy_sql = "COPY ({query}) TO STDOUT WITH DELIMITER '{delimiter}' CSV HEADER;".format(
             query=sql_query, delimiter=delimiter)
 
-        # Get a cursor
         connection = self.engine.raw_connection()
-        cursor = connection.cursor()
-        cursor.copy_expert(copy_sql, csv_temp)
+        try:
+            # Get a cursor
+            cursor = connection.cursor()
+            cursor.copy_expert(copy_sql, csv_temp)
 
-        csv_temp.seek(0)  # Rewind the file handle using seek() in order to read the data back from it
+            # Rewind the file handle using seek() in order to read the data back from it
+            csv_temp.seek(0)
 
-        table_data = pd.read_csv(csv_temp, **kwargs)  # Read data from temporary csv
+            table_data = pd.read_csv(csv_temp, **kwargs)  # Read data from temporary csv
 
-        csv_temp.close()  # Close the temp file
-        cursor.close()  # Close the cursor
-        connection.close()  # Close the connection
+            csv_temp.close()  # Close the temp file
+            cursor.close()  # Close the cursor
+        finally:
+            connection.close()  # Close the connection
 
         return table_data
 
     def _unique_rsq_args(self):
         """
         Get names of arguments that are exclusive to the method
-        :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`.
+        :meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`.
 
         :return: names of arguments exclusive to :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`
         :rtype: dict
@@ -2185,7 +2232,9 @@ class PostgreSQL:
         if bool(set(kwargs.keys()).intersection(self._unique_rsq_args())):
             table_data = self.read_sql_query(sql_query=sql_query, chunksize=chunk_size, **kwargs)
         else:
-            table_data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+            with self.engine.connect() as connection:
+                sql_query_ = sqlalchemy.text(sql_query)
+                table_data = pd.read_sql(sql=sql_query_, con=connection, chunksize=chunk_size, **kwargs)
 
         if sorted_by:
             table_data.sort_values(sorted_by, inplace=True, ignore_index=True)
@@ -2341,7 +2390,7 @@ class MSSQL:
             if verbose:
                 print("Successfully.")
         except Exception as e:
-            print(f"Failed. {e}.")
+            _print_failure_msg(e)
 
     def _database_name(self, database_name=None):
         """
@@ -2661,7 +2710,8 @@ class MSSQL:
         """
 
         with self.engine.connect() as connection:
-            result = connection.execute('SELECT name, database_id, create_date FROM sys.databases;')
+            query = sqlalchemy.text('SELECT name, database_id, create_date FROM sys.databases;')
+            result = connection.execute(query)
 
         db_names = result.fetchall()
         if names_only:
@@ -2709,15 +2759,18 @@ class MSSQL:
 
         db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
 
-        # noinspection PyBroadException
-        try:
-            result_ = self.engine.execute(
-                f"IF (EXISTS (SELECT name FROM master.sys.databases WHERE name='{db_name}')) "
-                f"SELECT 1 ELSE SELECT 0")
-        except Exception:
-            result_ = self.engine.execute(
-                f"SELECT COUNT(*) FROM master.sys.databases "
-                f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
+        with self.engine.connect() as connection:
+            # noinspection PyBroadException
+            try:
+                query = sqlalchemy.text(
+                    f"IF (EXISTS (SELECT name FROM master.sys.databases WHERE name='{db_name}')) "
+                    f"SELECT 1 ELSE SELECT 0")
+                result_ = connection.execute(query)
+            except Exception:
+                query = sqlalchemy.text(
+                    f"SELECT COUNT(*) FROM master.sys.databases "
+                    f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
+                result_ = connection.execute(query)
 
         result = bool(result_.fetchone()[0])
 
@@ -2787,7 +2840,7 @@ class MSSQL:
                     print("Successfully.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
         else:
             if verbose:
@@ -2878,23 +2931,27 @@ class MSSQL:
             print("Disconnecting the database \"{}\" ... ".format(db_name), end="")
 
         try:
-            # self.engine.execute(
-            #     f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
-            #     f'ALTER DATABASE {db_name} SET MULTI_USER;')
+            # with self.engine.connect() as connection:
+            #     query = sqlalchemy.text(
+            #         f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
+            #         f'ALTER DATABASE {db_name} SET MULTI_USER;')
+            #     connection.execute(query)
 
             self.connect_database(database_name=self.DEFAULT_DATABASE)
 
-            self.engine.execute(
-                f"DECLARE @kill varchar(8000) = ''; "
-                f"SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';' "
-                f"FROM sys.dm_exec_sessions WHERE database_id  = db_id('{db_name}') "
-                f"EXEC(@kill);")
+            with self.engine.connect() as connection:
+                query = sqlalchemy.text(
+                    f"DECLARE @kill varchar(8000) = ''; "
+                    f"SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';' "
+                    f"FROM sys.dm_exec_sessions WHERE database_id  = db_id('{db_name}') "
+                    f"EXEC(@kill);")
+                connection.execute(query)
 
             if verbose:
                 print("Done.")
 
         except Exception as e:
-            print("Failed. {}".format(e))
+            _print_failure_msg(e)
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
@@ -2967,9 +3024,11 @@ class MSSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        result_ = self.engine.execute(
-            f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') "
-            f"SELECT 1 ELSE SELECT 0")
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') "
+                f"SELECT 1 ELSE SELECT 0")
+            result_ = connection.execute(query)
 
         result = bool(result_.fetchone()[0])
 
@@ -3014,11 +3073,13 @@ class MSSQL:
                 print(f"Creating a schema: {s_name} ... ", end="")
 
             try:
-                self.engine.execute(f'CREATE SCHEMA {s_name};')
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE SCHEMA {s_name};')
+                    connection.execute(query)
                 if verbose:
                     print("Done.")
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
         else:
             print(f"The schema {s_name} already exists.")
@@ -3121,13 +3182,15 @@ class MSSQL:
                 if verbose:
                     print(f"Creating a table: {table_name_} ... ", end="")
 
-                self.engine.execute(f'CREATE TABLE {table_name_} ({column_specs});')
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
+                    connection.execute(query)
 
                 if verbose:
                     print("Done.")
 
             except Exception as e:
-                print("Failed. {}".format(e))
+                _print_failure_msg(e)
 
     def table_exists(self, table_name, schema_name=None):
         """
@@ -3164,11 +3227,13 @@ class MSSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        result_ = self.engine.execute(
-            f"IF (EXISTS ("
-            f"SELECT * FROM INFORMATION_SCHEMA.TABLES "
-            f"WHERE TABLE_SCHEMA = '{schema_name_}' AND TABLE_NAME = '{table_name}'))"
-            f"SELECT 1 ELSE SELECT 0")
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"IF (EXISTS ("
+                f"SELECT * FROM INFORMATION_SCHEMA.TABLES "
+                f"WHERE TABLE_SCHEMA = '{schema_name_}' AND TABLE_NAME = '{table_name}'))"
+                f"SELECT 1 ELSE SELECT 0")
+            result_ = connection.execute(query)
 
         result = bool(result_.fetchone()[0])
 
@@ -3194,7 +3259,9 @@ class MSSQL:
             []
         """
 
-        result = self.engine.execute('SELECT * FROM sys.tables WHERE is_filetable = 1;')
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text('SELECT * FROM sys.tables WHERE is_filetable = 1;')
+            result = connection.execute(query)
 
         file_tables_ = result.fetchall()
         if names_only:
@@ -3236,7 +3303,8 @@ class MSSQL:
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
         with self.engine.connect() as connection:
-            result = connection.execute(f'SELECT COUNT(*) FROM {table_name_};')
+            query = sqlalchemy.text(f'SELECT COUNT(*) FROM {table_name_};')
+            result = connection.execute(query)
 
         row_count = result.fetchone()[0]
 
@@ -3278,11 +3346,13 @@ class MSSQL:
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        cursor = self.engine.raw_connection().cursor()
-
-        col_names = [x.column_name for x in cursor.columns(table=table_name, schema=schema_name_)]
-
-        cursor.close()
+        connection = self.engine.raw_connection()
+        try:
+            cursor = connection.cursor()
+            col_names = [x.column_name for x in cursor.columns(table=table_name, schema=schema_name_)]
+            cursor.close()
+        finally:
+            connection.close()
 
         return col_names
 
@@ -3376,15 +3446,19 @@ class MSSQL:
             (True, ['major_version', 'minor_version', 'revision', 'install_failures'])
         """
 
-        schema_name_ = self._schema_name(schema_name=schema_name)
+        with self.engine.connect() as connection:
+            schema_name_ = self._schema_name(schema_name=schema_name)
 
-        dtype_query = (f"= '{dtypes}'" if isinstance(dtypes, str) else f"IN {tuple(dtypes)}")
-        sql_query_geom_col = \
-            f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " \
-            f"WHERE TABLE_NAME='{table_name}' AND TABLE_SCHEMA='{schema_name_}' " \
-            f"AND DATA_TYPE {dtype_query};"
+            dtype_query = (f"= '{dtypes}'" if isinstance(dtypes, str) else f"IN {tuple(dtypes)}")
+            sql_query_geom_col = \
+                f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " \
+                f"WHERE TABLE_NAME='{table_name}' AND TABLE_SCHEMA='{schema_name_}' " \
+                f"AND DATA_TYPE {dtype_query};"
 
-        col_names = self.engine.execute(sql_query_geom_col).fetchall()
+            query = sqlalchemy.text(sql_query_geom_col)
+            result = connection.execute(query)
+
+        col_names = result.fetchall()
 
         if len(col_names) > 0:
             has_the_dtypes = True
@@ -3447,22 +3521,25 @@ class MSSQL:
 
         dtypes_ = [dtypes] if isinstance(dtypes, str) else copy.copy(dtypes)
 
-        for data_type in dtypes_:
-            sql_query_geom_col = \
-                f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " \
-                f"WHERE TABLE_NAME='{table_name}' " \
-                f"AND TABLE_SCHEMA='{schema_name_}' " \
-                f"AND DATA_TYPE='{data_type}'"
+        with self.engine.connect() as connection:
+            for data_type in dtypes_:
+                sql_query_geom_col = \
+                    f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " \
+                    f"WHERE TABLE_NAME='{table_name}' " \
+                    f"AND TABLE_SCHEMA='{schema_name_}' " \
+                    f"AND DATA_TYPE='{data_type}'"
+                query = sqlalchemy.text(sql_query_geom_col)
+                result = connection.execute(query)
 
-            col_names = self.engine.execute(sql_query_geom_col).fetchall()
+                col_names = result.fetchall()
 
-            if len(col_names) > 0:
-                has_the_dtypes = True
-                col_names = list(itertools.chain.from_iterable(col_names))
-            else:
-                has_the_dtypes = False
+                if len(col_names) > 0:
+                    has_the_dtypes = True
+                    col_names = list(itertools.chain.from_iterable(col_names))
+                else:
+                    has_the_dtypes = False
 
-            yield data_type, has_the_dtypes, col_names
+                yield data_type, has_the_dtypes, col_names
 
     def _column_names_in_query(self, table_name, column_names=None, schema_name=None, exclude=None):
         """
@@ -3694,8 +3771,9 @@ class MSSQL:
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
-        sql_query = f'SELECT {col_names_} FROM {table_name_};'
-        data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(f'SELECT {col_names_} FROM {table_name_};')
+            data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
         if chunk_size:
             data = pd.concat(data, ignore_index=True)
@@ -3704,8 +3782,8 @@ class MSSQL:
             shapely_wkt = _check_dependency(name='shapely.wkt')
 
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=DeprecationWarning)
-                data.loc[:, col_names] = data[col_names].applymap(shapely_wkt.loads)
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                data[col_names] = data[col_names].applymap(shapely_wkt.loads)
 
         return data
 
@@ -3756,7 +3834,6 @@ class MSSQL:
             0   transactional   True  ...         0                 0
             1           merge   True  ...         0                 0
             2  security_model   True  ...         0                 0
-
             [3 rows x 6 columns]
 
             >>> mssql.read_table(table_name='MSreplication_options', column_names=['optname'])
@@ -3840,7 +3917,9 @@ class MSSQL:
         if conditions:
             sql_query = sql_query.replace(';', ' ') + conditions + ';'
 
-        data = pd.read_sql(sql=sql_query, con=self.engine, chunksize=chunk_size, **kwargs)
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(sql_query)
+            data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
         if chunk_size:
             data = pd.concat(objs=data, axis=0, ignore_index=True)
@@ -3893,13 +3972,15 @@ class MSSQL:
                     print(log_msg, end=" ... ")
 
                 try:
-                    self.engine.execute(f'DROP TABLE {table_name_};')
+                    with self.engine.connect() as connection:
+                        query = sqlalchemy.text(f'DROP TABLE {table_name_};')
+                        connection.execute(query)
 
                     if verbose:
                         print("Done.")
 
                 except Exception as e:
-                    print("Failed. {}".format(e))
+                    _print_failure_msg(e)
 
 
 # ==================================================================================================
