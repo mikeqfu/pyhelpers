@@ -957,7 +957,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
     :param encoding: encoding format defaults to ``'UTF-8'``
     :type encoding: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool
+    :type verbose: bool or int
     :param wkhtmltopdf_exe: absolute path to 'wkhtmltopdf.exe', defaults to ``None``;
         when ``wkhtmltopdf_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\wkhtmltopdf\\\\bin\\\\wkhtmltopdf.exe*"
@@ -975,12 +975,15 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
 
         >>> web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
         >>> save_web_page_as_pdf(web_page_url, pdf_pathname)
-
         >>> # Open the PDF file using the system's default application
         >>> subprocess.Popen(pdf_pathname, shell=True)
 
         >>> web_page_file = cd("docs\\build\\html\\index.html")
         >>> save_web_page_as_pdf(web_page_file, pdf_pathname, verbose=True)
+        Updating "pyhelpers.pdf" at "tests\\documents\\" ... Done.
+        >>> subprocess.Popen(pdf_pathname, shell=True)
+
+        >>> save_web_page_as_pdf(web_page_file, pdf_pathname, verbose=2)
         Updating "pyhelpers.pdf" at "tests\\documents\\" ...
         Loading pages (1/6)
         Counting pages (2/6)
@@ -1002,8 +1005,13 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
         pdfkit_configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe_)
 
         try:
+            if verbose == 2:
+                verbose_, verbose_end = True, " ... \n"
+            else:
+                verbose_, verbose_end = False, " ... "
+
             _check_path_to_file(
-                path_to_file=path_to_pdf, verbose=verbose, verbose_end=" ... \n", ret_info=False)
+                path_to_file=path_to_pdf, verbose=verbose, verbose_end=verbose_end, ret_info=False)
 
             wkhtmltopdf_options = {
                 'enable-local-file-access': None,
@@ -1024,17 +1032,20 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
             kwargs.update({'configuration': pdfkit_configuration, 'options': wkhtmltopdf_options})
 
             if os.path.isfile(web_page):
-                status = pdfkit_.from_file(web_page, path_to_pdf, verbose=verbose, **kwargs)
+                status = pdfkit_.from_file(web_page, path_to_pdf, verbose=verbose_, **kwargs)
             elif is_url(web_page):
-                status = pdfkit_.from_url(web_page, path_to_pdf, verbose=verbose, **kwargs)
+                status = pdfkit_.from_url(web_page, path_to_pdf, verbose=verbose_, **kwargs)
             else:
                 status = None
 
-            if verbose and not status:
-                print("Failed. Check if the URL is available.")
+            if verbose:
+                if not status:
+                    print("Failed. Check if the URL is available.")
+                elif not verbose_:
+                    print("Done.")
 
         except Exception as e:
-            print(f"Failed. {e}")
+            print(f"Failed. {e}.")
 
     else:
         print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
