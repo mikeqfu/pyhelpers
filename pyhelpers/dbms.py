@@ -526,8 +526,10 @@ class PostgreSQL:
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/postgres ... Successfully.
 
-            >>> postgres.get_database_names()
-            ['postgres', 'template1', 'template0', 'osmdb_test', 'postgis_32_sample']
+            >>> isinstance(postgres.get_database_names(), list)
+            True
+            >>> 'postgres' in postgres.get_database_names()
+            True
         """
 
         with self.engine.connect() as connection:
