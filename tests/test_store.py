@@ -110,7 +110,7 @@ def test_save_spreadsheet(capfd, file_ext, engine):
     pathname = pathname_.name + file_ext
     filename = os.path.basename(pathname)
     save_spreadsheet(dat, pathname, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
 
     if file_ext == ".pickle":
         assert all(x in out for x in [f'Saving "{filename}"', "", "File extension must be"])
@@ -297,6 +297,45 @@ def test_save_web_page_as_pdf(capfd):
     os.remove(pathname_.name)
 
 
+@pytest.mark.parametrize(
+    'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".pdf", ".png", ".unknown"])
+def test_save_data(capfd, recwarn, ext):
+    from pyhelpers.store import save_data
+
+    pathname_ = tempfile.NamedTemporaryFile()
+    pathname = pathname_.name + ext
+    filename = os.path.basename(pathname)
+
+    if ext == ".json":
+        dat = example_dataframe().to_json(orient='index')
+    elif ext == ".pdf":
+        dat = 'https://pyhelpers.readthedocs.io/en/latest/'
+    elif ext == ".png":
+        dat = None
+        x, y = (1, 1), (2, 2)
+        plt.figure()
+        plt.plot([x[0], y[0]], [x[1], y[1]])
+    else:
+        dat = example_dataframe()
+
+    save_data(dat, path_to_file=pathname, verbose=True, confirmation_required=False)
+    out, _ = capfd.readouterr()
+    assert f'Saving "{filename}"' in out and "Done" in out
+
+    if ext == ".unknown":
+        assert len(recwarn) == 1
+        w = recwarn.pop()
+        assert str(w.message) == "The specified file format (extension) is not recognisable by " \
+                                 "`pyhelpers.store.save_data`."
+
+    save_data(dat, path_to_file=pathname, verbose=True, confirmation_required=False)
+    out, _ = capfd.readouterr()
+    assert f'Updating "{filename}"' in out and "Done" in out
+
+    os.remove(pathname)
+    os.remove(pathname_.name)
+
+
 # == Load data =====================================================================================
 
 def test_load_spreadsheets(capfd):
@@ -306,7 +345,7 @@ def test_load_spreadsheets(capfd):
     path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
     wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert 'Loading "tests\\data\\dat.xlsx" ... \n' in out
     assert isinstance(wb_data, dict)
 
@@ -322,31 +361,34 @@ def test_load_data(capfd):
 
     dat_pathname = cd(data_dir, "dat.pickle")
     pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == f'Loading "{data_dir}\\dat.pickle" ... Done.\n'
     assert pickle_dat.equals(example_dataframe())
+    _ = load_data(path_to_file=dat_pathname, verbose=True, test_arg=True)
+    out, _ = capfd.readouterr()
+    assert "'test_arg' is an invalid keyword argument for load()" in out
 
     dat_pathname = cd(data_dir, "dat.csv")
     csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == f'Loading "{data_dir}\\dat.csv" ... Done.\n'
     assert csv_dat.astype('float').equals(example_dataframe())
 
     dat_pathname = cd(data_dir, "dat.json")
     json_dat = load_data(path_to_file=dat_pathname, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == f'Loading "{data_dir}\\dat.json" ... Done.\n'
     assert list(json_dat.keys()) == example_dataframe().index.to_list()
 
     dat_pathname = cd(data_dir, "dat.feather")
     feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == f'Loading "{data_dir}\\dat.feather" ... Done.\n'
     assert feather_dat.equals(example_dataframe())
 
     dat_pathname = cd(data_dir, "dat.joblib")
     joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == f'Loading "{data_dir}\\dat.joblib" ... Done.\n'
     np.random.seed(0)
     assert np.array_equal(joblib_dat, np.random.rand(100, 100))
@@ -361,7 +403,7 @@ def test_unzip(capfd):
 
     unzip(path_to_zip_file=zip_file_path, verbose=True)
 
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == 'Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.\n'
 
 
@@ -372,7 +414,7 @@ def test_seven_zip(capfd):
 
     seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
 
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out.startswith('\r\n7-Zip')
 
 
@@ -387,11 +429,11 @@ def test_markdown_to_rst(capfd):
     path_to_rst_file = cd(dat_dir, "readme.rst")
 
     markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == 'Updating "readme.rst" at "tests\\documents\\" ... Done.\n'
 
     markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == 'Updating "readme.rst" at "tests\\documents\\" ... Done.\n'
 
 

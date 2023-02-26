@@ -37,7 +37,7 @@ def test_confirmed(monkeypatch):
     assert confirmed(prompt=prompt, resp=False)
 
 
-def test_eval_dtype(capfd):
+def test_eval_dtype():
     from pyhelpers.ops import eval_dtype
 
     val_1 = '1'
@@ -320,11 +320,15 @@ def test_parse_csr_matrix(capfd):
     save_npz(path_to_csr_npz, csr_m)
 
     parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     assert out == 'Loading "\\tests\\data\\csr_mat.npz" ... Done.\n'
 
     assert (parsed_csr_mat != csr_m).count_nonzero() == 0
     assert (parsed_csr_mat != csr_m).nnz == 0
+
+    _ = parse_csr_matrix("", verbose=True)
+    out, _ = capfd.readouterr()
+    assert "No such file or directory" in out
 
 
 def test_swap_cols():
@@ -377,6 +381,9 @@ def test_np_shift():
                                            [406705, 286868],
                                            [383830, 398113]]))
 
+    rslt3 = np_shift(arr, step=0)
+    assert np.array_equal(rslt3, arr)
+
 
 def test_get_extreme_outlier_bounds():
     from pyhelpers.ops import get_extreme_outlier_bounds
@@ -385,7 +392,7 @@ def test_get_extreme_outlier_bounds():
 
     lo_bound, up_bound = get_extreme_outlier_bounds(data, k=1.5)
     assert (lo_bound, up_bound) == (0.0, 148.5)
-    
+
 
 def test_interquartile_range():
     from pyhelpers.ops import interquartile_range
@@ -394,7 +401,7 @@ def test_interquartile_range():
 
     iqr_result = interquartile_range(data)
     assert iqr_result == 49.5
-    
+
 
 def test_find_closest_date():
     from pyhelpers.ops import find_closest_date
@@ -406,6 +413,12 @@ def test_find_closest_date():
     assert closest_example_date == '2019-01-02 00:00:00.000000'
 
     example_date = pd.to_datetime('2019-01-01')
+    closest_example_date = find_closest_date(example_date, example_dates, as_datetime=True)
+    assert closest_example_date == pd.to_datetime('2019-01-02 00:00:00')
+
+    example_dates = ['2019-01-02', '2019-12-31']
+
+    example_date = '2019-01-01'
     closest_example_date = find_closest_date(example_date, example_dates, as_datetime=True)
     assert closest_example_date == pd.to_datetime('2019-01-02 00:00:00')
 
