@@ -2,6 +2,22 @@
 
 <br/>
 
+#### **[1.4.6](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.6)**
+
+(*26 February 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.5...1.4.6) since [1.4.5](https://pypi.org/project/pyhelpers/1.4.5/):**
+
+- Improved the module [dbms](https://github.com/mikeqfu/pyhelpers/blob/6602ace1cf7c04731970c01e01c0ad29f45a4b62/pyhelpers/dbms.py) (for migrating to SQLAlchemy 2.0).
+- Improved the following functions (with bug fixes):
+  - [cmap_discretisation()](https://github.com/mikeqfu/pyhelpers/commit/c268c3e70fe2812102d90c9739e9c9c636c42977) in the module [ops](https://github.com/mikeqfu/pyhelpers/blob/24f56435571f9a72810ee6eca63e22289b917335/pyhelpers/ops.py);
+  - [find_closest_points()](https://github.com/mikeqfu/pyhelpers/commit/117d5c3469a029e38ecf3d35d2a3d6f7c2eadaf2) in the module [geom](https://github.com/mikeqfu/pyhelpers/blob/24f56435571f9a72810ee6eca63e22289b917335/pyhelpers/geom.py);
+  - [save_web_page_as_pdf()](https://github.com/mikeqfu/pyhelpers/commit/e0ff2cfa36c0d4811d71274faff27fe8b5fb7a9d) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/24f56435571f9a72810ee6eca63e22289b917335/pyhelpers/store.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.4.6 documentation](https://pyhelpers.readthedocs.io/en/1.4.6/).**
+
+<br/>
+
 #### **[1.4.5](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.5)**
 
 (*9 January 2023*)
