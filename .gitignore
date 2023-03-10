@@ -28,3 +28,7 @@ tests/*
 !tests/images/
 !tests/*.py
 .pypirc
+
+*/vscode/*
+settings.json
+*Completion.json

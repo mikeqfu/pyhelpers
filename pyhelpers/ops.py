@@ -36,6 +36,37 @@ from ._cache import _check_dependency, _USER_AGENT_STRINGS
 # General use
 # ==================================================================================================
 
+def func_running_time(func):
+    """A decorator to measure the time of a function or class method.
+
+    Args:
+        func (_type_): any function or class method
+
+    Returns:
+        _type_: the decorated function or class method with the time of running
+
+    Examples:
+        >>> from pyhelpers.ops import func_running_time
+        >>> @func_running_time
+        >>> def test_func():
+        ...     print("Testing if the function works.")
+        ...     time.sleep(3)
+        >>> test_func()
+            INFO Begin to run function: test_func …
+            Testing if the function works.
+            INFO Finished running function: test_func, total: 3s
+    """
+    def inner(*args, **kwargs):
+        print(f'INFO Begin to run function: {func.__name__} …')
+        time_start = datetime.datetime.now()
+        res = func(*args, **kwargs)
+        time_diff = datetime.datetime.now() - time_start
+        print(
+            f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s')
+        print()
+        return res
+    return inner
+
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
     """

@@ -447,29 +447,26 @@ def project_point_to_line(point, line, drop_dimension=None):
 
 # -- Distance --------------------------------------------------------------------------------------
 
-def calc_distance_on_unit_sphere(pt1, pt2, verbose=False):
-    """
-    Calculate distance between two points.
+def calc_point2point_distance_on_unit_sphere(pt1: typing.Union[shapely.geometry.Point, tuple, np.array],
+                                             pt2: typing.Union[shapely.geometry.Point, tuple, np.array],
+                                             unit: str = "mile") -> float:
+    """Calculate distance between two points.
 
-    :param pt1: a point
-    :type pt1: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param pt2: another point
-    :type pt2: shapely.geometry.Point or list or tuple or numpy.ndarray
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
-    :type verbose: bool or int
-    :return: distance (in miles) between ``pt1`` and ``pt2`` (relative to the earth's radius)
-    :rtype: float
+    Args:
+        pt1 (typing.Union[shapely.geometry.Point, tuple, np.array]): _description_
+        pt2 (typing.Union[shapely.geometry.Point, tuple, np.array]): _description_
+        unit (str): the output distance unit. Defaults to miles, options include 'mile' and 'km'.
 
-    .. note::
+    Returns:
+        float: distance (in miles) between ``pt1`` and ``pt2`` (relative to the earth's radius)
 
+    Notes:
         This function is modified from the original code available at
         [`GEOM-CDOUS-1 <https://www.johndcook.com/blog/python_longitude_latitude/>`_].
         It assumes the earth is perfectly spherical and returns the distance based on each
         point's longitude and latitude.
 
-    **Examples**::
-
+    Examples:
         >>> from pyhelpers.geom import calc_distance_on_unit_sphere
         >>> from pyhelpers._cache import example_dataframe
 
@@ -483,10 +480,12 @@ def calc_distance_on_unit_sphere(pt1, pt2, verbose=False):
         Leeds       -1.543794  53.797418
 
         >>> london, birmingham = example_df.loc[['London', 'Birmingham']].values
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
+        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, unit="mile")
         >>> arc_len_in_miles
         101.10431101941569
     """
+
+    earth_radius = 3960.0 if unit == "mile" else 6371.0
 
     # Convert latitude and longitude to spherical coordinates in radians.
     degrees_to_radians = np.pi / 180.0
@@ -495,8 +494,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, verbose=False):
         try:
             pt1_, pt2_ = map(shapely.geometry.Point, (pt1, pt2))
         except Exception as e:
-            if verbose:
-                print(e)
+            print(e)
             return None
     else:
         pt1_, pt2_ = map(copy.copy, (pt1, pt2))
@@ -516,7 +514,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, verbose=False):
     # distance = rho * arc length
 
     cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
-    arc_length = np.arccos(cosine) * 3960  # in miles
+    arc_length = np.arccos(cosine) * earth_radius  # in miles
 
     # To multiply arc by the radius of the earth in a set of units to get length.
     return arc_length

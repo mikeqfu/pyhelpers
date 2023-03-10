@@ -13,6 +13,9 @@ import sys
 import tempfile
 import warnings
 import zipfile
+import re
+import urllib.request
+import json
 
 import pandas as pd
 import pkg_resources
@@ -225,12 +228,164 @@ def _set_index(df, index=None):
 
 
 # ==================================================================================================
+# Download data
+# ==================================================================================================
+class GitHubFileDownloader:
+    """The GitHubFileDownloader is a tool to download files on GitHub from repo_url.
+
+    Args:
+        repo_url (str): The URL of the GitHub repository to download from. Can be a blob or tree path.
+            directory: "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            single file: "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
+        flatten_files (bool, optional): If flatten is specified, the contents of any and all sub-directories
+                                        will be pulled upwards into the root folder. Defaults to True.
+        output_dir (str, optional): The output directory to write. Defaults to "./".
+
+    Returns:
+        None: will save files to output_dir.
+
+    Examples:
+        # Download a single file
+        >>> from pyhelpers.store import GitHubFileDownloader
+        >>> repo_url = "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
+        >>> downloader = GitHubFileDownloader(repo_url, output_dir="./")
+        >>> downloader.download()
+        Downloaded: 1 files to "./canada_cities.csv"
+
+        # Download a directory
+        >>> from pyhelpers.store import GitHubFileDownloader
+        >>> repo_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+        >>> downloader = GitHubFileDownloader(repo_url, output_dir="./")
+        >>> downloader.download()
+        Downloaded: 2 files to "./docs"
+    """
+
+    def __init__(self, repo_url, flatten_files=True, output_dir="./"):
+
+        self.repo_url = repo_url
+        self.flatten = flatten_files
+        self.output_dir = output_dir
+
+    def __create_url(self, url):
+        """
+        From the given url, produce a URL that is compatible with Github's REST API. Can handle blob or tree paths.
+        """
+        repo_only_url = re.compile(
+            r"https:\/\/github\.com\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-zA-Z0-9]+$")
+        re_branch = re.compile("/(tree|blob)/(.+?)/")
+
+        # Check if the given url is a url to a GitHub repo. If it is, tell the
+        # user to use 'git clone' to download it
+        if re.match(repo_only_url, url):
+            print(
+                "✘ The given url is a complete repository. Use 'git clone' to download the repository")
+            sys.exit()
+
+        # extract the branch name from the given url (e.g master)
+        branch = re_branch.search(url)
+        download_dirs = url[branch.end():]
+        api_url = (url[:branch.start()].replace("github.com", "api.github.com/repos",
+                   1) + "/contents/" + download_dirs + "?ref=" + branch.group(2))
+        return api_url, download_dirs
+
+    def download(self):
+        # generate the url which returns the JSON data
+        api_url, download_dirs = self.__create_url(self.repo_url)
+
+        # To handle file names.
+        if self.flatten:
+            dir_out = self.output_dir
+        elif len(download_dirs.split(".")) == 0:
+            dir_out = os.path.join(self.output_dir, download_dirs)
+        else:
+            dir_out = os.path.join(
+                self.output_dir, "/".join(download_dirs.split("/")[:-1]))
+
+        try:
+            opener = urllib.request.build_opener()
+            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+            urllib.request.install_opener(opener)
+            response = urllib.request.urlretrieve(api_url)
+        except KeyboardInterrupt:
+            # when CTRL+C is pressed during the execution of this script,
+            # bring the cursor to the beginning, erase the current line, and dont make a new line
+            print("✘ Got interrupted")
+            sys.exit()
+
+        if not self.flatten:
+            # make a directory with the name which is taken from
+            # the actual repo
+            os.makedirs(dir_out, exist_ok=True)
+
+        # total files count
+        total_files = 0
+
+        with open(response[0], "r") as f:
+            data = json.load(f)
+            # getting the total number of files so that we
+            # can use it for the output information later
+            total_files += len(data)
+
+            # print("Total files: ", data)
+
+            # If the data is a file, download it as one.
+            if isinstance(data, dict) and data["type"] == "file":
+                try:
+                    # download the file
+                    opener = urllib.request.build_opener()
+                    opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+                    urllib.request.install_opener(opener)
+                    urllib.request.urlretrieve(
+                        data["download_url"], os.path.join(dir_out, data["name"]))
+                    # bring the cursor to the beginning, erase the current line, and dont make a new line
+                    print("Downloaded: " + "{}".format(data["name"]))
+
+                    return total_files
+                except KeyboardInterrupt:
+                    # when CTRL+C is pressed during the execution of this script,
+                    # bring the cursor to the beginning, erase the current line, and dont make a new line
+                    print("✘ Got interrupted")
+                    sys.exit()
+
+            for file in data:
+                file_url = file["download_url"]
+                file_path = file["path"]
+                path = os.path.basename(
+                    file_path) if self.flatten else file_path
+                dirname = os.path.dirname(path)
+
+                if dirname != '':
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+                if file_url is not None:
+                    file_name = file["name"]
+
+                    try:
+                        opener = urllib.request.build_opener()
+                        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+                        urllib.request.install_opener(opener)
+                        # download the file
+                        urllib.request.urlretrieve(file_url, path)
+
+                        print(f"Downloaded: {file_name}")
+
+                    except KeyboardInterrupt:
+                        # when CTRL+C is pressed during the execution of this script,
+                        print("✘ Got interrupted")
+                        sys.exit()
+                else:
+                    self.download(file["html_url"], self.flatten, download_dirs)
+
+            print(f"Downloaded: {total_files} files to {dir_out}")
+
+        return total_files
+
+# ==================================================================================================
 # Save data
 # ==================================================================================================
 
 
 # Pickle files
-
 def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     """
     Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
@@ -290,7 +445,6 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
 
 
 # Spreadsheets
-
 def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None, delimiter=',',
                      verbose=False, **kwargs):
     """
@@ -507,7 +661,6 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
 
 
 # JSON files
-
 def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -610,7 +763,6 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
 
 
 # Joblib
-
 def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     """
     Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
@@ -686,7 +838,6 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
 
 
 # Feather files
-
 def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
@@ -750,7 +901,6 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
 
 
 # Images
-
 def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -939,7 +1089,6 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
 
 # Web page
-
 def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encoding='UTF-8',
                          verbose=False, wkhtmltopdf_exe=None, **kwargs):
     """
@@ -1053,7 +1202,6 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
 
 
 # A comprehensive function
-
 def save_data(data, path_to_file, err_warning=True, confirmation_required=True, **kwargs):
     """
     Save data to a file of a specific format.
@@ -1635,7 +1783,7 @@ def load_data(path_to_file, err_warning=True, **kwargs):
         supported file formats include
         `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_
     :type path_to_file: str or os.PathLike[str]
-    :param err_warning: whether to show a warning message if any unknown error occurs, 
+    :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
     :param kwargs: [optional] parameters of one of the following functions:
