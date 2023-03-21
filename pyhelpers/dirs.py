@@ -548,7 +548,7 @@ def get_filenames_from_folder_by_type(dir_name: str, file_type: str = "txt", isT
 
     if isTraverseSubdirectory:
         files_list = []
-        for root, dirs, files in os.walk(dir_name):
+        for root, _, files in os.walk(dir_name):
             files_list.extend([os.path.join(root, file) for file in files])
         if file_type in {"*", "all"}:
             return [path2linux(file) for file in files_list]
