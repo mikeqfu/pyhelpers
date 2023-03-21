@@ -32,3 +32,4 @@ tests/*
 */vscode/*
 settings.json
 *Completion.json
+*/__pycache__/*
