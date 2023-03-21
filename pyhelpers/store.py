@@ -14,7 +14,6 @@ import subprocess
 import sys
 import tempfile
 import urllib
-import urllib.request
 import warnings
 import zipfile
 
@@ -267,14 +266,14 @@ class GitHubFileDownloader:
         self.flatten = flatten_files
         self.output_dir = output_dir
 
-        self.api_url, self.download_dirs = self._create_url(self.repo_url)
+        self.api_url, self.download_dirs = self.create_url(self.repo_url)
 
         # Set user agent in default
         opener = urllib.request.build_opener()
         opener.addheaders = [('User-agent', 'Mozilla/5.0')]
         urllib.request.install_opener(opener)
 
-    def _create_url(self, url):
+    def create_url(self, url):
         """
         From the given url, produce a URL that is compatible with Github's REST API. Can handle blob or tree paths.
         """
@@ -314,7 +313,8 @@ class GitHubFileDownloader:
 
         # get response from GutHub response
         try:
-            response = urllib.request.urlretrieve(api_url_local)
+            with urllib.request.urlretrieve(api_url_local) as response_local:
+                response = response_local
         except KeyboardInterrupt:
             print("✘ Got interrupted")
             sys.exit()
@@ -331,8 +331,7 @@ class GitHubFileDownloader:
             if isinstance(data, dict) and data["type"] == "file":
                 try:
                     # Download the file
-                    urllib.request.urlretrieve(
-                        data["download_url"], os.path.join(self.dir_out, data["name"]))
+                    _ , _ = urllib.request.urlretrieve(data["download_url"], os.path.join(self.dir_out, data["name"]))
                     print("Downloaded: " + "{}".format(data["name"]))
 
                     return total_files
@@ -355,7 +354,7 @@ class GitHubFileDownloader:
 
                     try:
                         # download the file
-                        urllib.request.urlretrieve(file_url, path)
+                        _ , _ = urllib.request.urlretrieve(file_url, path)
                         print(f"Downloaded: {file_name}")
                     except KeyboardInterrupt:
                         print("✘ Got interrupted")
