@@ -1035,7 +1035,7 @@ class PostgreSQL:
         else:
             print("The schema \"{}\" already exists.".format(schema_name))
 
-    def get_schema_names(self, include_all=False, names_only=True, verbose=False):
+    def get_schema_names(self, include_all=False, names_only=True, column_names=None, verbose=False):
         """
         Get the names of existing schemas.
 
@@ -1043,6 +1043,9 @@ class PostgreSQL:
         :type include_all: bool
         :param names_only: whether to return only the names of the schema names, defaults to ``True``
         :type names_only: bool
+        :param column_names: column names of the returned dataframe if ``names_only=False``;
+            when ``column_names=None``, it defaults to ``['schema_name', 'schema_id', 'role']``
+        :type column_names: None or list
         :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool or int
         :return: schema names
@@ -1061,11 +1064,11 @@ class PostgreSQL:
             ['public']
 
             >>> testdb.get_schema_names(include_all=True, names_only=False)
-                      schema_name  schema_id      role
-            0  information_schema      13388  postgres
-            1          pg_catalog         11  postgres
-            2            pg_toast         99  postgres
-            3              public       2200  postgres
+                      schema_name       schema_owner    oid  nspowner
+            0              public  pg_database_owner   2200      6171
+            1            pg_toast           postgres     99        10
+            2          pg_catalog           postgres     11        10
+            3  information_schema           postgres  13183        10
 
             >>> testdb.drop_schema(schema_names='public', verbose=True)
             To drop the schema "public" from postgres:***@localhost:5432/testdb
@@ -1086,16 +1089,22 @@ class PostgreSQL:
         condition = ""
         # Note: Use '%%' for '%' in SQL statements, as '%' in Python is used for string formatting
         if not include_all:
-            condition = " WHERE nspname NOT IN ('information_schema', 'pg_catalog') " \
+            condition = "WHERE nspname NOT IN ('information_schema', 'pg_catalog') " \
                         "AND nspname NOT LIKE 'pg_toast%%' " \
                         "AND nspname NOT LIKE 'pg_temp%%'"
 
         with self.engine.connect() as connection:
+            # query = sqlalchemy.text(
+            #     f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s "
+            #     f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner "
+            #     f"{condition} "
+            #     f"ORDER BY s.nspname;")
             query = sqlalchemy.text(
-                f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s "
-                f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner"
+                f"SELECT s.schema_name, s.schema_owner, c.oid, c.nspowner "
+                f"FROM pg_catalog.pg_namespace c "
+                f"JOIN information_schema.schemata s ON POSITION(c.nspname IN s.schema_name) > 0 "
                 f"{condition} "
-                f"ORDER BY s.nspname;")
+                f"ORDER BY s.schema_owner;")
             result = connection.execute(query)
 
         schema_info_ = result.fetchall()
@@ -1108,7 +1117,13 @@ class PostgreSQL:
             if names_only:
                 schema_info = [x[0] for x in schema_info_]
             else:
-                schema_info = pd.DataFrame(schema_info_, columns=['schema_name', 'schema_id', 'role'])
+                if column_names is None:
+                    column_names = ['schema_name', 'schema_owner', 'oid', 'nspowner']
+                else:
+                    assert len(column_names) == len(schema_info_[0]), \
+                        f"`column_names` must be a list of strings and " \
+                        f"its length must equal {len(schema_info_[0])}."
+                schema_info = pd.DataFrame(schema_info_, columns=column_names)
 
         return schema_info
 
@@ -1539,8 +1554,8 @@ class PostgreSQL:
 
             return table_list
 
-    def alter_table_schema(self, table_name, schema_name, new_schema_name, confirmation_required=True,
-                           verbose=False):
+    def alter_table_schema(self, table_name, schema_name, new_schema_name,
+                           confirmation_required=True, verbose=False):
         """
         Move a table from one schema to another within the currently-connected database.
 
@@ -1916,9 +1931,9 @@ class PostgreSQL:
         sql_query = 'COPY {} ({}) FROM STDIN WITH CSV'.format(sql_table_name, sql_column_names)
         con_cur.copy_expert(sql=sql_query, file=io_buffer)
 
-    def import_data(self, data, table_name, schema_name=None, if_exists='fail',
-                    force_replace=False, chunk_size=None, col_type=None, method='multi',
-                    index=False, confirmation_required=True, verbose=False, **kwargs):
+    def import_data(self, data, table_name, schema_name=None, if_exists='fail', force_replace=False,
+                    chunk_size=None, col_type=None, method='multi', index=False,
+                    confirmation_required=True, verbose=False, **kwargs):
         """
         Import tabular data into a table.
 
@@ -2191,8 +2206,8 @@ class PostgreSQL:
 
         return rsq_args_spec - read_sql_args
 
-    def read_table(self, table_name, schema_name=None, conditions=None, chunk_size=None, sorted_by=None,
-                   **kwargs):
+    def read_table(self, table_name, schema_name=None, conditions=None, chunk_size=None,
+                   sorted_by=None, **kwargs):
         """
         Read data from a table.
 
