@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import importlib.resources
 import io
 import json
 import operator
@@ -18,7 +19,6 @@ import warnings
 import zipfile
 
 import pandas as pd
-import pkg_resources
 
 from ._cache import _check_dependency, _check_rel_pathname
 from .ops import confirmed, find_executable, is_url
@@ -2302,7 +2302,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
 
     if engine is None:
         if vbscript is None:
-            vbscript = pkg_resources.resource_filename(__name__, "data/xlsx2csv.vbs")
+            vbscript = str(importlib.resources.files(__package__).joinpath("data/xlsx2csv.vbs"))
 
         if csv_pathname is None:
             temp_file = tempfile.NamedTemporaryFile()

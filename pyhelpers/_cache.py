@@ -5,12 +5,10 @@ import importlib
 import importlib.util
 import json
 import os
+import pkgutil
 import sys
 
-import pkg_resources
-
-# import name: (package/module name, install name)
-_OPTIONAL_DEPENDENCY = {
+_OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
     "fuzzywuzzy": ("FuzzyWuzzy", "fuzzywuzzy"),
     "Levenshtein": ("python-Levenshtein", "python-Levenshtein"),
     "tqdm": ("tqdm", "tqdm"),
@@ -120,7 +118,6 @@ def _check_rel_pathname(pathname):
     return pathname_
 
 
-# An example DataFrame
 def example_dataframe(osgb36=False):
     """
     Create an example dataframe.
@@ -179,60 +176,6 @@ def example_dataframe(osgb36=False):
     return _example_dataframe
 
 
-# == For ops.py ====================================================================================
+_USER_AGENT_STRINGS = json.loads(pkgutil.get_data(__name__, "data/user-agent-strings.json").decode())
 
-def _load_user_agent_strings():
-    """
-    Load (fake) user agent strings.
-
-    :return: (fake) user agent strings
-    :rtype: dict
-    """
-
-    path_to_json = pkg_resources.resource_filename(__name__, "data/user-agent-strings.json")
-
-    with open(path_to_json, mode='r') as f:
-        user_agent_strings = json.loads(f.read())
-
-    return user_agent_strings
-
-
-_USER_AGENT_STRINGS = _load_user_agent_strings()
-
-
-# == For text.py ===================================================================================
-
-def _english_written_numbers():
-    metadata = dict()
-
-    # Singles
-    units = [
-        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
-        'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
-        'sixteen', 'seventeen', 'eighteen', 'nineteen', 'a',
-    ]
-
-    # Tens
-    tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
-
-    # Larger scales
-    scales = ['hundred', 'thousand', 'million', 'billion', 'trillion']
-
-    # divisors
-    metadata['and'] = (1, 0)
-
-    # perform our loops and start the swap
-    for i, word in enumerate(units):
-        if word == 'a':
-            metadata[word] = (1, 1)
-        else:
-            metadata[word] = (1, i)
-    for i, word in enumerate(tens):
-        metadata[word] = (1, i * 10)
-    for i, word in enumerate(scales):
-        metadata[word] = (10 ** (i * 3 or 2), 0)
-
-    return metadata
-
-
-_ENGLISH_WRITTEN_NUMBERS = _english_written_numbers()
+_ENGLISH_NUMERALS = json.loads(pkgutil.get_data(__name__, "data/english-numerals.json").decode())

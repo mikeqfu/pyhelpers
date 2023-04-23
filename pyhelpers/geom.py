@@ -975,7 +975,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
             nodes_order = possible_paths[i]  # order of nodes
             ordered_nodes = points_sequence[nodes_order]  # ordered nodes
 
-            # cost = the sum of euclidean distances between the i-th and (i+1)-th points
+            # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
             dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1)).sum()
             if dist <= min_dist:
                 min_dist = dist

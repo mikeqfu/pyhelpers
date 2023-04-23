@@ -3,13 +3,11 @@
 import collections.abc
 import copy
 import errno
+import importlib.resources
 import os
 import pathlib
 import re
 import shutil
-
-import pkg_resources
-from typing import Union  # Python version <= 3.9
 
 from ._cache import _check_rel_pathname
 from .ops import confirmed
@@ -25,11 +23,11 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     Get the full pathname of a directory (or file).
 
     :param subdir: name of a directory or names of directories (and/or a filename)
-    :type subdir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
     :param cwd: current working directory, defaults to ``None``
-    :type cwd: str or os.PathLike[str] or bytes or os.Path[bytes] or None
+    :type cwd: str | os.PathLike[str] | bytes | os.Path[bytes] | None
     :param back_check: whether to check if a parent directory exists, defaults to ``False``
     :type back_check: bool
     :param kwargs: [optional] parameters (e.g. ``mode=0o777``) of `os.makedirs`_
@@ -87,8 +85,8 @@ def go_from_altered_cwd(dir_name, **kwargs):
     Get the full pathname of an altered working directory.
 
     :param dir_name: name of a directory
-    :type dir_name: str or os.PathLike[str] or bytes or os.Path[bytes]
-    :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.dir.cd`
+    :type dir_name: str | os.PathLike[str] | bytes | os.Path[bytes]
+    :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
     :return: full pathname of an altered working directory (changed from the directory ``dir_name``)
     :rtype: str
 
@@ -149,12 +147,12 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     Get the full pathname of a directory (or file) under ``data_dir``.
 
     :param subdir: name of directory or names of directories (and/or a filename)
-    :type subdir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param data_dir: name of a directory where data is (or will be) stored, defaults to ``"data"``
-    :type data_dir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type data_dir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
-    :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.dir.cd`
+    :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
     :return path: full pathname of a directory (or a file) under ``data_dir``
     :rtype: str
 
@@ -208,9 +206,9 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     Get the full pathname of a directory (or file) under ``data_dir`` of a package.
 
     :param subdir: name of directory or names of directories (and/or a filename)
-    :type subdir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param data_dir: name of a directory to store data, defaults to ``"data"``
-    :type data_dir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type data_dir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param mkdir: whether to create a directory, defaults to ``False``
     :type mkdir: bool
     :param kwargs: [optional] parameters (e.g. ``mode=0o777``) of `os.makedirs`_
@@ -231,7 +229,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
 
     data_dir_ = data_dir.decode() if isinstance(data_dir, bytes) else str(data_dir)
-    path = pkg_resources.resource_filename(__name__, data_dir_)
+    path = importlib.resources.files(__package__).joinpath(data_dir_)
 
     for x in subdir:
         path = os.path.join(path, x.decode() if isinstance(x, bytes) else x)
@@ -261,7 +259,7 @@ def is_dir(path_to_dir):
     [`DIRS-IVD-2 <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
 
     :param path_to_dir: pathname of a directory
-    :type path_to_dir: str or bytes
+    :type path_to_dir: str | bytes
     :return: whether the input is a path-like string that describes a directory name
     :rtype: bool
 
@@ -310,12 +308,12 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     Validate the pathname of a directory.
 
     :param path_to_dir: pathname of a data directory, defaults to ``None``
-    :type path_to_dir: str or os.PathLike[str] or bytes or os.Path[bytes] or None
+    :type path_to_dir: str | os.PathLike[str] | bytes | os.Path[bytes] | None
     :param subdir: name of a subdirectory to be examined if ``directory=None``, defaults to ``""``
-    :type subdir: str or os.PathLike[str] or bytes or os.Path[bytes]
+    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param msg: error message if ``data_dir`` is not a full pathname, defaults to ``"Invalid input!"``
     :type msg: str
-    :param kwargs: [optional] parameters of the function :py:func:`pyhelpers.dir.cd`
+    :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
     :return: valid full pathname of a directory
     :rtype: str
 
@@ -369,13 +367,13 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
     Delete a directory.
 
     :param path_to_dir: pathname of a directory
-    :type path_to_dir: str or bytes or os.PathLike[str] or os.PathLike[bytes]
+    :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes]
     :param confirmation_required: whether to prompt a message for confirmation to proceed,
         defaults to ``True``
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `shutil.rmtree`_ or `os.rmdir`_
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
@@ -443,13 +441,13 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     Delete a directory or directories.
 
     :param path_to_dir: pathname (or pathnames) of a directory (or directories)
-    :type path_to_dir: str or bytes or os.PathLike[str] or os.PathLike[bytes] or collections.abc.Sequence
+    :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes] | collections.abc.Sequence
     :param confirmation_required: whether to prompt a message for confirmation to proceed,
         defaults to ``True``
     :type confirmation_required: bool
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `shutil.rmtree`_ or `os.rmdir`_
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
