@@ -6,7 +6,7 @@ import string
 
 import numpy as np
 
-from ._cache import _check_dependency, _ENGLISH_WRITTEN_NUMBERS
+from ._cache import _check_dependency, _ENGLISH_NUMERALS
 
 
 # ==================================================================================================
@@ -106,10 +106,10 @@ def extract_words1upper(x, join_with=None):
     :param x: a string joined by a number of words each starting with an uppercase letter
     :type x: str
     :param join_with: a string with which to (re)join the single words, defaults to ``None``
-    :type join_with: str or None
+    :type join_with: str | None
     :return: a list of single words each starting with an uppercase letter,
         or a single string joined together by them with ``join_with``
-    :rtype: list or str
+    :rtype: list | str
 
     **Examples**::
 
@@ -137,13 +137,47 @@ def extract_words1upper(x, join_with=None):
     return extracted_words
 
 
+def _english_numerals():
+    metadata = dict()
+
+    # Singles
+    units = [
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+        'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen',
+        'sixteen', 'seventeen', 'eighteen', 'nineteen', 'a',
+    ]
+
+    # Tens
+    tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+
+    # Larger scales
+    scales = ['hundred', 'thousand', 'million', 'billion', 'trillion']
+
+    # divisors
+    metadata['and'] = [1, 0]
+
+    # perform our loops and start the swap
+    for i, word in enumerate(units):
+        if word == 'a':
+            metadata[word] = [1, 1]
+        else:
+            metadata[word] = [1, i]
+    for i, word in enumerate(tens):
+        metadata[word] = [1, i * 10]
+    for i, word in enumerate(scales):
+        metadata[word] = [10 ** (i * 3 or 2), 0]
+
+    return metadata
+
+
 def numeral_english_to_arabic(x):
     """
-    Convert a string which potentially is a number written in English to an Arabic number
+    Convert a number written in English words into its equivalent numerical value represented in
+    Arabic numerals.
 
-    :param x: a number written in English
+    :param x: a number expressed in the English language
     :type x: str
-    :return: a number written in Arabic
+    :return: the equivalent Arabic number
     :rtype: int
 
     **Examples**::
@@ -169,7 +203,7 @@ def numeral_english_to_arabic(x):
     current = result = 0
 
     for word in x.lower().replace('-', ' ').split():
-        if word not in _ENGLISH_WRITTEN_NUMBERS and not word.isdigit():
+        if word not in _ENGLISH_NUMERALS and not word.isdigit():
             # word_ = find_similar_str(word, ENGLISH_WRITTEN_NUMBERS)
             # if word_ is None:
             raise Exception(f"Illegal word: \"{word}\"")
@@ -179,7 +213,7 @@ def numeral_english_to_arabic(x):
         if word.isdigit():
             scale, increment = (1, int(word))
         else:
-            scale, increment = _ENGLISH_WRITTEN_NUMBERS[word]
+            scale, increment = _ENGLISH_NUMERALS[word]
         current = current * scale + increment
 
         if scale > 100:
@@ -249,7 +283,7 @@ def calculate_idf(raw_documents, rm_punc=False):
     Calculate inverse document frequency.
 
     :param raw_documents: a sequence of textual data
-    :type raw_documents: typing.Iterable or typing.Sequence
+    :type raw_documents: typing.Iterable | typing.Sequence
     :param rm_punc: whether to remove punctuation from the input textual data, defaults to ``False``
     :type rm_punc: bool
     :return: term frequency (TF) of the input textual data, and inverse document frequency
@@ -332,10 +366,10 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
     Count term frequency–inverse document frequency.
 
     :param raw_documents: a sequence of textual data
-    :type raw_documents: typing.Iterable or typing.Sequence
+    :type raw_documents: typing.Iterable | typing.Sequence
     :param rm_punc: whether to remove punctuation from the input textual data, defaults to ``False``
     :type rm_punc: bool
-    :return: tf-idf of the input textual data
+    :return: TF-IDF of the input textual data.
     :rtype: dict
 
     **Examples**::
@@ -482,7 +516,7 @@ def find_matched_str(x, lookup_list):
     :param lookup_list: a sequence of strings for lookup
     :type lookup_list: typing.Iterable
     :return: a generator containing all that are matched with ``x``
-    :rtype: typing.Generator or None
+    :rtype: typing.Generator | None
 
     **Examples**::
 
@@ -524,13 +558,13 @@ def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs)
     :param n: number of similar strings to return, defaults to ``1``;
         when ``n=None``, the function returns a sorted ``lookup_list``
         (in the descending order of similarity)
-    :type n: int or None
+    :type n: int | None
     :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
         defaults to ``True``
     :type ignore_punctuation: bool
     :param kwargs: [optional] parameters of `difflib.get_close_matches`_
     :return: a string-type variable that should be similar to (or the same as) ``x``
-    :rtype: str or list or None
+    :rtype: str | list | None
 
     .. _`difflib.get_close_matches`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
@@ -568,10 +602,10 @@ def _find_str_by_fuzzywuzzy(x, lookup_list, n=1, **kwargs):
     :param n: number of similar strings to return, defaults to ``1``;
         when ``n=None``, the function returns a sorted ``lookup_list``
         (in the descending order of similarity)
-    :type n: int or None
+    :type n: int | None
     :param kwargs: [optional] parameters of `fuzzywuzzy.fuzz.token_set_ratio`_
     :return: a string-type variable that should be similar to (or the same as) ``x``
-    :rtype: str or list or None
+    :rtype: str | list | None
 
     .. _`fuzzywuzzy.fuzz.token_set_ratio`: https://github.com/seatgeek/fuzzywuzzy
 
@@ -627,7 +661,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
     :param n: number of similar strings to return, defaults to ``1``;
         when ``n=None``, the function returns a sorted ``lookup_list``
         (in the descending order of similarity)
-    :type n: int or None
+    :type n: int | None
     :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
         defaults to ``True``
     :type ignore_punctuation: bool
@@ -636,11 +670,11 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
         - if ``engine='difflib'``, the function relies on `difflib.get_close_matches`_
         - if ``engine='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
 
-    :type engine: str or typing.Callable
+    :type engine: str | typing.Callable
     :param kwargs: [optional] parameters of `difflib.get_close_matches`_ (e.g. ``cutoff=0.6``) or
         `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``engine``
     :return: a string-type variable that should be similar to (or the same as) ``x``
-    :rtype: str or list or None
+    :rtype: str | list | None
 
     .. _`difflib.get_close_matches`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
