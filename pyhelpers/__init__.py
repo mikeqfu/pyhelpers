@@ -2,13 +2,11 @@
 
 import datetime
 import json
-
-import pkg_resources
+import pkgutil
 
 from . import dbms, dirs, geom, ops, settings, store, text
 
-with open(pkg_resources.resource_filename(__name__, "data/metadata.json"), mode='r') as f:
-    metadata = json.load(f)
+metadata = json.loads(pkgutil.get_data(__name__, "data/metadata.json").decode())
 
 __project__ = metadata['Project']
 __pkgname__ = metadata['Package']
