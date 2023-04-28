@@ -10,18 +10,16 @@ import os
 import pathlib
 import pickle
 import platform
-import re
 import subprocess
 import sys
 import tempfile
-import urllib
 import warnings
 import zipfile
 
 import pandas as pd
 
 from ._cache import _check_dependency, _check_rel_pathname
-from .ops import confirmed, find_executable, is_url
+from .ops import confirmed, find_executable, format_err_msg, is_url
 
 
 def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
@@ -228,148 +226,8 @@ def _set_index(df, index=None):
 
 
 # ==================================================================================================
-# Download data
-# ==================================================================================================
-class GitHubFileDownloader:
-    """The GitHubFileDownloader is a tool to download files on GitHub from repo_url.
-
-    Args:
-        repo_url (str): The URL of the GitHub repository to download from. Can be a blob or tree path.
-            directory: "https://github.com/xyluo25/openNetwork/blob/main/docs"
-            single file: "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
-        flatten_files (bool, optional): If flatten is specified, the contents of any and all sub-directories
-                                        will be pulled upwards into the root folder. Defaults to True.
-        output_dir (str, optional): The output directory to write. Defaults to "./".
-
-    Returns:
-        None: will save files to output_dir.
-
-    Examples:
-        # Download a single file
-        >>> from pyhelpers.store import GitHubFileDownloader
-        >>> repo_url = "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
-        >>> downloader = GitHubFileDownloader(repo_url, output_dir="./")
-        >>> downloader.download()
-        Downloaded: 1 files to "./canada_cities.csv"
-
-        # Download a directory
-        >>> from pyhelpers.store import GitHubFileDownloader
-        >>> repo_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
-        >>> downloader = GitHubFileDownloader(repo_url, output_dir="./")
-        >>> downloader.download()
-        Downloaded: 2 files to "./docs"
-    """
-
-    def __init__(self, repo_url, flatten_files=False, output_dir="./"):
-
-        self.repo_url = repo_url
-        self.flatten = flatten_files
-        self.output_dir = output_dir
-
-        self.api_url, self.download_dirs = self.create_url(self.repo_url)
-
-        # Set user agent in default
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-        urllib.request.install_opener(opener)
-
-    def create_url(self, url):
-        """
-        From the given url, produce a URL that is compatible with Github's REST API. Can handle blob or tree paths.
-        """
-        repo_only_url = re.compile(
-            r"https:\/\/github\.com\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-zA-Z0-9]+$")
-        re_branch = re.compile("/(tree|blob)/(.+?)/")
-
-        # Check if the given url is a complete url to a GitHub repo.
-        if re.match(repo_only_url, url):
-            print(
-                "Given url is a complete repository, please use 'git clone' to download the repository")
-            sys.exit()
-
-        # extract the branch name from the given url (e.g master)
-        branch = re_branch.search(url)
-        download_dirs = url[branch.end():]
-        api_url = (
-            f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/contents/{download_dirs}?ref={branch[2]}')
-        return api_url, download_dirs
-
-    def download(self, api_url=None):
-        # Update api_url if it is not specified
-        api_url_local = self.api_url if api_url is None else api_url
-
-        # Update output directory if flatten is not specified
-        if self.flatten:
-            self.dir_out = self.flatten
-        elif len(self.download_dirs.split(".")) == 0:
-            self.dir_out = os.path.join(self.output_dir, self.download_dirs)
-        else:
-            self.dir_out = os.path.join(
-                self.output_dir, "/".join(self.download_dirs.split("/")[:-1]))
-
-        # Make a directory with the name which is taken from the actual repo
-        if not self.flatten:
-            os.makedirs(self.dir_out, exist_ok=True)
-
-        # get response from GutHub response
-        try:
-            with urllib.request.urlretrieve(api_url_local) as response_local:
-                response = response_local
-        except KeyboardInterrupt:
-            print("✘ Got interrupted")
-            sys.exit()
-
-        # download files according to the response
-        total_files = 0
-        with open(response[0], "r") as f:
-            data = json.load(f)
-
-            # count total number of files
-            total_files += len(data)
-
-            # If the data is a file, download it as one.
-            if isinstance(data, dict) and data["type"] == "file":
-                try:
-                    # Download the file
-                    _ , _ = urllib.request.urlretrieve(data["download_url"], os.path.join(self.dir_out, data["name"]))
-                    print("Downloaded: " + "{}".format(data["name"]))
-
-                    return total_files
-                except KeyboardInterrupt as e:
-                    print(f"Error: Got interrupted for {e}")
-                    sys.exit()
-
-            for file in data:
-                file_url = file["download_url"]
-                file_path = file["path"]
-                path = os.path.basename(
-                    file_path) if self.flatten else file_path
-                dirname = os.path.dirname(path)
-
-                if dirname != '':
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-                if file_url is not None:
-                    file_name = file["name"]
-
-                    try:
-                        # download the file
-                        _ , _ = urllib.request.urlretrieve(file_url, path)
-                        print(f"Downloaded: {file_name}")
-                    except KeyboardInterrupt:
-                        print("✘ Got interrupted")
-                        sys.exit()
-                else:
-                    self.download(file["html_url"])
-
-            print(f"Downloaded: {total_files} files to {self.dir_out}")
-        return total_files
-
-
-# ==================================================================================================
 # Save data
 # ==================================================================================================
-
 
 # Pickle files
 def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
@@ -427,7 +285,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 # Spreadsheets
@@ -515,7 +373,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e.args[0]}")
+        print(f"Failed. {format_err_msg(e.args[0])}")
 
 
 def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode='w',
@@ -641,7 +499,7 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
             cur_sheet_names = list(writer.sheets.keys())
 
         except Exception as e:
-            print(f"Failed. {e}")
+            print(f"Failed. {format_err_msg(e)}")
 
     writer.close()
 
@@ -745,7 +603,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 # Joblib
@@ -820,7 +678,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 # Feather files
@@ -883,7 +741,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 # Images
@@ -1068,7 +926,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
@@ -1180,7 +1038,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
                     print("Done.")
 
         except Exception as e:
-            print(f"Failed. {e}.")
+            print(f"Failed. {format_err_msg(e)}")
 
     else:
         print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
@@ -1322,7 +1180,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 # Load data
 # ==================================================================================================
 
-
+# Pickle files
 def load_pickle(path_to_pickle, verbose=False, **kwargs):
     """
     Load data from a `Pickle`_ file.
@@ -1371,9 +1229,10 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         return pickle_data
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
+# Spreadsheets
 def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **kwargs):
     """
     Load data from a `CSV`_ file.
@@ -1467,7 +1326,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         return csv_data
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
@@ -1543,7 +1402,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
 
         except Exception as e:
             sheet_dat = None
-            print(f"Failed. {e}")
+            print(f"Failed. {format_err_msg(e)}")
 
         workbook_dat.append(sheet_dat)
 
@@ -1557,6 +1416,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     return workbook_data
 
 
+# JSON files
 def load_json(path_to_json, engine=None, verbose=False, **kwargs):
     """
     Load data from a `JSON`_ file.
@@ -1628,9 +1488,10 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
         return json_data
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
+# Joblib
 def load_joblib(path_to_joblib, verbose=False, **kwargs):
     """
     Load data from a `joblib`_ file.
@@ -1687,9 +1548,10 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         return joblib_data
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
+# Feather files
 def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
@@ -1758,7 +1620,7 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
         return feather_data
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 def load_data(path_to_file, err_warning=True, **kwargs):
@@ -1964,10 +1826,11 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {e}")
+        print(f"Failed. {format_err_msg(e)}")
 
 
-def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None, **kwargs):
+def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
+              **kwargs):
     """
     Extract data from a compressed file by using `7-Zip <https://www.7-zip.org/>`_.
 
@@ -2046,7 +1909,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     """
 
     exe_name = "7z.exe"
-    possible_exe_pathnames = {exe_name, "C:\\Program Files\\7-Zip\\7z.exe"}
+    possible_exe_pathnames = {exe_name, "C:/Program Files/7-Zip/7z.exe"}
     seven_zip_exists, seven_zip_exe_ = _check_exe_pathname(
         exe_name, exe_pathname=seven_zip_exe, possible_pathnames=possible_exe_pathnames)
 
@@ -2072,8 +1935,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
                 print("An error occurred: {}.".format(e))
 
     else:
-        print("\"7-Zip\" (https://www.7-zip.org/) is required to run this function; "
-              "however, it is not found on this device.\nInstall it and then try again.")
+        print('"7-Zip" (https://www.7-zip.org/) is required to run this function; '
+              'however, it is not found on this device.\nInstall it and then try again.')
 
 
 # ==================================================================================================
@@ -2343,5 +2206,5 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             return buffer
 
         except Exception as e:
-            print(f"Failed. {e}")
+            print(f"Failed. {format_err_msg(e)}")
             buffer.close()
