@@ -640,13 +640,13 @@ def validate_filename(file_pathname, suffix_num=1):
         >>> import os
 
         >>> test_file_pathname = "tests/data/test.txt"
-        
+
         >>> # When the file does not exist, return the same file name
         >>> os.path.exists(test_file_pathname)
         False
         >>> file_pathname_ = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_)
-        'tests\\data\\test.txt'
+        'tests\data\test.txt'
 
         >>> # Create a file named "test.txt"
         >>> open(test_file_pathname, 'w').close()
@@ -655,7 +655,7 @@ def validate_filename(file_pathname, suffix_num=1):
         >>> # As "test.txt" exists, the function returns a new pathname ending with "test_1.txt"
         >>> file_pathname_ = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_)
-        'tests\\data\\test_1.txt'
+        'tests\data\test_1.txt'
 
         >>> # When "test_1.txt" exists, the function returns a pathname of a file named "test_2.txt"
         >>> open(file_pathname_, 'w').close()
@@ -675,9 +675,12 @@ def validate_filename(file_pathname, suffix_num=1):
     file_suffix = filename_abspath.split(".")[-1]
     file_without_suffix = filename_abspath[:-len(file_suffix) - 1]
 
+    # remove the suffix if the file name contains "("
+    file_without_suffix = file_without_suffix.split("(")[0] if "(" in file_without_suffix else file_without_suffix
+
     # if the file does not exist, return the same file name
     if os.path.exists(filename_abspath):
-        filename_update = f"{file_without_suffix}_{suffix_num}.{file_suffix}"
+        filename_update = f"{file_without_suffix}({suffix_num}).{file_suffix}"
         return validate_filename(filename_update, suffix_num + 1)
 
     return filename_abspath

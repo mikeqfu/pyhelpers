@@ -281,8 +281,8 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
         (in mebibyte i.e. MiB, or megabyte, i.e. MB) above which the function counts how many chunks
         there could be, defaults to ``50``;
     :type chunk_size_limit: int | float | None
-    :param binary: whether to use binary (i.e. factorized by 1024) representation, 
-        defaults to ``True``; if ``binary=False``, use the decimal (or metric) representation 
+    :param binary: whether to use binary (i.e. factorized by 1024) representation,
+        defaults to ``True``; if ``binary=False``, use the decimal (or metric) representation
         (i.e. factorized by 10 ** 3)
     :type binary: bool
     :return: number of chunks
@@ -2417,8 +2417,6 @@ class GitHubFileDownloader:
         self.flatten = flatten_files
         self.output_dir = "./" if output_dir is None else output_dir
 
-        self.dir_out = None
-
         self.api_url, self.download_dirs = self.create_url(self.repo_url)
 
         # Set user agent in default
@@ -2472,10 +2470,9 @@ class GitHubFileDownloader:
             os.makedirs(self.dir_out, exist_ok=True)
 
         try:  # Get response from GutHub response
-            with urllib.request.urlretrieve(api_url_local) as response_local:
-                response = response_local
+            response = urllib.request.urlretrieve(api_url_local)
         except KeyboardInterrupt:
-            print("✘ Got interrupted")
+            print("Got interrupted")
             sys.exit()
 
         # Download files according to the response
@@ -2490,8 +2487,8 @@ class GitHubFileDownloader:
                 try:
                     # Download the file
                     _, _ = urllib.request.urlretrieve(
-                        data["download_url"], os.path.join(self.dir_out, data["name"]))
-                    print("Downloaded: " + "{}".format(data["name"]))
+                        data["download_url"], os.path.join(self.output_dir, data["name"]))
+                    print(f"Downloaded: {total_files} files to {self.output_dir}")
 
                     return total_files
 
@@ -2513,14 +2510,14 @@ class GitHubFileDownloader:
 
                     try:  # Download the file
                         _, _ = urllib.request.urlretrieve(file_url, path)
-                        print(f"Downloaded: {file_name}")
+                        print(f"Info: downloaded {file_name}")
                     except KeyboardInterrupt:
-                        print("✘ Got interrupted")
+                        print("Got interrupted")
                         sys.exit()
 
                 else:
                     self.download(file["html_url"])
 
-            print(f"Downloaded: {total_files} files to {self.dir_out}")
+            print(f"Summary: {total_files} files to {self.output_dir}")
 
         return total_files
