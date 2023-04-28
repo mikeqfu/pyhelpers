@@ -495,86 +495,107 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
 
 # ==================================================================================================
-# Directory
+# Directory check
 # ==================================================================================================
 
-# Format the file path to be used for cross-platform compatibility
-# convert OS path to standard linux path
-def path2linux(path: Union[str, pathlib.Path]) -> str:
-    """Convert path to a linux path, linux path is executable in windows, linux and mac
 
-    Args:
-        path (Union[str, pathlib.Path]): a string or pathlib.Path object
+def path2linux(path):
+    """
+    Convert path to a linux path, linux path is executable in windows, linux and mac.
 
-    Returns:
-        str: standard linux path
+    - Format the file path to be used for cross-platform compatibility;
+    - Convert OS path to standard linux path.
 
-    Examples:
+    :param path: a string or pathlib.Path object
+    :type path: str | pathlib.Path
+    :return: standard linux path
+    :rtype: str
+
+    **Examples**::
+
         >>> from pyhelpers.dirs import path2linux
-        >>> path2linux("C:\\Users\\user\\Desktop\\test.txt")
-        'C:/Users/user/Desktop/test.txt'
+
+        >>> path2linux("C:\\Users\\my_username\\Desktop\\test.txt")
+        'C:/Users/my_username/Desktop/test.txt'
     """
 
+    # noinspection PyBroadException
     try:
         return path.replace("\\", "/")
     except Exception:
         return str(path).replace("\\", "/")
 
 
-def get_filenames_from_folder_by_type(dir_name: str, file_type: str = "txt", isTraverseSubdirectory: bool = False) -> list:
-    """Get all files in the folder with the specified file type
+def get_filenames_from_folder_by_type(dir_name, file_type="txt", is_traverse_subdir=False):
+    """
+    Get all files in the folder with the specified file type.
 
-    Args:
-        dir_name (str)                         : the folder path
-        file_type (str, optional)              : the exact file type to specify, if file_type is "*" or "all", return all files in the folder. Defaults to "txt".
-        isTraverseSubdirectory (bool, optional): get files inside the subfolder or not, if True, will traverse all subfolders. Defaults to False.
+    :param dir_name: a folder path
+    :type dir_name: str
+    :param file_type: exact file type to specify, if file_type is ``"*"`` or ``"all"``,
+        return all files in the folder; defaults to ``"txt"``
+    :type file_type: str
+    :param is_traverse_subdir: whether to get files inside the subfolder, defaults to ``False``;
+        when ``is_traverse_subdir=True``, the function traverses all subfolders
+    :type is_traverse_subdir: bool
+    :return: a list of file paths
+    :rtype: list
 
-    Returns:
-        list: a list of file paths
+    **Examples**::
 
-    Examples:
-        # get all files in the folder without traversing subfolder
+        >>> test_dir_name = "C:/Users/user/Desktop"
+
+        >>> # get all files in the folder without traversing sub-folder
         >>> from pyhelpers.dirs import get_filenames_from_folder_by_type
-        >>> get_filenames_from_folder_by_type("C:/Users/user/Desktop", "txt")
+        >>> get_filenames_from_folder_by_type(test_dir_name)
         ['C:/Users/user/Desktop/test.txt']
 
-        # get all files in the folder with traversing subfolder
+        >>> # get all files in the folder with traversing sub-folder
         >>> from pyhelpers.dirs import get_filenames_from_folder_by_type
-        >>> get_filenames_from_folder_by_type("C:/Users/user/Desktop", "txt", isTraverseSubdirectory=True)
+        >>> get_filenames_from_folder_by_type(test_dir_name, is_traverse_subdir=True)
         ['C:/Users/user/Desktop/test.txt', 'C:/Users/user/Desktop/sub_folder/test2.txt']
+
     """
 
-    if isTraverseSubdirectory:
+    if is_traverse_subdir:
         files_list = []
         for root, _, files in os.walk(dir_name):
             files_list.extend([os.path.join(root, file) for file in files])
+
         if file_type in {"*", "all"}:
             return [path2linux(file) for file in files_list]
+
         return [path2linux(file) for file in files_list if file.split(".")[-1] == file_type]
 
     # files in the first layer of the folder
     if file_type in {"*", "all"}:
         return [path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)]
-    return [path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name) if file.split(".")[-1] == file_type]
+
+    return [
+        path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)
+        if file.split(".")[-1] == file_type]
 
 
-def check_required_files_exist(required_files: list, dir_name: str) -> bool:
-    """Check if all required files exist in the directory
+def check_required_files_exist(required_files, dir_name):
+    """
+    Check if all required files exist in the directory.
 
-    Args:
-        required_files (list): a list of required file names
-        dir_files (list)     : a list of file names in the directory
+    :param required_files: a list of required file names
+    :type required_files: list
+    :param dir_name: a list of file names in the directory
+    :type dir_name: str
+    :return: ``True`` if all required files exist, ``False`` otherwise
+    :rtype: bool
 
-    Returns:
-        bool: True if all required files exist, False otherwise
+    **Examples**::
 
-    Examples:
-        # check if all required files exist in the directory
         >>> from pyhelpers.dirs import check_required_files_exist
+
+        >>> # Check if all required files exist in the directory
         >>> check_required_files_exist(["test.txt", "test2.txt"], "C:/Users/user/Desktop")
         True
 
-        # if not all required files exist, print the missing files
+        >>> # If not all required files exist, print the missing files
         >>> from pyhelpers.dirs import check_required_files_exist
         >>> check_required_files_exist(["test.txt", "test2.txt", "test3.txt"], "C:/Users/user/Desktop")
         Error: Required files are not satisfied, missing files are: ['test3.txt']
@@ -590,43 +611,65 @@ def check_required_files_exist(required_files: list, dir_name: str) -> bool:
 
     # mask have the same length as required_files
     mask = [file in dir_files_short for file in required_files_short]
+
     if all(mask):
-        return True
+        rslt = True
+    else:
+        err_prt_dat = [required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]
+        err_msg = f"Error: Required files are not satisfied, missing files are: {err_prt_dat}"
+        print(err_msg)
+        rslt = False
 
-    print(f"Error: Required files are not satisfied, \
-          missing files are: {[required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]}")
-
-    return False
+    return rslt
 
 
-def validate_filename(path_filename: str, suffix_num: int = 1) -> str:
-    """If the filename exist, then create new filename with suffix _1, _2, ...
+def validate_filename(file_pathname, suffix_num=1):
+    """
+    If the filename exist, then create new filename with suffix _1, _2, ...
 
-    Args:
-        path_filename (str): the file path
+    :param file_pathname: pathname of a file
+    :type file_pathname: str
+    :param suffix_num: a number as a suffix appended to the filename, defaults to ``1``
+    :type suffix_num: int
+    :return: a validated file name
+    :rtype: str
 
-    Returns:
-        str: a validated file name
+    **Examples**::
 
-    Examples:
-        # if the file does not exist, return the same file name
         >>> from pyhelpers.dirs import validate_filename
-        >>> validate_filename("C:/Users/user/Desktop/test.txt")
-        'C:/Users/user/Desktop/test.txt'
+        >>> import os
 
-        # if the file exist, return the new file name with suffix _1
-        >>> from pyhelpers.dirs import validate_filename
-        >>> validate_filename("C:/Users/user/Desktop/test.txt")
-        'C:/Users/user/Desktop/test_1.txt'
+        >>> test_file_pathname = "tests/data/test.txt"
+        
+        >>> # When the file does not exist, return the same file name
+        >>> os.path.exists(test_file_pathname)
+        False
+        >>> file_pathname_ = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_)
+        'tests\\data\\test.txt'
 
-        # if the file exist, return the new file name with suffix _2
-        >>> from pyhelpers.dirs import validate_filename
-        >>> validate_filename("C:/Users/user/Desktop/test.txt")
+        >>> # Create a file named "test.txt"
+        >>> open(test_file_pathname, 'w').close()
+        >>> os.path.exists(test_file_pathname)
+        True
+        >>> # As "test.txt" exists, the function returns a new pathname ending with "test_1.txt"
+        >>> file_pathname_ = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_)
+        'tests\\data\\test_1.txt'
+
+        >>> # When "test_1.txt" exists, the function returns a pathname of a file named "test_2.txt"
+        >>> open(file_pathname_, 'w').close()
+        >>> os.path.exists(file_pathname_)
+        True
+        >>> file_pathname_ = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_)
         'C:/Users/user/Desktop/test_2.txt'
+
+
     """
 
     # convert the path to standard linux path
-    filename_abspath = path2linux(os.path.abspath(path_filename))
+    filename_abspath = path2linux(os.path.abspath(file_pathname))
 
     # get the file suffix
     file_suffix = filename_abspath.split(".")[-1]
@@ -636,4 +679,5 @@ def validate_filename(path_filename: str, suffix_num: int = 1) -> str:
     if os.path.exists(filename_abspath):
         filename_update = f"{file_without_suffix}_{suffix_num}.{file_suffix}"
         return validate_filename(filename_update, suffix_num + 1)
+
     return filename_abspath
