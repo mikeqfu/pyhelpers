@@ -6,7 +6,6 @@ import copy
 import datetime
 import hashlib
 import html.parser
-import importlib
 import importlib.resources
 import inspect
 import itertools
@@ -34,38 +33,6 @@ from ._cache import _check_dependency, _USER_AGENT_STRINGS
 # ==================================================================================================
 # General use
 # ==================================================================================================
-
-def func_running_time(func):
-    """A decorator to measure the time of a function or class method.
-
-    Args:
-        func (_type_): any function or class method
-
-    Returns:
-        _type_: the decorated function or class method with the time of running
-
-    Examples:
-        >>> from pyhelpers.ops import func_running_time
-        >>> @func_running_time
-        >>> def test_func():
-        ...     print("Testing if the function works.")
-        ...     time.sleep(3)
-        >>> test_func()
-            INFO Begin to run function: test_func …
-            Testing if the function works.
-            INFO Finished running function: test_func, total: 3s
-    """
-    def inner(*args, **kwargs):
-        print(f'INFO Begin to run function: {func.__name__} …')
-        time_start = datetime.datetime.now()
-        res = func(*args, **kwargs)
-        time_diff = datetime.datetime.now() - time_start
-        print(
-            f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s')
-        print()
-        return res
-    return inner
-
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
     """
@@ -544,10 +511,73 @@ def verify_password(password, salt, key, iterations=None):
     return rslt
 
 
+def func_running_time(func):
+    """
+    A decorator to measure the time of a function or class method.
+
+    :param func: any function or class method
+    :type func: typing.Callable
+    :return: the decorated function or class method with the time of running
+    :rtype: typing.Callable
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import func_running_time
+        >>> import time
+
+        >>> @func_running_time
+        >>> def test_func():
+        ...     print("Testing if the function works.")
+        ...     time.sleep(3)
+
+        >>> test_func()
+        INFO Begin to run function: test_func …
+        Testing if the function works.
+        INFO Finished running function: test_func, total: 3s
+    """
+
+    def inner(*args, **kwargs):
+        print(f'INFO Begin to run function: {func.__name__} …')
+        time_start = datetime.datetime.now()
+        res = func(*args, **kwargs)
+        time_diff = datetime.datetime.now() - time_start
+        print(
+            f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s')
+        print()
+        return res
+
+    return inner
+
+
+def format_err_msg(e):
+    """
+    Format an error message.
+
+    :param e: Subclass of Exception.
+    :type e: Exception | None | str
+    :return: An error message.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import format_err_msg
+
+        >>> format_err_msg("test")
+        'test.'
+    """
+
+    if e:
+        err_msg = f"{e}"
+        err_msg = err_msg + "." if not err_msg.endswith((".", "!", "?")) else err_msg
+    else:
+        err_msg = ""
+
+    return err_msg
+
+
 # ==================================================================================================
 # Basic data manipulation
 # ==================================================================================================
-
 
 # Iterable
 
@@ -1211,7 +1241,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         return csr_mat
 
     except Exception as e:
-        print(f"Failed. {e}.")
+        print(f"Failed. {format_err_msg(e)}")
 
 
 def swap_cols(array, c1, c2, as_list=False):
@@ -2070,7 +2100,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
         except Exception as e:
             if verbose:
-                print(f"Failed. {e}.")
+                print(f"Failed. {format_err_msg(e)}")
             user_agent_strings = load_user_agent_strings(update=False, verbose=False)
 
     if shuffled:
@@ -2345,3 +2375,152 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                 print("ERROR! Something went wrong! Check if the URL is downloadable.")
 
         response.close()
+
+
+class GitHubFileDownloader:
+    """
+    Download files on GitHub from a given repository URL.
+    """
+
+    def __init__(self, repo_url, flatten_files=False, output_dir=None):
+        """
+        :param repo_url: URL of a GitHub repository to download from;
+            it can be a ``blob`` or tree path
+        :type repo_url: str
+        :param flatten_files: whether to pull the contents of all subdirectories into the root folder;
+            defaults to ``False``
+        :type flatten_files: bool
+        :param output_dir: an output directory where the downloaded files will be saved;
+            when ``output_dir=None``, it defaults to ``"./"``
+        :type output_dir: str or None
+
+        **Examples**::
+
+            >>> from pyhelpers.ops import GitHubFileDownloader
+
+            >>> test_output_dir = "tests"
+
+            >>> # Download a single file
+            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> downloader.download()
+
+
+            >>> # Download a directory
+            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> downloader.download()
+
+        """
+
+        self.repo_url = repo_url
+        self.flatten = flatten_files
+        self.output_dir = "./" if output_dir is None else output_dir
+
+        self.dir_out = None
+
+        self.api_url, self.download_dirs = self.create_url(self.repo_url)
+
+        # Set user agent in default
+        opener = urllib.request.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        urllib.request.install_opener(opener)
+
+    @staticmethod
+    def create_url(url):
+        """
+        From the given url, produce a URL that is compatible with GitHub's REST API.
+
+        It can handle blob or tree paths.
+        """
+
+        repo_only_url = re.compile(
+            r"https://github\.com/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}/[a-zA-Z0-9]+$")
+        re_branch = re.compile("/(tree|blob)/(.+?)/")
+
+        # Check if the given url is a complete url to a GitHub repo.
+        if re.match(repo_only_url, url):
+            print(
+                "Given url is a complete repository, "
+                "please use 'git clone' to download the repository")
+            sys.exit()
+
+        # Extract the branch name from the given url (e.g. master)
+        branch = re_branch.search(url)
+        download_dirs = url[branch.end():]
+
+        api_url = (
+            f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/'
+            f'contents/{download_dirs}?ref={branch[2]}')
+
+        return api_url, download_dirs
+
+    def download(self, api_url=None):
+        # Update api_url if it is not specified
+        api_url_local = self.api_url if api_url is None else api_url
+
+        # Update output directory if flatten is not specified
+        if self.flatten:
+            self.dir_out = self.flatten
+        elif len(self.download_dirs.split(".")) == 0:
+            self.dir_out = os.path.join(self.output_dir, self.download_dirs)
+        else:
+            self.dir_out = os.path.join(self.output_dir, "/".join(self.download_dirs.split("/")[:-1]))
+
+        # Make a directory with the name which is taken from the actual repo
+        if not self.flatten:
+            os.makedirs(self.dir_out, exist_ok=True)
+
+        try:  # Get response from GutHub response
+            with urllib.request.urlretrieve(api_url_local) as response_local:
+                response = response_local
+        except KeyboardInterrupt:
+            print("✘ Got interrupted")
+            sys.exit()
+
+        # Download files according to the response
+        total_files = 0
+        with open(response[0], "r") as f:
+            data = json.load(f)
+
+            total_files += len(data)  # Count total number of files
+
+            # If the data is a file, download it as one.
+            if isinstance(data, dict) and data["type"] == "file":
+                try:
+                    # Download the file
+                    _, _ = urllib.request.urlretrieve(
+                        data["download_url"], os.path.join(self.dir_out, data["name"]))
+                    print("Downloaded: " + "{}".format(data["name"]))
+
+                    return total_files
+
+                except KeyboardInterrupt as e:
+                    print(f"Error: Got interrupted for {e}")
+                    sys.exit()
+
+            for file in data:
+                file_url = file["download_url"]
+                file_path = file["path"]
+                path = os.path.basename(file_path) if self.flatten else file_path
+                dirname = os.path.dirname(path)
+
+                if dirname != '':
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+                if file_url is not None:
+                    file_name = file["name"]
+
+                    try:  # Download the file
+                        _, _ = urllib.request.urlretrieve(file_url, path)
+                        print(f"Downloaded: {file_name}")
+                    except KeyboardInterrupt:
+                        print("✘ Got interrupted")
+                        sys.exit()
+
+                else:
+                    self.download(file["html_url"])
+
+            print(f"Downloaded: {total_files} files to {self.dir_out}")
+
+        return total_files
