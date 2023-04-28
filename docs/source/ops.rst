@@ -25,6 +25,8 @@ General use
     find_executable
     hash_password
     verify_password
+    func_running_time
+    format_err_msg
 
 Basic data manipulation
 -----------------------
@@ -95,3 +97,9 @@ Web data extraction
     get_user_agent_string
     fake_requests_headers
     download_file_from_url
+
+.. autosummary::
+    :toctree: _generated/
+    :template: class.rst
+
+    GitHubFileDownloader

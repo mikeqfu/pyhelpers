@@ -38,3 +38,15 @@ Directory removal
     :template: function.rst
 
     delete_dir
+
+Directory/file check
+--------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    path2linux
+    get_filenames_from_folder_by_type
+    check_required_files_exist
+    validate_filename
