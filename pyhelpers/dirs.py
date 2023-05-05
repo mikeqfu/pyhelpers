@@ -87,7 +87,7 @@ def go_from_altered_cwd(dir_name, **kwargs):
     :param dir_name: name of a directory
     :type dir_name: str | os.PathLike[str] | bytes | os.Path[bytes]
     :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
-    :return: full pathname of an altered working directory (changed from the directory ``dir_name``)
+    :return: full pathname of an altered working directory (changed from the directory ``path_to_dir``)
     :rtype: str
 
     **Examples**::
@@ -105,12 +105,12 @@ def go_from_altered_cwd(dir_name, **kwargs):
         >>> os.chdir(new_cwd)
 
         >>> # Get the full path to a folder named "tests"
-        >>> path_to_tests = go_from_altered_cwd(dir_name="tests")
+        >>> path_to_tests = go_from_altered_cwd(path_to_dir="tests")
         >>> path_to_tests
         '<new_cwd>\\tests'
 
         >>> # Get the full path to a directory one level above the current working directory
-        >>> path_to_tests_ = go_from_altered_cwd(dir_name="\\tests")
+        >>> path_to_tests_ = go_from_altered_cwd(path_to_dir="\\tests")
         >>> path_to_tests_ == os.path.join(os.path.dirname(os.getcwd()), "tests")
         True
 
@@ -495,28 +495,32 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
 
 # ==================================================================================================
-# Directory check
+# Directory/file check
 # ==================================================================================================
 
 
 def path2linux(path):
     """
-    Convert path to a linux path, linux path is executable in windows, linux and mac.
+    Convert path to an uniformat (Linux) file path, which is executable in Windows, Linux and macOS.
 
     - Format the file path to be used for cross-platform compatibility;
-    - Convert OS path to standard linux path.
+    - Convert OS path to standard Linux path.
 
-    :param path: a string or pathlib.Path object
+    :param path: absolute or relative pathname
     :type path: str | pathlib.Path
-    :return: standard linux path
+    :return: standard linux pathname
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import path2linux
+        >>> import pathlib
 
-        >>> path2linux("C:\\Users\\my_username\\Desktop\\test.txt")
-        'C:/Users/my_username/Desktop/test.txt'
+        >>> path2linux("tests\\data\\dat.csv")
+        'tests/data/dat.csv'
+
+        >>> path2linux(pathlib.Path("tests\\data\\dat.csv"))
+        'tests/data/dat.csv'
     """
 
     # noinspection PyBroadException
@@ -526,90 +530,132 @@ def path2linux(path):
         return str(path).replace("\\", "/")
 
 
-def get_filenames_from_folder_by_type(dir_name, file_type="txt", is_traverse_subdir=False):
+def uniform_pathname(pathname):
+    """
+    An alternative to the function :func:`pyhelpers.dirs.path2linux`.
+
+    :param pathname: absolute or relative pathname
+    :type pathname: str | pathlib.Path
+    :return: standard linux pathname
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.dirs import uniform_pathname
+        >>> import pathlib
+
+        >>> uniform_pathname("tests\\data\\dat.csv")
+        'tests/data/dat.csv'
+
+        >>> uniform_pathname(pathlib.Path("tests\\data\\dat.csv"))
+        'tests/data/dat.csv'
+    """
+
+    pathname_ = re.sub(r"\\|\\\\|//", "/", str(pathname))
+
+    return pathname_
+
+
+def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     """
     Get all files in the folder with the specified file type.
 
-    :param dir_name: a folder path
-    :type dir_name: str
-    :param file_type: exact file type to specify, if file_type is ``"*"`` or ``"all"``,
-        return all files in the folder; defaults to ``"txt"``
-    :type file_type: str
-    :param is_traverse_subdir: whether to get files inside the subfolder, defaults to ``False``;
-        when ``is_traverse_subdir=True``, the function traverses all subfolders
-    :type is_traverse_subdir: bool
+    :param path_to_dir: a folder path
+    :type path_to_dir: str
+    :param file_ext: exact file type to specify, if file_type is ``"*"`` or ``"all"``,
+        return all files in the folder; defaults to ``None``
+    :type file_ext: str | None
+    :param incl_subdir: whether to get files inside the subfolder, defaults to ``False``;
+        when ``incl_subdir=True``, the function traverses all subfolders
+    :type incl_subdir: bool
     :return: a list of file paths
     :rtype: list
 
     **Examples**::
 
-        >>> test_dir_name = "C:/Users/user/Desktop"
+        >>> from pyhelpers.dirs import get_rel_pathnames
 
-        >>> # get all files in the folder without traversing sub-folder
-        >>> from pyhelpers.dirs import get_filenames_from_folder_by_type
-        >>> get_filenames_from_folder_by_type(test_dir_name)
-        ['C:/Users/user/Desktop/test.txt']
+        >>> test_dir_name = "tests/data"
 
-        >>> # get all files in the folder with traversing sub-folder
-        >>> from pyhelpers.dirs import get_filenames_from_folder_by_type
-        >>> get_filenames_from_folder_by_type(test_dir_name, is_traverse_subdir=True)
-        ['C:/Users/user/Desktop/test.txt', 'C:/Users/user/Desktop/sub_folder/test2.txt']
+        >>> # Get all files in the folder (without sub-folders)
+        >>> get_rel_pathnames(test_dir_name)
+        ['tests/data/csr_mat.npz',
+         'tests/data/dat.csv',
+         'tests/data/dat.feather',
+         'tests/data/dat.joblib',
+         'tests/data/dat.json',
+         'tests/data/dat.pickle',
+         'tests/data/dat.txt',
+         'tests/data/dat.xlsx',
+         'tests/data/zipped',
+         'tests/data/zipped.7z',
+         'tests/data/zipped.txt',
+         'tests/data/zipped.zip']
+
+        >>> get_rel_pathnames(test_dir_name, file_ext=".txt")
+        ['tests/data/dat.txt', 'tests/data/zipped.txt']
+
+        >>> # Get absolute pathnames of all files contained in the folder (incl. all sub-folders)
+        >>> get_rel_pathnames(test_dir_name, file_ext="txt", incl_subdir=True)
+        ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
 
     """
 
-    if is_traverse_subdir:
+    if incl_subdir:
         files_list = []
-        for root, _, files in os.walk(dir_name):
+        for root, _, files in os.walk(path_to_dir):
             files_list.extend([os.path.join(root, file) for file in files])
 
-        if file_type in {"*", "all"}:
+        if file_ext in {None, "*", "all"}:
             return [path2linux(file) for file in files_list]
 
-        return [path2linux(file) for file in files_list if file.split(".")[-1] == file_type]
+        return [path2linux(file) for file in files_list if file.endswith(file_ext)]
 
-    # files in the first layer of the folder
-    if file_type in {"*", "all"}:
-        return [path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)]
+    # Files in the first layer of the folder
+    if file_ext in {None, "*", "all"}:
+        return [path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)]
 
     return [
-        path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)
-        if file.split(".")[-1] == file_type]
+        path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)
+        if file.endswith(file_ext)]
 
 
-def check_required_files_exist(required_files, dir_name):
+def check_files_exist(filenames, path_to_dir):
     """
-    Check if all required files exist in the directory.
+    Check if queried files exist in a given directory.
 
-    :param required_files: a list of required file names
-    :type required_files: list
-    :param dir_name: a list of file names in the directory
-    :type dir_name: str
-    :return: ``True`` if all required files exist, ``False`` otherwise
+    :param filenames: a list of filenames
+    :type filenames: list
+    :param path_to_dir: a list of filenames in the directory
+    :type path_to_dir: str
+    :return: ``True`` if all the queried files exist, ``False`` otherwise
     :rtype: bool
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import check_required_files_exist
+        >>> from pyhelpers.dirs import check_files_exist
+
+        >>> test_dir_name = "tests/data"
 
         >>> # Check if all required files exist in the directory
-        >>> check_required_files_exist(["test.txt", "test2.txt"], "C:/Users/user/Desktop")
+        >>> check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
         True
 
         >>> # If not all required files exist, print the missing files
-        >>> from pyhelpers.dirs import check_required_files_exist
-        >>> check_required_files_exist(["test.txt", "test2.txt", "test3.txt"], "C:/Users/user/Desktop")
-        Error: Required files are not satisfied, missing files are: ['test3.txt']
+        >>> check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
+        Error: Required files are not satisfied, missing files are: ['dat_0.txt']
+        False
     """
 
-    dir_files = get_filenames_from_folder_by_type(dir_name, file_type="*")
+    dir_files = get_rel_pathnames(path_to_dir, file_ext="*")
 
-    # format the required file name to standard linux path
-    required_files = [path2linux(os.path.abspath(filename)) for filename in required_files]
+    # Format the required file name to standard linux path
+    filenames = [path2linux(os.path.abspath(filename)) for filename in filenames]
 
-    required_files_short = [filename.split("/")[-1] for filename in required_files]
+    required_files_short = [filename.split("/")[-1] for filename in filenames]
     dir_files_short = [filename.split("/")[-1] for filename in dir_files]
 
-    # mask have the same length as required_files
+    # `mask` have the same length as `filenames`
     mask = [file in dir_files_short for file in required_files_short]
 
     if all(mask):
@@ -625,7 +671,7 @@ def check_required_files_exist(required_files, dir_name):
 
 def validate_filename(file_pathname, suffix_num=1):
     """
-    If the filename exist, then create new filename with suffix _1, _2, ...
+    If the filename exist, then create new filename with a suffix e.g. (1), (2) and so on.
 
     :param file_pathname: pathname of a file
     :type file_pathname: str
@@ -644,28 +690,30 @@ def validate_filename(file_pathname, suffix_num=1):
         >>> # When the file does not exist, return the same file name
         >>> os.path.exists(test_file_pathname)
         False
-        >>> file_pathname_ = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_)
-        'tests\data\test.txt'
+        >>> file_pathname_0 = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_0)
+        'tests\\data\\test.txt'
 
         >>> # Create a file named "test.txt"
         >>> open(test_file_pathname, 'w').close()
         >>> os.path.exists(test_file_pathname)
         True
-        >>> # As "test.txt" exists, the function returns a new pathname ending with "test_1.txt"
-        >>> file_pathname_ = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_)
-        'tests\data\test_1.txt'
+        >>> # As "test.txt" exists, the function returns a new pathname ending with "test(1).txt"
+        >>> file_pathname_1 = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_1)
+        'tests\\data\\test(1).txt'
 
-        >>> # When "test_1.txt" exists, the function returns a pathname of a file named "test_2.txt"
-        >>> open(file_pathname_, 'w').close()
-        >>> os.path.exists(file_pathname_)
+        >>> # When "test(1).txt" exists, the function returns a pathname of a file named "test(2).txt"
+        >>> open(file_pathname_1, 'w').close()
+        >>> os.path.exists(file_pathname_1)
         True
-        >>> file_pathname_ = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_)
-        'C:/Users/user/Desktop/test_2.txt'
+        >>> file_pathname_2 = validate_filename(test_file_pathname)
+        >>> os.path.relpath(file_pathname_2)
+        'tests\\data\\test(2).txt'
 
-
+        >>> # Remove the created files
+        >>> for x in [file_pathname_0, file_pathname_1]:
+        ...     os.remove(x)
     """
 
     # convert the path to standard linux path
@@ -676,7 +724,8 @@ def validate_filename(file_pathname, suffix_num=1):
     file_without_suffix = filename_abspath[:-len(file_suffix) - 1]
 
     # remove the suffix if the file name contains "("
-    file_without_suffix = file_without_suffix.split("(")[0] if "(" in file_without_suffix else file_without_suffix
+    if "(" in file_without_suffix:
+        file_without_suffix = file_without_suffix.split("(")[0]
 
     # if the file does not exist, return the same file name
     if os.path.exists(filename_abspath):
