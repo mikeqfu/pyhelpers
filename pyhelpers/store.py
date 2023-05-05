@@ -4,7 +4,6 @@ import copy
 import csv
 import importlib.resources
 import io
-import json
 import operator
 import os
 import pathlib
@@ -1367,14 +1366,21 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
             'TestSheet2'. ... Done.
             'TestSheet11'. ... Done.
             'TestSheet21'. ... Done.
+            'TestSheet12'. ... Done.
+            'TestSheet22'. ... Done.
         >>> list(wb_data.keys())
-        ['TestSheet1', 'TestSheet2', 'TestSheet11', 'TestSheet21']
+        ['TestSheet1',
+         'TestSheet2',
+         'TestSheet11',
+         'TestSheet21',
+         'TestSheet12',
+         'TestSheet22']
 
         >>> wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
         >>> type(wb_data)
         list
         >>> len(wb_data)
-        4
+        6
         >>> wb_data[0]
                     Longitude   Latitude
         City

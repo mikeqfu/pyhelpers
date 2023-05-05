@@ -440,7 +440,7 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     elif reset is True:
         registered_options = pd_._config.config._registered_options
 
-        for key in options.keys():
+        for key in options:
             pd_.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
