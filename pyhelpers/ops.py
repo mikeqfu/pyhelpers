@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 import requests
 import requests.adapters
-import urllib3.util.retry
+import urllib3.util
 
 from ._cache import _check_dependency, _USER_AGENT_STRINGS
 
@@ -1906,18 +1906,18 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     :type url: str
     :param max_retries: maximum number of retries, defaults to ``5``
     :type max_retries: int
-    :param backoff_factor: ``backoff_factor`` of `urllib3.util.retry.Retry`_, defaults to ``0.1``
+    :param backoff_factor: ``backoff_factor`` of `urllib3.util.Retry`_, defaults to ``0.1``
     :type backoff_factor: float
     :param retry_status: a list of HTTP status codes that force to retry downloading,
-        inherited from ``status_forcelist`` of `urllib3.util.retry.Retry`_;
+        inherited from ``status_forcelist`` of `urllib3.util.Retry`_;
         when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
-    :param kwargs: [optional] parameters of `urllib3.util.retry.Retry`_
+    :param kwargs: [optional] parameters of `urllib3.util.Retry`_
     :return: a `requests`_ session
     :rtype: `requests.Session`_
 
     .. _`requests`: https://docs.python-requests.org/en/latest/
-    .. _`urllib3.util.retry.Retry`:
-        https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry
+    .. _`urllib3.util.Retry`:
+        https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html#urllib3.util.Retry
     .. _`requests.Session`:
         https://2.python-requests.org/en/master/api/#request-sessions
 
@@ -1939,7 +1939,7 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
         codes_for_retries = copy.copy(retry_status)
 
     kwargs.update({'backoff_factor': backoff_factor, 'status_forcelist': codes_for_retries})
-    retries = urllib3.util.retry.Retry(total=max_retries, **kwargs)
+    retries = urllib3.util.Retry(total=max_retries, **kwargs)
 
     session = requests.Session()
 
