@@ -2230,25 +2230,27 @@ def _download_file_from_url(response, path_to_file):
 
     total_iter = file_size // chunk_size
 
-    progress = tqdm_.tqdm(
-        desc=f'"{get_relative_path(path_to_file)}"', total=total_iter, unit='B', unit_scale=True,
-        unit_divisor=unit_divisor)
+    pg_args = {
+        'desc': f'"{get_relative_path(path_to_file)}"',
+        'total': total_iter,
+        'unit': 'B',
+        'unit_scale': True,
+        'unit_divisor': unit_divisor,
+    }
+    with tqdm_.tqdm(**pg_args) as progress:
 
-    contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
-    with open(file=path_to_file, mode='wb') as f:
-        written = 0
-        for data in contents:
-            if data:
-                try:
-                    f.write(data)
-                except TypeError:
-                    f.write(data.encode())
-                progress.update(len(data))
-                written += len(data)
+        contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
 
-        progress.close()
-
-    f.close()
+        with open(file=path_to_file, mode='wb') as f:
+            written = 0
+            for data in contents:
+                if data:
+                    try:
+                        f.write(data)
+                    except TypeError:
+                        f.write(data.encode())
+                    progress.update(len(data))
+                    written += len(data)
 
     if file_size != 0 and written != file_size:
         print("ERROR! Something went wrong!")
@@ -2298,7 +2300,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> import os
 
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
+        >>> path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
 
         >>> # Check if "python-logo.png" exists at the specified path
         >>> os.path.exists(path_to_img)
@@ -2345,9 +2347,6 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                   f"The download is cancelled.")
 
     else:
-        # if verbose:
-        #     _ = _check_dependency(name='tqdm')
-
         if requests_session_args is None:
             requests_session_args = {}
         session = init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
@@ -2357,24 +2356,20 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         fake_headers = fake_requests_headers(randomized=random_header, **fake_headers_args)
 
         # Streaming, so we can iterate over the response
-        response = session.get(url=url, stream=True, headers=fake_headers, **kwargs)
+        with session.get(url=url, stream=True, headers=fake_headers, **kwargs) as response:
 
-        if not os.path.exists(path_to_dir):
-            os.makedirs(path_to_dir)
+            if not os.path.exists(path_to_dir):
+                os.makedirs(path_to_dir)
 
-        if verbose:
-            _download_file_from_url(response=response, path_to_file=path_to_file_)
+            if verbose:
+                _download_file_from_url(response=response, path_to_file=path_to_file_)
 
-        else:
-            with open(file=path_to_file_, mode='wb') as f:
-                shutil.copyfileobj(fsrc=response.raw, fdst=f)
+            else:
+                with open(file=path_to_file_, mode='wb') as f:
+                    shutil.copyfileobj(fsrc=response.raw, fdst=f)
 
-            f.close()
-
-            if os.stat(path=path_to_file_).st_size == 0:
-                print("ERROR! Something went wrong! Check if the URL is downloadable.")
-
-        response.close()
+                if os.stat(path=path_to_file_).st_size == 0:
+                    print("ERROR! Something went wrong! Check if the URL is downloadable.")
 
 
 class GitHubFileDownloader:
@@ -2387,32 +2382,39 @@ class GitHubFileDownloader:
         :param repo_url: URL of a GitHub repository to download from;
             it can be a ``blob`` or tree path
         :type repo_url: str
-        :param flatten_files: whether to pull the contents of all subdirectories into the root folder;
+        :param flatten_files: whether to pull the contents of all subdirectories into the root folder,
             defaults to ``False``
         :type flatten_files: bool
-        :param output_dir: an output directory where the downloaded files will be saved;
-            when ``output_dir=None``, it defaults to ``"./"``
-        :type output_dir: str or None
+        :param output_dir: an output directory where the downloaded files will be saved,
+            when ``output_dir=None``, it defaults to ``None``
+        :type output_dir: str | None
+
+        :ivar str repo_url: URL of a GitHub repository to download from
+        :ivar bool flatten: whether to pull the contents of all subdirectories into the root folder,
+            defaults to ``False``
+        :ivar str | None output_dir: defaults to ``None``
 
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
 
-            >>> test_output_dir = "tests"
+            >>> test_output_dir = "tests/temp"
 
             >>> # Download a single file
-            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs/canada_cities.csv"
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
             >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
             >>> downloader.download()
 
 
             >>> # Download a directory
-            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
             >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
             >>> downloader.download()
 
+
         """
 
+        self.dir_out = None
         self.repo_url = repo_url
         self.flatten = flatten_files
         self.output_dir = "./" if output_dir is None else output_dir
@@ -2421,7 +2423,7 @@ class GitHubFileDownloader:
 
         # Set user agent in default
         opener = urllib.request.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        opener.addheaders = list(fake_requests_headers().items())
         urllib.request.install_opener(opener)
 
     @staticmethod
@@ -2429,7 +2431,36 @@ class GitHubFileDownloader:
         """
         From the given url, produce a URL that is compatible with GitHub's REST API.
 
-        It can handle blob or tree paths.
+        It can handle ``blob`` or tree paths.
+
+        :param url: URL
+        :type url: str
+        :return: URL of a GitHub repository and pathnames for downloading files
+        :rtype: tuple
+
+        **Examples**::
+
+            >>> from pyhelpers.ops import GitHubFileDownloader
+
+            >>> test_output_dir = "tests/temp"
+
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
+            >>> gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_paths = gd.create_url(test_url)
+            >>> test_api_url
+            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
+            >>> test_download_paths
+            'tests/data/dat.csv'
+
+            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            >>> gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_paths = gd.create_url(test_url)
+            >>> test_api_url
+            'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
+            >>> test_download_paths
+            'docs'
+
+
         """
 
         repo_only_url = re.compile(
@@ -2445,13 +2476,13 @@ class GitHubFileDownloader:
 
         # Extract the branch name from the given url (e.g. master)
         branch = re_branch.search(url)
-        download_dirs = url[branch.end():]
+        download_paths = url[branch.end():]
 
         api_url = (
             f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/'
-            f'contents/{download_dirs}?ref={branch[2]}')
+            f'contents/{download_paths}?ref={branch[2]}')
 
-        return api_url, download_dirs
+        return api_url, download_paths
 
     def download(self, api_url=None):
         # Update api_url if it is not specified
@@ -2484,10 +2515,10 @@ class GitHubFileDownloader:
 
             # If the data is a file, download it as one.
             if isinstance(data, dict) and data["type"] == "file":
-                try:
-                    # Download the file
+                try:  # Download the file
                     _, _ = urllib.request.urlretrieve(
                         data["download_url"], os.path.join(self.output_dir, data["name"]))
+
                     print(f"Downloaded: {total_files} files to {self.output_dir}")
 
                     return total_files
