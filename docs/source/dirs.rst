@@ -47,6 +47,7 @@ Directory/file check
     :template: function.rst
 
     path2linux
+    uniform_pathname
     get_rel_pathnames
     check_files_exist
     validate_filename
