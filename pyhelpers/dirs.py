@@ -526,7 +526,7 @@ def path2linux(path):
         return str(path).replace("\\", "/")
 
 
-def get_filenames_from_folder_by_type(dir_name, file_type="txt", is_traverse_subdir=False):
+def get_rel_pathnames(path_to_dir, file_ext="txt", incl_subdir=False):
     """
     Get all files in the folder with the specified file type.
 
@@ -557,26 +557,26 @@ def get_filenames_from_folder_by_type(dir_name, file_type="txt", is_traverse_sub
 
     """
 
-    if is_traverse_subdir:
+    if incl_subdir:
         files_list = []
-        for root, _, files in os.walk(dir_name):
+        for root, _, files in os.walk(path_to_dir):
             files_list.extend([os.path.join(root, file) for file in files])
 
-        if file_type in {"*", "all"}:
+        if file_ext in {"*", "all"}:
             return [path2linux(file) for file in files_list]
 
-        return [path2linux(file) for file in files_list if file.split(".")[-1] == file_type]
+        return [path2linux(file) for file in files_list if file.split(".")[-1] == file_ext]
 
     # files in the first layer of the folder
-    if file_type in {"*", "all"}:
-        return [path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)]
+    if file_ext in {"*", "all"}:
+        return [path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)]
 
     return [
-        path2linux(os.path.join(dir_name, file)) for file in os.listdir(dir_name)
-        if file.split(".")[-1] == file_type]
+        path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)
+        if file.split(".")[-1] == file_ext]
 
 
-def check_required_files_exist(required_files, dir_name):
+def check_files_exist(files: list, path_to_dir: str) -> bool:
     """
     Check if all required files exist in the directory.
 
@@ -601,10 +601,10 @@ def check_required_files_exist(required_files, dir_name):
         Error: Required files are not satisfied, missing files are: ['test3.txt']
     """
 
-    dir_files = get_filenames_from_folder_by_type(dir_name, file_type="*")
+    dir_files = get_rel_pathnames(path_to_dir, file_type="*")
 
     # format the required file name to standard linux path
-    required_files = [path2linux(os.path.abspath(filename)) for filename in required_files]
+    required_files = [path2linux(os.path.abspath(filename)) for filename in files]
 
     required_files_short = [filename.split("/")[-1] for filename in required_files]
     dir_files_short = [filename.split("/")[-1] for filename in dir_files]
@@ -613,14 +613,11 @@ def check_required_files_exist(required_files, dir_name):
     mask = [file in dir_files_short for file in required_files_short]
 
     if all(mask):
-        rslt = True
-    else:
-        err_prt_dat = [required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]
-        err_msg = f"Error: Required files are not satisfied, missing files are: {err_prt_dat}"
-        print(err_msg)
-        rslt = False
-
-    return rslt
+        return True
+    err_prt_dat = [required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]
+    err_msg = f"Error: Required files are not satisfied, missing files are: {err_prt_dat}"
+    print(err_msg)
+    return False
 
 
 def validate_filename(file_pathname, suffix_num=1):
