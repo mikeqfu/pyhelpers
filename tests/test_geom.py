@@ -152,13 +152,17 @@ def test_calc_distance_on_unit_sphere():
     london, birmingham = example_df.loc[['London', 'Birmingham']].values
     arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
     assert arc_len_in_miles == 101.10431101941569
+    arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, unit='km')
+    assert arc_len_in_miles == 162.66049633957005
+    arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, precision=4)
+    assert arc_len_in_miles == 101.1043
 
     leeds, manchester = map(shapely.geometry.Point, example_df.loc[['Leeds', 'Manchester']].values)
     arc_len_in_miles = calc_distance_on_unit_sphere(leeds, manchester)
     assert arc_len_in_miles == 36.175811917161276
 
     with pytest.raises(Exception) as err:
-        calc_distance_on_unit_sphere([1], [2], verbose=True)
+        calc_distance_on_unit_sphere([1], [2])
         assert isinstance(err.value.__cause__, IndexError)
 
 

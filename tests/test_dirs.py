@@ -108,5 +108,75 @@ def test_delete_dir(capfd):
     assert out == out_
 
 
+def test_path2linux():
+    from pyhelpers.dirs import path2linux
+
+    test_pathname = "tests\\data\\dat.csv"
+
+    rslt = path2linux(test_pathname)
+    assert rslt == 'tests/data/dat.csv'
+
+    rslt = path2linux(pathlib.Path(test_pathname))
+    assert rslt == 'tests/data/dat.csv'
+
+
+def test_uniform_pathname():
+    from pyhelpers.dirs import uniform_pathname
+
+    test_pathname = "tests\\data\\dat.csv"
+
+    rslt = uniform_pathname(test_pathname)
+    assert rslt == 'tests/data/dat.csv'
+
+    rslt = uniform_pathname(pathlib.Path(test_pathname))
+    assert rslt == 'tests/data/dat.csv'
+
+
+def test_get_rel_pathnames():
+    from pyhelpers.dirs import get_rel_pathnames
+
+    test_dir_name = "tests/data"
+
+    rslt = get_rel_pathnames(test_dir_name)
+    assert "tests/data/dat.csv" in rslt and isinstance(rslt, list)
+    rslt = get_rel_pathnames(test_dir_name, file_ext=".txt")
+    assert rslt == ['tests/data/dat.txt', 'tests/data/zipped.txt']
+    rslt = get_rel_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
+    assert rslt == ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
+
+
+def test_check_files_exist(capfd):
+    from pyhelpers.dirs import check_files_exist
+
+    test_dir_name = "tests/data"
+
+    assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
+    rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
+    out, err = capfd.readouterr()
+    assert rslt is False
+    assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
+
+
+def test_validate_filename():
+    from pyhelpers.dirs import validate_filename
+    import tempfile
+
+    temp_pathname_ = tempfile.NamedTemporaryFile()
+    temp_pathname_0 = temp_pathname_.name + '.txt'
+
+    open(temp_pathname_0, 'w').close()
+    assert os.path.isfile(temp_pathname_0)
+
+    temp_pathname_1 = validate_filename(temp_pathname_0)
+    assert os.path.splitext(temp_pathname_1)[0].endswith('(1)')
+
+    open(temp_pathname_1, 'w').close()
+    temp_pathname_2 = validate_filename(temp_pathname_1)
+    assert os.path.splitext(temp_pathname_2)[0].endswith('(2)')
+
+    os.remove(temp_pathname_0)
+    os.remove(temp_pathname_1)
+
+
 if __name__ == '__main__':
     pytest.main()
