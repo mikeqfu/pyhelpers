@@ -68,46 +68,6 @@ def test_cd_data():
     assert os.path.relpath(path_to_dat_dir) == 'pyhelpers\\data\\tests'
 
 
-def test_is_dir():
-    from pyhelpers.dirs import is_dir
-
-    assert not is_dir("tests")
-    assert is_dir("/tests")
-    assert is_dir(cd("tests"))
-
-
-def test_validate_dir():
-    from pyhelpers.dirs import validate_dir
-
-    dat_dir = validate_dir()
-    assert os.path.relpath(dat_dir) == '.'
-
-    dat_dir = validate_dir("tests")
-    assert os.path.relpath(dat_dir) == 'tests'
-
-    dat_dir = validate_dir(subdir="data")
-    assert os.path.relpath(dat_dir) == 'data'
-
-
-def test_delete_dir(capfd):
-    from pyhelpers.dirs import delete_dir
-
-    test_dirs = []
-    for x in range(3):
-        test_dirs.append(cd("tests", f"test_dir{x}", mkdir=True))
-        if x == 0:
-            cd("tests", f"test_dir{x}", "a_folder", mkdir=True)
-        elif x == 1:
-            open(cd("tests", f"test_dir{x}", "file"), 'w').close()
-
-    delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
-    out, err = capfd.readouterr()
-    out_ = '\n'.join(['Deleting "tests\\test_dir0\\" ... Done.',
-                      'Deleting "tests\\test_dir1\\" ... Done.',
-                      'Deleting "tests\\test_dir2\\" ... Done.\n'])
-    assert out == out_
-
-
 def test_path2linux():
     from pyhelpers.dirs import path2linux
 
@@ -130,6 +90,48 @@ def test_uniform_pathname():
 
     rslt = uniform_pathname(pathlib.Path(test_pathname))
     assert rslt == 'tests/data/dat.csv'
+
+
+def test_is_dir():
+    from pyhelpers.dirs import is_dir
+
+    assert not is_dir("tests")
+    assert is_dir("/tests")
+    assert is_dir(cd("tests"))
+
+
+def test_validate_dir():
+    from pyhelpers.dirs import validate_dir
+
+    dat_dir = validate_dir()
+    assert os.path.relpath(dat_dir) == '.'
+
+    dat_dir = validate_dir("tests")
+    assert os.path.relpath(dat_dir) == 'tests'
+
+    dat_dir = validate_dir(subdir="data")
+    assert os.path.relpath(dat_dir) == 'data'
+
+
+def test_validate_filename():
+    from pyhelpers.dirs import validate_filename
+    import tempfile
+
+    temp_pathname_ = tempfile.NamedTemporaryFile()
+    temp_pathname_0 = temp_pathname_.name + '.txt'
+
+    open(temp_pathname_0, 'w').close()
+    assert os.path.isfile(temp_pathname_0)
+
+    temp_pathname_1 = validate_filename(temp_pathname_0)
+    assert os.path.splitext(temp_pathname_1)[0].endswith('(1)')
+
+    open(temp_pathname_1, 'w').close()
+    temp_pathname_2 = validate_filename(temp_pathname_1)
+    assert os.path.splitext(temp_pathname_2)[0].endswith('(2)')
+
+    os.remove(temp_pathname_0)
+    os.remove(temp_pathname_1)
 
 
 def test_get_rel_pathnames():
@@ -157,25 +159,23 @@ def test_check_files_exist(capfd):
     assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 
 
-def test_validate_filename():
-    from pyhelpers.dirs import validate_filename
-    import tempfile
+def test_delete_dir(capfd):
+    from pyhelpers.dirs import delete_dir
 
-    temp_pathname_ = tempfile.NamedTemporaryFile()
-    temp_pathname_0 = temp_pathname_.name + '.txt'
+    test_dirs = []
+    for x in range(3):
+        test_dirs.append(cd("tests", f"test_dir{x}", mkdir=True))
+        if x == 0:
+            cd("tests", f"test_dir{x}", "a_folder", mkdir=True)
+        elif x == 1:
+            open(cd("tests", f"test_dir{x}", "file"), 'w').close()
 
-    open(temp_pathname_0, 'w').close()
-    assert os.path.isfile(temp_pathname_0)
-
-    temp_pathname_1 = validate_filename(temp_pathname_0)
-    assert os.path.splitext(temp_pathname_1)[0].endswith('(1)')
-
-    open(temp_pathname_1, 'w').close()
-    temp_pathname_2 = validate_filename(temp_pathname_1)
-    assert os.path.splitext(temp_pathname_2)[0].endswith('(2)')
-
-    os.remove(temp_pathname_0)
-    os.remove(temp_pathname_1)
+    delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
+    out, err = capfd.readouterr()
+    out_ = '\n'.join(['Deleting "tests\\test_dir0\\" ... Done.',
+                      'Deleting "tests\\test_dir1\\" ... Done.',
+                      'Deleting "tests\\test_dir2\\" ... Done.\n'])
+    assert out == out_
 
 
 if __name__ == '__main__':
