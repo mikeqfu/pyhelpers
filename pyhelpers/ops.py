@@ -2377,7 +2377,7 @@ class GitHubFileDownloader:
     Download files on GitHub from a given repository URL.
     """
 
-    def __init__(self, repo_url, flatten_files=False, output_dir=None):
+    def __init__(self, repo_url: str, flatten_files: bool = False, output_dir: str | None = None):
         """
         :param repo_url: URL of a GitHub repository to download from;
             it can be a ``blob`` or tree path
@@ -2419,7 +2419,11 @@ class GitHubFileDownloader:
         self.flatten = flatten_files
         self.output_dir = "./" if output_dir is None else output_dir
 
+        # Create a URL that is compatible with GitHub's REST API
         self.api_url, self.download_dirs = self.create_url(self.repo_url)
+
+        # Initialize the total number of files under the given directory
+        self.total_files = 0
 
         # Set user agent in default
         opener = urllib.request.build_opener()
@@ -2484,71 +2488,87 @@ class GitHubFileDownloader:
 
         return api_url, download_paths
 
-    def download(self, api_url=None):
+    def download_single_file(self, file_url: str, dir_out: str):
+        # Download the file
+        _, _ = urllib.request.urlretrieve(file_url, dir_out)
+
+        if self.flatten:
+            if self.output_dir == "./":
+                print(f"Downloaded to: ./{dir_out.split('/')[-1]}")
+            else:
+                print(
+                    f"Downloaded to: {self.output_dir}/{dir_out.split('/')[-1]}")
+        else:
+            print(f"Downloaded to: {dir_out}")
+
+    def download(self, api_url: str | None = None):
         # Update api_url if it is not specified
         api_url_local = self.api_url if api_url is None else api_url
 
         # Update output directory if flatten is not specified
         if self.flatten:
-            self.dir_out = self.flatten
+            self.dir_out = self.output_dir
         elif len(self.download_dirs.split(".")) == 0:
             self.dir_out = os.path.join(self.output_dir, self.download_dirs)
         else:
-            self.dir_out = os.path.join(self.output_dir, "/".join(self.download_dirs.split("/")[:-1]))
+            self.dir_out = os.path.join(
+                self.output_dir, "/".join(self.download_dirs.split("/")[:-1]))
 
         # Make a directory with the name which is taken from the actual repo
-        if not self.flatten:
-            os.makedirs(self.dir_out, exist_ok=True)
+        os.makedirs(self.dir_out, exist_ok=True)
 
-        try:  # Get response from GutHub response
+        # Get response from GutHub response
+        try:
             response = urllib.request.urlretrieve(api_url_local)
         except KeyboardInterrupt:
-            print("Got interrupted")
-            sys.exit()
+            print(
+                "Can not get response from GitHub API, please check the url again or try later.")
 
         # Download files according to the response
-        total_files = 0
         with open(response[0], "r") as f:
             data = json.load(f)
 
-            total_files += len(data)  # Count total number of files
+        # If the data is a file, download it as one.
+        if isinstance(data, dict) and data["type"] == "file":
+            try:
+                # Download the file
+                self.download_single_file(
+                    data["download_url"], "/".join([self.dir_out, data["name"]]))
+                self.total_files += 1
+                return self.total_files
+            except KeyboardInterrupt as e:
+                print(f"Error: Got interrupted for {e}")
 
-            # If the data is a file, download it as one.
-            if isinstance(data, dict) and data["type"] == "file":
-                try:  # Download the file
-                    _, _ = urllib.request.urlretrieve(
-                        data["download_url"], os.path.join(self.output_dir, data["name"]))
+        # If the data is a directory, download all files in it.
+        for file in data:
+            file_url = file["download_url"]
+            file_path = file["path"]
+            path = os.path.basename(file_path) if self.flatten else file_path
+            path = "/".join([self.output_dir, path])
 
-                    print(f"Downloaded: {total_files} files to {self.output_dir}")
+            dirname = os.path.dirname(path)
 
-                    return total_files
+            # Create a directory if it does not exist
+            if dirname != '':
+                os.makedirs(os.path.dirname(path), exist_ok=True)
 
-                except KeyboardInterrupt as e:
-                    print(f"Error: Got interrupted for {e}")
-                    sys.exit()
+            # Download the file if it is not a directory
+            if file_url is not None:
+                # file_name = file["name"]
+                try:
+                    self.download_single_file(file_url, path)
+                    self.total_files += 1
+                except KeyboardInterrupt:
+                    print("Got interrupted")
 
-            for file in data:
-                file_url = file["download_url"]
-                file_path = file["path"]
-                path = os.path.basename(file_path) if self.flatten else file_path
-                dirname = os.path.dirname(path)
+            # If the file is a directory, recursively download it
+            else:
+                try:
+                    self.api_url, self.download_dirs = self.create_url(
+                        file["html_url"])
+                    self.download(self.api_url)
+                except Exception:
+                    print(
+                        f"Error: {file['html_url']} is not a file or a directory")
 
-                if dirname != '':
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-                if file_url is not None:
-                    file_name = file["name"]
-
-                    try:  # Download the file
-                        _, _ = urllib.request.urlretrieve(file_url, path)
-                        print(f"Info: downloaded {file_name}")
-                    except KeyboardInterrupt:
-                        print("Got interrupted")
-                        sys.exit()
-
-                else:
-                    self.download(file["html_url"])
-
-            print(f"Summary: {total_files} files to {self.output_dir}")
-
-        return total_files
+        return self.total_files
