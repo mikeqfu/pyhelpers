@@ -554,7 +554,7 @@ def format_err_msg(e):
     Format an error message.
 
     :param e: Subclass of Exception.
-    :type e: Exception | None | str
+    :type e: typing.Any
     :return: An error message.
     :rtype: str
 
@@ -2377,7 +2377,7 @@ class GitHubFileDownloader:
     Download files on GitHub from a given repository URL.
     """
 
-    def __init__(self, repo_url: str, flatten_files: bool = False, output_dir: str | None = None):
+    def __init__(self, repo_url, flatten_files=False, output_dir=None):
         """
         :param repo_url: URL of a GitHub repository to download from;
             it can be a ``blob`` or tree path
@@ -2385,7 +2385,7 @@ class GitHubFileDownloader:
         :param flatten_files: whether to pull the contents of all subdirectories into the root folder,
             defaults to ``False``
         :type flatten_files: bool
-        :param output_dir: an output directory where the downloaded files will be saved,
+        :param output_dir: output directory where the downloaded files will be saved,
             when ``output_dir=None``, it defaults to ``None``
         :type output_dir: str | None
 
@@ -2393,6 +2393,9 @@ class GitHubFileDownloader:
         :ivar bool flatten: whether to pull the contents of all subdirectories into the root folder,
             defaults to ``False``
         :ivar str | None output_dir: defaults to ``None``
+        :ivar str api_url: URL of a GitHub repository (compatible with GitHub's REST API)
+        :ivar str download_path: pathname for downloading files
+        :ivar int total_files: total number of files under the given directory
 
         **Examples**::
 
@@ -2402,25 +2405,54 @@ class GitHubFileDownloader:
 
             >>> # Download a single file
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
-            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
             >>> downloader.download()
-
+            Downloaded to: tests/temp/tests/data/dat.csv
+            1
 
             >>> # Download a directory
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
-            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
             >>> downloader.download()
+            Downloaded to: tests/temp/tests/data/csr_mat.npz
+            Downloaded to: tests/temp/tests/data/dat.csv
+            Downloaded to: tests/temp/tests/data/dat.feather
+            Downloaded to: tests/temp/tests/data/dat.joblib
+            Downloaded to: tests/temp/tests/data/dat.json
+            Downloaded to: tests/temp/tests/data/dat.pickle
+            Downloaded to: tests/temp/tests/data/dat.txt
+            Downloaded to: tests/temp/tests/data/dat.xlsx
+            Downloaded to: tests/temp/tests/data/zipped.7z
+            Downloaded to: tests/temp/tests/data/zipped.txt
+            Downloaded to: tests/temp/tests/data/zipped.zip
+            Downloaded to: tests/temp/tests/data/zipped/zipped.txt
+            12
 
-
+            >>> downloader = GitHubFileDownloader(
+            ...     repo_url=test_url, flatten_files=True, output_dir=test_output_dir)
+            >>> downloader.download()
+            Downloaded to: tests/temp/csr_mat.npz
+            Downloaded to: tests/temp/dat.csv
+            Downloaded to: tests/temp/dat.feather
+            Downloaded to: tests/temp/dat.joblib
+            Downloaded to: tests/temp/dat.json
+            Downloaded to: tests/temp/dat.pickle
+            Downloaded to: tests/temp/dat.txt
+            Downloaded to: tests/temp/dat.xlsx
+            Downloaded to: tests/temp/zipped.7z
+            Downloaded to: tests/temp/zipped.txt
+            Downloaded to: tests/temp/zipped.zip
+            Downloaded to: tests/temp/zipped.txt
+            12
         """
 
-        self.dir_out = None
+        self.dir_out = ''
         self.repo_url = repo_url
         self.flatten = flatten_files
-        self.output_dir = "./" if output_dir is None else output_dir
+        self.output_dir = "./" if output_dir is None else re.sub(r"\\|\\\\|//", "/", output_dir)
 
         # Create a URL that is compatible with GitHub's REST API
-        self.api_url, self.download_dirs = self.create_url(self.repo_url)
+        self.api_url, self.download_path = self.create_url(self.repo_url)
 
         # Initialize the total number of files under the given directory
         self.total_files = 0
@@ -2433,13 +2465,13 @@ class GitHubFileDownloader:
     @staticmethod
     def create_url(url):
         """
-        From the given url, produce a URL that is compatible with GitHub's REST API.
+        From the given ``url``, produce a URL that is compatible with GitHub's REST API.
 
         It can handle ``blob`` or tree paths.
 
         :param url: URL
         :type url: str
-        :return: URL of a GitHub repository and pathnames for downloading files
+        :return: URL of a GitHub repository and pathname for downloading file
         :rtype: tuple
 
         **Examples**::
@@ -2449,46 +2481,58 @@ class GitHubFileDownloader:
             >>> test_output_dir = "tests/temp"
 
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
-            >>> gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
-            >>> test_api_url, test_download_paths = gd.create_url(test_url)
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_path = downloader.create_url(test_url)
             >>> test_api_url
             'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
-            >>> test_download_paths
+            >>> test_download_path
             'tests/data/dat.csv'
 
             >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
-            >>> gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
-            >>> test_api_url, test_download_paths = gd.create_url(test_url)
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_path = downloader.create_url(test_url)
             >>> test_api_url
             'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
-            >>> test_download_paths
+            >>> test_download_path
             'docs'
-
-
         """
 
         repo_only_url = re.compile(
             r"https://github\.com/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}/[a-zA-Z0-9]+$")
         re_branch = re.compile("/(tree|blob)/(.+?)/")
 
-        # Check if the given url is a complete url to a GitHub repo.
+        # Check if the given URL is a complete url to a GitHub repo.
         if re.match(repo_only_url, url):
             print(
                 "Given url is a complete repository, "
-                "please use 'git clone' to download the repository")
+                "please use 'git clone' to download the repository.")
             sys.exit()
 
         # Extract the branch name from the given url (e.g. master)
         branch = re_branch.search(url)
-        download_paths = url[branch.end():]
+        download_path = url[branch.end():]
 
         api_url = (
             f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/'
-            f'contents/{download_paths}?ref={branch[2]}')
+            f'contents/{download_path}?ref={branch[2]}')
 
-        return api_url, download_paths
+        return api_url, download_path
 
-    def download_single_file(self, file_url: str, dir_out: str):
+    def download_single_file(self, file_url, dir_out):
+        """
+        Download a single file.
+
+        :param file_url: URL of a single file
+        :type file_url: str
+        :param dir_out: pathname for saving the file
+        :type dir_out: str
+
+        .. seealso::
+
+            - Examples for the method
+              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+        """
+
         # Download the file
         _, _ = urllib.request.urlretrieve(file_url, dir_out)
 
@@ -2496,50 +2540,63 @@ class GitHubFileDownloader:
             if self.output_dir == "./":
                 print(f"Downloaded to: ./{dir_out.split('/')[-1]}")
             else:
-                print(
-                    f"Downloaded to: {self.output_dir}/{dir_out.split('/')[-1]}")
+                print(f"Downloaded to: {self.output_dir}/{dir_out.split('/')[-1]}")
+
         else:
             print(f"Downloaded to: {dir_out}")
 
-    def download(self, api_url: str | None = None):
-        # Update api_url if it is not specified
+    def download(self, api_url=None):
+        """
+        Download a file or a directory for the given ``api_url``.
+
+        :param api_url: defaults to ``None``
+        :type api_url: str | None
+        :return: total number of files under the given directory
+        :rtype: int
+
+        .. seealso::
+
+            - Examples for the method
+              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+        """
+
+        # Update `api_url` if it is not specified
         api_url_local = self.api_url if api_url is None else api_url
 
         # Update output directory if flatten is not specified
         if self.flatten:
             self.dir_out = self.output_dir
-        elif len(self.download_dirs.split(".")) == 0:
-            self.dir_out = os.path.join(self.output_dir, self.download_dirs)
+        elif len(self.download_path.split(".")) == 0:
+            self.dir_out = os.path.join(self.output_dir, self.download_path)
         else:
-            self.dir_out = os.path.join(
-                self.output_dir, "/".join(self.download_dirs.split("/")[:-1]))
+            self.dir_out = os.path.join(self.output_dir, "/".join(self.download_path.split("/")[:-1]))
+        self.dir_out = re.sub(r"\\|\\\\|//", "/", self.dir_out)
 
         # Make a directory with the name which is taken from the actual repo
         os.makedirs(self.dir_out, exist_ok=True)
 
         # Get response from GutHub response
         try:
-            response = urllib.request.urlretrieve(api_url_local)
+            response, _ = urllib.request.urlretrieve(api_url_local)
         except KeyboardInterrupt:
-            print(
-                "Can not get response from GitHub API, please check the url again or try later.")
+            print("Cannot get response from GitHub API, please check the url again or try later.")
 
-        # Download files according to the response
-        with open(response[0], "r") as f:
+        # noinspection PyUnboundLocalVariable
+        with open(response, "r") as f:  # Download files according to the response
             data = json.load(f)
 
         # If the data is a file, download it as one.
         if isinstance(data, dict) and data["type"] == "file":
-            try:
-                # Download the file
-                self.download_single_file(
-                    data["download_url"], "/".join([self.dir_out, data["name"]]))
+            try:  # Download the file
+                self.download_single_file(data["download_url"], "/".join([self.dir_out, data["name"]]))
                 self.total_files += 1
-                return self.total_files
-            except KeyboardInterrupt as e:
-                print(f"Error: Got interrupted for {e}")
 
-        # If the data is a directory, download all files in it.
+                return self.total_files
+
+            except KeyboardInterrupt as e:
+                print(f"Error: Got interrupted for {format_err_msg(e)}")
+
+        # If the data is a directory, download all files in it
         for file in data:
             file_url = file["download_url"]
             file_path = file["path"]
@@ -2552,8 +2609,7 @@ class GitHubFileDownloader:
             if dirname != '':
                 os.makedirs(os.path.dirname(path), exist_ok=True)
 
-            # Download the file if it is not a directory
-            if file_url is not None:
+            if file_url is not None:  # Download the file if it is not a directory
                 # file_name = file["name"]
                 try:
                     self.download_single_file(file_url, path)
@@ -2561,14 +2617,13 @@ class GitHubFileDownloader:
                 except KeyboardInterrupt:
                     print("Got interrupted")
 
-            # If the file is a directory, recursively download it
-            else:
+            else:  # If a directory, recursively download it
+                # noinspection PyBroadException
                 try:
-                    self.api_url, self.download_dirs = self.create_url(
-                        file["html_url"])
+                    self.api_url, self.download_path = self.create_url(file["html_url"])
                     self.download(self.api_url)
+
                 except Exception:
-                    print(
-                        f"Error: {file['html_url']} is not a file or a directory")
+                    print(f"Error: {file['html_url']} is not a file or a directory")
 
         return self.total_files

@@ -27,27 +27,19 @@ Directory validation
     :toctree: _generated/
     :template: function.rst
 
-    is_dir
-    validate_dir
-
-Directory removal
------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    delete_dir
-
-Directory/file check
---------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
     path2linux
     uniform_pathname
+    is_dir
+    validate_dir
+    validate_filename
+
+Directory/file control
+----------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
     get_rel_pathnames
     check_files_exist
-    validate_filename
+    delete_dir
