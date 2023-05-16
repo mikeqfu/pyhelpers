@@ -9,7 +9,7 @@ import pkgutil
 import sys
 
 _OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
-    "fuzzywuzzy": ("FuzzyWuzzy", "fuzzywuzzy"),
+    "thefuzz": ("TheFuzz", "thefuzz"),
     "Levenshtein": ("python-Levenshtein", "python-Levenshtein"),
     "tqdm": ("tqdm", "tqdm"),
     "matplotlib": ("Matplotlib", "matplotlib"),

@@ -590,10 +590,10 @@ def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs)
     return sim_str
 
 
-def _find_str_by_fuzzywuzzy(x, lookup_list, n=1, **kwargs):
+def _find_str_by_thefuzz(x, lookup_list, n=1, **kwargs):
     """
     Find ``n`` strings that are similar to ``x`` from among a sequence of candidates
-    by using `FuzzyWuzzy <https://pypi.org/project/fuzzywuzzy/>`_.
+    by using `TheFuzz <https://pypi.org/project/thefuzz/>`_.
 
     :param x: a string-type variable
     :type x: str
@@ -603,15 +603,15 @@ def _find_str_by_fuzzywuzzy(x, lookup_list, n=1, **kwargs):
         when ``n=None``, the function returns a sorted ``lookup_list``
         (in the descending order of similarity)
     :type n: int | None
-    :param kwargs: [optional] parameters of `fuzzywuzzy.fuzz.token_set_ratio`_
+    :param kwargs: [optional] parameters of `thefuzz.fuzz.token_set_ratio`_
     :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str | list | None
 
-    .. _`fuzzywuzzy.fuzz.token_set_ratio`: https://github.com/seatgeek/fuzzywuzzy
+    .. _`thefuzz.fuzz.token_set_ratio`: https://github.com/seatgeek/thefuzz#token-set-ratio
 
     **Tests**::
 
-        >>> from pyhelpers.text import _find_str_by_fuzzywuzzy
+        >>> from pyhelpers.text import _find_str_by_thefuzz
 
         >>> lookup_lst = ['Anglia',
         ...               'East Coast',
@@ -624,20 +624,20 @@ def _find_str_by_fuzzywuzzy(x, lookup_list, n=1, **kwargs):
         ...               'Wessex',
         ...               'Western']
 
-        >>> y = _find_str_by_fuzzywuzzy(x='angle', lookup_list=lookup_lst, n=1)
+        >>> y = _find_str_by_thefuzz(x='angle', lookup_list=lookup_lst, n=1)
         >>> y
         'Anglia'
 
-        >>> y = _find_str_by_fuzzywuzzy(x='123', lookup_list=lookup_lst, n=1)
+        >>> y = _find_str_by_thefuzz(x='123', lookup_list=lookup_lst, n=1)
         >>> y is None
         True
     """
 
-    fuzzywuzzy_fuzz = _check_dependency(name='fuzzywuzzy.fuzz')
+    thefuzz_fuzz = _check_dependency(name='thefuzz.fuzz')
 
     lookup_list_ = list(lookup_list)
 
-    l_distances = [fuzzywuzzy_fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list_]
+    l_distances = [thefuzz_fuzz.token_set_ratio(s1=x, s2=a, **kwargs) for a in lookup_list_]
 
     if sum(l_distances) == 0:
         sim_str = None
@@ -665,28 +665,30 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
     :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
         defaults to ``True``
     :type ignore_punctuation: bool
-    :param engine: options include ``'difflib'`` (default) and ``'fuzzywuzzy'``
+    :param engine: options include ``'difflib'`` (default) and
+        ``'thefuzz'`` (previously ``'fuzzywuzzy'``) (or simply ``'fuzz'``)
 
         - if ``engine='difflib'``, the function relies on `difflib.get_close_matches`_
-        - if ``engine='fuzzywuzzy'``, the function relies on `fuzzywuzzy.fuzz.token_set_ratio`_
+        - if ``engine='thefuzz'`` (or ``engine='fuzz'``), the function relies on
+          `thefuzz.fuzz.token_set_ratio`_
 
     :type engine: str | typing.Callable
     :param kwargs: [optional] parameters of `difflib.get_close_matches`_ (e.g. ``cutoff=0.6``) or
-        `fuzzywuzzy.fuzz.token_set_ratio`_, depending on ``engine``
+        `thefuzz.fuzz.token_set_ratio`_, depending on ``engine``
     :return: a string-type variable that should be similar to (or the same as) ``x``
     :rtype: str | list | None
 
     .. _`difflib.get_close_matches`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
-    .. _`fuzzywuzzy.fuzz.token_set_ratio`:
-        https://github.com/seatgeek/fuzzywuzzy
+    .. _`thefuzz.fuzz.token_set_ratio`:
+        https://github.com/seatgeek/thefuzz#token-set-ratio
 
     .. note::
 
         - By default, the function uses the built-in module
           `difflib <https://docs.python.org/3/library/difflib.html>`_; when we set the parameter
-          ``engine='fuzzywuzzy'``, the function then relies on
-          `FuzzyWuzzy <https://pypi.org/project/fuzzywuzzy/>`_, which is not an essential dependency
+          ``engine='thefuzz'`` (or ``engine='fuzz'``), the function then relies on
+          `TheFuzz <https://pypi.org/project/thefuzz/>`_, which is not an essential dependency
           for installing pyhelpers. We could however use ``pip`` (or ``conda``) to install it first
           separately.
 
@@ -712,10 +714,10 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
         >>> y
         ['Anglia', 'Wales']
 
-        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='fuzzywuzzy')
+        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='fuzz')
         >>> y
         'Anglia'
-        >>> y = find_similar_str('angle', lookup_lst, n=2, engine='fuzzywuzzy')
+        >>> y = find_similar_str('angle', lookup_lst, n=2, engine='fuzz')
         >>> y
         ['Anglia', 'Wales']
 
@@ -729,23 +731,23 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
         >>> y
         'Wessex'
 
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzzywuzzy')
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzz')
         >>> y
         'Wessex'
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzzywuzzy')
+        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzz')
         >>> y
         ['Wessex', 'Western']
     """
 
-    methods = {'difflib', 'fuzzywuzzy', None}
+    methods = {'difflib', 'fuzzywuzzy', 'thefuzz', 'fuzz', None}
     assert engine in methods or callable(engine), \
         f"Invalid input: `engine`. Valid options can include {methods}."
 
-    if engine == 'difflib' or engine is None:
+    if engine in {'difflib', None}:
         sim_str = _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs)
 
-    elif engine == 'fuzzywuzzy':
-        sim_str = _find_str_by_fuzzywuzzy(x, lookup_list, n, **kwargs)
+    elif engine in {'fuzzywuzzy', 'thefuzz', 'fuzz'}:
+        sim_str = _find_str_by_thefuzz(x, lookup_list, n, **kwargs)
 
     else:
         sim_str = engine(x, lookup_list, **kwargs)
