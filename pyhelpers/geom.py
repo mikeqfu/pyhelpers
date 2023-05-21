@@ -18,7 +18,7 @@ from ._cache import _check_dependency
 # Geometric data transformation
 # ==================================================================================================
 
-# -- Geometric type --------------------------------------------------------------------------------
+# Geometric type
 
 def transform_geom_point_type(*pts, as_geom=True):
     """
@@ -101,7 +101,7 @@ def transform_geom_point_type(*pts, as_geom=True):
         yield pt
 
 
-# -- Coordinate system -----------------------------------------------------------------------------
+# Coordinate system
 
 def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     """
@@ -252,7 +252,7 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     return lonlat_data
 
 
-# -- Dimension / Projection ------------------------------------------------------------------------
+# Dimension / Projection
 
 def _drop_z(x, y, _):
     return x, y
@@ -445,7 +445,7 @@ def project_point_to_line(point, line, drop_dimension=None):
 # Geometric data computation
 # ==================================================================================================
 
-# -- Distance --------------------------------------------------------------------------------------
+# Distance
 
 def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
     """
@@ -761,8 +761,8 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     return closest_point
 
 
-def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False, ret_dist=False,
-                        **kwargs):
+def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False,
+                        ret_dist=False, **kwargs):
     """
     Find the closest points from a list of reference points (applicable for vectorized computation).
 
@@ -1009,7 +1009,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     return shortest_path
 
 
-# -- Locating --------------------------------------------------------------------------------------
+# Locating
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
@@ -1359,7 +1359,6 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
 # ==================================================================================================
 # Geometric data sketching
 # ==================================================================================================
-
 
 def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs):
     p = '{' + '0:.{}f'.format(precision) + '}'

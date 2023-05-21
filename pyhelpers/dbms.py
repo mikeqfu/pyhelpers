@@ -24,15 +24,7 @@ import pandas as pd
 import sqlalchemy
 import sqlalchemy.dialects
 
-from ._cache import _check_dependency
-from .dirs import cd, validate_dir
-from .ops import confirmed
-from .store import save_data
-
-
-def _print_failure_msg(e):
-    e_ = f"{e}"
-    print(f"Failed. " + e_ if e_.endswith(".") else f"{e_}.")
+from ._cache import _check_dependency, _confirmed, _print_failure_msg
 
 
 def _create_db(cls, confirm_db_creation, verbose):
@@ -48,7 +40,7 @@ def _create_db(cls, confirm_db_creation, verbose):
     db_name = cls._database_name(cls.database_name)
 
     cfm_msg = f"The database {db_name} does not exist. Proceed by creating it\n?"
-    if confirmed(prompt=cfm_msg, confirmation_required=confirm_db_creation):
+    if _confirmed(prompt=cfm_msg, confirmation_required=confirm_db_creation):
 
         if verbose:
             print(f"Creating a database: {db_name}", end=" ... ")
@@ -116,7 +108,7 @@ def _drop_database(cls, database_name, confirmation_required, verbose):
         # address_ = self.address.replace(f"/{db_name}", "")
         address_ = cls.address.split('/')[0]
         cfm_msg = f"To drop the database {db_name} from {address_}\n?"
-        if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
+        if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
             cls.disconnect_database(database_name=database_name)
 
             if verbose:
@@ -184,8 +176,8 @@ def _import_data(cls, data, table_name, schema_name=None, if_exists='fail',
     schema_name_ = cls._schema_name(schema_name=schema_name)
     table_name_ = cls._table_name(table_name=table_name, schema_name=schema_name_)
 
-    if confirmed("To import data into {} at {}\n?".format(table_name_, cls.address),
-                 confirmation_required=confirmation_required):
+    if _confirmed("To import data into {} at {}\n?".format(table_name_, cls.address),
+                  confirmation_required=confirmation_required):
 
         inspector = sqlalchemy.inspect(cls.engine)
         if schema_name_ not in inspector.get_schema_names():
@@ -248,7 +240,6 @@ def _import_data(cls, data, table_name, schema_name=None, if_exists='fail',
 # ==================================================================================================
 # Databases
 # ==================================================================================================
-
 
 class PostgreSQL:
     """
@@ -349,7 +340,6 @@ class PostgreSQL:
         **Define a proxy object that inherits from this class**::
 
             >>> class ExampleProxyObj(PostgreSQL):
-            ...
             ...     def __init__(self, **kwargs):
             ...         super().__init__(**kwargs)
 
@@ -1185,7 +1175,7 @@ class PostgreSQL:
             cfm_msg = "To drop the following {} from {}: {}\n?".format(
                 print_plural, self.address, print_schema)
 
-        if confirmed(cfm_msg, confirmation_required=confirmation_required):
+        if _confirmed(cfm_msg, confirmation_required=confirmation_required):
             if verbose:
                 if len(schemas) == 1:
                     if confirmation_required:
@@ -1554,8 +1544,8 @@ class PostgreSQL:
 
             return table_list
 
-    def alter_table_schema(self, table_name, schema_name, new_schema_name,
-                           confirmation_required=True, verbose=False):
+    def alter_table_schema(self, table_name, schema_name, new_schema_name, confirmation_required=True,
+                           verbose=False):
         """
         Move a table from one schema to another within the currently-connected database.
 
@@ -1613,7 +1603,7 @@ class PostgreSQL:
         cfm_msg = f"To move the table \"{table_name}\" " \
                   f"from the schema \"{schema_name}\" to \"{new_schema_name}\"\n?"
 
-        if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
+        if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
 
             if not self.schema_exists(schema_name=new_schema_name):
                 self.create_schema(schema_name=new_schema_name, verbose=verbose)
@@ -1876,8 +1866,8 @@ class PostgreSQL:
                 print("The table {} does not exist.".format(table_name_))
 
         else:
-            if confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
-                         confirmation_required=confirmation_required):
+            if _confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
+                          confirmation_required=confirmation_required):
 
                 if verbose:
                     if confirmation_required:
@@ -3805,7 +3795,7 @@ class MSSQL:
         return data
 
     def read_table(self, table_name, schema_name=None, column_names=None, conditions=None,
-                   chunk_size=None, save_as=None, data_dir=None, **kwargs):
+                   chunk_size=None, save_as=None, data_dir=None, verbose=False, **kwargs):
         """
         Read data from a table.
 
@@ -3821,10 +3811,13 @@ class MSSQL:
         :param chunk_size: number of rows to include in each chunk (if specified),
             defaults to ``None``
         :type chunk_size: int or None
-        :param save_as: file extension (if specified) for saving table data locally, defaults to ``None``
+        :param save_as: file extension (if specified) for saving table data locally,
+            defaults to ``None``
         :type save_as: str or None
         :param data_dir: directory where the table data is to be saved, defaults to ``None``
         :type data_dir: str or None
+        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :type verbose: bool | int
         :param kwargs: [optional] parameters of `pandas.read_sql`_
         :return: data of the queried table
         :rtype: pandas.DataFrame
@@ -3945,9 +3938,13 @@ class MSSQL:
         data = data[[x for x in column_names_ if x not in data.index.names]]
 
         if save_as:
+            from pyhelpers.dirs import validate_dir
+            from pyhelpers.store import save_data
+
             data_dir_ = validate_dir(data_dir)
-            path_to_file = cd(data_dir_, table_name + save_as)
-            save_data(data, path_to_file)
+            path_to_file = os.path.join(data_dir_, table_name + save_as)
+
+            save_data(data, path_to_file=path_to_file, verbose=verbose)
 
         return data
 
@@ -3978,8 +3975,8 @@ class MSSQL:
                 print("The table {} does not exist.".format(table_name_))
 
         else:
-            if confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
-                         confirmation_required=confirmation_required):
+            if _confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
+                          confirmation_required=confirmation_required):
 
                 if verbose:
                     if confirmation_required:
@@ -4003,7 +4000,6 @@ class MSSQL:
 # ==================================================================================================
 # Database tools/utilities
 # ==================================================================================================
-
 
 def make_database_address(host, port, username, database_name=""):
     """
@@ -4181,7 +4177,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
     task_msg = f'from [{mssql.database_name}] (MSSQL) to "{postgres.database_name}" (PostgreSQL)'
 
-    if confirmed(f'To copy tables {task_msg}\n?', confirmation_required=confirmation_required):
+    if _confirmed(f'To copy tables {task_msg}\n?', confirmation_required=confirmation_required):
 
         # MSSQL
         mssql_schema_name = mssql._schema_name(schema_name=mssql_schema)

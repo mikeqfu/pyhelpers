@@ -10,7 +10,6 @@ from ._cache import _check_dependency
 # Configurations
 # ==================================================================================================
 
-
 def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
@@ -20,7 +19,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
     :param max_tmpfile_size: maximum size of the temporary file, defaults to ``None``
-    :type max_tmpfile_size: int or None
+    :type max_tmpfile_size: int | None
     :param interleaved_reading: whether to enable interleaved reading, defaults to ``True``
     :type interleaved_reading: bool
     :param custom_indexing: whether to enable custom indexing, defaults to ``False``
@@ -77,7 +76,6 @@ def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=
 # Preferences
 # ==================================================================================================
 
-
 def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font_size=13,
                     legend_spacing=0.7, fig_style=None):
     """
@@ -85,15 +83,15 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_.
 
     :param backend: specify the backend used for rendering and GUI integration, defaults to ``None``
-    :type backend: str or None
+    :type backend: str | None
     :param font_name: name of a font to be used, defaults to ``'Times New Roman'``
-    :type font_name: None or str
+    :type font_name: None | str
     :param font_size: font size, defaults to ``13``
-    :type font_size: int or float
+    :type font_size: int | float
     :param legend_spacing: spacing between labels in plot legend, defaults to ``0.7``
-    :type legend_spacing: float or int
+    :type legend_spacing: float | int
     :param fig_style: style of the figure, defaults to ``None``
-    :type fig_style: str or None
+    :type fig_style: str | None
     :param reset: whether to reset to default settings, defaults to ``False``
     :type reset: bool
 
@@ -115,25 +113,24 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
                [0.64386404, 0.50177313]])
 
         >>> def example_plot(arr):
-        ...     fig = plt.figure(figsize=(6, 6))
+        ...     fig = plt.figure(constrained_layout=True)
         ...     ax = fig.add_subplot(aspect='equal', adjustable='box')
         ...
         ...     ax.scatter(arr[:500, 0], arr[:500, 1], label='Group0')
         ...     ax.scatter(arr[500:, 0], arr[500:, 1], label='Group1')
-        ...     ax.legend(loc='best')
-        ...
-        ...     plt.tight_layout()
+        ...     ax.legend(frameon=False, bbox_to_anchor=(1.0, 0.95))
         ...
         ...     plt.show()
 
         >>> example_plot(random_array)
 
+    .. _label: settings-mpl_preferences-demo-1
     .. figure:: ../_images/settings-mpl_preferences-demo-1.*
         :name: settings-mpl_preferences-demo-1
         :align: center
-        :width: 70%
+        :width: 65%
 
-        An example figure, before applying the function :py:func:`~pyhelpers.settings.mpl_preferences`.
+        An example figure, before applying the function :func:`~pyhelpers.settings.mpl_preferences`.
 
     .. code-block:: python
 
@@ -146,9 +143,9 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     .. figure:: ../_images/settings-mpl_preferences-demo-2.*
         :name: settings-mpl_preferences-demo-2
         :align: center
-        :width: 70%
+        :width: 65%
 
-        After applying the function :py:func:`~pyhelpers.settings.mpl_preferences`.
+        After applying the function :func:`~pyhelpers.settings.mpl_preferences`.
 
     Reset to default settings:
 
@@ -156,14 +153,10 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
 
         >>> mpl_preferences(reset=True)
 
+        >>> # The altered parameters are now set to their default values.
         >>> example_plot(random_array)
 
-    .. figure:: ../_images/settings-mpl_preferences-demo-1.*
-        :name: settings-mpl_preferences-demo-3
-        :align: center
-        :width: 70%
-
-        Resetting the altered parameters to their default values.
+    (The above code should display the same figure as :numref:`settings-mpl_preferences-demo-1`.)
     """
 
     mpl, mpl_style = map(_check_dependency, ['matplotlib', 'matplotlib.style'])
@@ -226,7 +219,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     :param formatter: specified format, which corresponds to ``formatter`` of
         `numpy.set_printoptions()`_, if ``None`` (default), fill the empty decimal places with zeros
         for the specified ``precision``
-    :type formatter: dict or None
+    :type formatter: dict | None
     :kwargs: [optional] parameters used by `numpy.set_printoptions()`_
 
     .. _`numpy.set_printoptions()`:
@@ -318,7 +311,7 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     for displaying `data frame <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html>`_.
 
     :param reset: whether to reset all to default settings, defaults to ``False``
-    :type reset: bool or str
+    :type reset: bool | str
     :param max_columns: maximum number of columns, which corresponds to ``'display.max_columns'`` for
         `pandas.set_option()`_, defaults to ``100``
     :type max_columns: int
@@ -359,7 +352,6 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
         97  0.891112  0.268674  0.840285  ...  0.573680  0.737291  0.225198
         98  0.269698  0.738825  0.807145  ...  0.948368  0.881307  0.141933
         99  0.884982  0.197014  0.568613  ...  0.758430  0.023787  0.813575
-
         [100 rows x 100 columns]
 
     Limit to display of at most ``6`` columns and round the numbers to ``2`` decimal places:
@@ -383,7 +375,6 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
         97 0.89 0.27 0.84  ... 0.57 0.74 0.23
         98 0.27 0.74 0.81  ... 0.95 0.88 0.14
         99 0.88 0.20 0.57  ... 0.76 0.02 0.81
-
         [100 rows x 100 columns]
 
     Reset to default settings:
@@ -405,13 +396,12 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
         97  0.891112  0.268674  0.840285  ...  0.573680  0.737291  0.225198
         98  0.269698  0.738825  0.807145  ...  0.948368  0.881307  0.141933
         99  0.884982  0.197014  0.568613  ...  0.758430  0.023787  0.813575
-
         [100 rows x 100 columns]
 
     .. note::
 
-        - Default values of all available options can be checked by running `pandas.describe_option()`_
-          or ``pandas._config.config._registered_options``
+        - Default values of all available options can be checked by running
+          `pandas.describe_option()`_ or ``pandas._config.config._registered_options``
 
         .. _`pandas.describe_option()`:
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html

@@ -27,7 +27,8 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from ._cache import _check_dependency, _USER_AGENT_STRINGS
+from ._cache import _check_dependency, _confirmed, _find_executable, _format_err_msg, \
+    _USER_AGENT_STRINGS
 
 
 # ==================================================================================================
@@ -59,28 +60,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
         Passed.
     """
 
-    if confirmation_required:
-        if prompt is None:
-            prompt_ = "Confirmed?"
-        else:
-            prompt_ = copy.copy(prompt)
-
-        if resp is True:  # meaning that default response is True
-            prompt_ = "{} [{}]|{}: ".format(prompt_, "Yes", "No")
-        else:
-            prompt_ = "{} [{}]|{}: ".format(prompt_, "No", "Yes")
-
-        ans = input(prompt_)
-        if not ans:
-            return resp
-
-        if re.match('[Yy](es)?', ans):
-            return True
-        if re.match('[Nn](o)?', ans):
-            return False
-
-    else:
-        return True
+    return _confirmed(prompt=prompt, confirmation_required=confirmation_required, resp=resp)
 
 
 def get_obj_attr(obj, col_names=None, as_dataframe=False):
@@ -389,22 +369,7 @@ def find_executable(app_name, possibilities=None):
         False
     """
 
-    exe_pathname = copy.copy(app_name)
-    exe_exists = False
-
-    if not os.path.isfile(exe_pathname):
-        alt_exe_pathnames = {shutil.which(app_name)}
-        if possibilities is not None:
-            alt_exe_pathnames.update(set(possibilities))
-
-        for x in alt_exe_pathnames:
-            if x:
-                if os.path.isfile(x):
-                    exe_pathname = x
-                    exe_exists = True
-                    break
-
-    return exe_exists, exe_pathname
+    return _find_executable(app_name=app_name, possibilities=possibilities)
 
 
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
@@ -547,32 +512,6 @@ def func_running_time(func):
         return res
 
     return inner
-
-
-def format_err_msg(e):
-    """
-    Format an error message.
-
-    :param e: Subclass of Exception.
-    :type e: typing.Any
-    :return: An error message.
-    :rtype: str
-
-    **Examples**::
-
-        >>> from pyhelpers.ops import format_err_msg
-
-        >>> format_err_msg("test")
-        'test.'
-    """
-
-    if e:
-        err_msg = f"{e}"
-        err_msg = err_msg + "." if not err_msg.endswith((".", "!", "?")) else err_msg
-    else:
-        err_msg = ""
-
-    return err_msg
 
 
 # ==================================================================================================
@@ -1241,7 +1180,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         return csr_mat
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 def swap_cols(array, c1, c2, as_list=False):
@@ -1402,7 +1341,6 @@ def np_shift(array, step, fill_value=np.nan):
 # Basic computation
 # ==================================================================================================
 
-
 def get_extreme_outlier_bounds(num_dat, k=1.5):
     """
     Get upper and lower bounds for extreme outliers.
@@ -1547,7 +1485,6 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 # ==================================================================================================
 # Graph plotting
 # ==================================================================================================
-
 
 def cmap_discretisation(cmap, n_colours):
     # noinspection PyShadowingNames
@@ -1739,7 +1676,6 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
 # ==================================================================================================
 # Web data extraction
 # ==================================================================================================
-
 
 def is_network_connected():
     """
@@ -2100,7 +2036,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
         except Exception as e:
             if verbose:
-                print(f"Failed. {format_err_msg(e)}")
+                print(f"Failed. {_format_err_msg(e)}")
             user_agent_strings = load_user_agent_strings(update=False, verbose=False)
 
     if shuffled:
@@ -2256,9 +2192,9 @@ def _download_file_from_url(response, path_to_file):
         print("ERROR! Something went wrong!")
 
 
-def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5, random_header=True,
-                           verbose=False, requests_session_args=None, fake_headers_args=None,
-                           **kwargs):
+def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
+                           random_header=True, verbose=False, requests_session_args=None,
+                           fake_headers_args=None, **kwargs):
     """
     Download an object available at a valid URL.
 
@@ -2594,7 +2530,7 @@ class GitHubFileDownloader:
                 return self.total_files
 
             except KeyboardInterrupt as e:
-                print(f"Error: Got interrupted for {format_err_msg(e)}")
+                print(f"Error: Got interrupted for {_format_err_msg(e)}")
 
         # If the data is a directory, download all files in it
         for file in data:

@@ -6,6 +6,8 @@ import importlib.util
 import json
 import os
 import pkgutil
+import re
+import shutil
 import sys
 
 _OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
@@ -116,6 +118,187 @@ def _check_rel_pathname(pathname):
         pathname_ = copy.copy(pathname)
 
     return pathname_
+
+
+def _confirmed(prompt=None, confirmation_required=True, resp=False):
+    """
+    Type to confirm whether to proceed or not.
+
+    See also [`OPS-C-1 <https://code.activestate.com/recipes/541096/>`_].
+
+    :param prompt: a message that prompts a response (Yes/No), defaults to ``None``
+    :type prompt: str | None
+    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
+    :type confirmation_required: bool
+    :param resp: default response, defaults to ``False``
+    :type resp: bool
+    :return: a response
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _confirmed
+
+        >>> if _confirmed(prompt="Testing if the function works?", resp=True):
+        ...     print("Passed.")
+        Testing if the function works? [Yes]|No: yes
+        Passed.
+    """
+
+    if confirmation_required:
+        if prompt is None:
+            prompt_ = "Confirmed?"
+        else:
+            prompt_ = copy.copy(prompt)
+
+        if resp is True:  # meaning that default response is True
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "Yes", "No")
+        else:
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "No", "Yes")
+
+        ans = input(prompt_)
+        if not ans:
+            return resp
+
+        if re.match('[Yy](es)?', ans):
+            return True
+        if re.match('[Nn](o)?', ans):
+            return False
+
+    else:
+        return True
+
+
+def _find_executable(app_name, possibilities=None):
+    """
+    Get pathname of an executable file for a specified application.
+
+    :param app_name: executable filename of the application that is to be called
+    :type app_name: str
+    :param possibilities: possible pathnames
+    :type possibilities: list | set | None
+    :return: pathname of the specified executable file and whether it exists
+    :rtype: typing.Tuple[str, bool]
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _find_executable
+        >>> import os
+
+        >>> python_exe = "python.exe"
+        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
+
+        >>> path_to_python_exe, python_exe_exists = _find_executable(python_exe, possible_paths)
+        >>> os.path.relpath(path_to_python_exe)
+        'venv\\Scripts\\python.exe'
+        >>> python_exe_exists
+        True
+
+        >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
+        >>> path_to_test_exe, test_exe_exists = _find_executable(text_exe, possible_paths)
+        >>> path_to_test_exe
+        'pyhelpers.exe'
+        >>> test_exe_exists
+        False
+    """
+
+    exe_pathname = copy.copy(app_name)
+    exe_exists = False
+
+    if not os.path.isfile(exe_pathname):
+        alt_exe_pathnames = {shutil.which(app_name)}
+        if possibilities is not None:
+            alt_exe_pathnames.update(set(possibilities))
+
+        for x in alt_exe_pathnames:
+            if x:
+                if os.path.isfile(x):
+                    exe_pathname = x
+                    exe_exists = True
+                    break
+
+    return exe_exists, exe_pathname
+
+
+def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
+    """
+    Check about a specified executable file pathname.
+
+    :param exe_name: name of an executable file
+    :type exe_name: str
+    :param exe_pathname: pathname of an executable file
+    :type exe_pathname: str | None
+    :param possible_pathnames: a number of possible pathnames of the executable file
+    :type possible_pathnames: list | set
+    :return: whether the specified executable file exists and its pathname
+    :rtype: typing.Tuple[bool, str]
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _check_exe_pathname
+        >>> import os
+
+        >>> possibilities = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
+
+        >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, possibilities)
+        >>> python_exists
+        True
+        >>> os.path.basename(path_to_exe)
+        'python.exe'
+    """
+
+    if exe_pathname is None:
+        exe_exists, exe_pathname_ = _find_executable(exe_name, possibilities=possible_pathnames)
+    else:
+        exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
+
+    return exe_exists, exe_pathname_
+
+
+def _format_err_msg(e=None, msg=""):
+    """
+    Format an error message.
+
+    :param e: Exception or any of its subclasses, defaults to ``None``
+    :type e: Exception | BaseException | str | None
+    :param msg: default error message, defaults to ``""``
+    :type msg: str
+    :return: an error message
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _format_err_msg
+
+        >>> _format_err_msg("test")
+        'test.'
+
+        >>> _format_err_msg("test", msg="Failed.")
+        'Failed. test.'
+    """
+
+    if e:
+        e_ = f"{e}"
+        err_msg = e_ + "." if not e_.endswith((".", "!", "?")) else e_
+    else:
+        err_msg = ""
+
+    if msg:
+        err_msg = msg + " " + err_msg
+
+    return err_msg
+
+
+def _print_failure_msg(e, msg="Failed."):
+    """
+    Print the error message associated with occurrence of an``Exception``.
+
+    :param e: Exception or any of its subclasses, defaults to ``None``
+    :type e: Exception | BaseException | str | None
+    """
+
+    err_msg = _format_err_msg(e=e, msg=msg)
+    print(err_msg)
 
 
 def example_dataframe(osgb36=False):

@@ -17,18 +17,22 @@ import zipfile
 
 import pandas as pd
 
-from ._cache import _check_dependency, _check_rel_pathname
-from .ops import confirmed, find_executable, format_err_msg, is_url
+from ._cache import _check_dependency, _check_exe_pathname, _check_rel_pathname, _confirmed, \
+    _format_err_msg
 
 
-def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
+# ==================================================================================================
+# Save data
+# ==================================================================================================
+
+def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
     """
     Check about a specified file pathname.
 
     :param path_to_file: path where a file is saved
-    :type path_to_file: str or pathlib.Path
+    :type path_to_file: str | pathlib.Path
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
     :type verbose_end: str
     :param ret_info: whether to return the file path information, defaults to ``False``
@@ -38,23 +42,23 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
 
     **Tests**::
 
-        >>> from pyhelpers.store import _check_path_to_file
+        >>> from pyhelpers.store import _check_saving_path
         >>> from pyhelpers.dirs import cd
 
         >>> file_path = cd()
         >>> try:
-        ...     _check_path_to_file(file_path, verbose=True)
+        ...     _check_saving_path(file_path, verbose=True)
         ... except AssertionError as e:
         ...     print(e)
         The input for `path_to_file` may not be a file path.
 
         >>> file_path = cd("pyhelpers.pdf")
-        >>> _check_path_to_file(file_path, verbose=True)
+        >>> _check_saving_path(file_path, verbose=True)
         >>> print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
 
         >>> file_path = cd("tests\\documents", "pyhelpers.pdf")
-        >>> _check_path_to_file(file_path, verbose=True)
+        >>> _check_saving_path(file_path, verbose=True)
         >>> print("Passed.")
         Saving "pyhelpers.pdf" to "tests\\" ... Passed.
     """
@@ -104,130 +108,6 @@ def _check_path_to_file(path_to_file, verbose=False, verbose_end=" ... ", ret_in
         return rel_path, filename
 
 
-def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
-    """
-    Check about loading a file from a specified pathname.
-
-    :param path_to_file: path where a file is saved
-    :type path_to_file: str or pathlib.Path
-    :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
-    :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
-    :type verbose_end: str
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _check_loading_path
-        >>> from pyhelpers.dirs import cd
-
-        >>> file_path = cd("test_func.py")
-        >>> _check_loading_path(file_path, verbose=True)
-        >>> print("Passed.")
-        Loading "test_func.py" ... Passed.
-    """
-
-    if verbose:
-        rel_pathname = _check_rel_pathname(path_to_file)
-        print("Loading \"{}\"".format(rel_pathname), end=verbose_end)
-
-
-def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
-    """
-    Check about a specified executable file pathname.
-
-    :param exe_name: name of an executable file
-    :type exe_name: str
-    :param exe_pathname: pathname of an executable file
-    :type exe_pathname: str or None
-    :param possible_pathnames: a number of possible pathnames of the executable file
-    :type possible_pathnames: list or set
-    :return: whether the specified executable file exists and its pathname
-    :rtype: typing.Tuple[bool, str]
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _check_exe_pathname
-        >>> import os
-
-        >>> possibilities = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
-
-        >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, possibilities)
-        >>> python_exists
-        True
-        >>> os.path.basename(path_to_exe)
-        'python.exe'
-    """
-
-    if exe_pathname is None:
-        exe_exists, exe_pathname_ = find_executable(app_name=exe_name, possibilities=possible_pathnames)
-    else:
-        exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
-
-    return exe_exists, exe_pathname_
-
-
-def _set_index(df, index=None):
-    """
-    Set index of a dataframe.
-
-    :param df: any dataframe
-    :type df: pandas.DataFrame
-    :param index: column index or a list of column indices, defaults to ``None``;
-        when ``index=None``, set the first column to be the index if the column name is an empty string
-    :type index: int or list or None
-    :return: an updated dataframe
-    :rtype: pandas.DataFrame
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _set_index
-        >>> from pyhelpers._cache import example_dataframe
-
-        >>> example_df = example_dataframe()
-        >>> example_df
-                    Longitude   Latitude
-        City
-        London      -0.127647  51.507322
-        Birmingham  -1.902691  52.479699
-        Manchester  -2.245115  53.479489
-        Leeds       -1.543794  53.797418
-
-        >>> example_df.equals(_set_index(example_df))
-        True
-
-        >>> example_df_ = _set_index(example_df, index=0)
-        >>> example_df_
-                    Latitude
-        Longitude
-        -0.127647  51.507322
-        -1.902691  52.479699
-        -2.245115  53.479489
-        -1.543794  53.797418
-
-        >>> example_df.iloc[:, 0].to_list() == example_df_.index.to_list()
-        True
-    """
-
-    data = df.copy()
-
-    if index is None:
-        idx_col = df.columns[0]
-        if idx_col == '':
-            data = df.set_index(idx_col)
-            data.index.name = None
-
-    else:
-        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
-        idx_keys = [df.columns[x] if isinstance(x, int) else x for x in idx_keys_]
-        data = df.set_index(keys=idx_keys)
-
-    return data
-
-
-# ==================================================================================================
-# Save data
-# ==================================================================================================
-
 # Pickle files
 def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     """
@@ -236,9 +116,9 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     :param pickle_data: data that could be dumped by the built-in module `pickle.dump`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str or os.PathLike[str]
+    :type path_to_pickle: str | os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.dump`_
 
     .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
@@ -273,7 +153,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
         - Examples for the function :py:func:`pyhelpers.store.load_pickle`.
     """
 
-    _check_path_to_file(path_to_pickle, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_pickle, verbose=verbose, ret_info=False)
 
     try:
         pickle_out = open(path_to_pickle, mode='wb')
@@ -284,7 +164,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Spreadsheets
@@ -301,18 +181,18 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         (e.g. with a file extension ".xlsx" or ".csv")
     :type spreadsheet_data: pandas.DataFrame
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str or os.PathLike[str] or None
+    :type path_to_spreadsheet: str | os.PathLike[str] | None
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param engine: options include ``'openpyxl'`` for latest Excel file formats,
         ``'xlrd'`` for .xls ``'odf'`` for OpenDocument file formats (.odf, .ods, .odt), and
         ``'pyxlsb'`` for Binary Excel files; defaults to ``None``
-    :type engine: str or None
+    :type engine: str | None
     :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file,
         defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
 
     .. _`xlsxwriter`: https://pypi.org/project/XlsxWriter/
@@ -347,7 +227,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         Saving "dat.xlsx" to "tests\\data\\" ... Done.
     """
 
-    _, spreadsheet_filename = _check_path_to_file(
+    _, spreadsheet_filename = _check_saving_path(
         path_to_file=path_to_spreadsheet, verbose=verbose, ret_info=True)
 
     try:  # to save the data
@@ -372,7 +252,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e.args[0])}")
+        print(f"Failed. {_format_err_msg(e.args[0])}")
 
 
 def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode='w',
@@ -383,18 +263,18 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
     The file extension can be `".xlsx"` or `".xls"`.
 
     :param spreadsheets_data: a sequence of pandas.DataFrame
-    :type spreadsheets_data: list or tuple or iterable
+    :type spreadsheets_data: list | tuple | iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str or os.PathLike[str]
+    :type path_to_spreadsheet: str | os.PathLike[str]
     :param sheet_names: all sheet names of an Excel workbook
-    :type sheet_names: list or tuple or iterable
+    :type sheet_names: list | tuple | iterable
     :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
     :type mode: str
     :param if_sheet_exists: indicate the behaviour when trying to write to an existing sheet;
         see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_
-    :type if_sheet_exists: None or str
+    :type if_sheet_exists: None | str
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
@@ -453,7 +333,7 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
 
     assert path_to_spreadsheet.endswith((".xlsx", ".xls"))
 
-    _check_path_to_file(path_to_spreadsheet, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_spreadsheet, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_spreadsheet) and mode == 'a':
         with pd.ExcelFile(path_or_buffer=path_to_spreadsheet) as f:
@@ -498,7 +378,7 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
             cur_sheet_names = list(writer.sheets.keys())
 
         except Exception as e:
-            print(f"Failed. {format_err_msg(e)}")
+            print(f"Failed. {_format_err_msg(e)}")
 
     writer.close()
 
@@ -511,13 +391,13 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     :param json_data: data that could be dumped by as a JSON file
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str or os.PathLike[str]
+    :type path_to_json: str | os.PathLike[str]
     :param engine: an open-source module used for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
-    :type engine: str or None
+    :type engine: str | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `json.dump()`_ (if ``engine=None``),
         `orjson.dumps()`_ (if ``engine='orjson'``), `ujson.dump()`_ (if ``engine='ujson'``) or
         `rapidjson.dump()`_ (if ``engine='rapidjson'``)
@@ -587,7 +467,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     else:
         mod = sys.modules.get('json')
 
-    _check_path_to_file(path_to_json, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_json, verbose=verbose, ret_info=False)
 
     try:
         if engine == 'orjson':
@@ -602,7 +482,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Joblib
@@ -613,9 +493,9 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     :param joblib_data: data that could be dumped by `joblib.dump`_
     :type joblib_data: any
     :param path_to_joblib: path where a pickle file is saved
-    :type path_to_joblib: str or os.PathLike[str]
+    :type path_to_joblib: str | os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.dump`_
 
     .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
@@ -666,7 +546,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
         - Examples for the function :py:func:`pyhelpers.store.load_joblib`.
     """
 
-    _check_path_to_file(path_to_joblib, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_joblib, verbose=verbose, ret_info=False)
 
     try:
         joblib_ = _check_dependency(name='joblib')
@@ -677,7 +557,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Feather files
@@ -688,11 +568,11 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
     :param feather_data: a dataframe to be saved as a feather-formatted file
     :type feather_data: pandas.DataFrame
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str or os.PathLike[str]
+    :type path_to_feather: str | os.PathLike[str]
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pandas.DataFrame.to_feather`_
 
     .. _`pandas.DataFrame.to_feather`:
@@ -728,7 +608,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
 
     assert isinstance(feather_data, pd.DataFrame)
 
-    _check_path_to_file(path_to_feather, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_feather, verbose=verbose, ret_info=False)
 
     try:
         if list(feather_data.index) != range(len(feather_data)) or index is True:
@@ -740,7 +620,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Images
@@ -754,12 +634,12 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     :param path_to_emf: path where a .emf file is saved
     :type path_to_emf: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param inkscape_exe: absolute path to 'inkscape.exe', defaults to ``None``;
         when ``inkscape_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*"
         or "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*"
-    :type inkscape_exe: str or None
+    :type inkscape_exe: str | None
     :param kwargs: [optional] parameters of `subprocess.run`_
 
     .. _`subprocess.run`:
@@ -822,7 +702,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         #     else:
         #         msg = f"Saving the {abs_svg_path.suffix} file as \"{os.path.relpath(abs_emf_path)}\""
         #     print(msg, end=" ... ")
-        _check_path_to_file(abs_emf_path, verbose=verbose)
+        _check_saving_path(abs_emf_path, verbose=verbose)
 
         try:
             abs_emf_path.parent.mkdir(exist_ok=True)
@@ -859,11 +739,11 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
     :param path_to_fig_file: path where a figure file is saved
-    :type path_to_fig_file: str or os.PathLike[str]
+    :type path_to_fig_file: str | os.PathLike[str]
     :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
-    :type dpi: int or None
+    :type dpi: int | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
     :type conv_svg_to_emf: bool
     :param kwargs: [optional] parameters of `matplotlib.pyplot.savefig`_
@@ -912,7 +792,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         >>> plt.close()
     """
 
-    _check_path_to_file(path_to_fig_file, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_fig_file, verbose=verbose, ret_info=False)
 
     file_ext = pathlib.Path(path_to_fig_file).suffix
 
@@ -925,7 +805,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
@@ -933,7 +813,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
 
 # Web page
 def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encoding='UTF-8',
-                         verbose=False, wkhtmltopdf_exe=None, **kwargs):
+                         wkhtmltopdf_options=None, wkhtmltopdf_exe=None, verbose=False, **kwargs):
     """
     Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     by `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
@@ -948,14 +828,20 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
     :type zoom: float
     :param encoding: encoding format defaults to ``'UTF-8'``
     :type encoding: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :param wkhtmltopdf_options: specify `wkhtmltopdf options`_, defaults to ``None``;
+        check also the project description of `pdfkit`_
+    :type wkhtmltopdf_options: dict | None
     :param wkhtmltopdf_exe: absolute path to 'wkhtmltopdf.exe', defaults to ``None``;
-        when ``wkhtmltopdf_exe=None``, use the default installation path, e.g. (on Windows)
-        "*C:\\\\Program Files\\\\wkhtmltopdf\\\\bin\\\\wkhtmltopdf.exe*"
+        when ``wkhtmltopdf_exe=None``, use the default installation path, such as
+        "*C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe*" (on Windows)
+    :type wkhtmltopdf_exe: str | None
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :param kwargs: [optional] parameters of `pdfkit.from_url`_
 
-    :type wkhtmltopdf_exe: str or None
-    :param kwargs: [optional] parameters of `pdfkit.from_url <https://pypi.org/project/pdfkit/>`_
+    .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
+    .. _`pdfkit`: https://pypi.org/project/pdfkit/
+    .. _`pdfkit.from_url`: https://pypi.org/project/pdfkit/
 
     **Examples**::
 
@@ -1002,10 +888,10 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
             else:
                 verbose_, verbose_end = False, " ... "
 
-            _check_path_to_file(
+            _check_saving_path(
                 path_to_file=path_to_pdf, verbose=verbose, verbose_end=verbose_end, ret_info=False)
 
-            wkhtmltopdf_options = {
+            options = {
                 'enable-local-file-access': None,
                 'page-size': page_size,
                 'zoom': str(float(zoom)),
@@ -1015,13 +901,17 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
                 # 'margin-left': '0',
                 # 'margin-bottom': '0',
             }
+            if isinstance(wkhtmltopdf_options, dict):
+                options.update(wkhtmltopdf_options)
 
             os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
 
             if os.path.isfile(path_to_pdf):
                 os.remove(path_to_pdf)
 
-            kwargs.update({'configuration': pdfkit_configuration, 'options': wkhtmltopdf_options})
+            kwargs.update({'configuration': pdfkit_configuration, 'options': options})
+
+            from pyhelpers.ops import is_url
 
             if os.path.isfile(web_page):
                 status = pdfkit_.from_file(web_page, path_to_pdf, verbose=verbose_, **kwargs)
@@ -1037,7 +927,7 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
                     print("Done.")
 
         except Exception as e:
-            print(f"Failed. {format_err_msg(e)}")
+            print(f"Failed. {_format_err_msg(e)}")
 
     else:
         print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
@@ -1054,7 +944,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         a URL of a web page or an `HTML file`_; or an image file of a `Matplotlib`-supported format
     :type data: any
     :param path_to_file: pathname of a file that stores the ``data``
-    :type path_to_file: str or os.PathLike[str]
+    :type path_to_file: str | os.PathLike[str]
     :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
@@ -1157,6 +1047,8 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         save_feather(data, path_to_feather=path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".pdf"):
+        from pyhelpers.ops import is_url
+
         if is_url(data) or os.path.isfile(data):
             save_web_page_as_pdf(data, path_to_pdf=path_to_file_, **kwargs)
 
@@ -1171,7 +1063,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
                 "The specified file format (extension) is not recognisable by "
                 "`pyhelpers.store.save_data`.")
 
-        if confirmed("To save the data as a pickle file\n?", confirmation_required):
+        if _confirmed("To save the data as a pickle file\n?", confirmation_required):
             save_pickle(data, path_to_pickle=path_to_file, **kwargs)
 
 
@@ -1179,15 +1071,101 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 # Load data
 # ==================================================================================================
 
+def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
+    """
+    Check about loading a file from a specified pathname.
+
+    :param path_to_file: path where a file is saved
+    :type path_to_file: str | pathlib.Path
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
+    :type verbose_end: str
+
+    **Tests**::
+
+        >>> from pyhelpers.store import _check_loading_path
+        >>> from pyhelpers.dirs import cd
+
+        >>> file_path = cd("test_func.py")
+        >>> _check_loading_path(file_path, verbose=True)
+        >>> print("Passed.")
+        Loading "test_func.py" ... Passed.
+    """
+
+    if verbose:
+        rel_pathname = _check_rel_pathname(path_to_file)
+        print("Loading \"{}\"".format(rel_pathname), end=verbose_end)
+
+
+def _set_index(data, index=None):
+    """
+    Set index of a dataframe.
+
+    :param data: any dataframe
+    :type data: pandas.DataFrame
+    :param index: column index or a list of column indices, defaults to ``None``;
+        when ``index=None``, set the first column to be the index
+        if the column name is an empty string
+    :type index: int | list | None
+    :return: an updated dataframe
+    :rtype: pandas.DataFrame
+
+    **Tests**::
+
+        >>> from pyhelpers.store import _set_index
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> example_df = example_dataframe()
+        >>> example_df
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> example_df.equals(_set_index(example_df))
+        True
+
+        >>> example_df_ = _set_index(example_df, index=0)
+        >>> example_df_
+                    Latitude
+        Longitude
+        -0.127647  51.507322
+        -1.902691  52.479699
+        -2.245115  53.479489
+        -1.543794  53.797418
+
+        >>> example_df.iloc[:, 0].to_list() == example_df_.index.to_list()
+        True
+    """
+
+    data_ = data.copy()
+
+    if index is None:
+        idx_col = data.columns[0]
+        if idx_col == '':
+            data_ = data.set_index(idx_col)
+            data_.index.name = None
+
+    else:
+        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
+        idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
+        data_ = data.set_index(keys=idx_keys)
+
+    return data_
+
+
 # Pickle files
 def load_pickle(path_to_pickle, verbose=False, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str or os.PathLike[str]
+    :type path_to_pickle: str | os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.load`_
     :return: data retrieved from the specified path ``path_to_pickle``
     :rtype: any
@@ -1228,7 +1206,7 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         return pickle_data
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Spreadsheets
@@ -1239,19 +1217,19 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
 
     :param path_to_csv: path where a `CSV`_ file is saved
-    :type path_to_csv: str or os.PathLike[str]
+    :type path_to_csv: str | os.PathLike[str]
     :param delimiter: delimiter used between values in the data file, defaults to ``','``
     :type delimiter: str
     :param header: index number of the rows used as column names, defaults to ``0``
-    :type header: int or typing.List[int] or None
+    :type header: int | typing.List[int] | None
     :param index: index number of the column(s) to use as the row labels of the dataframe,
         defaults to ``None``
-    :type index: str or int or list or None
+    :type index: str | int | list | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `csv.reader()`_ or `pandas.read_csv()`_
     :return: data retrieved from the specified path ``path_to_csv``
-    :rtype: pandas.DataFrame or None
+    :rtype: pandas.DataFrame | None
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`csv.reader()`: https://docs.python.org/3/library/pickle.html#pickle.load
@@ -1325,7 +1303,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         return csv_data
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
@@ -1333,14 +1311,14 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     Load multiple sheets of an `Microsoft Excel`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str or os.PathLike[str]
+    :type path_to_spreadsheet: str | os.PathLike[str]
     :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pandas.ExcelFile.parse`_
     :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
-    :rtype: list or dict
+    :rtype: list | dict
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`pandas.ExcelFile.parse`:
@@ -1408,7 +1386,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
 
         except Exception as e:
             sheet_dat = None
-            print(f"Failed. {format_err_msg(e)}")
+            print(f"Failed. {_format_err_msg(e)}")
 
         workbook_dat.append(sheet_dat)
 
@@ -1428,13 +1406,13 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
     Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str or os.PathLike[str]
+    :type path_to_json: str | os.PathLike[str]
     :param engine: an open-source Python package for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
-    :type engine: str or None
+    :type engine: str | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `json.load()`_ (if ``engine=None``),
         `orjson.loads()`_ (if ``engine='orjson'``), `ujson.load()`_ (if ``engine='ujson'``) or
         `rapidjson.load()`_ (if ``engine='rapidjson'``)
@@ -1494,7 +1472,7 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
         return json_data
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Joblib
@@ -1503,9 +1481,9 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
     Load data from a `joblib`_ file.
 
     :param path_to_joblib: path where a joblib file is saved
-    :type path_to_joblib: str or os.PathLike[str]
+    :type path_to_joblib: str | os.PathLike[str]
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.load`_
     :return: data retrieved from the specified path ``path_to_joblib``
     :rtype: any
@@ -1554,7 +1532,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         return joblib_data
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 # Feather files
@@ -1563,12 +1541,12 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
     Load a dataframe from a `Feather`_ file.
 
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str or os.PathLike[str]
+    :type path_to_feather: str | os.PathLike[str]
     :param index: index number of the column(s) to use as the row labels of the dataframe,
         defaults to ``None``
-    :type index: str or int or list or None
+    :type index: str | int | list | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `pandas.read_feather`_
 
         * columns: a sequence of column names, if ``None``, all columns
@@ -1626,7 +1604,7 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
         return feather_data
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 def load_data(path_to_file, err_warning=True, **kwargs):
@@ -1636,7 +1614,7 @@ def load_data(path_to_file, err_warning=True, **kwargs):
     :param path_to_file: pathname of a file;
         supported file formats include
         `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_
-    :type path_to_file: str or os.PathLike[str]
+    :type path_to_file: str | os.PathLike[str]
     :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
@@ -1764,7 +1742,6 @@ def load_data(path_to_file, err_warning=True, **kwargs):
 # Uncompress data
 # ==================================================================================================
 
-
 def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     """
     Extract data from a `zipped (compressed)
@@ -1773,9 +1750,9 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     :param path_to_zip_file: path where a Zip file is saved
     :type path_to_zip_file: str
     :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
-    :type out_dir: str or None
+    :type out_dir: str | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `zipfile.ZipFile.extractall`_
 
     .. _`zipfile.ZipFile.extractall`:
@@ -1832,7 +1809,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        print(f"Failed. {format_err_msg(e)}")
+        print(f"Failed. {_format_err_msg(e)}")
 
 
 def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
@@ -1843,15 +1820,15 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     :param path_to_zip_file: path where a compressed file is saved
     :type path_to_zip_file: str
     :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
-    :type out_dir: str or None
+    :type out_dir: str | None
     :param mode: defaults to ``'aoa'``
     :type mode: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``;
         when ``seven_zip_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*"
-    :type seven_zip_exe: str or None
+    :type seven_zip_exe: str | None
     :param kwargs: [optional] parameters of `subprocess.run`_
 
     .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
@@ -1949,7 +1926,6 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 # Convert data
 # ==================================================================================================
 
-
 def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbose=False, **kwargs):
     """
     Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
@@ -1965,13 +1941,13 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
     :type path_to_rst: str
     :param engine: engine/module used for performing the conversion, defaults to ``None``;
         an alternative option is ``'pypandoc'``
-    :type engine: None or str
+    :type engine: None | str
     :param pandoc_exe: absolute path to the executable "pandoc.exe", defaults to ``None``;
         when ``pandoc_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\Pandoc\\\\pandoc.exe*"
-    :type pandoc_exe: str or None
+    :type pandoc_exe: str | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of `subprocess.run`_ (when ``engine=None``) or
         `pypandoc.convert_file`_ (when ``engine='pypandoc'``)
 
@@ -2057,11 +2033,11 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **
     :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
     :type xlsx_pathname: str
     :param csv_pathname_: pathname of a CSV format file;
-    :type csv_pathname_: str or None
+    :type csv_pathname_: str | None
     :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
     :type sheet_name: str
     :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
-    :type vbscript: str or None
+    :type vbscript: str | None
     :param kwargs: [optional] parameters of the function `subprocess.run`_
     :return: code for the result of running the VBScript
     :rtype: int
@@ -2094,25 +2070,25 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         when ``csv_pathname=""``,
         the target CSV file is generated at the same directory where the source Excel spreadsheet is;
         otherwise, it could also be a specific pathname
-    :type csv_pathname: str or None
+    :type csv_pathname: str | None
     :param engine: engine used for converting .xlsx/.xls to .csv;
         when ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
         when ``engine='xlsx2csv'``, the function would rely on `xlsx2csv`_
-    :type engine: str or None
+    :type engine: str | None
     :param if_exists: how to proceed if the target ``csv_pathname`` exists, defaults to ``'replace'``
     :type if_exists: str
     :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
-    :type vbscript: str or None
+    :type vbscript: str | None
     :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
     :type sheet_name: str
     :param ret_null: whether to return something depending on the specified ``engine``,
         defaults to ``False``
     :param verbose: whether to print relevant information in console, defaults to ``False``
-    :type verbose: bool or int
+    :type verbose: bool | int
     :param kwargs: [optional] parameters of the function `subprocess.run`_
     :return: the pathname of the generated CSV file or None, when ``engine=None``;
         `io.StringIO`_ buffer, when ``engine='xlsx2csv'``
-    :rtype: str or _io.StringIO or None
+    :rtype: str | _io.StringIO | None
 
     .. _`tempfile.NamedTemporaryFile`:
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
@@ -2212,5 +2188,5 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
             return buffer
 
         except Exception as e:
-            print(f"Failed. {format_err_msg(e)}")
+            print(f"Failed. {_format_err_msg(e)}")
             buffer.close()

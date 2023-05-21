@@ -9,14 +9,12 @@ import pathlib
 import re
 import shutil
 
-from ._cache import _check_rel_pathname
-from .ops import confirmed
+from ._cache import _check_rel_pathname, _confirmed
 
 
 # ==================================================================================================
 # Directory navigation
 # ==================================================================================================
-
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     """
@@ -250,7 +248,6 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
 # Directory validation
 # ==================================================================================================
 
-
 def path2linux(path):
     """
     Convert path to an uniformat (Linux) file path, which is executable in Windows, Linux and macOS.
@@ -419,7 +416,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
 def validate_filename(file_pathname, suffix_num=1):
     """
-    If the filename exist, then create new filename with a suffix e.g. (1), (2) and so on.
+    If the filename exist, then create new filename with a suffix such as "(1)", "(2)", and so on.
 
     :param file_pathname: pathname of a file
     :type file_pathname: str
@@ -486,7 +483,6 @@ def validate_filename(file_pathname, suffix_num=1):
 # ==================================================================================================
 # Directory/file control
 # ==================================================================================================
-
 
 def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     """
@@ -659,7 +655,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
             cfm_msg = f"To delete the directory \"{dir_pathname}\\\"\n?"
             func = os.rmdir
 
-        if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
+        if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
             if verbose:
                 print("Deleting \"{}\\\"".format(path_to_dir), end=" ... ")
 
@@ -728,6 +724,6 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         temp = "\n\t".join(pn)
         cfm_msg = f"To delete the following directories:\n\t{temp}\n?"
 
-    if confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
+    if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
         for dir_pathname in dir_pathnames:
             _delete_dir(dir_pathname, confirmation_required=False, verbose=verbose, **kwargs)

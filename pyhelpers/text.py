@@ -13,7 +13,6 @@ from ._cache import _check_dependency, _ENGLISH_NUMERALS
 # Textual data preprocessing
 # ==================================================================================================
 
-
 def get_acronym(text, only_capitals=False, capitals_in_words=False):
     """
     Get an acronym (in capital letters) of an input text.
@@ -226,7 +225,6 @@ def numeral_english_to_arabic(x):
 # ==================================================================================================
 # Textual data computation
 # ==================================================================================================
-
 
 def count_words(raw_txt):
     """
@@ -505,7 +503,6 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 # ==================================================================================================
 # Textual data comparison
 # ==================================================================================================
-
 
 def find_matched_str(x, lookup_list):
     """
