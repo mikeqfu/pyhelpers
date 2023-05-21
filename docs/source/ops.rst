@@ -26,7 +26,6 @@ General use
     hash_password
     verify_password
     func_running_time
-    format_err_msg
 
 Basic data manipulation
 -----------------------
