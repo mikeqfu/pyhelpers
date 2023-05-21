@@ -14,19 +14,19 @@ from pyhelpers.dirs import cd
 
 
 def test__check_path_to_file(capfd):
-    from pyhelpers.store import _check_path_to_file
+    from pyhelpers.store import _check_saving_path
 
     file_path = os.getcwd()
     with pytest.raises(AssertionError, match="The input for `path_to_file` may not be a file path."):
-        _check_path_to_file(file_path, verbose=True)
+        _check_saving_path(file_path, verbose=True)
 
     file_path = "pyhelpers.pdf"
-    _check_path_to_file(file_path, verbose=True)
+    _check_saving_path(file_path, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Saving "{file_path}" ... ' in out
 
     file_path = "tests\\documents\\pyhelpers.pdf"
-    _check_path_to_file(file_path, verbose=True)
+    _check_saving_path(file_path, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Updating "{os.path.basename(file_path)}"' in out and os.path.dirname(file_path) in out
 
