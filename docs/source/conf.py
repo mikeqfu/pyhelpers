@@ -21,12 +21,7 @@ version = __version__  # The short X.Y.Z version
 release = version  # The full version, including alpha/beta/rc tags
 
 # == General configuration =========================================================================
-import sphinx_rtd_theme
-
-_ = sphinx_rtd_theme.get_html_theme_path()
-
-# Sphinx extension module names, which can be named 'sphinx.ext.*' or custom ones:
-extensions = [
+extensions = [  # Sphinx extension module names, which can be named 'sphinx.ext.*' or custom ones:
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
@@ -37,7 +32,72 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx_rtd_theme',
     'sphinx_copybutton',
+    'sphinx.ext.linkcode',
+    'sphinx.ext.doctest',
 ]
+
+
+def linkcode_resolve(domain, info):
+    """
+    Determine the URL corresponding to Python object.
+
+    (Adapted from https://github.com/pandas-dev/pandas/blob/main/doc/source/conf.py)
+    """
+
+    import inspect
+    import warnings
+
+    if domain != 'py' or not info['module']:
+        return None
+
+    module_name, full_name = info['module'], info['fullname']
+
+    sub_module_name = sys.modules.get(module_name)
+    if sub_module_name is None:
+        return None
+
+    obj = sub_module_name
+    for part in full_name.split('.'):
+        try:
+            with warnings.catch_warnings():
+                # Accessing deprecated objects will generate noisy warnings
+                warnings.simplefilter('ignore', FutureWarning)
+                obj = getattr(obj, part)
+        except AttributeError:
+            return None
+
+    try:
+        fn = inspect.getsourcefile(inspect.unwrap(obj))
+    except TypeError:
+        try:  # property
+            fn = inspect.getsourcefile(inspect.unwrap(obj.fget))
+        except (AttributeError, TypeError):
+            fn = None
+    if not fn:
+        return None
+
+    source = [0]
+    try:
+        source, line_no = inspect.getsourcelines(obj)
+    except TypeError:
+        try:  # property
+            source, line_no = inspect.getsourcelines(obj.fget)
+        except (AttributeError, TypeError):
+            line_no = None
+    except OSError:
+        line_no = None
+
+    if line_no:
+        line_spec = f"#L{line_no}-L{line_no + len(source) - 1}"
+    else:
+        line_spec = ""
+
+    fn = os.path.relpath(fn, start=os.path.abspath(".."))
+
+    url = f"https://github.com/mikeqfu/pyhelpers/blob/master/{fn}{line_spec}"
+
+    return url
+
 
 # Enable to reference numbered figures:
 numfig = True
@@ -123,7 +183,7 @@ latex_documents = [
      ),
 ]
 
-affil_centre, affil_school, affil_univ = __affiliation__.split(', ')
+affil_dept, affil_sch, affil_univ = __affiliation__.split(', ')
 
 # Custom title page:
 latex_maketitle = r'''
@@ -179,16 +239,15 @@ latex_maketitle = r'''
 
     \clearpage
     \pagenumbering{arabic}
-    ''' % (
-    project,
-    __description__.rstrip('.'),
-    release,
-    __author__,
-    affil_centre,
-    affil_school,
-    affil_univ,
-    __first_release_date__,
-    copyright)
+    ''' % (project,
+           __description__.rstrip('.'),
+           release,
+           __author__,
+           affil_dept,
+           affil_sch,
+           affil_univ,
+           __first_release_date__,
+           copyright)
 
 latex_preamble = r'''
     \setlength{\headheight}{14pt}

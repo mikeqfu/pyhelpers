@@ -1,6 +1,6 @@
-#########
+=========
 PyHelpers
-#########
+=========
 
 |PyPI| |Python| |Documentation| |License| |Codacy grade| |DOI|
 
@@ -26,7 +26,7 @@ PyHelpers
 PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL and Microsoft SQL Server).
 
 Installation
-############
+============
 
 To install the latest release of pyhelpers from `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://pip.pypa.io/en/stable/cli/pip/>`_:
 
@@ -37,17 +37,12 @@ To install the latest release of pyhelpers from `PyPI <https://pypi.org/project/
 For more information, please refer to `Installation <https://pyhelpers.readthedocs.io/en/latest/installation.html>`_.
 
 Documentation
-#############
+=============
 
 The full PyHelpers documentation (including detailed examples and a quick-start tutorial) is hosted on `ReadTheDocs <https://readthedocs.org/projects/pyhelpers/>`_: [`HTML <https://pyhelpers.readthedocs.io/en/latest/>`_] [`PDF <https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/>`_].
 
-License
-#######
-
-PyHelpers is licensed under `GNU General Public License v3 <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_ or later (GPLv3+).
-
 Cite as
-#######
+=======
 
 Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. `doi:10.5281/zenodo.4017438 <https://doi.org/10.5281/zenodo.4017438>`_
 
@@ -64,3 +59,8 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
     }
 
 **Note:** Please also refer to the export options from `Zenodo <https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True>`_ to reference the specific version of PyHelpers as appropriate.
+
+License
+=======
+
+PyHelpers is licensed under `GNU General Public License v3 <https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE>`_ or later (GPLv3+).

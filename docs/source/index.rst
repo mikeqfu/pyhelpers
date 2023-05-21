@@ -1,6 +1,6 @@
-#########
+=========
 PyHelpers
-#########
+=========
 
 .. only:: html
 
@@ -44,13 +44,13 @@ PyHelpers is an open-source Python package designed as a lite toolkit for facili
 .. toctree::
     :maxdepth: 1
     :includehidden:
-    :caption: Quick start
+    :caption: Tutorial
 
     quick-start
 
 
 Indices
-#######
+=======
 
 * :ref:`genindex`
 * :ref:`modindex`
