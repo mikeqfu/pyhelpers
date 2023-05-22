@@ -1,9 +1,9 @@
 import json
-import pkgutil
 
 import setuptools
 
-metadata = json.loads(pkgutil.get_data(__name__, "data/metadata.json").decode())
+with open(file="pyhelpers/data/metadata.json", mode='r') as metadata_file:
+    metadata = json.load(metadata_file)
 
 __pkgname__, __version__ = metadata['Package'], metadata['Version']
 
