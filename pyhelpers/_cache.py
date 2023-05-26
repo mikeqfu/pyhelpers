@@ -178,7 +178,7 @@ def _find_file(app_name, possibilities=None):
     :param possibilities: possible pathnames
     :type possibilities: list | set | None
     :return: pathname of the specified executable file and whether it exists
-    :rtype: typing.Tuple[str, bool]
+    :rtype: tuple[bool, str]
 
     **Examples**::
 
@@ -186,36 +186,39 @@ def _find_file(app_name, possibilities=None):
         >>> import os
 
         >>> python_exe = "python.exe"
-        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
+        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
 
-        >>> path_to_python_exe, python_exe_exists = _find_file(python_exe, possible_paths)
-        >>> os.path.relpath(path_to_python_exe)
-        'venv\\Scripts\\python.exe'
+        >>> python_exe_exists, path_to_python_exe = _find_file(python_exe, possible_paths)
         >>> python_exe_exists
         True
+        >>> os.path.relpath(path_to_python_exe)
+        'venv\\Scripts\\python.exe'
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> path_to_test_exe, test_exe_exists = _find_file(text_exe, possible_paths)
-        >>> path_to_test_exe
-        'pyhelpers.exe'
+        >>> test_exe_exists, path_to_test_exe = _find_file(text_exe, possible_paths)
         >>> test_exe_exists
         False
+        >>> path_to_test_exe
+        'pyhelpers.exe'
     """
 
     file_pathname = copy.copy(app_name)
     file_exists = False
 
     if not os.path.isfile(file_pathname):
-        alt_pathnames = {shutil.which(app_name)}
+        alt_pathnames = {shutil.which(file_pathname)}
         if possibilities is not None:
             alt_pathnames.update(set(possibilities))
 
-        for x in alt_pathnames:
-            if x:
-                if os.path.isfile(x):
-                    file_pathname = x
-                    file_exists = True
-                    break
+        for x in {x_ for x_ in alt_pathnames if x_}:
+            if os.path.isdir(x):
+                file_pathname_ = os.path.join(x, file_pathname)
+            else:
+                file_pathname_ = x
+            if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
+                file_pathname = file_pathname_
+                file_exists = True
+                break
 
     return file_exists, file_pathname
 

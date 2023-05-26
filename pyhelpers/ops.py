@@ -345,7 +345,7 @@ def find_executable(app_name, possibilities=None):
     :param possibilities: possible pathnames
     :type possibilities: list | set | None
     :return: pathname of the specified executable file and whether it exists
-    :rtype: typing.Tuple[str, bool]
+    :rtype: tuple[bool, str]
 
     **Examples**::
 
@@ -353,7 +353,7 @@ def find_executable(app_name, possibilities=None):
         >>> import os
 
         >>> python_exe = "python.exe"
-        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
+        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
 
         >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
         >>> python_exe_exists
