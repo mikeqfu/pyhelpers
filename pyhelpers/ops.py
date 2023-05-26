@@ -27,7 +27,7 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from ._cache import _check_dependency, _confirmed, _find_executable, _format_err_msg, \
+from ._cache import _check_dependency, _confirmed, _find_file, _format_err_msg, \
     _USER_AGENT_STRINGS
 
 
@@ -355,21 +355,21 @@ def find_executable(app_name, possibilities=None):
         >>> python_exe = "python.exe"
         >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39"]
 
-        >>> path_to_python_exe, python_exe_exists = find_executable(python_exe, possible_paths)
-        >>> os.path.relpath(path_to_python_exe)
-        'venv\\Scripts\\python.exe'
+        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
         >>> python_exe_exists
         True
+        >>> os.path.relpath(path_to_python_exe)
+        'venv\\Scripts\\python.exe'
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> path_to_test_exe, test_exe_exists = find_executable(text_exe, possible_paths)
-        >>> path_to_test_exe
-        'pyhelpers.exe'
+        >>> test_exe_exists, path_to_test_exe = find_executable(text_exe, possible_paths)
         >>> test_exe_exists
         False
+        >>> path_to_test_exe
+        'pyhelpers.exe'
     """
 
-    return _find_executable(app_name=app_name, possibilities=possibilities)
+    return _find_file(app_name=app_name, possibilities=possibilities)
 
 
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
