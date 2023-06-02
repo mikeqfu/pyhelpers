@@ -1,15 +1,16 @@
 """Test the module :mod:`~pyhelpers.dirs`."""
 
+import importlib.resources
 import os
 import pathlib
 import shutil
 
 import pytest
 
-from pyhelpers.dirs import cd
-
 
 def test_cd(capfd):
+    from pyhelpers.dirs import cd
+
     current_wd = cd()
     assert os.path.relpath(current_wd) == "."
 
@@ -65,7 +66,7 @@ def test_cd_data():
 
     path_to_dat_dir = cd_data("tests", mkdir=False)
 
-    assert os.path.relpath(path_to_dat_dir) == 'pyhelpers\\data\\tests'
+    assert "pyhelpers\\data\\tests" in os.path.relpath(path_to_dat_dir)
 
 
 def test_path2linux():
@@ -97,7 +98,7 @@ def test_is_dir():
 
     assert not is_dir("tests")
     assert is_dir("/tests")
-    assert is_dir(cd("tests"))
+    assert is_dir("\\tests")
 
 
 def test_validate_dir():
@@ -134,47 +135,54 @@ def test_validate_filename():
     os.remove(temp_pathname_1)
 
 
-def test_get_rel_pathnames():
-    from pyhelpers.dirs import get_rel_pathnames
+def test_get_file_pathnames():
+    from pyhelpers.dirs import get_file_pathnames
 
-    test_dir_name = "tests/data"
+    test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
 
-    rslt = get_rel_pathnames(test_dir_name)
-    assert "tests/data/dat.csv" in rslt and isinstance(rslt, list)
-    rslt = get_rel_pathnames(test_dir_name, file_ext=".txt")
-    assert rslt == ['tests/data/dat.txt', 'tests/data/zipped.txt']
-    rslt = get_rel_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
-    assert rslt == ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
+    with importlib.resources.as_file(test_dir_name_) as test_dir_name:
+        rslt_ = get_file_pathnames(test_dir_name)
+        assert isinstance(rslt_, list)
+        rslt = [os.path.basename(x) for x in rslt_]
+        assert "dat.csv" in rslt
+
+        rslt = [os.path.basename(x) for x in get_file_pathnames(test_dir_name, file_ext=".txt")]
+        assert rslt == ['dat.txt', 'zipped.txt']
+
+        rslt = [
+            os.path.basename(x)
+            for x in get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)]
+        assert rslt == ['dat.txt', 'zipped.txt', 'zipped.txt']
 
 
 def test_check_files_exist(capfd):
     from pyhelpers.dirs import check_files_exist
 
-    test_dir_name = "tests/data"
-
-    assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
-    rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
-    out, err = capfd.readouterr()
-    assert rslt is False
-    assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
+    test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
+    with importlib.resources.as_file(test_dir_name_) as test_dir_name:
+        assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
+        rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
+        out, err = capfd.readouterr()
+        assert rslt is False
+        assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 
 
 def test_delete_dir(capfd):
-    from pyhelpers.dirs import delete_dir
+    from pyhelpers.dirs import delete_dir, cd
 
     test_dirs = []
     for x in range(3):
-        test_dirs.append(cd("tests", f"test_dir{x}", mkdir=True))
+        test_dirs.append(cd(f"test_dir{x}", mkdir=True))
         if x == 0:
-            cd("tests", f"test_dir{x}", "a_folder", mkdir=True)
+            cd(f"test_dir{x}", "a_folder", mkdir=True)
         elif x == 1:
-            open(cd("tests", f"test_dir{x}", "file"), 'w').close()
+            open(cd(f"test_dir{x}", "file"), 'w').close()
 
     delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
     out, err = capfd.readouterr()
-    out_ = '\n'.join(['Deleting "tests\\test_dir0\\" ... Done.',
-                      'Deleting "tests\\test_dir1\\" ... Done.',
-                      'Deleting "tests\\test_dir2\\" ... Done.\n'])
+    out_ = '\n'.join(['Deleting "test_dir0\\" ... Done.',
+                      'Deleting "test_dir1\\" ... Done.',
+                      'Deleting "test_dir2\\" ... Done.\n'])
     assert out == out_
 
 

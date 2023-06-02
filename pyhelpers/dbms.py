@@ -1410,8 +1410,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.create_table`.
         """
 
         schema_name_ = self._schema_name(schema_name=schema_name)
@@ -1448,8 +1447,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.create_table`.
         """
 
         schema_name_ = self._schema_name(schema_name=schema_name)
@@ -1627,92 +1625,6 @@ class PostgreSQL:
             except Exception as e:
                 _print_failure_msg(e)
 
-    def null_text_to_empty_string(self, table_name, column_names=None, schema_name=None):
-        """
-        Convert null values (in text columns) to empty strings.
-
-        :param table_name: name of a table
-        :type table_name: str
-        :param column_names: (list of) column name(s);
-            when ``column_names=None`` (default), all available columns are included
-        :type column_names: str or list or None
-        :param schema_name: name of a schema
-        :type schema_name: str
-
-        **Examples**::
-
-            >>> from pyhelpers.dbms import PostgreSQL
-            >>> from pyhelpers._cache import example_dataframe
-
-            >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
-            Password (postgres@localhost:5432): ***
-            Creating a database: "testdb" ... Done.
-            Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
-            >>> dat = example_dataframe()
-            >>> dat.Longitude = dat.Longitude.astype(str)
-            >>> dat.loc['London', 'Longitude'] = None
-            >>> dat
-                         Longitude   Latitude
-            City
-            London            None  51.507322
-            Birmingham  -1.9026911  52.479699
-            Manchester  -2.2451148  53.479489
-            Leeds       -1.5437941  53.797418
-
-            >>> tbl_name = 'test_table'
-
-            >>> testdb.import_data(data=dat, table_name=tbl_name, index=True, verbose=True)
-            To import data into "public"."test_table" at postgres:***@localhost:5432/postgres
-            ? [No]|Yes: yes
-
-            >>> testdb.table_exists(table_name=tbl_name)
-            True
-
-            >>> testdb.get_column_dtype(table_name=tbl_name)
-            {'City': 'text', 'Longitude': 'text', 'Latitude': 'double precision'}
-
-        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-1.*
-            :name: dbms-postgresql-null_text_to_empty_string-demo-1
-            :align: center
-            :width: 55%
-
-            The table "*test_table*" in the database "*testdb*".
-
-        .. code-block:: python
-
-            >>> # Replace the 'null' value with an empty string
-            >>> testdb.null_text_to_empty_string(table_name=tbl_name)
-
-        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-2.*
-            :name: dbms-postgresql-null_text_to_empty_string-demo-2
-            :align: center
-            :width: 55%
-
-            The table "*test_table*" in the database "*testdb*"
-            (after converting 'null' to empty string).
-
-        .. code-block:: python
-
-            >>> # Delete the database "testdb"
-            >>> testdb.drop_database(verbose=True)
-            To drop the database "testdb" from postgres:***@localhost:5432
-            ? [No]|Yes: yes
-            Dropping "testdb" ... Done.
-        """
-
-        column_dtypes = self.get_column_dtype(
-            table_name=table_name, column_names=column_names, schema_name=schema_name)
-        text_columns = [k for k, v in column_dtypes.items() if v == 'text']
-
-        if len(text_columns) > 0:
-            cols_query = ', '.join(f'"{x}"=COALESCE("{x}", \'\')' for x in text_columns)
-            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
-
-            with self.engine.connect() as connection:
-                query = sqlalchemy.text(f'UPDATE {table_name_} SET {cols_query};')
-                connection.execute(query)
-
     def add_primary_keys(self, primary_keys, table_name, schema_name=None):
         """
         Add a primary key or multiple primary keys to a table.
@@ -1726,8 +1638,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.get_primary_keys()<pyhelpers.dbms.PostgreSQL.get_primary_keys>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.get_primary_keys`.
         """
 
         if primary_keys is not None:
@@ -1838,6 +1749,98 @@ class PostgreSQL:
 
         return primary_keys
 
+    def null_text_to_empty_string(self, table_name, column_names=None, schema_name=None):
+        """
+        Convert null values (in text columns) to empty strings.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param column_names: (list of) column name(s);
+            when ``column_names=None`` (default), all available columns are included
+        :type column_names: str or list or None
+        :param schema_name: name of a schema
+        :type schema_name: str
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import PostgreSQL
+            >>> from pyhelpers._cache import example_dataframe
+
+            >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
+            Password (postgres@localhost:5432): ***
+            Creating a database: "testdb" ... Done.
+            Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+            >>> dat = example_dataframe()
+            >>> dat['Longitude'] = dat['Longitude'].astype(str)
+            >>> dat.loc['London', 'Longitude'] = None
+            >>> dat
+                         Longitude   Latitude
+            City
+            London            None  51.507322
+            Birmingham  -1.9026911  52.479699
+            Manchester  -2.2451148  53.479489
+            Leeds       -1.5437941  53.797418
+
+            >>> tbl_name = 'test_table'
+
+            >>> testdb.import_data(data=dat, table_name=tbl_name, index=True, verbose=True)
+            To import data into "public"."test_table" at postgres:***@localhost:5432/postgres
+            ? [No]|Yes: yes
+
+            >>> testdb.table_exists(table_name=tbl_name)
+            True
+
+            >>> testdb.get_column_dtype(table_name=tbl_name)
+            {'City': 'text', 'Longitude': 'text', 'Latitude': 'double precision'}
+            >>> dat_ = testdb.read_table(tbl_name)
+            >>> dat_.loc[0, 'Longitude'] is None
+            True
+
+        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-1.*
+            :name: dbms-postgresql-null_text_to_empty_string-demo-1
+            :align: center
+            :width: 55%
+
+            The table "*test_table*" in the database "*testdb*".
+
+        .. code-block:: python
+
+            >>> # Replace the 'null' value with an empty string
+            >>> testdb.null_text_to_empty_string(table_name=tbl_name)
+            >>> dat_ = testdb.read_table(tbl_name)
+            >>> dat_.loc[0, 'Longitude']
+            ''
+
+        .. figure:: ../_images/dbms-postgresql-null_text_to_empty_string-demo-2.*
+            :name: dbms-postgresql-null_text_to_empty_string-demo-2
+            :align: center
+            :width: 55%
+
+            The table "*test_table*" in the database "*testdb*"
+            (after converting 'null' to empty string).
+
+        .. code-block:: python
+
+            >>> # Delete the database "testdb"
+            >>> testdb.drop_database(verbose=True)
+            To drop the database "testdb" from postgres:***@localhost:5432
+            ? [No]|Yes: yes
+            Dropping "testdb" ... Done.
+        """
+
+        column_dtypes = self.get_column_dtype(
+            table_name=table_name, column_names=column_names, schema_name=schema_name)
+        text_columns = [k for k, v in column_dtypes.items() if v == 'text']
+
+        if len(text_columns) > 0:
+            cols_query = ', '.join(f'"{x}"=COALESCE("{x}", \'\')' for x in text_columns)
+            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+            with self.engine.connect() as connection:
+                query = sqlalchemy.text(f'UPDATE {table_name_} SET {cols_query};')
+                connection.execute(query)
+
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
         """
         Delete/drop a table.
@@ -1855,8 +1858,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.create_table()<pyhelpers.dbms.PostgreSQL.create_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.create_table`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -1971,8 +1973,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`.
         """
 
         _import_data(
@@ -2225,8 +2226,7 @@ class PostgreSQL:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -3703,7 +3703,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :meth:`MSSQL.read_table()<pyhelpers.dbms.MSSQL.read_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.read_table`.
         """
 
         if index is True:
@@ -3761,7 +3761,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :meth:`MSSQL.read_table()<pyhelpers.dbms.MSSQL.read_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.read_table`.
         """
 
         col_names = [column_names] if isinstance(column_names, str) else copy.copy(column_names)
@@ -3890,7 +3890,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :meth:`MSSQL.import_data()<pyhelpers.dbms.MSSQL.import_data>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.import_data`.
         """
 
         if column_names is None:
@@ -3965,7 +3965,7 @@ class MSSQL:
 
         .. seealso::
 
-            - Examples for the method :meth:`MSSQL.create_table()<pyhelpers.dbms.MSSQL.create_table>`.
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)

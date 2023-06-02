@@ -1,6 +1,7 @@
 """Test the module :mod:`~pyhelpers.ops`."""
 
 import datetime
+import importlib.resources
 import os
 import shutil
 import tempfile
@@ -16,7 +17,6 @@ import requests
 from scipy.sparse import csr_matrix, save_npz
 
 from pyhelpers._cache import example_dataframe
-from pyhelpers.dirs import cd
 from pyhelpers.ops import GitHubFileDownloader
 
 
@@ -100,6 +100,22 @@ def test_get_relative_path():
     # On Windows OS
     rel_pathname = get_relative_path(pathname="C:/Windows")
     assert rel_pathname == "C:/Windows"
+
+
+def test_find_executable():
+    from pyhelpers.ops import find_executable
+
+    python_exe = "python.exe"
+    possible_paths = ["C:/Program Files/Python39", "C:/Python39/python.exe"]
+
+    python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
+    assert python_exe_exists
+    assert os.path.isfile(path_to_python_exe)
+
+    test_exe = "pyhelpers.exe"
+    test_exe_exists, path_to_test_exe = find_executable(test_exe, possible_paths)
+    assert not test_exe_exists
+    assert path_to_test_exe == test_exe
 
 
 def test_hash_password():
@@ -317,13 +333,14 @@ def test_parse_csr_matrix(capfd):
     assert list(csr_m.indices) == indices_
     assert list(csr_m.indptr) == indptr_
 
-    path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
+    path_to_csr_npz_ = importlib.resources.files(__package__).joinpath("data\\csr_mat.npz")
 
-    save_npz(path_to_csr_npz, csr_m)
+    with importlib.resources.as_file(path_to_csr_npz_) as path_to_csr_npz:
+        save_npz(path_to_csr_npz, csr_m)
 
-    parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
-    out, _ = capfd.readouterr()
-    assert out == 'Loading "\\tests\\data\\csr_mat.npz" ... Done.\n'
+        parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
+        out, _ = capfd.readouterr()
+        assert "Loading " in out and '\\data\\csr_mat.npz" ... Done.\n' in out
 
     assert (parsed_csr_mat != csr_m).count_nonzero() == 0
     assert (parsed_csr_mat != csr_m).nnz == 0
@@ -572,21 +589,20 @@ class TestGitHubFileDownloader:
         test_output_dir = tempfile.mkdtemp()
 
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
-        downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+        downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
         assert "tests/data/dat.csv" in out
         assert downloader.total_files == 1
 
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
-        downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+        downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
         assert "tests/data/zipped/zipped.txt" in out
         assert downloader.total_files == 12
 
-        downloader = GitHubFileDownloader(
-            repo_url=test_url, flatten_files=True, output_dir=test_output_dir)
+        downloader = GitHubFileDownloader(test_url, flatten_files=True, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
         assert "zipped.txt" in out
