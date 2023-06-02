@@ -17,7 +17,7 @@ import zipfile
 
 import pandas as pd
 
-from ._cache import _check_dependency, _check_exe_pathname, _check_rel_pathname, _confirmed, \
+from ._cache import _check_dependency, _check_file_pathname, _check_rel_pathname, _confirmed, \
     _format_err_msg
 
 
@@ -116,7 +116,7 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
     :param pickle_data: data that could be dumped by the built-in module `pickle.dump`_
     :type pickle_data: any
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str | os.PathLike[str]
+    :type path_to_pickle: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.dump`_
@@ -181,7 +181,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         (e.g. with a file extension ".xlsx" or ".csv")
     :type spreadsheet_data: pandas.DataFrame
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike[str] | None
+    :type path_to_spreadsheet: str | os.PathLike | None
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param engine: options include ``'openpyxl'`` for latest Excel file formats,
@@ -265,7 +265,7 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
     :param spreadsheets_data: a sequence of pandas.DataFrame
     :type spreadsheets_data: list | tuple | iterable
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike[str]
+    :type path_to_spreadsheet: str | os.PathLike
     :param sheet_names: all sheet names of an Excel workbook
     :type sheet_names: list | tuple | iterable
     :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
@@ -391,7 +391,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     :param json_data: data that could be dumped by as a JSON file
     :type json_data: any json data
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str | os.PathLike[str]
+    :type path_to_json: str | os.PathLike
     :param engine: an open-source module used for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
@@ -493,7 +493,7 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
     :param joblib_data: data that could be dumped by `joblib.dump`_
     :type joblib_data: any
     :param path_to_joblib: path where a pickle file is saved
-    :type path_to_joblib: str | os.PathLike[str]
+    :type path_to_joblib: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.dump`_
@@ -568,7 +568,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
     :param feather_data: a dataframe to be saved as a feather-formatted file
     :type feather_data: pandas.DataFrame
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str | os.PathLike[str]
+    :type path_to_feather: str | os.PathLike
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -684,12 +684,11 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     """
 
     exe_name = "inkscape.exe"
-    possible_exe_pathnames = {
-        exe_name,
+    optional_pathnames = {
         f"C:\\Program Files\\Inkscape\\{exe_name}",
         f"C:\\Program Files\\Inkscape\\bin\\{exe_name}",
     }
-    inkscape_exists, inkscape_exe_ = _check_exe_pathname(exe_name, inkscape_exe, possible_exe_pathnames)
+    inkscape_exists, inkscape_exe_ = _check_file_pathname(exe_name, optional_pathnames, inkscape_exe)
 
     abs_svg_path, abs_emf_path = map(pathlib.Path, (path_to_svg, path_to_emf))
     assert abs_svg_path.suffix.lower() == ".svg"
@@ -739,7 +738,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
     This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
     :param path_to_fig_file: path where a figure file is saved
-    :type path_to_fig_file: str | os.PathLike[str]
+    :type path_to_fig_file: str | os.PathLike
     :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
     :type dpi: int | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -873,9 +872,12 @@ def save_web_page_as_pdf(web_page, path_to_pdf, page_size='A4', zoom=1.0, encodi
     """
 
     exe_name = "wkhtmltopdf.exe"
-    possible_exe_pathnames = {exe_name, f"C:\\Program Files\\wkhtmltopdf\\bin\\{exe_name}"}
-    wkhtmltopdf_exists, wkhtmltopdf_exe_ = _check_exe_pathname(
-        exe_name, exe_pathname=wkhtmltopdf_exe, possible_pathnames=possible_exe_pathnames)
+    optional_pathnames = {
+        f"C:\\Program Files\\wkhtmltopdf\\{exe_name}",
+        f"C:\\Program Files\\wkhtmltopdf\\bin\\{exe_name}",
+    }
+    wkhtmltopdf_exists, wkhtmltopdf_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=wkhtmltopdf_exe)
 
     if wkhtmltopdf_exists:
         pdfkit_ = _check_dependency(name='pdfkit')
@@ -944,7 +946,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         a URL of a web page or an `HTML file`_; or an image file of a `Matplotlib`-supported format
     :type data: any
     :param path_to_file: pathname of a file that stores the ``data``
-    :type path_to_file: str | os.PathLike[str]
+    :type path_to_file: str | os.PathLike
     :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
@@ -1029,7 +1031,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         - Examples for the function :py:func:`pyhelpers.store.load_data`.
     """
 
-    path_to_file_ = path_to_file.lower()
+    path_to_file_ = str(path_to_file).lower()
 
     if path_to_file_.endswith((".pkl", ".pickle")):
         save_pickle(data, path_to_pickle=path_to_file, **kwargs)
@@ -1163,7 +1165,7 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
     Load data from a `Pickle`_ file.
 
     :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str | os.PathLike[str]
+    :type path_to_pickle: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.load`_
@@ -1217,7 +1219,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
 
     :param path_to_csv: path where a `CSV`_ file is saved
-    :type path_to_csv: str | os.PathLike[str]
+    :type path_to_csv: str | os.PathLike
     :param delimiter: delimiter used between values in the data file, defaults to ``','``
     :type delimiter: str
     :param header: index number of the rows used as column names, defaults to ``0``
@@ -1311,7 +1313,7 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     Load multiple sheets of an `Microsoft Excel`_ file.
 
     :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike[str]
+    :type path_to_spreadsheet: str | os.PathLike
     :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -1406,7 +1408,7 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
     Load data from a `JSON`_ file.
 
     :param path_to_json: path where a json file is saved
-    :type path_to_json: str | os.PathLike[str]
+    :type path_to_json: str | os.PathLike
     :param engine: an open-source Python package for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
@@ -1481,7 +1483,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
     Load data from a `joblib`_ file.
 
     :param path_to_joblib: path where a joblib file is saved
-    :type path_to_joblib: str | os.PathLike[str]
+    :type path_to_joblib: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.load`_
@@ -1541,7 +1543,7 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
     Load a dataframe from a `Feather`_ file.
 
     :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str | os.PathLike[str]
+    :type path_to_feather: str | os.PathLike
     :param index: index number of the column(s) to use as the row labels of the dataframe,
         defaults to ``None``
     :type index: str | int | list | None
@@ -1614,7 +1616,7 @@ def load_data(path_to_file, err_warning=True, **kwargs):
     :param path_to_file: pathname of a file;
         supported file formats include
         `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_
-    :type path_to_file: str | os.PathLike[str]
+    :type path_to_file: str | os.PathLike
     :param err_warning: whether to show a warning message if any unknown error occurs,
         defaults to ``True``
     :type err_warning: bool
@@ -1707,7 +1709,7 @@ def load_data(path_to_file, err_warning=True, **kwargs):
                 0.81357508]])
     """
 
-    path_to_file_ = path_to_file.lower()
+    path_to_file_ = str(path_to_file).lower()
 
     if path_to_file_.endswith((".pkl", ".pickle")):
         data = load_pickle(path_to_file, **kwargs)
@@ -1748,7 +1750,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_ file.
 
     :param path_to_zip_file: path where a Zip file is saved
-    :type path_to_zip_file: str
+    :type path_to_zip_file: str | os.PathLike
     :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
     :type out_dir: str | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -1818,7 +1820,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     Extract data from a compressed file by using `7-Zip <https://www.7-zip.org/>`_.
 
     :param path_to_zip_file: path where a compressed file is saved
-    :type path_to_zip_file: str
+    :type path_to_zip_file: str | os.PathLike
     :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
     :type out_dir: str | None
     :param mode: defaults to ``'aoa'``
@@ -1892,9 +1894,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     """
 
     exe_name = "7z.exe"
-    possible_exe_pathnames = {exe_name, "C:/Program Files/7-Zip/7z.exe"}
-    seven_zip_exists, seven_zip_exe_ = _check_exe_pathname(
-        exe_name, exe_pathname=seven_zip_exe, possible_pathnames=possible_exe_pathnames)
+    optional_pathnames = {exe_name, f"C:/Program Files/7-Zip/{exe_name}"}
+    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(exe_name, optional_pathnames, seven_zip_exe)
 
     if seven_zip_exists:
         if out_dir is None:
@@ -1936,9 +1937,9 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
     `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
 
     :param path_to_md: path where a markdown file is saved
-    :type path_to_md: str
+    :type path_to_md: str | os.PathLike
     :param path_to_rst: path where a reStructuredText file is saved
-    :type path_to_rst: str
+    :type path_to_rst: str | os.PathLike
     :param engine: engine/module used for performing the conversion, defaults to ``None``;
         an alternative option is ``'pypandoc'``
     :type engine: None | str
@@ -1969,8 +1970,8 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
     """
 
     exe_name = "pandoc.exe"
-    possible_exe_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
-    pandoc_exists, pandoc_exe_ = _check_exe_pathname(exe_name, pandoc_exe, possible_exe_pathnames)
+    optional_pathnames = {exe_name, f"C:/Program Files/Pandoc/{exe_name}"}
+    pandoc_exists, pandoc_exe_ = _check_file_pathname(exe_name, optional_pathnames, target=pandoc_exe)
 
     abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
     # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
@@ -2063,14 +2064,14 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
     :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
-    :type xlsx_pathname: str
+    :type xlsx_pathname: str | os.PathLike
     :param csv_pathname: pathname of a CSV format file;
         when ``csv_pathname=None`` (default),
         the target CSV file is generated as a `tempfile.NamedTemporaryFile`_;
         when ``csv_pathname=""``,
         the target CSV file is generated at the same directory where the source Excel spreadsheet is;
         otherwise, it could also be a specific pathname
-    :type csv_pathname: str | None
+    :type csv_pathname: str | os.PathLike | None
     :param engine: engine used for converting .xlsx/.xls to .csv;
         when ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
         when ``engine='xlsx2csv'``, the function would rely on `xlsx2csv`_

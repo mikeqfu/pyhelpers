@@ -27,7 +27,7 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from ._cache import _check_dependency, _confirmed, _find_file, _format_err_msg, \
+from ._cache import _check_dependency, _check_file_pathname, _confirmed, _format_err_msg, \
     _USER_AGENT_STRINGS
 
 
@@ -336,15 +336,17 @@ def get_relative_path(pathname):
     return rel_path
 
 
-def find_executable(app_name, possibilities=None):
+def find_executable(name, options=None, target=None):
     """
     Get pathname of an executable file for a specified application.
 
-    :param app_name: executable filename of the application that is to be called
-    :type app_name: str
-    :param possibilities: possible pathnames
-    :type possibilities: list | set | None
-    :return: pathname of the specified executable file and whether it exists
+    :param name: name or filename of the application that is to be called
+    :type name: str
+    :param options: possible pathnames or directories, defaults to ``None``
+    :type options: list | set | None
+    :param target: specific pathname (that may be known already), defaults to ``None``
+    :type target: str | None
+    :return: whether the specified executable file exists and its pathname
     :rtype: tuple[bool, str]
 
     **Examples**::
@@ -355,21 +357,21 @@ def find_executable(app_name, possibilities=None):
         >>> python_exe = "python.exe"
         >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
 
-        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, possible_paths)
         >>> python_exe_exists
         True
         >>> os.path.relpath(path_to_python_exe)
         'venv\\Scripts\\python.exe'
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> test_exe_exists, path_to_test_exe = find_executable(text_exe, possible_paths)
+        >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
         >>> test_exe_exists
         False
-        >>> path_to_test_exe
+        >>> os.path.relpath(path_to_test_exe)
         'pyhelpers.exe'
     """
 
-    return _find_file(app_name=app_name, possibilities=possibilities)
+    return _check_file_pathname(name=name, options=options, target=target)
 
 
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
@@ -1120,7 +1122,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     Load in a compressed sparse row (CSR) or compressed row storage (CRS).
 
     :param path_to_csr: path where a CSR file (e.g. with a file extension ".npz") is saved
-    :type path_to_csr: str
+    :type path_to_csr: str | os.PathLike
     :param verbose: whether to print relevant information in console as the function runs,
         defaults to ``False``
     :type verbose: bool | int

@@ -169,93 +169,115 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def _find_file(app_name, possibilities=None):
-    """
-    Get pathname of an executable file for a specified application.
+def _get_rel_pathname(pathname):
+    try:
+        rel_path = os.path.relpath(pathname)
+    except ValueError:
+        rel_path = pathname
 
-    :param app_name: executable filename of the application that is to be called
-    :type app_name: str
-    :param possibilities: possible pathnames
-    :type possibilities: list | set | None
-    :return: pathname of the specified executable file and whether it exists
+    return rel_path
+
+
+def _check_file_pathname(name, options=None, target=None):
+    """
+    Check pathname of a specified file given its name or filename.
+
+    :param name: name or filename of the application that is to be called
+    :type name: str
+    :param options: possible pathnames or directories, defaults to ``None``
+    :type options: list | set | None
+    :param target: specific pathname (that may be known already), defaults to ``None``
+    :type target: str | None
+    :return: whether the specified executable file exists and its pathname
     :rtype: tuple[bool, str]
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _find_file
+        >>> from pyhelpers._cache import _check_file_pathname
         >>> import os
 
         >>> python_exe = "python.exe"
         >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
 
-        >>> python_exe_exists, path_to_python_exe = _find_file(python_exe, possible_paths)
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, possible_paths)
         >>> python_exe_exists
         True
         >>> os.path.relpath(path_to_python_exe)
         'venv\\Scripts\\python.exe'
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> test_exe_exists, path_to_test_exe = _find_file(text_exe, possible_paths)
+        >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
         >>> test_exe_exists
         False
-        >>> path_to_test_exe
+        >>> os.path.relpath(path_to_test_exe)
         'pyhelpers.exe'
     """
 
-    file_pathname = copy.copy(app_name)
-    file_exists = False
+    if target:
+        if os.path.isfile(target):
+            file_exists, file_pathname = True, target
+        else:
+            file_exists, file_pathname = None, False
 
-    if not os.path.isfile(file_pathname):
-        alt_pathnames = {shutil.which(file_pathname)}
-        if possibilities is not None:
-            alt_pathnames.update(set(possibilities))
+    else:
+        file_pathname = copy.copy(name)
 
-        for x in {x_ for x_ in alt_pathnames if x_}:
-            if os.path.isdir(x):
-                file_pathname_ = os.path.join(x, file_pathname)
-            else:
-                file_pathname_ = x
-            if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
-                file_pathname = file_pathname_
-                file_exists = True
-                break
+        if os.path.isfile(file_pathname):
+            file_exists = True
+
+        else:
+            file_exists = False
+            alt_pathnames = {shutil.which(file_pathname)}
+
+            if options is not None:
+                alt_pathnames.update(set(options))
+
+            for x in {x_ for x_ in alt_pathnames if x_}:
+                if os.path.isdir(x):
+                    file_pathname_ = os.path.join(x, file_pathname)
+                else:
+                    file_pathname_ = x
+                if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
+                    file_pathname = file_pathname_
+                    file_exists = True
+                    break
 
     return file_exists, file_pathname
 
 
-def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
-    """
-    Check about a specified executable file pathname.
-
-    :param exe_name: name of an executable file
-    :type exe_name: str
-    :param exe_pathname: pathname of an executable file
-    :type exe_pathname: str | None
-    :param possible_pathnames: a number of possible pathnames of the executable file
-    :type possible_pathnames: list | set
-    :return: whether the specified executable file exists and its pathname
-    :rtype: typing.Tuple[bool, str]
-
-    **Tests**::
-
-        >>> from pyhelpers._cache import _check_exe_pathname
-        >>> import os
-
-        >>> possibilities = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
-
-        >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, possibilities)
-        >>> python_exists
-        True
-        >>> os.path.basename(path_to_exe)
-        'python.exe'
-    """
-
-    if exe_pathname is None:
-        exe_exists, exe_pathname_ = _find_file(exe_name, possibilities=possible_pathnames)
-    else:
-        exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
-
-    return exe_exists, exe_pathname_
+# def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
+#     """
+#     Check about a specified executable file pathname.
+#
+#     :param exe_name: filename of an executable file
+#     :type exe_name: str
+#     :param exe_pathname: pathname of an executable file
+#     :type exe_pathname: str | None
+#     :param possible_pathnames: a number of possible pathnames of the executable file
+#     :type possible_pathnames: list | set
+#     :return: whether the specified executable file exists and its pathname
+#     :rtype: typing.Tuple[bool, str]
+#
+#     **Tests**::
+#
+#         >>> from pyhelpers._cache import _check_exe_pathname
+#         >>> import os
+#
+#         >>> options = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
+#
+#         >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, options)
+#         >>> python_exists
+#         True
+#         >>> os.path.basename(path_to_exe)
+#         'python.exe'
+#     """
+#
+#     if exe_pathname is None:
+#         exe_exists, exe_pathname_ = _find_file(exe_name, options=possible_pathnames)
+#     else:
+#         exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
+#
+#     return exe_exists, exe_pathname_
 
 
 def _format_err_msg(e=None, msg=""):
