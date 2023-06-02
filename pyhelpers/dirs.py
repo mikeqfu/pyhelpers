@@ -256,7 +256,7 @@ def path2linux(path):
     - Convert OS path to standard Linux path.
 
     :param path: absolute or relative pathname
-    :type path: str | pathlib.Path
+    :type path: str | os.PathLike | bytes
     :return: standard linux pathname
     :rtype: str
 
@@ -484,12 +484,12 @@ def validate_filename(file_pathname, suffix_num=1):
 # Directory/file control
 # ==================================================================================================
 
-def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
+def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     """
     Get all files in the folder with the specified file type.
 
     :param path_to_dir: a folder path
-    :type path_to_dir: str
+    :type path_to_dir: str | os.PathLike
     :param file_ext: exact file type to specify, if file_type is ``"*"`` or ``"all"``,
         return all files in the folder; defaults to ``None``
     :type file_ext: str | None
@@ -501,12 +501,12 @@ def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import get_rel_pathnames
+        >>> from pyhelpers.dirs import get_file_pathnames
 
         >>> test_dir_name = "tests/data"
 
         >>> # Get all files in the folder (without sub-folders)
-        >>> get_rel_pathnames(test_dir_name)
+        >>> get_file_pathnames(test_dir_name)
         ['tests/data/csr_mat.npz',
          'tests/data/dat.csv',
          'tests/data/dat.feather',
@@ -520,11 +520,11 @@ def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
          'tests/data/zipped.txt',
          'tests/data/zipped.zip']
 
-        >>> get_rel_pathnames(test_dir_name, file_ext=".txt")
+        >>> get_file_pathnames(test_dir_name, file_ext=".txt")
         ['tests/data/dat.txt', 'tests/data/zipped.txt']
 
         >>> # Get absolute pathnames of all files contained in the folder (incl. all sub-folders)
-        >>> get_rel_pathnames(test_dir_name, file_ext="txt", incl_subdir=True)
+        >>> get_file_pathnames(test_dir_name, file_ext="txt", incl_subdir=True)
         ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
 
     """
@@ -543,6 +543,7 @@ def get_rel_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     if file_ext in {None, "*", "all"}:
         return [path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)]
 
+    # noinspection PyTypeChecker
     return [
         path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)
         if file.endswith(file_ext)]
@@ -555,7 +556,7 @@ def check_files_exist(filenames, path_to_dir):
     :param filenames: a list of filenames
     :type filenames: list
     :param path_to_dir: a list of filenames in the directory
-    :type path_to_dir: str
+    :type path_to_dir: str | os.PathLike
     :return: ``True`` if all the queried files exist, ``False`` otherwise
     :rtype: bool
 
@@ -575,7 +576,7 @@ def check_files_exist(filenames, path_to_dir):
         False
     """
 
-    dir_files = get_rel_pathnames(path_to_dir, file_ext="*")
+    dir_files = get_file_pathnames(path_to_dir, file_ext="*")
 
     # Format the required file name to standard linux path
     filenames = [path2linux(os.path.abspath(filename)) for filename in filenames]

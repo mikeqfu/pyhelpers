@@ -40,6 +40,6 @@ Directory/file control
     :toctree: _generated/
     :template: function.rst
 
-    get_rel_pathnames
+    get_file_pathnames
     check_files_exist
     delete_dir
