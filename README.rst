@@ -60,6 +60,28 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
 
 **Note:** Please also refer to the export options from `Zenodo <https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True>`_ to reference the specific version of PyHelpers as appropriate.
 
+Contributors
+============
+
+.. raw:: html
+
+    <table>
+      <tbody>
+        <tr>
+          <td align="center">
+            <a href="https://github.com/mikeqfu"><img src="https://avatars.githubusercontent.com/u/1729711?v=4?s=100" width="100px;" alt="Qian Fu"/><br/><sub><b>Qian Fu</b></sub></a><br/>
+            <a href="https://github.com/mikeqfu/pyhelpers" title="Seeding">&#127793;</a>
+            <a href="https://github.com/mikeqfu/pyhelpers/commits?author=mikeqfu" title="Code">&#128187;</a>
+            <a href="https://github.com/mikeqfu/pyhelpers/tree/master/tests" title="Tests">&#9989;</a>
+            <a href="https://pyhelpers.readthedocs.io/en/latest/" title="Documentation">&#128214;</a>
+          </td>
+          <td align="center">
+            <a href="https://github.com/xyluo25"><img src="https://avatars.githubusercontent.com/u/36498464?v=4?s=100" width="100px;" alt="Xiangyong Luo"/><br/><sub><b>Xiangyong Luo</b></sub></a><br/>
+            <a href="https://github.com/mikeqfu/pyhelpers/commits?author=xyluo25" title="Code">&#128187;</a>
+          </td>
+      </tbody>
+    </table>
+
 License
 =======
 
