@@ -8,19 +8,23 @@ docs/source/_generated
 
 # Environments
 venv/
+*/vscode/*
+settings.json
+*Completion.json
+*/__pycache__/*
 
 # Jupyter Notebooks
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
-# Unit test / coverage reports
+# pytest / coverage reports
 htmlcov/
 .coverage
 .coverage.*
 coverage.xml
 .pytest_cache/
 
-# PyHelpers
+# Project
 .idea
 tests/*
 !tests/data/
@@ -28,8 +32,4 @@ tests/*
 !tests/images/
 !tests/*.py
 .pypirc
-
-*/vscode/*
-settings.json
-*Completion.json
-*/__pycache__/*
+cmd.txt
