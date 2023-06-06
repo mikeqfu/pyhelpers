@@ -39,6 +39,7 @@ PyHelpers is an open-source Python package designed as a lite toolkit for facili
     introduction
     installation
     modules
+    contributors
     license
 
 .. toctree::
