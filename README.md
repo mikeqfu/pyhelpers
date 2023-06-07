@@ -39,7 +39,7 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
 }
 ```
 
-**Note:** Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.
+(Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.)
 
 ## Contributors
 
