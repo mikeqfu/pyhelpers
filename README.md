@@ -1,5 +1,6 @@
 # PyHelpers
 
+[![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
 [![Documentation status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/pypi/l/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
