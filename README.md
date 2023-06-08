@@ -1,19 +1,18 @@
 # PyHelpers
 
-[![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
 [![Documentation status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/pypi/l/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![Codacy grade (Code quality)](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://www.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mikeqfu/pyhelpers&amp;utm_campaign=Badge_Grade)
 [![Zenodo - DOI](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
-PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL and Microsoft SQL Server).
+PyHelpers is a lightweight open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
 
 ## Installation
 
 To install the latest release of pyhelpers from [PyPI](https://pypi.org/project/pyhelpers/) via [pip](https://pip.pypa.io/en/stable/cli/pip/):
 
-```{bash}
+```bash
 pip install --upgrade pyhelpers
 ```
 
@@ -27,7 +26,7 @@ The full PyHelpers documentation (including detailed examples and a quick-start 
 
 Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438)
 
-```{bibtex}
+```bibtex
 @software{qian_fu_pyhelpers_4017438,
   author    = {Qian Fu},
   title     = {{PyHelpers: an open-source toolkit for facilitating
