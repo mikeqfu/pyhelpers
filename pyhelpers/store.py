@@ -1927,7 +1927,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 # Convert data
 # ==================================================================================================
 
-def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbose=False, **kwargs):
+def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
+                    verbose=False, **kwargs):
     """
     Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
     to a `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
@@ -1940,6 +1941,8 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
     :type path_to_md: str | os.PathLike
     :param path_to_rst: path where a reStructuredText file is saved
     :type path_to_rst: str | os.PathLike
+    :param reverse: whether to convert a .rst file to a .md file, defaults to ``False``
+    :type reverse: bool
     :param engine: engine/module used for performing the conversion, defaults to ``None``;
         an alternative option is ``'pypandoc'``
     :type engine: None | str
@@ -1961,39 +1964,48 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
         >>> from pyhelpers.dirs import cd
 
         >>> dat_dir = cd("tests\\documents")
-
         >>> path_to_md_file = cd(dat_dir, "readme.md")
         >>> path_to_rst_file = cd(dat_dir, "readme.rst")
 
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
         Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
+
+        >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
+        Updating "readme.rst" at "tests\\documents\\" ... Done.
     """
 
     exe_name = "pandoc.exe"
-    optional_pathnames = {exe_name, f"C:/Program Files/Pandoc/{exe_name}"}
+    optional_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
     pandoc_exists, pandoc_exe_ = _check_file_pathname(exe_name, optional_pathnames, target=pandoc_exe)
 
-    abs_md_path, abs_rst_path = pathlib.Path(path_to_md), pathlib.Path(path_to_rst)
-    # assert abs_md_path.suffix == ".md" and abs_rst_path.suffix == ".rst"
+    input_path, output_path = path_to_md, path_to_rst
+    arg_f, arg_t = 'markdown+smart', 'rst+smart'
+    if reverse:
+        input_path, output_path = output_path, input_path
+        arg_f, arg_t = arg_t, arg_f
+
+    abs_input_path, abs_output_path = map(pathlib.Path, [input_path, output_path])
+    # assert abs_from_path.suffix == ".md" and abs_to_path.suffix == ".rst"
 
     if verbose:
-        rel_md_path, rel_rst_path = map(
-            lambda x: pathlib.Path(os.path.relpath(x)), (abs_md_path, abs_rst_path))
+        rel_input_path, rel_output_path = map(
+            lambda x: pathlib.Path(os.path.relpath(x)), (abs_input_path, abs_output_path))
 
-        if not os.path.exists(abs_rst_path):
-            msg = "Converting \"{}\" to \"{}\"".format(rel_md_path, rel_rst_path)
+        if not os.path.exists(abs_output_path):
+            msg = "Converting \"{}\" to \"{}\"".format(rel_input_path, rel_output_path)
         else:
-            msg = "Updating \"{}\" at \"{}\\\"".format(rel_rst_path.name, rel_rst_path.parent)
+            msg = "Updating \"{}\" at \"{}\\\"".format(rel_output_path.name, rel_output_path.parent)
         print(msg, end=" ... ")
 
     try:
         if engine is None:
             if pandoc_exists:
-                # subprocess.run(
-                #     f'"{pandoc_exe_}" "{abs_md_path}" -f markdown -t rst -s -o "{abs_rst_path}"')
-                command_args = [
-                    pandoc_exe_, abs_md_path, '-f', 'markdown', '-t', 'rst', '-s', '-o', abs_rst_path]
-                rslt = subprocess.run(command_args, **kwargs)
+                cmd_args = [pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
+                if reverse:
+                    cmd_args += ['-o', abs_output_path]
+                else:
+                    cmd_args += ['-s', '-o', abs_output_path]
+                rslt = subprocess.run(cmd_args, **kwargs)
                 ret_code = rslt.returncode
 
             else:
@@ -2002,8 +2014,12 @@ def markdown_to_rst(path_to_md, path_to_rst, engine=None, pandoc_exe=None, verbo
         else:
             py_pandoc = _check_dependency(name='pypandoc')
 
+            if 'extra_args' in kwargs:
+                kwargs['extra_args'].append(['--wrap=preserve'])
+            else:
+                kwargs.update({'extra_args': ['--wrap=preserve']})
             rslt = py_pandoc.convert_file(
-                str(abs_md_path), 'rst', outputfile=str(abs_rst_path), **kwargs)
+                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path), **kwargs)
 
             ret_code = 0 if rslt == '' else -2
 
