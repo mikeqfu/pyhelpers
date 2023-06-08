@@ -2,6 +2,21 @@
 
 <br/>
 
+#### **[1.5.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.0)**
+
+(*8 June 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.4.6...1.5.0) since [1.4.6](https://pypi.org/project/pyhelpers/1.4.6/):**
+
+- Improved the structure of the package and a few functions and class methods.
+- Added the following new functions/classes:
+  - [path2linux()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/dirs.py#L251-L279), [validate_filename()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/dirs.py#L417-L480), [get_file_pathnames()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/dirs.py#L487-L549), and [check_files_exist()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/dirs.py#L552-L598) to the module [dir](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/dirs.py);
+  - [GitHubFileDownloader()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/ops.py#L2313-L2567) and [func_running_time()](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/ops.py#L481-L516) to the module [ops](https://github.com/mikeqfu/pyhelpers/blob/85d483e35f34ff8a766c203d920bf04cf7a82c00/pyhelpers/ops.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.5.0 documentation](https://pyhelpers.readthedocs.io/en/1.5.0/).**
+
+<br/>
+
 #### **[1.4.6](https://github.com/mikeqfu/pyhelpers/releases/tag/1.4.6)**
 
 (*26 February 2023*)
