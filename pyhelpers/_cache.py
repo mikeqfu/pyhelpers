@@ -11,26 +11,22 @@ import shutil
 import sys
 
 _OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
-    "thefuzz": ("TheFuzz", "thefuzz"),
-    "Levenshtein": ("python-Levenshtein", "python-Levenshtein"),
+    "rapidfuzz": ("RapidFuzz", "rapidfuzz"),
     "tqdm": ("tqdm", "tqdm"),
     "matplotlib": ("Matplotlib", "matplotlib"),
     "nltk": ("NLTK", "nltk"),
     "joblib": ("Joblib", "joblib"),
     "openpyxl": ("openpyxl", "openpyxl"),
     "xlsxwriter": ("XlsxWriter", "xlsxwriter"),
-    "xlrd": ("xlrd", "xlrd"),
-    "pyxlsb": ("pyxlsb", "pyxlsb"),
+    "odf": ("odfpy", "odfpy"),
     "pyarrow": ("PyArrow", "pyarrow"),
     "orjson": ("orjson", "orjson"),
     "rapidjson": ("python-rapidjson", "python-rapidjson"),
-    "osgeo.gdal": ("GDAL", "gdal"),
-    "pyproj": ("pyproj", "pyproj"),
+    "ujson": ("UltraJSON", "ujson"),
     "pypandoc": ("Pypandoc", "pypandoc"),
     "pdfkit": ("pdfkit", "pdfkit"),
     "psycopg2": ("psycopg2", "psycopg2"),
     "pyodbc": ("pyodbc", "pyodbc"),
-    "ujson": ("UltraJSON", "ujson"),
 }
 
 
@@ -63,7 +59,10 @@ def _check_dependency(name, package=None):
 
     import_name = name.replace('-', '_')
     if package is None:
-        pkg_name = None
+        if '.' in import_name:
+            pkg_name, _ = import_name.split('.', 1)
+        else:
+            pkg_name = None
     else:
         pkg_name = package.replace('-', '_')
         import_name = '.' + import_name
@@ -79,13 +78,15 @@ def _check_dependency(name, package=None):
         return importlib.import_module(name=import_name, package=pkg_name)
 
     else:
-        if import_name in _OPTIONAL_DEPENDENCY:
+        if name.startswith('osgeo') or 'gdal' in import_name:
+            package_name, install_name = 'GDAL', 'gdal'
+        elif import_name in _OPTIONAL_DEPENDENCY:
             package_name, install_name = _OPTIONAL_DEPENDENCY[import_name]
         else:
             package_name, install_name = name, name.split('.')[0]
 
         raise ModuleNotFoundError(
-            f"The specified dependency '{package_name}' is not available. "
+            f"Missing optional dependency '{package_name}'. "
             f"Use pip or conda to install it, e.g. 'pip install {install_name}'.")
 
 
