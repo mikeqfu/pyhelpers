@@ -243,7 +243,7 @@ latex_maketitle = r'''
 
     \clearpage
     \pagenumbering{arabic}
-    ''' % (project,
+    ''' % (__project__,
            __description__.rstrip('.'),
            release,
            __author__,
@@ -269,6 +269,8 @@ latex_preamble = r'''
     \linespread{1.05}
     \renewcommand{\sfdefault}{pplj}
     \newunicodechar{≤}{\ensuremath{\leq}}
+    \newunicodechar{≈}{\ensuremath{\approx}}
+    \newunicodechar{≥}{\ensuremath{\geq}}
     \IfFileExists{zlmtt.sty}
                  {\usepackage[light,scaled=1.05]{zlmtt}}
                  {\renewcommand{\ttdefault}{lmtt}}
@@ -294,7 +296,7 @@ latex_elements = {
 
     'preamble': latex_preamble,
 
-    'figure_align': 'H',  # 'htbp',
+    'figure_align': 'H',  # Latex figure (float) alignment; optional: 'htbp'
     'extraclassoptions': 'openany,oneside',
 
     'maketitle': latex_maketitle,

@@ -531,22 +531,21 @@ The module :mod:`pyhelpers.text` can assist us in manipulating textual data. For
     >>> result_1
     'Anglia'
 
-By default, the function relies on `difflib`_ - a Python built-in module - to perform the task. Alternatively, we could also make use of an open-source package, `FuzzyWuzzy`_, via setting the parameter ``engine='fuzzywuzzy'``:
+By default, the function relies on `difflib`_ - a Python built-in module - to perform the task. Alternatively, we could also make use of an open-source package, `RapidFuzz`_, via setting the parameter ``engine='rapidfuzz'`` (or simply ``engine='fuzz'``):
 
-.. _`FuzzyWuzzy`: https://pypi.org/project/fuzzywuzzy/
 .. _`difflib`: https://docs.python.org/3/library/difflib.html
+.. _`RapidFuzz`: https://pypi.org/project/rapidfuzz/
 
 .. code-block:: python
 
-    >>> # Find the most similar word to 'angle' by using FuzzyWuzzy
-    >>> result_2 = find_similar_str(word, lookup_list, engine='fuzzywuzzy')
+    >>> # Find the most similar word to 'angle' by using RapidFuzz
+    >>> result_2 = find_similar_str(word, lookup_list, engine='rapidfuzz')
     >>> result_2
     'Anglia'
 
 .. note::
 
-    - The package `FuzzyWuzzy`_ is NOT an essential dependency for the installation of pyhelpers>=1.3.0. We need to install it (e.g. via ``pip install``) to make the function run successfully with setting ``engine='fuzzywuzzy'``.
-    - In previous versions of pyhelpers (i.e. pyhelpers<=1.2.14), optional values for the parameter ``engine`` include ``'fuzzywuzzy'`` and ``'nltk'``. The latter has been replaced with ``'difflib'`` since pyhelpers 1.2.15.
+    - The package `RapidFuzz`_ is NOT an essential dependency for the installation of pyhelpers. We need to install it (e.g. via ``pip install``) to make the function run successfully with setting ``engine='rapidfuzz'`` (or ``engine='fuzz'``).
 
 
 
