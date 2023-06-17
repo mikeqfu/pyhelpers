@@ -2,6 +2,21 @@
 
 <br/>
 
+#### **[1.5.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.1)**
+
+(*17 June 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.5.0...1.5.1) since [1.5.0](https://pypi.org/project/pyhelpers/1.5.0/):**
+
+- Renamed arguments for the functions of saving/loading data within the module [store](https://github.com/mikeqfu/pyhelpers/commit/fb1629caf52af8382967d16dd1888b44da33d1b9).
+- Modified the following functions: 
+  - [save_spreadsheet()](https://github.com/mikeqfu/pyhelpers/commit/fb1629caf52af8382967d16dd1888b44da33d1b9?diff=unified#diff-5be4770b2702d34ea60ff69d076c06b6311d2de302323f4313f5829f857e7607L170-R265) in the module [store](https://github.com/mikeqfu/pyhelpers/blob/21d8271cc0cfc8e01ee183f3c7e192b02e047a73/pyhelpers/store.py);
+  - [find_similar_str()](https://github.com/mikeqfu/pyhelpers/commit/b99678ba7cf1e493a01b4461d4352264ccf15c1c) in the module [text](https://github.com/mikeqfu/pyhelpers/blob/21d8271cc0cfc8e01ee183f3c7e192b02e047a73/pyhelpers/text.py).
+
+**For more information and detailed specifications, check out [PyHelpers 1.5.1 documentation](https://pyhelpers.readthedocs.io/en/1.5.1/).**
+
+<br/>
+
 #### **[1.5.0](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.0)**
 
 (*8 June 2023*)
