@@ -31,5 +31,6 @@ tests/*
 !tests/documents/
 !tests/images/
 !tests/*.py
+tutorials/*
 .pypirc
 cmd.txt
