@@ -234,7 +234,7 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     """
 
     _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
-    filename_, ext = os.path.splitext(filename)
+    _, ext = os.path.splitext(filename)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
     assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
