@@ -108,15 +108,15 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
         return rel_path, filename
 
 
-# Pickle files
-def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
+# Pickle file
+def save_pickle(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
-    :param pickle_data: data that could be dumped by the built-in module `pickle.dump`_
-    :type pickle_data: any
-    :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str | os.PathLike
+    :param data: data that could be dumped by the built-in module `pickle.dump`_
+    :type data: any
+    :param path_to_file: path where a pickle file is saved
+    :type path_to_file: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.dump`_
@@ -150,14 +150,14 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
 
     .. seealso::
 
-        - Examples for the function :py:func:`pyhelpers.store.load_pickle`.
+        - Examples for the function :func:`pyhelpers.store.load_pickle`.
     """
 
-    _check_saving_path(path_to_pickle, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
-        pickle_out = open(path_to_pickle, mode='wb')
-        pickle.dump(pickle_data, pickle_out, **kwargs)
+        pickle_out = open(path_to_file, mode='wb')
+        pickle.dump(data, pickle_out, **kwargs)
         pickle_out.close()
 
         if verbose:
@@ -167,28 +167,29 @@ def save_pickle(pickle_data, path_to_pickle, verbose=False, **kwargs):
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Spreadsheets
-def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=None, delimiter=',',
-                     verbose=False, **kwargs):
+# Spreadsheet
+def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',', verbose=False,
+                     **kwargs):
     """
-    Save data to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ or
-    an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file.
+    Save data to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
+    an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_, or
+    an `OpenDocument <https://en.wikipedia.org/wiki/OpenDocument>`_ format file.
 
-    The file extension can be `".txt"`, `".csv"`, `".xlsx"` or `".xls"`;
-    engines can include: `xlsxwriter`_ (for .xlsx) and `openpyxl`_ (for .xlsx/.xlsm).
+    The file extension can be `".txt"`, `".csv"`, `".xlsx"`, or `".xls"`;
+    and engines may rely on `xlsxwriter`_, `openpyxl`_, or `odfpy`_.
 
-    :param spreadsheet_data: data that could be saved as a spreadsheet
+    :param data: data that could be saved as a spreadsheet
         (e.g. with a file extension ".xlsx" or ".csv")
-    :type spreadsheet_data: pandas.DataFrame
-    :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike | None
+    :type data: pandas.DataFrame
+    :param path_to_file: path where a spreadsheet is saved
+    :type path_to_file: str | os.PathLike | None
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
-    :param engine: options include ``'openpyxl'`` for latest Excel file formats,
-        ``'xlrd'`` for .xls ``'odf'`` for OpenDocument file formats (.odf, .ods, .odt), and
-        ``'pyxlsb'`` for Binary Excel files; defaults to ``None``
+    :param engine: options include ``'openpyxl'`` and `'xlsxwriter'` for Excel file formats
+        such as ".xlsx" (or ".xls"), and ``'odf'`` for OpenDocument file format such as ".ods",
+        defaults to ``None``
     :type engine: str | None
-    :param delimiter: separator for saving a `".xlsx"` (or `".xls"`) file as a `".csv"` file,
+    :param delimiter: separator for saving ``data`` as a `".csv"`, `".txt"`, or `".odt"` file,
         defaults to ``','``
     :type delimiter: str
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -197,6 +198,7 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
 
     .. _`xlsxwriter`: https://pypi.org/project/XlsxWriter/
     .. _`openpyxl`: https://pypi.org/project/openpyxl/
+    .. _`odfpy`: https://pypi.org/project/odfpy/
     .. _`pandas.DataFrame.to_excel`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv`:
@@ -225,28 +227,36 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         >>> spreadsheet_pathname = cd("tests\\data", "dat.xlsx")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
         Saving "dat.xlsx" to "tests\\data\\" ... Done.
+
+        >>> spreadsheet_pathname = cd("tests\\data", "dat.ods")
+        >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
+        Saving "dat.ods" to "tests\\data\\" ... Done.
     """
 
-    _, spreadsheet_filename = _check_saving_path(
-        path_to_file=path_to_spreadsheet, verbose=verbose, ret_info=True)
+    _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
+    filename_, ext = os.path.splitext(filename)
+
+    valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
+    assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
 
     try:  # to save the data
-        if spreadsheet_filename.endswith(".xlsx"):  # a .xlsx file
-            spreadsheet_data.to_excel(
-                excel_writer=path_to_spreadsheet, index=index, engine=engine, **kwargs)
+        if ext.startswith(".xls"):  # a .xlsx file or a .xls file
+            kwargs.update({'excel_writer': path_to_file, 'index': index, 'engine': engine})
 
-        elif spreadsheet_filename.endswith(".xls"):  # a .xls file
-            if engine is None or engine == 'xlwt':
-                engine = 'openpyxl'
-            spreadsheet_data.to_excel(
-                excel_writer=path_to_spreadsheet, index=index, engine=engine, **kwargs)
+            if ext == ".xls":  # a .xls file
+                if engine in {None, 'xlwt'}:
+                    _ = _check_dependency(name='openpyxl')
+                    kwargs.update({'engine': 'openpyxl'})
+            data.to_excel(**kwargs)
 
-        elif spreadsheet_filename.endswith((".csv", ".txt")):  # a .csv file
-            spreadsheet_data.to_csv(
-                path_or_buf=path_to_spreadsheet, index=index, sep=delimiter, **kwargs)
+        elif ext == ".ods":
+            if engine not in {None, 'odf'}:  # engine in {'openpyxl', 'xlsxwriter'}:
+                _ = _check_dependency(name='odf')
+                kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
+            data.to_excel(excel_writer=path_to_file, index=index, **kwargs)
 
-        else:
-            raise AssertionError('File extension must be ".txt", ".csv", ".xlsx" or ".xls"')
+        elif ext in {".csv", ".txt", ".odt"}:  # a .csv file
+            data.to_csv(path_or_buf=path_to_file, index=index, sep=delimiter, **kwargs)
 
         if verbose:
             print("Done.")
@@ -255,20 +265,22 @@ def save_spreadsheet(spreadsheet_data, path_to_spreadsheet, index=False, engine=
         print(f"Failed. {_format_err_msg(e.args[0])}")
 
 
-def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode='w',
-                      if_sheet_exists=None, verbose=False, **kwargs):
+def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None, verbose=False,
+                      **kwargs):
     """
-    Save data to a multi-sheet `Microsoft Excel`_ file.
+    Save data to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
-    The file extension can be `".xlsx"` or `".xls"`.
+    The file extension can be `".xlsx"` (or `".xls"`) or `".ods"`.
 
-    :param spreadsheets_data: a sequence of pandas.DataFrame
-    :type spreadsheets_data: list | tuple | iterable
-    :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike
+    :param data: a sequence of ``pandas.DataFrame``
+    :type data: list | tuple | iterable
+    :param path_to_file: path where a spreadsheet is saved
+    :type path_to_file: str | os.PathLike
     :param sheet_names: all sheet names of an Excel workbook
     :type sheet_names: list | tuple | iterable
-    :param mode: mode to write to an Excel file; ``'w'`` (default) for 'write' and ``'a'`` for 'append'
+    :param mode: mode to write to an Excel file;
+        ``'w'`` (default) for 'write' and ``'a'`` for 'append';
+        note that the 'append' mode is not supported with OpenDocument
     :type mode: str
     :param if_sheet_exists: indicate the behaviour when trying to write to an existing sheet;
         see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_
@@ -278,6 +290,7 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
     :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`OpenDocument`: https://en.wikipedia.org/wiki/OpenDocument
     .. _`pandas.ExcelWriter`:
         https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html
     .. _`pandas.DataFrame.to_excel`:
@@ -306,8 +319,14 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
 
         >>> dat = [dat1, dat2]
         >>> sheets = ['TestSheet1', 'TestSheet2']
-        >>> pathname = cd("tests\\data", "dat.xlsx")
 
+        >>> pathname = cd("tests\\data", "dat.ods")
+        >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
+        Saving "dat.ods" to "tests\\data\\" ...
+            'TestSheet1' ... Done.
+            'TestSheet2' ... Done.
+
+        >>> pathname = cd("tests\\data", "dat.xlsx")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.xlsx" to "tests\\data\\" ...
             'TestSheet1' ... Done.
@@ -331,26 +350,29 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert path_to_spreadsheet.endswith((".xlsx", ".xls"))
+    assert path_to_file.endswith((".xlsx", ".xls", ".ods"))
 
-    _check_saving_path(path_to_spreadsheet, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
-    if os.path.isfile(path_to_spreadsheet) and mode == 'a':
-        with pd.ExcelFile(path_or_buffer=path_to_spreadsheet) as f:
+    if os.path.isfile(path_to_file) and mode == 'a':
+        with pd.ExcelFile(path_or_buffer=path_to_file) as f:
             cur_sheet_names = f.sheet_names
     else:
         cur_sheet_names = []
 
-    engine = 'openpyxl' if mode == 'a' else None
-    writer = pd.ExcelWriter(path=path_to_spreadsheet, engine=engine, mode=mode)
+    if path_to_file.endswith((".xlsx", ".xls")):
+        engine = 'openpyxl'
+    else:
+        engine = 'odf'
+    writer = pd.ExcelWriter(path=path_to_file, engine=engine, mode=mode)
 
     if verbose:
         print("")
 
-    for sheet_data, sheet_name in zip(spreadsheets_data, sheet_names):
+    for sheet_data, sheet_name in zip(data, sheet_names):
         # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
         if verbose:
-            print("\t'{}'".format(sheet_name), end=" ... ")
+            print(f"\t'{sheet_name}'", end=" ... ")
 
         if sheet_name in cur_sheet_names:
             if if_sheet_exists is None:
@@ -383,15 +405,15 @@ def save_spreadsheets(spreadsheets_data, path_to_spreadsheet, sheet_names, mode=
     writer.close()
 
 
-# JSON files
-def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
+# JSON file
+def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
-    :param json_data: data that could be dumped by as a JSON file
-    :type json_data: any json data
-    :param path_to_json: path where a json file is saved
-    :type path_to_json: str | os.PathLike
+    :param data: data that could be dumped by as a JSON file
+    :type data: any json data
+    :param path_to_file: path where a json file is saved
+    :type path_to_file: str | os.PathLike
     :param engine: an open-source module used for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
@@ -457,7 +479,7 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
 
     .. seealso::
 
-        - Examples for the function :py:func:`pyhelpers.store.load_json`.
+        - Examples for the function :func:`pyhelpers.store.load_json`.
     """
 
     if engine is not None:
@@ -467,16 +489,16 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
     else:
         mod = sys.modules.get('json')
 
-    _check_saving_path(path_to_json, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
         if engine == 'orjson':
-            with open(path_to_json, mode='wb') as json_out:
-                json_out.write(mod.dumps(json_data, **kwargs))
+            with open(path_to_file, mode='wb') as json_out:
+                json_out.write(mod.dumps(data, **kwargs))
 
         else:
-            with open(path_to_json, mode='w') as json_out:
-                mod.dump(json_data, json_out, **kwargs)
+            with open(path_to_file, mode='w') as json_out:
+                mod.dump(data, json_out, **kwargs)
 
         if verbose:
             print("Done.")
@@ -485,15 +507,15 @@ def save_json(json_data, path_to_json, engine=None, verbose=False, **kwargs):
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Joblib
-def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
+# Joblib file
+def save_joblib(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
-    :param joblib_data: data that could be dumped by `joblib.dump`_
-    :type joblib_data: any
-    :param path_to_joblib: path where a pickle file is saved
-    :type path_to_joblib: str | os.PathLike
+    :param data: data that could be dumped by `joblib.dump`_
+    :type data: any
+    :param path_to_file: path where a pickle file is saved
+    :type path_to_file: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.dump`_
@@ -543,15 +565,15 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
 
     .. seealso::
 
-        - Examples for the function :py:func:`pyhelpers.store.load_joblib`.
+        - Examples for the function :func:`pyhelpers.store.load_joblib`.
     """
 
-    _check_saving_path(path_to_joblib, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
         joblib_ = _check_dependency(name='joblib')
 
-        joblib_.dump(value=joblib_data, filename=path_to_joblib, **kwargs)
+        joblib_.dump(value=data, filename=path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
@@ -560,15 +582,15 @@ def save_joblib(joblib_data, path_to_joblib, verbose=False, **kwargs):
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Feather files
-def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kwargs):
+# Feather file
+def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
-    :param feather_data: a dataframe to be saved as a feather-formatted file
-    :type feather_data: pandas.DataFrame
-    :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str | os.PathLike
+    :param data: a dataframe to be saved as a feather-formatted file
+    :type data: pandas.DataFrame
+    :param path_to_file: path where a feather file is saved
+    :type path_to_file: str | os.PathLike
     :param index: whether to include the index as a column, defaults to ``False``
     :type index: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -603,18 +625,18 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
 
     .. seealso::
 
-        - Examples for the function :py:func:`pyhelpers.store.load_feather`.
+        - Examples for the function :func:`pyhelpers.store.load_feather`.
     """
 
-    assert isinstance(feather_data, pd.DataFrame)
+    assert isinstance(data, pd.DataFrame)
 
-    _check_saving_path(path_to_feather, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
-        if list(feather_data.index) != range(len(feather_data)) or index is True:
-            feather_data.reset_index().to_feather(path_to_feather, **kwargs)
+        if list(data.index) != range(len(data)) or index is True:
+            data.reset_index().to_feather(path_to_file, **kwargs)
         else:
-            feather_data.to_feather(path_to_feather, **kwargs)
+            data.to_feather(path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
@@ -623,7 +645,7 @@ def save_feather(feather_data, path_to_feather, index=False, verbose=False, **kw
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Images
+# Image
 def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -667,7 +689,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         :align: center
         :width: 75%
 
-        An example figure created for the function :py:func:`~pyhelpers.store.save_svg_as_emf`.
+        An example figure created for the function :func:`~pyhelpers.store.save_svg_as_emf`.
 
     .. code-block:: python
 
@@ -731,14 +753,14 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
                 " however, it is not found on this device.\nInstall it and then try again.")
 
 
-def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
+def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
     """
     Save a figure object to a file of a supported file format.
 
     This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
-    :param path_to_fig_file: path where a figure file is saved
-    :type path_to_fig_file: str | os.PathLike
+    :param path_to_file: path where a figure file is saved
+    :type path_to_file: str | os.PathLike
     :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
     :type dpi: int | None
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -773,7 +795,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         :align: center
         :width: 75%
 
-        An example figure created for the function :py:func:`~pyhelpers.store.save_fig`.
+        An example figure created for the function :func:`~pyhelpers.store.save_fig`.
 
     .. code-block:: python
 
@@ -791,14 +813,14 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         >>> plt.close()
     """
 
-    _check_saving_path(path_to_fig_file, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
-    file_ext = pathlib.Path(path_to_fig_file).suffix
+    file_ext = pathlib.Path(path_to_file).suffix
 
     try:
         mpl_plt = _check_dependency(name='matplotlib.pyplot')
 
-        mpl_plt.savefig(path_to_fig_file, dpi=dpi, **kwargs)
+        mpl_plt.savefig(path_to_file, dpi=dpi, **kwargs)
 
         if verbose:
             print("Done.")
@@ -807,7 +829,7 @@ def save_fig(path_to_fig_file, dpi=None, verbose=False, conv_svg_to_emf=False, *
         print(f"Failed. {_format_err_msg(e)}")
 
     if file_ext == ".svg" and conv_svg_to_emf:
-        save_svg_as_emf(path_to_fig_file, path_to_fig_file.replace(file_ext, ".emf"), verbose=verbose)
+        save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
 
 
 # Web page
@@ -953,13 +975,13 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
     :type confirmation_required: bool
     :param kwargs: [optional] parameters of one of the following functions:
-        :py:func:`~pyhelpers.store.save_pickle`,
-        :py:func:`~pyhelpers.store.save_spreadsheet`,
-        :py:func:`~pyhelpers.store.save_json`,
-        :py:func:`~pyhelpers.store.save_joblib`,
-        :py:func:`~pyhelpers.store.save_feather`,
-        :py:func:`~pyhelpers.store.save_fig` or
-        :py:func:`~pyhelpers.store.save_web_page_as_pdf`
+        :func:`~pyhelpers.store.save_pickle`,
+        :func:`~pyhelpers.store.save_spreadsheet`,
+        :func:`~pyhelpers.store.save_json`,
+        :func:`~pyhelpers.store.save_joblib`,
+        :func:`~pyhelpers.store.save_feather`,
+        :func:`~pyhelpers.store.save_fig` or
+        :func:`~pyhelpers.store.save_web_page_as_pdf`
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
@@ -1028,25 +1050,25 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     .. seealso::
 
-        - Examples for the function :py:func:`pyhelpers.store.load_data`.
+        - Examples for the function :func:`pyhelpers.store.load_data`.
     """
 
     path_to_file_ = str(path_to_file).lower()
 
     if path_to_file_.endswith((".pkl", ".pickle")):
-        save_pickle(data, path_to_pickle=path_to_file, **kwargs)
+        save_pickle(data, path_to_file=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        save_spreadsheet(data, path_to_spreadsheet=path_to_file, **kwargs)
+        save_spreadsheet(data, path_to_file=path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".json"):
-        save_json(data, path_to_json=path_to_file, **kwargs)
+        save_json(data, path_to_file=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        save_joblib(data, path_to_joblib=path_to_file, **kwargs)
+        save_joblib(data, path_to_file=path_to_file, **kwargs)
 
     elif path_to_file_.endswith((".fea", ".feather")):
-        save_feather(data, path_to_feather=path_to_file, **kwargs)
+        save_feather(data, path_to_file=path_to_file, **kwargs)
 
     elif path_to_file_.endswith(".pdf"):
         from pyhelpers.ops import is_url
@@ -1057,7 +1079,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     elif path_to_file_.endswith(
             ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
              '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
-        save_fig(path_to_fig_file=path_to_file, **kwargs)
+        save_fig(path_to_file=path_to_file, **kwargs)
 
     else:
         if err_warning:
@@ -1066,7 +1088,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
                 "`pyhelpers.store.save_data`.")
 
         if _confirmed("To save the data as a pickle file\n?", confirmation_required):
-            save_pickle(data, path_to_pickle=path_to_file, **kwargs)
+            save_pickle(data, path_to_file=path_to_file, **kwargs)
 
 
 # ==================================================================================================
@@ -1159,13 +1181,13 @@ def _set_index(data, index=None):
     return data_
 
 
-# Pickle files
-def load_pickle(path_to_pickle, verbose=False, **kwargs):
+# Pickle file
+def load_pickle(path_to_file, verbose=False, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
-    :param path_to_pickle: path where a pickle file is saved
-    :type path_to_pickle: str | os.PathLike
+    :param path_to_file: path where a pickle file is saved
+    :type path_to_file: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `pickle.load`_
@@ -1177,7 +1199,7 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_pickle`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_pickle`.
 
     **Examples**::
 
@@ -1196,10 +1218,10 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_pickle, verbose=verbose)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
-        with open(file=path_to_pickle, mode='rb') as pickle_in:
+        with open(file=path_to_file, mode='rb') as pickle_in:
             pickle_data = pickle.load(pickle_in, **kwargs)
 
         if verbose:
@@ -1211,15 +1233,15 @@ def load_pickle(path_to_pickle, verbose=False, **kwargs):
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Spreadsheets
-def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **kwargs):
+# Spreadsheet
+def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, **kwargs):
     """
     Load data from a `CSV`_ file.
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
 
-    :param path_to_csv: path where a `CSV`_ file is saved
-    :type path_to_csv: str | os.PathLike
+    :param path_to_file: path where a `CSV`_ file is saved
+    :type path_to_file: str | os.PathLike
     :param delimiter: delimiter used between values in the data file, defaults to ``','``
     :type delimiter: str
     :param header: index number of the rows used as column names, defaults to ``0``
@@ -1239,7 +1261,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_spreadsheet`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_spreadsheet`.
 
     **Examples**::
 
@@ -1278,10 +1300,10 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         2       Leeds  582044   152953
     """
 
-    _check_loading_path(path_to_file=path_to_csv, verbose=verbose)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
-        with open(path_to_csv, mode='r') as csv_file:
+        with open(path_to_file, mode='r') as csv_file:
             csv_data_ = csv.reader(csv_file, delimiter=delimiter, **kwargs)
             csv_rows = [row for row in csv_data_]
 
@@ -1300,7 +1322,7 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         return csv_data
 
     except TypeError:
-        csv_data = pd.read_csv(path_to_csv, index_col=index, **kwargs)
+        csv_data = pd.read_csv(path_to_file, index_col=index, **kwargs)
 
         return csv_data
 
@@ -1308,12 +1330,12 @@ def load_csv(path_to_csv, delimiter=',', header=0, index=None, verbose=False, **
         print(f"Failed. {_format_err_msg(e)}")
 
 
-def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs):
+def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
     """
-    Load multiple sheets of an `Microsoft Excel`_ file.
+    Load multiple sheets of an `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
-    :param path_to_spreadsheet: path where a spreadsheet is saved
-    :type path_to_spreadsheet: str | os.PathLike
+    :param path_to_file: path where a spreadsheet is saved
+    :type path_to_file: str | os.PathLike
     :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
     :type as_dict: bool
     :param verbose: whether to print relevant information in console, defaults to ``False``
@@ -1322,15 +1344,18 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
     :rtype: list | dict
 
-    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`Microsoft Excel`:
+        https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`OpenDocument`:
+        https://en.wikipedia.org/wiki/OpenDocument
     .. _`pandas.ExcelFile.parse`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
 
     .. note::
 
-        - Example data can be referred to the functions
-          :py:func:`pyhelpers.store.save_multiple_spreadsheets` and
-          :py:func:`pyhelpers.store.save_spreadsheet`.
+         - Example data can be referred to the functions
+           :func:`pyhelpers.store.save_multiple_spreadsheets` and
+           :func:`pyhelpers.store.save_spreadsheet`.
 
     **Examples**::
 
@@ -1338,8 +1363,23 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
         >>> from pyhelpers.dirs import cd
 
         >>> dat_dir = cd("tests\\data")
-        >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
 
+        >>> path_to_xlsx = cd(dat_dir, "dat.ods")
+        >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
+        Loading "tests\\data\\dat.ods" ...
+            'TestSheet1'. ... Done.
+            'TestSheet2'. ... Done.
+        >>> list(wb_data.keys())
+        ['TestSheet1', 'TestSheet2']
+        >>> wb_data['TestSheet1']
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+
+        >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
         >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
         Loading "tests\\data\\dat.xlsx" ...
             'TestSheet1'. ... Done.
@@ -1370,29 +1410,24 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_spreadsheet, verbose=verbose, verbose_end=" ... \n")
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, verbose_end=" ... \n")
 
-    excel_file_reader = pd.ExcelFile(path_to_spreadsheet)
+    with pd.ExcelFile(path_to_file) as excel_file_reader:
+        sheet_names = excel_file_reader.sheet_names
+        workbook_dat = []
 
-    sheet_names = excel_file_reader.sheet_names
-    workbook_dat = []
-
-    for sheet_name in sheet_names:
-        if verbose:
-            print("\t'{}'.".format(sheet_name), end=" ... ")
-
-        try:
-            sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
+        for sheet_name in sheet_names:
             if verbose:
-                print("Done.")
+                print(f"\t'{sheet_name}'.", end=" ... ")
+            try:
+                sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
+                if verbose:
+                    print("Done.")
+            except Exception as e:
+                sheet_dat = None
+                print(f"Failed. {_format_err_msg(e)}")
 
-        except Exception as e:
-            sheet_dat = None
-            print(f"Failed. {_format_err_msg(e)}")
-
-        workbook_dat.append(sheet_dat)
-
-    excel_file_reader.close()
+            workbook_dat.append(sheet_dat)
 
     if as_dict:
         workbook_data = dict(zip(sheet_names, workbook_dat))
@@ -1402,13 +1437,13 @@ def load_spreadsheets(path_to_spreadsheet, as_dict=True, verbose=False, **kwargs
     return workbook_data
 
 
-# JSON files
-def load_json(path_to_json, engine=None, verbose=False, **kwargs):
+# JSON file
+def load_json(path_to_file, engine=None, verbose=False, **kwargs):
     """
     Load data from a `JSON`_ file.
 
-    :param path_to_json: path where a json file is saved
-    :type path_to_json: str | os.PathLike
+    :param path_to_file: path where a json file is saved
+    :type path_to_file: str | os.PathLike
     :param engine: an open-source Python package for JSON serialization, options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
         ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
@@ -1433,7 +1468,7 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_json`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_json`.
 
     **Examples**::
 
@@ -1457,15 +1492,15 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
     else:
         mod = sys.modules.get('json')
 
-    _check_loading_path(path_to_file=path_to_json, verbose=verbose)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
         if engine == 'orjson':
-            with open(path_to_json, mode='rb') as json_in:
+            with open(path_to_file, mode='rb') as json_in:
                 json_data = mod.loads(json_in.read(), **kwargs)
 
         else:
-            with open(path_to_json, mode='r') as json_in:
+            with open(path_to_file, mode='r') as json_in:
                 json_data = mod.load(json_in, **kwargs)
 
         if verbose:
@@ -1478,12 +1513,12 @@ def load_json(path_to_json, engine=None, verbose=False, **kwargs):
 
 
 # Joblib
-def load_joblib(path_to_joblib, verbose=False, **kwargs):
+def load_joblib(path_to_file, verbose=False, **kwargs):
     """
     Load data from a `joblib`_ file.
 
-    :param path_to_joblib: path where a joblib file is saved
-    :type path_to_joblib: str | os.PathLike
+    :param path_to_file: path where a joblib file is saved
+    :type path_to_file: str | os.PathLike
     :param verbose: whether to print relevant information in console, defaults to ``False``
     :type verbose: bool | int
     :param kwargs: [optional] parameters of `joblib.load`_
@@ -1495,7 +1530,7 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_joblib`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_joblib`.
 
     **Examples**::
 
@@ -1523,10 +1558,10 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
 
     joblib_ = _check_dependency(name='joblib')
 
-    _check_loading_path(path_to_file=path_to_joblib, verbose=verbose)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
-        joblib_data = joblib_.load(filename=path_to_joblib, **kwargs)
+        joblib_data = joblib_.load(filename=path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
@@ -1537,13 +1572,13 @@ def load_joblib(path_to_joblib, verbose=False, **kwargs):
         print(f"Failed. {_format_err_msg(e)}")
 
 
-# Feather files
-def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
+# Feather file
+def load_feather(path_to_file, verbose=False, index=None, **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
 
-    :param path_to_feather: path where a feather file is saved
-    :type path_to_feather: str | os.PathLike
+    :param path_to_file: path where a feather file is saved
+    :type path_to_file: str | os.PathLike
     :param index: index number of the column(s) to use as the row labels of the dataframe,
         defaults to ``None``
     :type index: str | int | list | None
@@ -1563,7 +1598,7 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_feather`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_feather`.
 
     **Examples**::
 
@@ -1582,10 +1617,10 @@ def load_feather(path_to_feather, verbose=False, index=None, **kwargs):
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_feather, verbose=verbose)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
-        feather_data = pd.read_feather(path_to_feather, **kwargs)
+        feather_data = pd.read_feather(path_to_file, **kwargs)
 
         feather_data = _set_index(feather_data, index=index)
 
@@ -1621,12 +1656,12 @@ def load_data(path_to_file, err_warning=True, **kwargs):
         defaults to ``True``
     :type err_warning: bool
     :param kwargs: [optional] parameters of one of the following functions:
-        :py:func:`~pyhelpers.store.load_pickle`,
-        :py:func:`~pyhelpers.store.load_csv`,
-        :py:func:`~pyhelpers.store.load_multiple_spreadsheets`,
-        :py:func:`~pyhelpers.store.load_json`,
-        :py:func:`~pyhelpers.store.load_joblib` or
-        :py:func:`~pyhelpers.store.load_feather`
+        :func:`~pyhelpers.store.load_pickle`,
+        :func:`~pyhelpers.store.load_csv`,
+        :func:`~pyhelpers.store.load_multiple_spreadsheets`,
+        :func:`~pyhelpers.store.load_json`,
+        :func:`~pyhelpers.store.load_joblib` or
+        :func:`~pyhelpers.store.load_feather`
     :return: loaded data
     :rtype: any
 
@@ -1639,7 +1674,7 @@ def load_data(path_to_file, err_warning=True, **kwargs):
 
     .. note::
 
-        - Example data can be referred to the function :py:func:`pyhelpers.store.save_data`.
+        - Example data can be referred to the function :func:`pyhelpers.store.save_data`.
 
     **Examples**::
 
@@ -2040,7 +2075,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         print("An error occurred: {}".format(e))
 
 
-def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **kwargs):
+def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file
     using VBScript.
@@ -2049,8 +2084,8 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **
 
     :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
     :type xlsx_pathname: str
-    :param csv_pathname_: pathname of a CSV format file;
-    :type csv_pathname_: str | None
+    :param csv_pathname: pathname of a CSV format file;
+    :type csv_pathname: str | None
     :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
     :type sheet_name: str
     :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
@@ -2062,7 +2097,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **
     .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
 
-    command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname_, sheet_name]
+    command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname, sheet_name]
     if platform.system() == 'Linux':
         command_args = ["wine"] + command_args
 
@@ -2072,22 +2107,22 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname_, sheet_name='1', vbscript=None, **
     return ret_code
 
 
-def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replace', vbscript=None,
+def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
-    :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
-    :type xlsx_pathname: str | os.PathLike
-    :param csv_pathname: pathname of a CSV format file;
+    :param path_to_xlsx: pathname of an Excel spreadsheet (in the format of .xlsx)
+    :type path_to_xlsx: str | os.PathLike
+    :param path_to_csv: pathname of a CSV format file;
         when ``csv_pathname=None`` (default),
         the target CSV file is generated as a `tempfile.NamedTemporaryFile`_;
         when ``csv_pathname=""``,
         the target CSV file is generated at the same directory where the source Excel spreadsheet is;
         otherwise, it could also be a specific pathname
-    :type csv_pathname: str | os.PathLike | None
+    :type path_to_csv: str | os.PathLike | None
     :param engine: engine used for converting .xlsx/.xls to .csv;
         when ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
         when ``engine='xlsx2csv'``, the function would rely on `xlsx2csv`_
@@ -2156,9 +2191,9 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
 
     if verbose:
         try:
-            rel_path = os.path.relpath(xlsx_pathname)
+            rel_path = os.path.relpath(path_to_xlsx)
         except ValueError:
-            rel_path = copy.copy(xlsx_pathname)
+            rel_path = copy.copy(path_to_xlsx)
 
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
@@ -2166,29 +2201,29 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         if vbscript is None:
             vbscript = str(importlib.resources.files(__package__).joinpath("data/xlsx2csv.vbs"))
 
-        if csv_pathname is None:
+        if path_to_csv is None:
             temp_file = tempfile.NamedTemporaryFile()
-            csv_pathname_ = temp_file.name + ".csv"
-        elif csv_pathname == "":
-            csv_pathname_ = xlsx_pathname.replace(".xlsx", ".csv")
+            csv_pathname = temp_file.name + ".csv"
+        elif path_to_csv == "":
+            csv_pathname = path_to_xlsx.replace(".xlsx", ".csv")
         else:
-            csv_pathname_ = copy.copy(csv_pathname)
+            csv_pathname = copy.copy(path_to_csv)
 
-        if os.path.exists(csv_pathname_):
+        if os.path.exists(csv_pathname):
             if if_exists == 'replace':
-                os.remove(csv_pathname_)
+                os.remove(csv_pathname)
             elif if_exists == 'pass':
-                return csv_pathname_
+                return csv_pathname
 
         ret_code = _xlsx_to_csv(
-            xlsx_pathname=xlsx_pathname, csv_pathname_=csv_pathname_, sheet_name=sheet_name,
+            xlsx_pathname=path_to_xlsx, csv_pathname=csv_pathname, sheet_name=sheet_name,
             vbscript=vbscript, **kwargs)
 
         if verbose:
             print("Done." if ret_code == 0 else "Failed.")
 
         if not ret_null and ret_code == 0:
-            return csv_pathname_
+            return csv_pathname
 
     elif engine == 'xlsx2csv':
         xlsx2csv = _check_dependency(name='xlsx2csv')
@@ -2196,7 +2231,7 @@ def xlsx_to_csv(xlsx_pathname, csv_pathname=None, engine=None, if_exists='replac
         buffer = io.StringIO()
         try:
             xlsx2csv.Xlsx2csv(
-                xlsxfile=xlsx_pathname, sheet_name=sheet_name, outputencoding="utf-8").convert(buffer)
+                xlsxfile=path_to_xlsx, sheet_name=sheet_name, outputencoding="utf-8").convert(buffer)
             buffer.seek(0)
 
             if verbose:
