@@ -218,7 +218,7 @@ def test_find_matched_str():
 
 
 def test_find_similar_str():
-    from pyhelpers.text import find_similar_str, _find_str_by_thefuzz
+    from pyhelpers.text import find_similar_str, _find_str_by_rapidfuzz
 
     lookup_lst = [
         'Anglia',
@@ -237,9 +237,9 @@ def test_find_similar_str():
     y = find_similar_str(x='angle', lookup_list=lookup_lst, n=2)
     assert y == ['Anglia', 'Wales']
 
-    y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='thefuzz')
+    y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='rapidfuzz')
     assert y == 'Anglia'
-    y = find_similar_str('angle', lookup_lst, n=2, engine='thefuzz')
+    y = find_similar_str('angle', lookup_lst, n=2, engine='rapidfuzz')
     assert y == ['Anglia', 'Wales']
 
     y = find_similar_str(x='x', lookup_list=lookup_lst)
@@ -249,18 +249,18 @@ def test_find_similar_str():
     y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, cutoff=0.25)
     assert y == 'Wessex'
 
-    y = find_similar_str(x='x', lookup_list=lookup_lst, engine='thefuzz')
+    y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzz')
     assert y == 'Wessex'
-    y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='thefuzz')
+    y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzz')
     assert y == ['Wessex', 'Western']
 
-    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine='thefuzz')
+    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine='fuzz')
     assert y is None
 
-    y = find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=_find_str_by_thefuzz)
+    y = find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=_find_str_by_rapidfuzz)
     assert y == 'Anglia'
 
-    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine=_find_str_by_thefuzz)
+    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine=_find_str_by_rapidfuzz)
     assert y is None
 
     with pytest.raises(Exception):

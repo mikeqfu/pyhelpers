@@ -100,12 +100,13 @@ def test_save_spreadsheet(capfd, file_ext, engine):
 
     pathname = pathname_.name + file_ext
     filename = os.path.basename(pathname)
-    save_spreadsheet(dat, pathname, verbose=True)
-    out, _ = capfd.readouterr()
 
     if file_ext == ".pickle":
-        assert all(x in out for x in [f'Saving "{filename}"', "", "File extension must be"])
+        with pytest.raises(AssertionError, match=r"File extension must be"):
+            save_spreadsheet(dat, pathname, verbose=True)
     else:
+        save_spreadsheet(dat, pathname, verbose=True)
+        out, _ = capfd.readouterr()
         assert f'Saving "{filename}"' in out and "Done." in out
         os.remove(pathname)
         os.remove(pathname_.name)
@@ -200,11 +201,11 @@ def test_save_feather(capfd, index):
     pathname = pathname_.name + ".feather"
     filename = os.path.basename(pathname)
 
-    save_feather(feather_dat, path_to_feather=pathname, index=index, verbose=True)
+    save_feather(feather_dat, path_to_file=pathname, index=index, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Saving "{filename}"' in out and "Done." in out
 
-    save_feather(feather_dat.reset_index(), path_to_feather=pathname, verbose=True)
+    save_feather(feather_dat.reset_index(), path_to_file=pathname, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Updating "{filename}"' in out and "Done." in out
 
