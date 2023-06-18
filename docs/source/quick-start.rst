@@ -2,9 +2,7 @@
 Quick start
 ===========
 
-This quick-start tutorial provides a few examples for each of the :doc:`modules`. These examples demonstrate the capabilities of `pyhelpers`_ in assisting us with data manipulation tasks in our day-to-day work.
-
-.. _`pyhelpers`: https://pypi.org/project/pyhelpers/
+This quick-start tutorial provides a few examples for each of the :doc:`modules`. These examples demonstrate the capabilities of `pyhelpers <https://pypi.org/project/pyhelpers/>`_ in assisting us with data manipulation tasks in our day-to-day work.
 
 
 .. _quickstart-preparation:
@@ -12,14 +10,11 @@ This quick-start tutorial provides a few examples for each of the :doc:`modules`
 Preparation - Create a data set
 ===============================
 
-To begin with, let's use `NumPy`_ and `Pandas`_ to create an example data set, which is used throughout this tutorial.
-
-.. _`NumPy`: https://numpy.org/
-.. _`Pandas`: https://pandas.pydata.org/
+To begin with, let's use `NumPy <https://numpy.org/>`_ and `Pandas <https://pandas.pydata.org/>`_ to create an example data set, which is used throughout this tutorial.
 
 .. note::
 
-    - `NumPy`_ and `Pandas`_ are installed along with the installation of `pyhelpers`_ as they are among the dependencies of the package.
+    - `NumPy <https://numpy.org/>`_ and `Pandas <https://pandas.pydata.org/>`_ are installed along with the installation of `pyhelpers <https://pypi.org/project/pyhelpers/>`_ as they are among the dependencies of the package.
 
 For demonstration purposes, firstly, we can use the function `numpy.random.rand`_ to generate a 100-by-100 Numpy array of random samples drawn from a standard uniform distribution, and name it ``random_array``:
 
@@ -83,7 +78,7 @@ Then, we use the class `pandas.DataFrame`_ to transform ``random_array`` into a 
 Alter settings for display of data
 ==================================
 
-The module :mod:`pyhelpers.settings` can be used to alter a few frequently-used parameters (of `GDAL`_, `Matplotlib`_, `NumPy`_ and `Pandas`_) such that the working environment is adapted to suit our own preferences. For example, we could apply the function :func:`~pyhelpers.settings.np_preferences` with its default parameters whereby we may have a 'neater' view of the ``random_array``:
+The module :mod:`pyhelpers.settings` can be used to alter a few frequently-used parameters (of `GDAL`_, `Matplotlib`_, `NumPy <https://numpy.org/>`_ and `Pandas <https://pandas.pydata.org/>`_) such that the working environment is adapted to suit our own preferences. For example, we could apply the function :func:`~pyhelpers.settings.np_preferences` with its default parameters whereby we may have a 'neater' view of the ``random_array``:
 
 .. _`Matplotlib`: https://matplotlib.org/
 .. _`GDAL`: https://gdal.org/
@@ -135,7 +130,7 @@ To reset the display, we can set ``reset=True`` by which the altered parameters 
 
 .. _`numpy.set_printoptions`: https://numpy.org/doc/stable/reference/generated/numpy.set_printoptions.html
 
-For another example, the function :func:`~pyhelpers.settings.pd_preferences` alters a few `Pandas`_ `options and settings`_, such as representation and maximum number of columns when displaying a Pandas DataFrame. Applying the function with its default parameters should allow us to view all the 100 columns and the precision of numbers changes to four decimal places.
+For another example, the function :func:`~pyhelpers.settings.pd_preferences` alters a few `Pandas <https://pandas.pydata.org/>`_ `options and settings`_, such as representation and maximum number of columns when displaying a Pandas DataFrame. Applying the function with its default parameters should allow us to view all the 100 columns and the precision of numbers changes to four decimal places.
 
 .. _`options and settings`: https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html
 
@@ -417,7 +412,7 @@ Before we move on, let's delete again the Pickle file (i.e. ``path_to_pickle``) 
 
 .. note::
 
-    - In the module :mod:`~pyhelpers.store`, some functions such as :func:`~pyhelpers.store.save_spreadsheet` and :func:`~pyhelpers.store.save_spreadsheets` may require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are NOT essential dependencies for the installation of `pyhelpers`_. We could install them as needed via an appropriate method such as ``pip install``.
+    - In the module :mod:`pyhelpers.store`, some functions such as :func:`~pyhelpers.store.save_spreadsheet` and :func:`~pyhelpers.store.save_spreadsheets` may require `openpyxl`_, `XlsxWriter`_ or `xlrd`_, which are NOT essential dependencies for the installation of `pyhelpers <https://pypi.org/project/pyhelpers/>`_. We could install them as needed via an appropriate method such as ``pip install``.
 
 .. _openpyxl: https://pypi.org/project/openpyxl/
 .. _XlsxWriter: https://pypi.org/project/XlsxWriter/
