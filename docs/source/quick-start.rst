@@ -2,7 +2,7 @@
 Quick start
 ===========
 
-This brief tutorial provides a few examples for each of the :doc:`modules` to demonstrate that what `pyhelpers`_ could offer to assist us in performing data manipulation tasks in our day-to-day work.
+This quick-start tutorial provides a few examples for each of the :doc:`modules`. These examples demonstrate the capabilities of `pyhelpers`_ in assisting us with data manipulation tasks in our day-to-day work.
 
 .. _`pyhelpers`: https://pypi.org/project/pyhelpers/
 

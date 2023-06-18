@@ -9,6 +9,7 @@
 
 PyHelpers is a lightweight open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
 
+
 ## Installation
 
 To install the latest release of pyhelpers from [PyPI](https://pypi.org/project/pyhelpers/) via [pip](https://pip.pypa.io/en/stable/cli/pip/):
@@ -19,9 +20,21 @@ pip install --upgrade pyhelpers
 
 For more information, please refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html).
 
+
+## Quick start
+
+Please check out [a quick-start tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) that provides a few examples for each of the [modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples demonstrate the capabilities of pyhelpers in assisting us with data manipulation tasks in our day-to-day work.
+
+
 ## Documentation
 
-The full PyHelpers documentation (including detailed examples and a quick-start tutorial) is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/): [[HTML](https://pyhelpers.readthedocs.io/en/latest/)\] \[[PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/)].
+The full PyHelpers documentation (including detailed examples) is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/): [[HTML](https://pyhelpers.readthedocs.io/en/latest/)\] \[[PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/)].
+
+
+## License
+
+PyHelpers is licensed under [GNU General Public License v3](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE) or later (GPLv3+).
+
 
 ## Cite as
 
@@ -40,6 +53,7 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
 ```
 
 (Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.)
+
 
 ## Contributors
 
@@ -60,7 +74,3 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
       </td>
   </tbody>
 </table>
-
-## License
-
-PyHelpers is licensed under [GNU General Public License v3](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE) or later (GPLv3+).
