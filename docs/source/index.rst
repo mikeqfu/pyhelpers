@@ -28,7 +28,7 @@ PyHelpers
 | **Author**: Qian Fu
 | **Email**: q.fu@bham.ac.uk
 
-PyHelpers is an open-source Python package designed as a lite toolkit for facilitating data (pre)processing. It offers a miscellaneous collection of handy utilities, which could assist us in performing many common data manipulation tasks, such as reading/writing of file-like objects, handling of various types of data (e.g. geographical data and textual data) and communication with relational databases (e.g. PostgreSQL and Microsoft SQL Server).
+PyHelpers is a lightweight open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
 
 
 .. toctree::

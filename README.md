@@ -17,15 +17,17 @@ To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/
 pip install --upgrade pyhelpers
 ```
 
-For more information, please refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html).
+Please also refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html) for more information. 
 
 ## Quick start
 
-Please refer to the [quick-start tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) that provides a few examples for each of the [modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples demonstrate the capabilities of PyHelpers in assisting us with data manipulation tasks in our day-to-day work.
+For a concise guide on how to utilise PyHelpers, we recommend checking out the [quick-start tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html), which features multiple illustrative examples for each of the [modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples effectively demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining your work processes.
 
 ## Documentation
 
-The full PyHelpers documentation (including detailed examples) is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/): [[HTML](https://pyhelpers.readthedocs.io/en/latest/)\] \[[PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/)].
+The complete PyHelpers documentation: [[HTML](https://pyhelpers.readthedocs.io/en/latest/)\] \[[PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/)]. 
+
+It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and provides a wealth of detailed examples.
 
 ## License
 
