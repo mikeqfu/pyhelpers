@@ -1,11 +1,11 @@
 # PyHelpers
 
 [![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
-[![Python version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
-[![Documentation status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
+[![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
+[![Documentation Status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/pypi/l/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
-[![Codacy grade (Code quality)](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://www.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mikeqfu/pyhelpers&amp;utm_campaign=Badge_Grade)
-[![Zenodo - DOI](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
 PyHelpers is a lightweight open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
 
