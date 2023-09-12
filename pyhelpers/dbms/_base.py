@@ -128,7 +128,7 @@ class _Base:
     def connect_database(self, database_name, verbose):
         pass
 
-    def disconnect_database(self, *args, **kwargs):
+    def disconnect_database(self, database_name=None, verbose=False):
         pass
 
     def _create_database(self, database_name, verbose, fmt):
