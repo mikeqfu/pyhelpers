@@ -342,8 +342,10 @@ def test_parse_csr_matrix(capfd):
         out, _ = capfd.readouterr()
         assert "Loading " in out and '\\data\\csr_mat.npz" ... Done.\n' in out
 
-    assert (parsed_csr_mat != csr_m).count_nonzero() == 0
-    assert (parsed_csr_mat != csr_m).nnz == 0
+    rslt = parsed_csr_mat != csr_m
+    assert isinstance(rslt, csr_matrix)
+    assert rslt.count_nonzero() == 0
+    assert rslt.nnz == 0
 
     _ = parse_csr_matrix("", verbose=True)
     out, _ = capfd.readouterr()
@@ -600,13 +602,13 @@ class TestGitHubFileDownloader:
         downloader.download()
         out, _ = capfd.readouterr()
         assert "tests/data/zipped/zipped.txt" in out
-        assert downloader.total_files == 12
+        assert downloader.total_files == 13
 
         downloader = GitHubFileDownloader(test_url, flatten_files=True, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
         assert "zipped.txt" in out
-        assert downloader.total_files == 12
+        assert downloader.total_files == 13
 
         shutil.rmtree(test_output_dir)
 
