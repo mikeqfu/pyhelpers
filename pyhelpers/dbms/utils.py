@@ -73,6 +73,78 @@ def get_default_database_address(db_cls):
     return database_address
 
 
+def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_name, mssql_table_name,
+                                memory_threshold, chunk_size, col_type):
+    memory_usage = sys.getsizeof(source_data) / 1024 ** 3
+    if memory_usage > memory_threshold:
+        np_ = _check_dependency(name='numpy')
+
+        source_data = np_.array_split(source_data, memory_usage // memory_threshold)
+
+        i = 0
+        while i < len(source_data):
+            postgres.import_data(
+                source_data[i], table_name=mssql_table_name,
+                schema_name=postgres_schema_name,
+                if_exists='replace' if i == 0 else 'append',
+                method=postgres.psql_insert_copy, chunk_size=chunk_size,
+                col_type=col_type, confirmation_required=False, verbose=False)
+
+            gc.collect()
+            i += 1
+
+    else:
+        postgres.import_data(
+            source_data, table_name=mssql_table_name, schema_name=postgres_schema_name,
+            if_exists='replace', method=postgres.psql_insert_copy,
+            chunk_size=chunk_size, col_type=col_type, confirmation_required=False,
+            verbose=False)
+
+    # Get primary keys from MSSQL
+    primary_keys = mssql.get_primary_keys(mssql_table_name, table_type='TABLE')
+
+    # Specify primary keys in PostgreSQL
+    postgres_pkey = postgres.get_primary_keys(
+        table_name=mssql_table_name, schema_name=postgres_schema_name)
+    if not postgres_pkey:
+        postgres.add_primary_keys(primary_keys, mssql_table_name, postgres_schema_name)
+
+    del source_data
+    gc.collect()
+
+
+def _get_col_type(mssql, mssql_table_name, source_data):
+
+    source_data_ = source_data.copy()
+
+    col_type = {}
+
+    check_dtypes = ['hierarchyid', 'varbinary']
+    check_dtypes_rslt = mssql.has_dtypes(mssql_table_name, dtypes=check_dtypes)
+
+    for dtype, if_exists, col_names in check_dtypes_rslt:
+        if if_exists:
+            if dtype == 'hierarchyid':
+                source_data_.loc[:, col_names] = source_data_[col_names].applymap(
+                    lambda x: str(x).replace('\\', '\\\\'))
+
+            bytea_list = [sqlalchemy.dialects.postgresql.BYTEA] * len(col_names)
+            col_type.update(dict(zip(col_names, bytea_list)))
+
+    return source_data_, col_type
+
+
+def _get_chunk_size(mssql, mssql_table_name, chunk_size=None):
+    row_count = mssql.get_row_count(mssql_table_name)
+
+    if row_count >= 1000000:
+
+        if chunk_size is None:
+            chunk_size = 1000000
+
+    return chunk_size
+
+
 def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None, chunk_size=None,
                         excluded_tables=None, file_tables=False, memory_threshold=2., update=False,
                         confirmation_required=True, verbose=True):
@@ -234,65 +306,16 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
                             msg = f"Copying {mssql_tbl} to {postgresql_tbl}"
                         print(f'\t{counter_msg} ' + msg, end=" ... ")
 
-                    row_count = mssql.get_row_count(mssql_table_name)
+                    chunk_size_ = _get_chunk_size(mssql, mssql_table_name, chunk_size=chunk_size)
 
-                    if row_count >= 1000000:
+                    source_data = mssql.read_table(table_name=mssql_table_name, chunk_size=chunk_size_)
 
-                        if chunk_size is None:
-                            chunk_size = 1000000
+                    source_data_, col_type = _get_col_type(mssql, mssql_table_name, source_data)
 
-                    source_data = mssql.read_table(table_name=mssql_table_name, chunk_size=chunk_size)
-
-                    col_type = {}
-
-                    check_dtypes = ['hierarchyid', 'varbinary']
-                    check_dtypes_rslt = mssql.has_dtypes(mssql_table_name, dtypes=check_dtypes)
-
-                    for dtype, if_exists, col_names in check_dtypes_rslt:
-                        if if_exists:
-                            if dtype == 'hierarchyid':
-                                source_data.loc[:, col_names] = source_data[col_names].applymap(
-                                    lambda x: str(x).replace('\\', '\\\\'))
-
-                            bytea_list = [sqlalchemy.dialects.postgresql.BYTEA] * len(col_names)
-                            col_type.update(dict(zip(col_names, bytea_list)))
-
-                    memory_usage = sys.getsizeof(source_data) / 1024 ** 3
-                    if memory_usage > memory_threshold:
-                        np_ = _check_dependency(name='numpy')
-
-                        source_data = np_.array_split(source_data, memory_usage // memory_threshold)
-
-                        i = 0
-                        while i < len(source_data):
-                            postgres.import_data(
-                                source_data[i], table_name=mssql_table_name,
-                                schema_name=postgres_schema_name,
-                                if_exists='replace' if i == 0 else 'append',
-                                method=postgres.psql_insert_copy, chunk_size=chunk_size,
-                                col_type=col_type, confirmation_required=False, verbose=False)
-
-                            gc.collect()
-                            i += 1
-
-                    else:
-                        postgres.import_data(
-                            source_data, table_name=mssql_table_name, schema_name=postgres_schema_name,
-                            if_exists='replace', method=postgres.psql_insert_copy,
-                            chunk_size=chunk_size, col_type=col_type, confirmation_required=False,
-                            verbose=False)
-
-                    # Get primary keys from MSSQL
-                    primary_keys = mssql.get_primary_keys(mssql_table_name, table_type='TABLE')
-
-                    # Specify primary keys in PostgreSQL
-                    postgres_pkey = postgres.get_primary_keys(
-                        table_name=mssql_table_name, schema_name=postgres_schema_name)
-                    if not postgres_pkey:
-                        postgres.add_primary_keys(primary_keys, mssql_table_name, postgres_schema_name)
-
-                    del source_data
-                    gc.collect()
+                    _mssql_postgres_import_data(
+                        mssql=mssql, postgres=postgres, source_data=source_data_,
+                        postgres_schema_name=postgres_schema_name, mssql_table_name=mssql_table_name,
+                        memory_threshold=memory_threshold, chunk_size=chunk_size_, col_type=col_type)
 
                     if verbose:
                         print("Done.")
@@ -310,7 +333,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
             table_counter += 1
 
         if verbose:
-            print(f"Completed.")
+            print("Completed.")
 
         if bool(error_log):
             return error_log

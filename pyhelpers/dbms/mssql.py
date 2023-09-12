@@ -718,9 +718,9 @@ class MSSQL(_Base):
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        query = sqlalchemy.text(
-            f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') "
-            f"SELECT 1 ELSE SELECT 0")
+        query = \
+            f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') " \
+            f"SELECT 1 ELSE SELECT 0"
 
         result = bool(self._execute(query)[0])
 

@@ -45,8 +45,14 @@ class _Base:
             Dropping "testdb" ... Done.
         """
 
+        if isinstance(query, str):
+            query_ = sqlalchemy.text(query)
+        else:
+            assert isinstance(query, sqlalchemy.TextClause)
+            query_ = query
+
         with self.engine.connect() as connection:
-            result_ = connection.execute(query)
+            result_ = connection.execute(query_)
 
         result = result_.fetchone()
 
@@ -489,7 +495,7 @@ class _Base:
                             print(if_exists_msg + f". ({add_msg})")
                             return None
                     elif if_exists == 'replace':
-                        print(if_exists_msg + f" and is replaced.")
+                        print(if_exists_msg + " and is replaced.")
 
                     if force_replace:
                         print("The existing table is forced to be dropped", end=" ... ")

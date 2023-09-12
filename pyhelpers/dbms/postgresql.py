@@ -267,8 +267,9 @@ class PostgreSQL(_Base):
 
         db_name = self.database_name if database_name is None else str(database_name)
 
-        query = sqlalchemy.text(
-            f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{db_name}');")
+        query = \
+            f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database " \
+            f"WHERE datname='{db_name}');"
 
         result = bool(self._execute(query)[0])
 
@@ -594,10 +595,10 @@ class PostgreSQL(_Base):
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        query = sqlalchemy.text(
-            f"SELECT EXISTS("
-            f"SELECT schema_name FROM information_schema.schemata "
-            f"WHERE schema_name='{schema_name_}');")
+        query = \
+            f"SELECT EXISTS(" \
+            f"SELECT schema_name FROM information_schema.schemata " \
+            f"WHERE schema_name='{schema_name_}');"
 
         result = bool(self._execute(query)[0])
 
@@ -843,10 +844,10 @@ class PostgreSQL(_Base):
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        query = sqlalchemy.text(
-            f"SELECT EXISTS("
-            f"SELECT * FROM information_schema.tables "
-            f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');")
+        query = \
+            f"SELECT EXISTS(" \
+            f"SELECT * FROM information_schema.tables " \
+            f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}');"
 
         result = bool(self._execute(query)[0])
 
