@@ -103,6 +103,16 @@ def linkcode_resolve(domain, info):
     return url
 
 
+# noinspection PyUnusedLocal
+def remove_module_docstring(app, what, name, obj, options, lines):
+    if what == "module" and name == "pyhelpers.dbms.utils":
+        del lines[:]
+
+
+def setup(app):
+    app.connect("autodoc-process-docstring", remove_module_docstring)
+
+
 # Enable to reference numbered figures:
 numfig = True
 numfig_secnum_depth = 0
@@ -178,7 +188,7 @@ latex_engine = 'pdflatex'
 
 # Grouping the document tree into LaTeX files:
 latex_documents = [
-    ('index',  # source start file
+    ('latexindex',  # source start file
      __pkgname__ + '.tex',  # target name
      __project__ + ' Documentation',  # title
      __author__,  # author

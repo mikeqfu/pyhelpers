@@ -21,6 +21,13 @@ Databases
 Database tools/utilities
 ------------------------
 
+.. py:module:: pyhelpers.dbms.utils
+
+.. automodule:: pyhelpers.dbms.utils
+    :noindex:
+    :no-members:
+    :no-inherited-members:
+
 .. autosummary::
     :toctree: _generated/
     :template: function.rst

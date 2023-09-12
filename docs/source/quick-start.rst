@@ -2,7 +2,10 @@
 Quick start
 ===========
 
-This quick-start tutorial provides a few examples for each of the :doc:`modules`. These examples demonstrate the capabilities of `pyhelpers <https://pypi.org/project/pyhelpers/>`_ in assisting us with data manipulation tasks in our day-to-day work.
+This quick-start tutorial provides a few examples for each of the :doc:`modules`. These examples are intended to demonstrate the capabilities of `pyhelpers`_ in assisting us with data manipulation tasks in our daily work.
+
+.. _`pyhelpers`: https://pypi.org/project/pyhelpers/
+
 
 
 .. _quickstart-preparation:
@@ -10,13 +13,16 @@ This quick-start tutorial provides a few examples for each of the :doc:`modules`
 Preparation - Create a data set
 ===============================
 
-To begin with, let's use `NumPy <https://numpy.org/>`_ and `Pandas <https://pandas.pydata.org/>`_ to create an example data set, which is used throughout this tutorial.
+To begin with, let's create an example data set using `NumPy`_ and `Pandas`_. This data set will be used throughout this tutorial.
+
+.. _`NumPy`: https://numpy.org/
+.. _`Pandas`: https://pandas.pydata.org/
 
 .. note::
 
-    - `NumPy <https://numpy.org/>`_ and `Pandas <https://pandas.pydata.org/>`_ are installed along with the installation of `pyhelpers <https://pypi.org/project/pyhelpers/>`_ as they are among the dependencies of the package.
+    - `NumPy`_ and `Pandas`_ are automatically installed when we install `pyhelpers`_ since they are among the the package's dependencies.
 
-For demonstration purposes, firstly, we can use the function `numpy.random.rand`_ to generate a 100-by-100 Numpy array of random samples drawn from a standard uniform distribution, and name it ``random_array``:
+For the purpose of demonstration, firstly, we can use the function `numpy.random.rand`_ to generate a 100-by-100 Numpy array of random samples drawn from a standard uniform distribution; let's name the array ``random_array``:
 
 .. _`numpy.random.rand`: https://numpy.org/doc/stable/reference/random/generated/numpy.random.rand.html
 
@@ -797,7 +803,6 @@ In pgAdmin, we can see the table has been added to the *Tables* list, as illustr
 
     The table *"public"."df_table_alt"*.
 
-
 .. _quickstart-dbms-examples-fetch-data:
 
 Fetch data from a database
@@ -875,8 +880,8 @@ Now we have removed all the databases created above, and restored the PostgreSQL
 
 -----------------------------------------------------------------
 
-Any issues regarding the use of the package are all welcome and should be logged/reported onto the `Bug Tracker`_.
+Any issues regarding the use of pyhelpers are all welcome and should be logged/reported onto `Issue Tracker`_.
 
-.. _`Bug Tracker`: https://github.com/mikeqfu/pyhelpers/issues
+.. _`Issue Tracker`: https://github.com/mikeqfu/pyhelpers/issues
 
 For more details and examples, check :doc:`modules`.
