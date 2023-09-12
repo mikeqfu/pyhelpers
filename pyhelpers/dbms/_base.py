@@ -116,10 +116,10 @@ class _Base:
             except Exception as e:
                 _print_failure_msg(e=e)
 
-    def database_exists(self, *args, **kwargs):
+    def database_exists(self, database_name):
         pass
 
-    def connect_database(self, *args, **kwargs):
+    def connect_database(self, database_name, verbose):
         pass
 
     def disconnect_database(self, *args, **kwargs):
@@ -152,7 +152,7 @@ class _Base:
             if verbose:
                 print("The database already exists.")
 
-        self.connect_database(database_name=database_name)
+        self.connect_database(database_name=database_name, verbose=False)
 
     def _schema_name(self, schema_name=None):
         """
@@ -333,10 +333,10 @@ class _Base:
 
         return item_names_, print_plural, print_items
 
-    def create_schema(self, *args, **kwargs):
+    def create_schema(self, schema_name, verbose):
         pass
 
-    def schema_exists(self, *args, **kwargs):
+    def schema_exists(self, schema_name):
         pass
 
     def _drop_schema(self, schema_names, fmt, query_fmt, confirmation_required=True, verbose=False):
@@ -388,7 +388,7 @@ class _Base:
                     except Exception as e:
                         _print_failure_msg(e)
 
-    def table_exists(self, *args, **kwargs):
+    def table_exists(self, table_name, schema_name):
         pass
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
@@ -422,7 +422,7 @@ class _Base:
                 except Exception as e:
                     _print_failure_msg(e)
 
-    def drop_table(self, *args, **kwargs):
+    def drop_table(self, table_name, schema_name, confirmation_required, verbose):
         pass
 
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
@@ -533,7 +533,8 @@ class _Base:
             if verbose == 2:
                 print("Done.")
 
-    def read_sql_query(self, *args, **kwargs):
+    def read_sql_query(self, sql_query, method, max_size_spooled, delimiter, tempfile_kwargs,
+                       stringio_kwargs, **kwargs):
         pass
 
     def _unique_rsq_args(self):
