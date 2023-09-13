@@ -2,6 +2,18 @@
 
 <br/>
 
+#### **[1.5.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.2)**
+
+(*13 September 2023*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.5.1...1.5.2) since [1.5.1](https://pypi.org/project/pyhelpers/1.5.1/):**
+
+- Turned the module [dbms](https://github.com/mikeqfu/pyhelpers/commit/14a0c902d43a4eabcf0044777afb550cd3468a47#diff-402d385f94d69cd9596a357c63ccdf2d12f55165339af5d3c1bd554fb5a5e146) into a [sub-package](https://github.com/mikeqfu/pyhelpers/commit/14a0c902d43a4eabcf0044777afb550cd3468a47#diff-6e2acc03b11f525b7b7e640c7d6d29d0e395dd1edfbbb74f96359d4019432b63).
+
+**For more information and detailed specifications, check out [PyHelpers 1.5.2 documentation](https://pyhelpers.readthedocs.io/en/1.5.2/).**
+
+<br/>
+
 #### **[1.5.1](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.1)**
 
 (*17 June 2023*)
