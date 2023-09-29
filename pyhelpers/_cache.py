@@ -52,6 +52,10 @@ def _check_dependency(name, package=None):
         >>> pyodbc_.__name__
         'pyodbc'
 
+        >>> sqlalchemy_dialects = _check_dependency(name='dialects', package='sqlalchemy')
+        >>> sqlalchemy_dialects.__name__
+        'sqlalchemy.dialects'
+
         >>> gdal_ = _check_dependency(name='gdal', package='osgeo')
         >>> gdal_.__name__
         'osgeo.gdal'
@@ -171,6 +175,26 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
 
 
 def _get_rel_pathname(pathname):
+    """
+    Get relative pathname of a file or a directory.
+
+    :param pathname: pathname of a file or a directory
+    :type pathname: str | os.PathLike[str]
+    :return: relative path to the given ``pathname``
+    :rtype: str | os.PathLike[str]
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _get_rel_pathname
+        >>> import os
+
+        >>> _get_rel_pathname(os.path.curdir)
+        '.'
+
+        >>> _get_rel_pathname("C:\\Windows")
+        'C:\\Windows'
+    """
+
     try:
         rel_path = os.path.relpath(pathname)
     except ValueError:
@@ -198,13 +222,25 @@ def _check_file_pathname(name, options=None, target=None):
         >>> import os
 
         >>> python_exe = "python.exe"
-        >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
-
-        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, possible_paths)
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
         >>> python_exe_exists
         True
-        >>> os.path.relpath(path_to_python_exe)
-        'venv\\Scripts\\python.exe'
+
+        >>> possible_paths = [
+        ...     "C:\\Program Files\\Python310",
+        ...     "C:\\Program Files\\Python310\\python.exe"]
+
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(
+        ...     python_exe, target=possible_paths[0])
+        >>> python_exe_exists
+        False
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(
+        ...     python_exe, target=possible_paths[1])
+        >>> python_exe_exists
+        True
+        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
+        >>> python_exe_exists
+        True
 
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
         >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
@@ -315,16 +351,22 @@ def _format_err_msg(e=None, msg=""):
     return err_msg
 
 
-def _print_failure_msg(e, msg="Failed."):
+def _print_failure_msg(e, msg="Failed.", verbose=True):
     """
     Print the error message associated with occurrence of an``Exception``.
 
     :param e: Exception or any of its subclasses, defaults to ``None``
     :type e: Exception | BaseException | str | None
+    :param msg: default error message, defaults to ``"Failed."``
+    :type msg: str
+    :param verbose: whether to print relevant information in console, defaults to ``True``
+    :type verbose: bool | int
     """
 
     err_msg = _format_err_msg(e=e, msg=msg)
-    print(err_msg)
+
+    if verbose:
+        print(err_msg)
 
 
 def example_dataframe(osgb36=False):
