@@ -1,0 +1,909 @@
+"""
+Utilities Internet-related tasks and manipulating data from online sources.
+"""
+
+import copy
+import html.parser
+import importlib.resources
+import json
+import os
+import random
+import re
+import secrets
+import shutil
+import socket
+import sys
+import urllib.parse
+import urllib.request
+
+import requests
+import requests.adapters
+import urllib3.util
+
+from .._cache import _check_dependency, _format_err_msg, _get_rel_pathname, _print_failure_msg, \
+    _USER_AGENT_STRINGS
+
+
+def is_network_connected():
+    """
+    Check whether the current machine can connect to the Internet.
+
+    :return: whether the Internet connection is currently working
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_network_connected
+
+        >>> is_network_connected()  # assuming the machine is currently connected to the Internet
+        True
+    """
+
+    host_name = socket.gethostname()
+    ip_address = socket.gethostbyname(host_name)
+
+    if ip_address == '127.0.0.1':
+        connected = False
+    else:
+        connected = True
+
+    return connected
+
+
+def is_url(url, partially=False):
+    """
+    Check whether ``url`` is a valid URL.
+
+    See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_]
+
+    :param url: a string-type variable
+    :type url: str
+    :param partially: whether to consider the input as partially valid, defaults to ``False``
+    :type partially: bool
+    :return: whether ``url`` is a valid URL
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_url
+
+        >>> is_url(url='https://github.com/mikeqfu/pyhelpers')
+        True
+
+        >>> is_url(url='github.com/mikeqfu/pyhelpers')
+        False
+
+        >>> is_url(url='github.com/mikeqfu/pyhelpers', partially=True)
+        True
+
+        >>> is_url(url='github.com')
+        False
+
+        >>> is_url(url='github.com', partially=True)
+        True
+
+        >>> is_url(url='github', partially=True)
+        False
+    """
+
+    # noinspection PyBroadException
+    try:
+        parsed_url = urllib.parse.urlparse(url)
+        schema_netloc = [parsed_url.scheme, parsed_url.netloc]
+
+        rslt = all(schema_netloc)
+
+        if rslt is False and not any(schema_netloc):
+            assert re.match(r'(/\w+)+|(\w+\.\w+)', parsed_url.path.lower())
+            if partially:
+                rslt = True
+        else:
+            assert re.match(r'(ht|f)tp(s)?', parsed_url.scheme.lower())
+
+    except Exception:  # (AssertionError, AttributeError)
+        rslt = False
+
+    return rslt
+
+
+def is_url_connectable(url):
+    """
+    Check whether the current machine can connect to a given URL.
+
+    :param url: a (valid) URL
+    :type url: str
+    :return: whether the machine can currently connect to the given URL
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_url_connectable
+
+        >>> url_0 = 'https://www.python.org/'
+        >>> is_url_connectable(url_0)
+        True
+
+        >>> url_1 = 'https://www.python.org1/'
+        >>> is_url_connectable(url_1)
+        False
+    """
+
+    try:
+        netloc = urllib.parse.urlparse(url).netloc
+        host = socket.gethostbyname(netloc)
+        s = socket.create_connection((host, 80))
+        s.close()
+
+        return True
+
+    except (socket.gaierror, OSError):
+        return False
+
+
+def is_downloadable(url, request_field='content-type', **kwargs):
+    """
+    Check whether a URL leads to a web page where there is downloadable contents.
+
+    :param url: a valid URL
+    :type url: str
+    :param request_field: name of the field/header indicating the original media type of the resource,
+        defaults to ``'content-type'``
+    :type request_field: str
+    :param kwargs: [optional] parameters of `requests.head`_
+    :return: whether the ``url`` leads to downloadable contents
+    :rtype: bool
+
+    .. _`requests.head`: https://2.python-requests.org/en/master/api/#requests.head
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_downloadable
+
+        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> is_downloadable(logo_url)
+        True
+
+        >>> google_url = 'https://www.google.co.uk/'
+        >>> is_downloadable(google_url)
+        False
+    """
+
+    kwargs.update({'allow_redirects': True})
+    h = requests.head(url=url, **kwargs)
+
+    content_type = h.headers.get(request_field).lower()
+
+    if content_type.startswith('text/html'):
+        downloadable = False
+    else:
+        downloadable = True
+
+    return downloadable
+
+
+def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default', **kwargs):
+    """
+    Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session.
+
+    :param url: a valid URL
+    :type url: str
+    :param max_retries: maximum number of retries, defaults to ``5``
+    :type max_retries: int
+    :param backoff_factor: ``backoff_factor`` of `urllib3.util.Retry`_, defaults to ``0.1``
+    :type backoff_factor: float
+    :param retry_status: a list of HTTP status codes that force to retry downloading,
+        inherited from ``status_forcelist`` of `urllib3.util.Retry`_;
+        when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
+    :param kwargs: [optional] parameters of `urllib3.util.Retry`_
+    :return: a `requests`_ session
+    :rtype: `requests.Session`_
+
+    .. _`requests`: https://docs.python-requests.org/en/latest/
+    .. _`urllib3.util.Retry`:
+        https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html#urllib3.util.Retry
+    .. _`requests.Session`:
+        https://2.python-requests.org/en/master/api/#request-sessions
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import init_requests_session
+
+        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+
+        >>> s = init_requests_session(logo_url)
+
+        >>> type(s)
+        requests.sessions.Session
+    """
+
+    if retry_status == 'default':
+        codes_for_retries = [429, 500, 502, 503, 504]
+    else:
+        codes_for_retries = copy.copy(retry_status)
+
+    kwargs.update({'backoff_factor': backoff_factor, 'status_forcelist': codes_for_retries})
+    retries = urllib3.util.Retry(total=max_retries, **kwargs)
+
+    session = requests.Session()
+
+    # noinspection HttpUrlsUsage
+    session.mount(
+        prefix='https://' if url.startswith('https:') else 'http://',
+        adapter=requests.adapters.HTTPAdapter(max_retries=retries))
+
+    return session
+
+
+class _FakeUserAgentParser(html.parser.HTMLParser):
+
+    def __init__(self, browser_name):
+        super().__init__()
+        self.reset()
+        self.recording = 0
+        self.data = []
+        self.browser_name = browser_name
+
+    def error(self, message):
+        pass
+
+    def handle_starttag(self, tag, attrs):
+        if tag != 'a':
+            return
+
+        if self.recording:
+            self.recording += 1
+            return
+
+        if tag == 'a':
+            for name, link in attrs:
+                if (name == 'href' and link.startswith(f'/{self.browser_name}') and
+                        link.endswith('.php')):
+                    break
+                else:
+                    return
+            self.recording = 1
+
+    def handle_endtag(self, tag):
+        if tag == 'a' and self.recording:
+            self.recording -= 1
+
+    def handle_data(self, data):
+        if self.recording:
+            self.data.append(data.strip())
+
+
+def _user_agent_strings(browser_names=None, dump_dat=True):
+    """
+    Get a dictionary of user-agent strings for popular browsers.
+
+    :param browser_names: names of a list of popular browsers
+    :type browser_names: list
+    :return: a dictionary of user-agent strings for popular browsers
+    :rtype: dict
+
+    **Examples**::
+
+        >>> from pyhelpers.ops.webutils import _user_agent_strings
+
+        >>> uas = _user_agent_strings()
+        >>> list(uas.keys())
+        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+    """
+
+    if browser_names is None:
+        browser_names_ = ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+    else:
+        browser_names_ = browser_names.copy()
+
+    resource_url = 'https://useragentstring.com/pages/useragentstring.php'
+
+    user_agent_strings = {}
+    for browser_name in browser_names_:
+        # url = resource_url.replace('useragentstring.php', browser_name.replace(" ", "+") + '/')
+        url = resource_url + f'?name={browser_name.replace(" ", "+")}'
+        response = requests.get(url=url)
+        fua_parser = _FakeUserAgentParser(browser_name=browser_name)
+        fua_parser.feed(response.text)
+        user_agent_strings[browser_name] = sorted(list(set(fua_parser.data)))
+
+    if dump_dat and all(user_agent_strings.values()):
+        path_to_uas = importlib.resources.files(__package__).joinpath("../data/user-agent-strings.json")
+        with path_to_uas.open(mode='w') as f:
+            f.write(json.dumps(user_agent_strings, indent=4))
+
+    return user_agent_strings
+
+
+def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
+    """
+    Load user-agent strings of popular browsers.
+
+    The current version collects a partially comprehensive list of user-agent strings for
+    `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_ and `Opera`_.
+
+    :param shuffled: whether to randomly shuffle the user-agent strings, defaults to ``False``
+    :type shuffled: bool
+    :param flattened: whether to make a list of all available user-agent strings, defaults to ``False``
+    :type flattened: bool
+    :param update: whether to update the backup data of user-agent strings, defaults to ``False``
+    :type update: bool
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :return: a dictionary of user agent strings for popular browsers
+    :rtype: dict | list
+
+    .. _`Chrome`: https://useragentstring.com/pages/useragentstring.php?name=Chrome
+    .. _`Firefox`: https://useragentstring.com/pages/useragentstring.php?name=Firefox
+    .. _`Safari`: https://useragentstring.com/pages/useragentstring.php?name=Safari
+    .. _`Edge`: https://useragentstring.com/pages/useragentstring.php?name=Edge
+    .. _`Internet Explorer`: https://useragentstring.com/pages/useragentstring.php?name=Internet+Explorer
+    .. _`Opera`: https://useragentstring.com/pages/useragentstring.php?name=Opera
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import load_user_agent_strings
+
+        >>> uas = load_user_agent_strings()
+
+        >>> list(uas.keys())
+        ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
+        >>> type(uas['Chrome'])
+        list
+        >>> uas['Chrome'][0]
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/...
+
+        >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
+        >>> type(uas_list)
+        list
+        >>> uas_list[0]  # a random one
+        'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.792.0 Saf...
+
+    .. note::
+
+        The order of the elements in ``uas_list`` may be different every time we run the example
+        as ``shuffled=True``.
+    """
+
+    if not update:
+        user_agent_strings = _USER_AGENT_STRINGS.copy()
+
+    else:
+        if verbose:
+            print("Updating the backup data of user-agent strings", end=" ... ")
+
+        try:
+            user_agent_strings = _user_agent_strings(dump_dat=True)
+
+            importlib.reload(sys.modules.get('pyhelpers._cache'))
+
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+            user_agent_strings = load_user_agent_strings(update=False, verbose=False)
+
+    if shuffled:
+        for browser_name, ua_str in user_agent_strings.items():
+            random.shuffle(ua_str)
+            user_agent_strings.update({browser_name: ua_str})
+
+    if flattened:
+        user_agent_strings = [x for v in user_agent_strings.values() for x in v]
+
+    return user_agent_strings
+
+
+def get_user_agent_string(fancy=None, **kwargs):
+    """
+    Get a random user-agent string of a certain browser.
+
+    :param fancy: name of a preferred browser, defaults to ``None``;
+        options include ``'Chrome'``, ``'Firefox'``, ``'Safari'``, ``'Edge'``,
+        ``'Internet Explorer'`` and ``'Opera'``;
+        if ``fancy=None``, the function returns a user-agent string of a randomly-selected browser
+        among all the available options
+    :type: fancy: None | str
+    :param kwargs: [optional] parameters of the function :func:`pyhelpers.ops.get_user_agent_strings`
+    :return: a user-agent string of a certain browser
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_user_agent_string
+
+        >>> # Get a random user-agent string
+        >>> uas_0 = get_user_agent_string()
+        >>> uas_0
+        'Opera/7.01 (Windows 98; U)  [en]'
+
+        >>> # Get a random Chrome user-agent string
+        >>> uas_1 = get_user_agent_string(fancy='Chrome')
+        >>> uas_1
+        'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.9...
+
+    .. note::
+
+        In the above examples, the returned user-agent string is random and may be different
+        every time of running the function.
+    """
+
+    if fancy is not None:
+        browser_names = {'Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera'}
+        assert fancy in browser_names, f"`fancy` must be one of {browser_names}."
+
+        kwargs.update({'flattened': False})
+        user_agent_strings_ = load_user_agent_strings(**kwargs)
+
+        user_agent_strings = user_agent_strings_[fancy]
+
+    else:
+        kwargs.update({'flattened': True})
+        user_agent_strings = load_user_agent_strings(**kwargs)
+
+    user_agent_string = secrets.choice(user_agent_strings)
+
+    return user_agent_string
+
+
+def fake_requests_headers(randomized=True, **kwargs):
+    """
+    Make a fake HTTP headers for `requests.get
+    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
+
+    :param randomized: whether to use a user-agent string randomly selected
+        from among all available data of several popular browsers, defaults to ``True``;
+        if ``randomized=False``, the function uses a random Chrome user-agent string
+    :type randomized: bool
+    :param kwargs: [optional] parameters of the function :func:`pyhelpers.ops.get_user_agent_string`
+    :return: fake HTTP headers
+    :rtype: dict
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import fake_requests_headers
+
+        >>> fake_headers_1 = fake_requests_headers()
+        >>> fake_headers_1
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.19 (KHTML...
+
+        >>> fake_headers_2 = fake_requests_headers(randomized=False)
+        >>> fake_headers_2  # using a random Chrome user-agent string
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1 (KHTML,...
+
+    .. note::
+
+        - ``fake_headers_1`` may also be different every time we run the example.
+          This is because the returned result is randomly chosen from a limited set of candidate
+          user-agent strings, even though ``randomized`` is (by default) set to be ``False``.
+        - By setting ``randomized=True``, the function returns a random result from among
+          all available user-agent strings of several popular browsers.
+    """
+
+    if not randomized:
+        kwargs.update({'fancy': 'Chrome'})
+
+    user_agent_string = get_user_agent_string(**kwargs)
+
+    fake_headers = {'user-agent': user_agent_string}
+
+    return fake_headers
+
+
+def _download_file_from_url(response, path_to_file):
+    """
+    Download an object from a valid URL (and save it as a file).
+
+    :param response: a server's response to an HTTP request
+    :type response: requests.Response
+    :param path_to_file: a path where the downloaded object is saved as, or a filename
+    :type path_to_file: str | os.PathLike[str]
+    """
+
+    tqdm_ = _check_dependency(name='tqdm')
+
+    file_size = int(response.headers.get('content-length'))  # Total size in bytes
+
+    unit_divisor = 1024
+    block_size = unit_divisor ** 2
+    chunk_size = block_size if file_size >= block_size else unit_divisor
+
+    total_iter = file_size // chunk_size
+
+    pg_args = {
+        'desc': f'"{_get_rel_pathname(path_to_file)}"',
+        'total': total_iter,
+        'unit': 'B',
+        'unit_scale': True,
+        'unit_divisor': unit_divisor,
+    }
+    with tqdm_.tqdm(**pg_args) as progress:
+
+        contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
+
+        with open(file=path_to_file, mode='wb') as f:
+            written = 0
+            for data in contents:
+                if data:
+                    try:
+                        f.write(data)
+                    except TypeError:
+                        f.write(data.encode())
+                    progress.update(len(data))
+                    written += len(data)
+
+    if file_size != 0 and written != file_size:
+        print("ERROR! Something went wrong!")
+
+
+def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
+                           random_header=True, verbose=False, requests_session_args=None,
+                           fake_headers_args=None, **kwargs):
+    """
+    Download an object available at a valid URL.
+
+    See also [`OPS-DFFU-1`_] and [`OPS-DFFU-2`_].
+
+    .. _OPS-DFFU-1: https://stackoverflow.com/questions/37573483/
+    .. _OPS-DFFU-2: https://stackoverflow.com/questions/15431044/
+
+    :param url: valid URL to a web resource
+    :type url: str
+    :param path_to_file: a path where the downloaded object is saved as, or a filename
+    :type path_to_file: str | os.PathLike[str]
+    :param if_exists: given that the specified file already exists, options include
+        ``'replace'`` (default, continuing to download the requested file and replace the existing one
+        at the specified path) and ``'pass'`` (cancelling the download)
+    :type if_exists: str
+    :param max_retries: maximum number of retries, defaults to ``5``
+    :type max_retries: int
+    :param random_header: whether to go for a random agent, defaults to ``True``
+    :type random_header: bool
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :param requests_session_args: [optional] parameters of the function
+        :func:`pyhelpers.ops.init_requests_session`, defaults to ``None``
+    :type requests_session_args: dict | None
+    :param fake_headers_args: [optional] parameters of the function
+        :func:`pyhelpers.ops.fake_requests_headers`, defaults to ``None``
+    :type fake_headers_args: dict | None
+    :param kwargs: [optional] parameters of `requests.Session.get()`_
+
+    .. _`requests.Session.get()`:
+        https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import download_file_from_url
+        >>> from pyhelpers.dirs import cd
+        >>> from PIL import Image
+        >>> import os
+
+        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
+
+        >>> # Check if "python-logo.png" exists at the specified path
+        >>> os.path.exists(path_to_img)
+        False
+
+        >>> # Download the .png file
+        >>> download_file_from_url(logo_url, path_to_img)
+
+        >>> # If download is successful, check again:
+        >>> os.path.exists(path_to_img)
+        True
+
+        >>> img = Image.open(path_to_img)
+        >>> img.show()  # as illustrated below
+
+    .. figure:: ../_images/ops-download_file_from_url-demo.*
+        :name: ops-download_file_from_url-demo
+        :align: center
+        :width: 65%
+
+        The Python Logo.
+
+    .. only:: html
+
+        |
+
+    .. note::
+
+        - When ``verbose=True``, the function requires `tqdm`_.
+
+        .. _`tqdm`: https://pypi.org/project/tqdm/
+    """
+
+    path_to_dir = os.path.dirname(path_to_file)
+    if path_to_dir == "":
+        path_to_file_ = os.path.join(os.getcwd(), path_to_file)
+        path_to_dir = os.path.dirname(path_to_file_)
+    else:
+        path_to_file_ = copy.copy(path_to_file)
+
+    if os.path.exists(path_to_file_) and if_exists != 'replace':
+        if verbose:
+            print(f"The destination already has a file named \"{os.path.basename(path_to_file_)}\". "
+                  f"The download is cancelled.")
+
+    else:
+        if requests_session_args is None:
+            requests_session_args = {}
+        session = init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
+
+        if fake_headers_args is None:
+            fake_headers_args = {}
+        fake_headers = fake_requests_headers(randomized=random_header, **fake_headers_args)
+
+        # Streaming, so we can iterate over the response
+        with session.get(url=url, stream=True, headers=fake_headers, **kwargs) as response:
+
+            if not os.path.exists(path_to_dir):
+                os.makedirs(path_to_dir)
+
+            if verbose:
+                _download_file_from_url(response=response, path_to_file=path_to_file_)
+
+            else:
+                with open(file=path_to_file_, mode='wb') as f:
+                    shutil.copyfileobj(fsrc=response.raw, fdst=f)
+
+                if os.stat(path=path_to_file_).st_size == 0:
+                    print("ERROR! Something went wrong! Check if the URL is downloadable.")
+
+
+class GitHubFileDownloader:
+    """
+    Download files on GitHub from a given repository URL.
+    """
+
+    def __init__(self, repo_url, flatten_files=False, output_dir=None):
+        """
+        :param repo_url: URL of a GitHub repository to download from;
+            it can be a ``blob`` or tree path
+        :type repo_url: str
+        :param flatten_files: whether to pull the contents of all subdirectories into the root folder,
+            defaults to ``False``
+        :type flatten_files: bool
+        :param output_dir: output directory where the downloaded files will be saved,
+            when ``output_dir=None``, it defaults to ``None``
+        :type output_dir: str | None
+
+        :ivar str repo_url: URL of a GitHub repository to download from
+        :ivar bool flatten: whether to pull the contents of all subdirectories into the root folder,
+            defaults to ``False``
+        :ivar str | None output_dir: defaults to ``None``
+        :ivar str api_url: URL of a GitHub repository (compatible with GitHub's REST API)
+        :ivar str download_path: pathname for downloading files
+        :ivar int total_files: total number of files under the given directory
+
+        **Examples**::
+
+            >>> from pyhelpers.ops import GitHubFileDownloader
+
+            >>> test_output_dir = "tests/temp"
+
+            >>> # Download a single file
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
+            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+            >>> downloader.download()
+            Downloaded to: tests/temp/tests/data/dat.csv
+            1
+
+            >>> # Download a directory
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
+            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+            >>> downloader.download()
+            Downloaded to: tests/temp/tests/data/csr_mat.npz
+            Downloaded to: tests/temp/tests/data/dat.csv
+            Downloaded to: tests/temp/tests/data/dat.feather
+            Downloaded to: tests/temp/tests/data/dat.joblib
+            Downloaded to: tests/temp/tests/data/dat.json
+            Downloaded to: tests/temp/tests/data/dat.pickle
+            Downloaded to: tests/temp/tests/data/dat.txt
+            Downloaded to: tests/temp/tests/data/dat.xlsx
+            Downloaded to: tests/temp/tests/data/zipped.7z
+            Downloaded to: tests/temp/tests/data/zipped.txt
+            Downloaded to: tests/temp/tests/data/zipped.zip
+            Downloaded to: tests/temp/tests/data/zipped/zipped.txt
+            12
+
+            >>> downloader = GitHubFileDownloader(
+            ...     repo_url=test_url, flatten_files=True, output_dir=test_output_dir)
+            >>> downloader.download()
+            Downloaded to: tests/temp/csr_mat.npz
+            Downloaded to: tests/temp/dat.csv
+            Downloaded to: tests/temp/dat.feather
+            Downloaded to: tests/temp/dat.joblib
+            Downloaded to: tests/temp/dat.json
+            Downloaded to: tests/temp/dat.pickle
+            Downloaded to: tests/temp/dat.txt
+            Downloaded to: tests/temp/dat.xlsx
+            Downloaded to: tests/temp/zipped.7z
+            Downloaded to: tests/temp/zipped.txt
+            Downloaded to: tests/temp/zipped.zip
+            Downloaded to: tests/temp/zipped.txt
+            12
+        """
+
+        self.dir_out = ''
+        self.repo_url = repo_url
+        self.flatten = flatten_files
+        self.output_dir = "./" if output_dir is None else re.sub(r"\\|\\\\|//", "/", output_dir)
+
+        # Create a URL that is compatible with GitHub's REST API
+        self.api_url, self.download_path = self.create_url(self.repo_url)
+
+        # Initialize the total number of files under the given directory
+        self.total_files = 0
+
+        # Set user agent in default
+        opener = urllib.request.build_opener()
+        opener.addheaders = list(fake_requests_headers().items())
+        urllib.request.install_opener(opener)
+
+    @staticmethod
+    def create_url(url):
+        """
+        From the given ``url``, produce a URL that is compatible with GitHub's REST API.
+
+        It can handle ``blob`` or tree paths.
+
+        :param url: URL
+        :type url: str
+        :return: URL of a GitHub repository and pathname for downloading file
+        :rtype: tuple
+
+        **Examples**::
+
+            >>> from pyhelpers.ops import GitHubFileDownloader
+
+            >>> test_output_dir = "tests/temp"
+
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_path = downloader.create_url(test_url)
+            >>> test_api_url
+            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
+            >>> test_download_path
+            'tests/data/dat.csv'
+
+            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> test_api_url, test_download_path = downloader.create_url(test_url)
+            >>> test_api_url
+            'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
+            >>> test_download_path
+            'docs'
+        """
+
+        repo_only_url = re.compile(
+            r"https://github\.com/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}/[a-zA-Z0-9]+$")
+        re_branch = re.compile("/(tree|blob)/(.+?)/")
+
+        # Check if the given URL is a complete url to a GitHub repo.
+        if re.match(repo_only_url, url):
+            print(
+                "Given url is a complete repository, "
+                "please use 'git clone' to download the repository.")
+            sys.exit()
+
+        # Extract the branch name from the given url (e.g. master)
+        branch = re_branch.search(url)
+        download_path = url[branch.end():]
+
+        api_url = (
+            f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/'
+            f'contents/{download_path}?ref={branch[2]}')
+
+        return api_url, download_path
+
+    def download_single_file(self, file_url, dir_out):
+        """
+        Download a single file.
+
+        :param file_url: URL of a single file
+        :type file_url: str
+        :param dir_out: pathname for saving the file
+        :type dir_out: str
+
+        .. seealso::
+
+            - Examples for the method
+              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+        """
+
+        # Download the file
+        _, _ = urllib.request.urlretrieve(file_url, dir_out)
+
+        if self.flatten:
+            if self.output_dir == "./":
+                print(f"Downloaded to: ./{dir_out.split('/')[-1]}")
+            else:
+                print(f"Downloaded to: {self.output_dir}/{dir_out.split('/')[-1]}")
+
+        else:
+            print(f"Downloaded to: {dir_out}")
+
+    def download(self, api_url=None):
+        """
+        Download a file or a directory for the given ``api_url``.
+
+        :param api_url: defaults to ``None``
+        :type api_url: str | None
+        :return: total number of files under the given directory
+        :rtype: int
+
+        .. seealso::
+
+            - Examples for the method
+              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+        """
+
+        # Update `api_url` if it is not specified
+        api_url_local = self.api_url if api_url is None else api_url
+
+        # Update output directory if flatten is not specified
+        if self.flatten:
+            self.dir_out = self.output_dir
+        elif len(self.download_path.split(".")) == 0:
+            self.dir_out = os.path.join(self.output_dir, self.download_path)
+        else:
+            self.dir_out = os.path.join(self.output_dir, "/".join(self.download_path.split("/")[:-1]))
+        self.dir_out = re.sub(r"\\|\\\\|//", "/", self.dir_out)
+
+        # Make a directory with the name which is taken from the actual repo
+        os.makedirs(self.dir_out, exist_ok=True)
+
+        # Get response from GutHub response
+        try:
+            response, _ = urllib.request.urlretrieve(api_url_local)
+        except KeyboardInterrupt:
+            print("Cannot get response from GitHub API, please check the url again or try later.")
+
+        # noinspection PyUnboundLocalVariable
+        with open(response, "r") as f:  # Download files according to the response
+            data = json.load(f)
+
+        # If the data is a file, download it as one.
+        if isinstance(data, dict) and data["type"] == "file":
+            try:  # Download the file
+                self.download_single_file(data["download_url"], "/".join([self.dir_out, data["name"]]))
+                self.total_files += 1
+
+                return self.total_files
+
+            except KeyboardInterrupt as e:
+                print(f"Error: Got interrupted for {_format_err_msg(e)}")
+
+        # If the data is a directory, download all files in it
+        for file in data:
+            file_url = file["download_url"]
+            file_path = file["path"]
+            path = os.path.basename(file_path) if self.flatten else file_path
+            path = "/".join([self.output_dir, path])
+
+            dirname = os.path.dirname(path)
+
+            # Create a directory if it does not exist
+            if dirname != '':
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+
+            if file_url is not None:  # Download the file if it is not a directory
+                # file_name = file["name"]
+                try:
+                    self.download_single_file(file_url, path)
+                    self.total_files += 1
+                except KeyboardInterrupt:
+                    print("Got interrupted")
+
+            else:  # If a directory, recursively download it
+                # noinspection PyBroadException
+                try:
+                    self.api_url, self.download_path = self.create_url(file["html_url"])
+                    self.download(self.api_url)
+
+                except Exception:
+                    print(f"Error: {file['html_url']} is not a file or a directory")
+
+        return self.total_files
