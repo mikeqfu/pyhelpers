@@ -176,11 +176,11 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
 
 def _get_rel_pathname(pathname):
     """
-    Get relative pathname of a file or a directory.
+    Get the relative or absolute path of ``pathname`` to the current working directory.
 
-    :param pathname: pathname of a file or a directory
+    :param pathname: pathname (of a file or a directory)
     :type pathname: str | os.PathLike[str]
-    :return: relative path to the given ``pathname``
+    :return: the relative or absolute path of ``path_to_file`` to the current working directory
     :rtype: str | os.PathLike[str]
 
     **Examples**::
@@ -188,11 +188,17 @@ def _get_rel_pathname(pathname):
         >>> from pyhelpers._cache import _get_rel_pathname
         >>> import os
 
-        >>> _get_rel_pathname(os.path.curdir)
-        '.'
+        >>> rel_pathname = _get_rel_pathname(pathname="")
+        >>> rel_pathname
+        ''
+        >>> rel_pathname = _get_rel_pathname(pathname=os.path.join(os.getcwd(), "tests"))
+        >>> rel_pathname
+        'tests'
 
-        >>> _get_rel_pathname("C:\\Windows")
-        'C:\\Windows'
+        >>> # On Windows OS
+        >>> rel_pathname = _get_rel_pathname(pathname="C:/Windows")
+        >>> rel_pathname
+        "C:/Windows"
     """
 
     try:
@@ -340,7 +346,7 @@ def _format_err_msg(e=None, msg=""):
     """
 
     if e:
-        e_ = f"{e}"
+        e_ = f"{e}".strip()
         err_msg = e_ + "." if not e_.endswith((".", "!", "?")) else e_
     else:
         err_msg = ""
