@@ -2,16 +2,18 @@
 
 import importlib.resources
 import json
-import os
-import tempfile
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
 
 from pyhelpers._cache import example_dataframe
+from pyhelpers.store import *
 
+
+# ==================================================================================================
+# svr - Save data.
+# ==================================================================================================
 
 def test__check_saving_path(capfd):
     from pyhelpers.store import _check_saving_path
@@ -32,28 +34,6 @@ def test__check_saving_path(capfd):
         assert "Updating " in out
 
 
-def test__check_loading_path(capfd):
-    from pyhelpers.store import _check_loading_path
-
-    file_path = "documents\\pyhelpers.pdf"
-    _check_loading_path(file_path, verbose=True)
-    out, _ = capfd.readouterr()
-    assert f'Loading "{file_path}"' in out
-
-
-def test__set_index():
-    from pyhelpers.store import _set_index
-
-    example_df = example_dataframe()
-
-    assert example_df.equals(_set_index(example_df))
-
-    example_df_ = _set_index(example_df, index=0)
-    assert example_df.iloc[:, 0].to_list() == example_df_.index.to_list()
-
-
-# == Save data =====================================================================================
-
 def _test_save(func, dat, file_ext, capfd):
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + file_ext
@@ -68,8 +48,6 @@ def _test_save(func, dat, file_ext, capfd):
 
 
 def test_save_pickle(capfd):
-    from pyhelpers.store import save_pickle
-
     # pickle_pathname = importlib.resources.files(__package__).joinpath("data\\dat.pickle")
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + ".xlsx"
@@ -89,23 +67,21 @@ def test_save_pickle(capfd):
     os.remove(pathname_.name)
 
 
-@pytest.mark.parametrize('file_ext', [".csv", ".xlsx", ".xls", ".pickle"])
-@pytest.mark.parametrize('engine', [None, 'xlwt', ".xls"])
-def test_save_spreadsheet(capfd, file_ext, engine):
-    from pyhelpers.store import save_spreadsheet
-
+@pytest.mark.parametrize('ext', [".csv", ".xlsx", ".xls", ".pickle", ".ods", ".odt"])
+@pytest.mark.parametrize('engine', [None, 'xlwt', 'openpyxl'])
+def test_save_spreadsheet(capfd, ext, engine):
     dat = example_dataframe()
 
     pathname_ = tempfile.NamedTemporaryFile()
 
-    pathname = pathname_.name + file_ext
+    pathname = pathname_.name + ext
     filename = os.path.basename(pathname)
 
-    if file_ext == ".pickle":
+    if ext == ".pickle":
         with pytest.raises(AssertionError, match=r"File extension must be"):
-            save_spreadsheet(dat, pathname, verbose=True)
+            save_spreadsheet(dat, pathname, engine=engine, verbose=True)
     else:
-        save_spreadsheet(dat, pathname, verbose=True)
+        save_spreadsheet(dat, pathname, engine=engine, verbose=True)
         out, _ = capfd.readouterr()
         assert f'Saving "{filename}"' in out and "Done." in out
         os.remove(pathname)
@@ -113,8 +89,6 @@ def test_save_spreadsheet(capfd, file_ext, engine):
 
 
 def test_save_spreadsheets(capfd):
-    from pyhelpers.store import save_spreadsheets
-
     dat = [example_dataframe(), example_dataframe().T]
     sheets = ['TestSheet1', 'TestSheet2']
 
@@ -140,8 +114,6 @@ def test_save_spreadsheets(capfd):
 
 
 def test_save_json(capfd):
-    from pyhelpers.store import save_json
-
     # json_pathname = importlib.resources.files(__package__).joinpath("data\\dat.json")
 
     pathname_ = tempfile.NamedTemporaryFile()
@@ -170,10 +142,7 @@ def test_save_json(capfd):
 
 
 def test_save_joblib(capfd):
-    from pyhelpers.store import save_joblib
-
     # joblib_pathname = importlib.resources.files(__package__).joinpath("data\\dat.joblib")
-
     dat = example_dataframe().to_numpy()
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + ".joblib"
@@ -192,8 +161,6 @@ def test_save_joblib(capfd):
 
 @pytest.mark.parametrize('index', [False, True])
 def test_save_feather(capfd, index):
-    from pyhelpers.store import save_feather
-
     feather_dat = example_dataframe()
 
     # feather_pathname = importlib.resources.files(__package__).joinpath("data\\dat.feather")
@@ -214,8 +181,6 @@ def test_save_feather(capfd, index):
 
 
 def test_save_svg_as_emf(capfd):
-    from pyhelpers.store import save_svg_as_emf
-
     x, y = (1, 1), (2, 2)
     plt.figure()
     plt.plot([x[0], y[0]], [x[1], y[1]])
@@ -239,8 +204,6 @@ def test_save_svg_as_emf(capfd):
 
 
 def test_save_fig(capfd):
-    from pyhelpers.store import save_fig
-
     x, y = (1, 1), (2, 2)
 
     plt.figure()
@@ -272,18 +235,17 @@ def test_save_fig(capfd):
     os.remove(pathname_.name)
 
 
-def test_save_web_page_as_pdf(capfd):
-    from pyhelpers.store import save_web_page_as_pdf
-
-    # pdf_pathname = cd("tests\\documents", "pyhelpers.pdf")
+def test_save_html_as_pdf(capfd):
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + ".pdf"
     filename = os.path.basename(pathname)
-    web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
+    web_page_url = 'https://github.com/mikeqfu/pyhelpers#readme'
+    # web_page_url = 'https://www.python.org/'
 
-    save_web_page_as_pdf(web_page_url, pathname, verbose=True)
+    # noinspection PyBroadException
+    save_html_as_pdf(web_page_url, pathname, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Saving "{filename}"' in out and "Done." in out
+    assert f'Saving "{filename}"' in out
 
     os.remove(pathname)
     os.remove(pathname_.name)
@@ -292,8 +254,6 @@ def test_save_web_page_as_pdf(capfd):
 @pytest.mark.parametrize(
     'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".pdf", ".png", ".unknown"])
 def test_save_data(capfd, recwarn, ext):
-    from pyhelpers.store import save_data
-
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + ext
     filename = os.path.basename(pathname)
@@ -301,7 +261,7 @@ def test_save_data(capfd, recwarn, ext):
     if ext == ".json":
         dat = example_dataframe().to_json(orient='index')
     elif ext == ".pdf":
-        dat = 'https://pyhelpers.readthedocs.io/en/latest/'
+        dat = 'https://github.com/mikeqfu/pyhelpers#readme'
     elif ext == ".png":
         dat = None
         x, y = (1, 1), (2, 2)
@@ -312,7 +272,10 @@ def test_save_data(capfd, recwarn, ext):
 
     save_data(dat, path_to_file=pathname, verbose=True, confirmation_required=False)
     out, _ = capfd.readouterr()
-    assert f'Saving "{filename}"' in out and "Done." in out
+    if ext == ".pdf":
+        assert f'Saving "{filename}"' in out
+    else:
+        assert f'Saving "{filename}"' in out and "Done." in out
 
     if ext == ".unknown":
         assert len(recwarn) == 1
@@ -322,17 +285,44 @@ def test_save_data(capfd, recwarn, ext):
 
     save_data(dat, path_to_file=pathname, verbose=True, confirmation_required=False)
     out, _ = capfd.readouterr()
-    assert f'Updating "{filename}"' in out and "Done." in out
+    if ext == ".pdf":
+        assert f'Updating "{filename}"' in out
+    else:
+        assert f'Updating "{filename}"' in out and "Done." in out
 
     os.remove(pathname)
     os.remove(pathname_.name)
 
 
-# == Load data =====================================================================================
+# ==================================================================================================
+# ldr - Load data.
+# ==================================================================================================
+
+def test__check_loading_path(capfd):
+    from pyhelpers.store import _check_loading_path
+
+    file_path = "documents\\pyhelpers.pdf"
+    _check_loading_path(file_path, verbose=True)
+    out, _ = capfd.readouterr()
+    assert f'Loading "{file_path}"' in out
+
+
+def test__set_index():
+    from pyhelpers.store import _set_index
+
+    example_df = example_dataframe()
+    assert example_df.equals(_set_index(example_df))
+
+    example_df_ = _set_index(example_df, index=0)
+    assert example_df.iloc[:, 0].to_list() == example_df_.index.to_list()
+
+    example_df_ = example_df.copy()
+    example_df_.index.name = ''
+    example_df_ = _set_index(example_df_.reset_index(), index=None)
+    assert np.array_equal(example_df_.values, example_df.values)
+
 
 def test_load_spreadsheets(capfd):
-    from pyhelpers.store import load_spreadsheets
-
     path_to_xlsx_ = importlib.resources.files(__package__).joinpath("data\\dat.xlsx")
 
     with importlib.resources.as_file(path_to_xlsx_) as path_to_xlsx:
@@ -353,53 +343,64 @@ def test_load_spreadsheets(capfd):
 
 
 def test_load_data(capfd):
-    from pyhelpers.store import load_data
-
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.pickle")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
+        dat = load_data(path_to_file=dat_pathname, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.pickle" ... Done.\n' in out
-        assert pickle_dat.equals(example_dataframe())
+        assert dat.equals(example_dataframe())
         _ = load_data(path_to_file=dat_pathname, verbose=True, test_arg=True)
         out, _ = capfd.readouterr()
         assert "'test_arg' is an invalid keyword argument for load()" in out
 
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.csv")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.csv" ... Done.\n' in out
-        assert csv_dat.astype(float).equals(example_dataframe())
+        assert dat.astype(float).equals(example_dataframe())
+
+    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.xlsx")
+    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
+        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        out, _ = capfd.readouterr()
+        assert 'Loading ' in out and 'data\\dat.xlsx" ... ' in out and "Done." in out
+        assert isinstance(dat, dict)
+        assert dat['TestSheet1'].set_index('City').equals(example_dataframe())
 
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.json")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        json_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        out, _ = capfd.readouterr()
-        assert 'Loading ' in out and 'data\\dat.json" ... Done.\n' in out
-        assert list(json_dat.keys()) == example_dataframe().index.to_list()
+        for engine in {'ujson', 'orjson', 'rapidjson', None}:
+            dat = load_data(path_to_file=dat_pathname, engine=engine, verbose=True)
+            out, _ = capfd.readouterr()
+            assert 'Loading ' in out and 'data\\dat.json" ... Done.\n' in out
+        assert list(dat.keys()) == example_dataframe().index.to_list()
 
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.feather")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.feather" ... Done.\n' in out
-        assert feather_dat.equals(example_dataframe())
+        assert dat.equals(example_dataframe())
 
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.joblib")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
+        dat = load_data(path_to_file=dat_pathname, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.joblib" ... Done.\n' in out
         np.random.seed(0)
-        assert np.array_equal(joblib_dat, np.random.rand(100, 100))
+        assert np.array_equal(dat, np.random.rand(100, 100))
+
+    with pytest.warns(UserWarning):
+        dat = load_data(path_to_file='none.test', verbose=True)
+        assert dat is None
 
 
-# == Uncompress data ===============================================================================
+# ==================================================================================================
+# xfr - Manipulate or transform data in various ways.
+# ==================================================================================================
 
 def test_unzip(capfd):
-    from pyhelpers.store import unzip
-
     zip_file_path_ = importlib.resources.files(__package__).joinpath("data\\zipped.zip")
 
     with importlib.resources.as_file(zip_file_path_) as zip_file_path:
@@ -410,8 +411,6 @@ def test_unzip(capfd):
 
 
 def test_seven_zip(capfd):
-    from pyhelpers.store import seven_zip
-
     zip_file_pathname_ = importlib.resources.files(__package__).joinpath("data\\zipped.zip")
     with importlib.resources.as_file(zip_file_pathname_) as zip_file_pathname:
         seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
@@ -419,11 +418,7 @@ def test_seven_zip(capfd):
         assert out.startswith('\r\n7-Zip')
 
 
-# == Convert data ==================================================================================
-
 def test_markdown_to_rst(capfd):
-    from pyhelpers.store import markdown_to_rst
-
     path_to_md_file, path_to_rst_file = map(
         importlib.resources.files(__package__).joinpath,
         ["documents\\readme.md", "documents\\readme.rst"])
@@ -438,16 +433,36 @@ def test_markdown_to_rst(capfd):
 
 
 @pytest.mark.parametrize('engine', [None, 'xlsx2csv'])
-def test_xlsx_to_csv(engine, capfd):
-    from pyhelpers.store import xlsx_to_csv, load_csv
+@pytest.mark.parametrize('header', [0, None])
+def test_xlsx_to_csv(engine, header, capfd):
+    path_to_test_xlsx_ = importlib.resources.files(__package__).joinpath("data/dat.xlsx")
 
-    path_to_test_xlsx_ = importlib.resources.files(__package__).joinpath("data\\dat.xlsx")
     with importlib.resources.as_file(path_to_test_xlsx_) as path_to_test_xlsx:
         temp_csv = xlsx_to_csv(path_to_test_xlsx, engine=engine, verbose=True)
         out, _ = capfd.readouterr()
         assert out.startswith("Converting") and "Done." in out
 
-        data = load_csv(temp_csv, index=0)
+        if engine is None:
+            temp_csv_ = xlsx_to_csv(
+                path_to_test_xlsx, path_to_csv=temp_csv, if_exists='replace', engine=engine,
+                verbose=True)
+            out, _ = capfd.readouterr()
+            assert out.startswith("Converting") and "Done." in out
+            assert temp_csv_ == temp_csv
+
+            _ = xlsx_to_csv(
+                path_to_test_xlsx, path_to_csv="", if_exists='pass', engine=engine, verbose=True)
+            out, _ = capfd.readouterr()
+            assert out.startswith("Converting") and "Cancelled." in out
+
+        data = load_csv(temp_csv, index=0, header=header)
+
+        if engine is None and header is None:
+            data.columns = data.iloc[0]
+            data = data[1:]
+            data.index.name = data.columns.name
+            data.columns.name = None
+
         assert data.astype('float16').equals(example_dataframe().astype('float16'))
 
         if engine is None:

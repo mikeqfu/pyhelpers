@@ -1,49 +1,69 @@
 """Test the module :mod:`~pyhelpers.dirs`."""
 
 import importlib.resources
-import os
-import pathlib
-import shutil
+import tempfile
 
 import pytest
 
-
-def test_cd(capfd):
-    from pyhelpers.dirs import cd
-
-    current_wd = cd()
-    assert os.path.relpath(current_wd) == "."
-
-    path_to_tests_dir = cd("tests")
-    assert os.path.relpath(path_to_tests_dir) == "tests"
-
-    path_to_tests_dir = cd(pathlib.Path("tests"))
-    assert os.path.relpath(path_to_tests_dir) == "tests"
+from pyhelpers.dirs import *
 
 
-def test_go_from_altered_cwd():
-    from pyhelpers.dirs import go_from_altered_cwd
+# ==================================================================================================
+# nav - Directory/file navigation.
+# ==================================================================================================
 
-    init_cwd = os.getcwd()
+@pytest.mark.parametrize('cwd', [None, ".", "C:\\Programme"])
+def test_cd(capfd, cwd):
+    current_wd = cd(cwd=cwd, back_check=True)
+    if cwd in {None, "."}:
+        assert os.path.relpath(current_wd) == "."
+    else:
+        assert current_wd == "C:\\"
 
-    new_cwd = "\\new_cwd"
-    new_cwd_pathname = os.path.join(init_cwd, new_cwd)
+    for subdir in ["tests", b"tests", pathlib.Path("tests")]:
+        path_to_tests_dir = cd(subdir)
+        assert os.path.relpath(path_to_tests_dir) == "tests"
 
-    os.mkdir(new_cwd_pathname)
-    os.chdir(new_cwd_pathname)
+    tmp = tempfile.TemporaryFile()
+    tmp_dir = cd(tmp.name + '0', mkdir=True)
+    assert os.path.isdir(tmp_dir)
 
-    assert os.getcwd() == new_cwd_pathname
+    tmp_dir_ = cd(tmp.name + '0', 'test.dir', mkdir=True)
+    assert not os.path.isdir(tmp_dir_)
+    assert tmp_dir == os.path.dirname(tmp_dir_)
 
-    cwd_ = go_from_altered_cwd(dir_name="tests")
-    assert cwd_ == os.path.join(new_cwd_pathname, "tests")
+    os.rmdir(tmp_dir)
+
+
+def test_ccd():
+    init_cwd = cd()
+    assert ccd() == init_cwd
+
+    # Change the current working directory
+    new_cwd = "tests/new_cwd"
+    os.makedirs(new_cwd, exist_ok=True)
+    os.chdir(new_cwd)
+
+    path_to_tests = ccd("tests")
+    assert os.path.relpath(path_to_tests) == 'tests'
+
+    # Change again the current working directory
+    new_cwd_ = tempfile.TemporaryDirectory()
+    os.chdir(new_cwd_.name)
+    shutil.rmtree(os.path.dirname(path_to_tests))
+
+    # Get the full path to a folder named "tests"
+    path_to_tests = ccd("tests")
+    assert os.path.relpath(path_to_tests) == 'tests'
+
+    path_to_tests_ = ccd("test1", "test2")
+    assert path_to_tests_ == os.path.join(os.getcwd(), "test1", "test2")
 
     os.chdir(init_cwd)
-    shutil.rmtree(new_cwd_pathname)
+    shutil.rmtree(new_cwd_.name)
 
 
 def test_cdd():
-    from pyhelpers.dirs import cdd
-
     path_to_dat_dir = cdd()
     # As `mkdir=False`, `path_to_dat_dir` will NOT be created if it doesn't exist
     assert os.path.relpath(path_to_dat_dir) == 'data'
@@ -61,17 +81,39 @@ def test_cdd():
     shutil.rmtree(os.path.dirname(path_to_dat_dir))
 
 
-def test_cd_data():
-    from pyhelpers.dirs import cd_data
+@pytest.mark.parametrize('subdir', [['test_dir'], ['test_dir', 'test.dat']])
+@pytest.mark.parametrize('mkdir', [False, True])
+def test_cd_data(subdir, mkdir):
+    path_to_dat_dir = cd_data(*subdir, mkdir=mkdir)
+    if is_dir(path_to_dat_dir):
+        path_to_dat_dir_ = path_to_dat_dir
+    else:
+        path_to_dat_dir_ = os.path.relpath(os.path.dirname(path_to_dat_dir))
+    assert os.path.relpath(path_to_dat_dir_) == "pyhelpers\\data\\test_dir"
 
-    path_to_dat_dir = cd_data("tests", mkdir=False)
+    if mkdir:
+        shutil.rmtree(path_to_dat_dir_)
 
-    assert "pyhelpers\\data\\tests" in os.path.relpath(path_to_dat_dir)
 
+def test_find_executable():
+    python_exe = "python.exe"
+    possible_paths = ["C:/Program Files/Python39", "C:/Python39/python.exe"]
+
+    python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
+    assert python_exe_exists
+    assert os.path.isfile(path_to_python_exe)
+
+    test_exe = "pyhelpers.exe"
+    test_exe_exists, path_to_test_exe = find_executable(test_exe, possible_paths)
+    assert not test_exe_exists
+    assert path_to_test_exe == test_exe
+
+
+# ==================================================================================================
+# val - Directory/file navigation.
+# ==================================================================================================
 
 def test_path2linux():
-    from pyhelpers.dirs import path2linux
-
     test_pathname = "tests\\data\\dat.csv"
 
     rslt = path2linux(test_pathname)
@@ -82,8 +124,6 @@ def test_path2linux():
 
 
 def test_uniform_pathname():
-    from pyhelpers.dirs import uniform_pathname
-
     test_pathname = "tests\\data\\dat.csv"
 
     rslt = uniform_pathname(test_pathname)
@@ -94,20 +134,24 @@ def test_uniform_pathname():
 
 
 def test_is_dir():
-    from pyhelpers.dirs import is_dir
-
+    # noinspection PyTypeChecker
+    assert not is_dir(1)
     assert not is_dir("tests")
     assert is_dir("/tests")
     assert is_dir("\\tests")
 
 
 def test_validate_dir():
-    from pyhelpers.dirs import validate_dir
-
     dat_dir = validate_dir()
+    assert os.path.relpath(dat_dir) == '.'
+    dat_dir = validate_dir(os.getcwd())
     assert os.path.relpath(dat_dir) == '.'
 
     dat_dir = validate_dir("tests")
+    assert os.path.relpath(dat_dir) == 'tests'
+    dat_dir = validate_dir(b"tests")
+    assert os.path.relpath(dat_dir) == 'tests'
+    dat_dir = validate_dir(pathlib.Path("tests"))
     assert os.path.relpath(dat_dir) == 'tests'
 
     dat_dir = validate_dir(subdir="data")
@@ -115,9 +159,6 @@ def test_validate_dir():
 
 
 def test_validate_filename():
-    from pyhelpers.dirs import validate_filename
-    import tempfile
-
     temp_pathname_ = tempfile.NamedTemporaryFile()
     temp_pathname_0 = temp_pathname_.name + '.txt'
 
@@ -136,8 +177,6 @@ def test_validate_filename():
 
 
 def test_get_file_pathnames():
-    from pyhelpers.dirs import get_file_pathnames
-
     test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
 
     with importlib.resources.as_file(test_dir_name_) as test_dir_name:
@@ -146,18 +185,19 @@ def test_get_file_pathnames():
         rslt = [os.path.basename(x) for x in rslt_]
         assert "dat.csv" in rslt
 
-        rslt = [os.path.basename(x) for x in get_file_pathnames(test_dir_name, file_ext=".txt")]
+        rslt_ = get_file_pathnames(test_dir_name, incl_subdir=True)
+        assert any("zipped/zipped.txt" in x for x in rslt_)
+
+        rslt_ = get_file_pathnames(test_dir_name, file_ext=".txt")
+        rslt = [os.path.basename(x) for x in rslt_]
         assert rslt == ['dat.txt', 'zipped.txt']
 
-        rslt = [
-            os.path.basename(x)
-            for x in get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)]
+        rslt_ = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
+        rslt = [os.path.basename(x) for x in rslt_]
         assert rslt == ['dat.txt', 'zipped.txt', 'zipped.txt']
 
 
 def test_check_files_exist(capfd):
-    from pyhelpers.dirs import check_files_exist
-
     test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
     with importlib.resources.as_file(test_dir_name_) as test_dir_name:
         assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
@@ -167,23 +207,32 @@ def test_check_files_exist(capfd):
         assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 
 
+# ==================================================================================================
+# mgmt - Directory/file management.
+# ==================================================================================================
+
 def test_delete_dir(capfd):
-    from pyhelpers.dirs import delete_dir, cd
+    tmp_dir = tempfile.TemporaryDirectory()
 
     test_dirs = []
     for x in range(3):
-        test_dirs.append(cd(f"test_dir{x}", mkdir=True))
+        tmp_dir_pathname = f"{tmp_dir.name}{x}"
+        test_dirs.append(cd(tmp_dir_pathname, mkdir=True))
         if x == 0:
-            cd(f"test_dir{x}", "a_folder", mkdir=True)
+            cd(tmp_dir_pathname, "a_folder", mkdir=True)
         elif x == 1:
-            open(cd(f"test_dir{x}", "file"), 'w').close()
+            open(cd(tmp_dir_pathname, "file"), 'w').close()
+
+    delete_dir(tmp_dir.name, confirmation_required=False, verbose=True)
+    out, _ = capfd.readouterr()
+    assert f'Deleting "{tmp_dir.name}\\" ... Done.\n' == out
 
     delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
-    out, err = capfd.readouterr()
-    out_ = '\n'.join(['Deleting "test_dir0\\" ... Done.',
-                      'Deleting "test_dir1\\" ... Done.',
-                      'Deleting "test_dir2\\" ... Done.\n'])
-    assert out == out_
+    out, _ = capfd.readouterr()
+    out_ = '\n'.join([f'Deleting "{tmp_dir.name}0\\" ... Done.',
+                      f'Deleting "{tmp_dir.name}1\\" ... Done.',
+                      f'Deleting "{tmp_dir.name}2\\" ... Done.\n'])
+    assert out_ == out
 
 
 if __name__ == '__main__':

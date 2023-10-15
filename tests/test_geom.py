@@ -10,7 +10,7 @@ from pyhelpers._cache import example_dataframe
 
 
 def test_transform_geom_point_type():
-    from pyhelpers.geom import transform_geom_point_type
+    from pyhelpers.geom import transform_point_type
 
     example_df = example_dataframe()
 
@@ -20,21 +20,21 @@ def test_transform_geom_point_type():
     ref_rslt_1 = ['POINT (-0.1276474 51.5073219)', 'POINT (-1.9026911 52.4796992)']
     ref_rslt_2 = [np.array([-0.1276474, 51.5073219]), np.array([-1.9026911, 52.4796992])]
 
-    geom_points = [x.wkt for x in transform_geom_point_type(pt1, pt2)]
+    geom_points = [x.wkt for x in transform_point_type(pt1, pt2)]
     assert geom_points == ref_rslt_1
 
-    geom_points = list(transform_geom_point_type(pt1, pt2, as_geom=False))
+    geom_points = list(transform_point_type(pt1, pt2, as_geom=False))
     assert np.array_equal(geom_points, ref_rslt_2)
 
     pt1, pt2 = map(shapely.geometry.Point, (pt1, pt2))
 
-    geom_points = [x.wkt for x in transform_geom_point_type(pt1, pt2)]
+    geom_points = [x.wkt for x in transform_point_type(pt1, pt2)]
     assert geom_points == ref_rslt_1
 
-    geom_points = list(transform_geom_point_type(pt1, pt2, as_geom=False))
+    geom_points = list(transform_point_type(pt1, pt2, as_geom=False))
     assert np.array_equal(geom_points, ref_rslt_2)
 
-    geom_points_ = transform_geom_point_type(shapely.geometry.Point([1, 2, 3]), as_geom=False)
+    geom_points_ = transform_point_type(shapely.geometry.Point([1, 2, 3]), as_geom=False)
     assert np.array_equal(list(geom_points_), [(1.0, 2.0, 3.0)])
 
 

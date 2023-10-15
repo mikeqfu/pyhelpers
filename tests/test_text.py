@@ -2,10 +2,10 @@
 
 import pytest
 
+from pyhelpers.text import *
+
 
 def test_get_acronym():
-    from pyhelpers.text import get_acronym
-
     text_a = 'This is an apple.'
     assert get_acronym(text_a) == 'TIAA'
 
@@ -17,8 +17,6 @@ def test_get_acronym():
 
 
 def test_remove_punctuation():
-    from pyhelpers.text import remove_punctuation
-
     raw_text = 'Hello world!\tThis is a test. :-)'
 
     result_1 = remove_punctuation(raw_text)
@@ -29,8 +27,6 @@ def test_remove_punctuation():
 
 
 def test_extract_words1upper():
-    from pyhelpers.text import extract_words1upper
-
     x1 = 'Network_Waymarks'
     assert extract_words1upper(x1) == ['Network', 'Waymarks']
 
@@ -38,9 +34,15 @@ def test_extract_words1upper():
     assert extract_words1upper(x2, join_with=' ') == 'Network Rail Retaining Wall'
 
 
-def test_numeral_english_to_arabic():
-    from pyhelpers.text import numeral_english_to_arabic
+def test__english_numerals():
+    from pyhelpers.text.preproc import _english_numerals
 
+    res = _english_numerals()
+    assert isinstance(res, dict)
+    assert len(res) >= 36
+
+
+def test_numeral_english_to_arabic():
     assert numeral_english_to_arabic('one') == 1
 
     assert numeral_english_to_arabic('one hundred and one') == 101
@@ -54,8 +56,6 @@ def test_numeral_english_to_arabic():
 
 
 def test_count_words():
-    from pyhelpers.text import count_words, remove_punctuation
-
     raw_text = 'This is an apple. That is a pear. Hello world!'
 
     assert count_words(raw_text) == {
@@ -86,8 +86,6 @@ def test_count_words():
 
 
 def test_calculate_idf():
-    from pyhelpers.text import calculate_idf
-
     raw_doc = [
         'This is an apple.',
         'That is a pear.',
@@ -138,8 +136,6 @@ def test_calculate_idf():
 
 
 def test_calculate_tf_idf():
-    from pyhelpers.text import calculate_tf_idf
-
     raw_doc = [
         'This is an apple.',
         'That is a pear.',
@@ -180,8 +176,6 @@ def test_calculate_tf_idf():
 
 
 def test_euclidean_distance_between_texts():
-    from pyhelpers.text import euclidean_distance_between_texts
-
     txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
 
     euclidean_distance = euclidean_distance_between_texts(txt_1, txt_2)
@@ -189,8 +183,6 @@ def test_euclidean_distance_between_texts():
 
 
 def test_cosine_similarity_between_texts():
-    from pyhelpers.text import cosine_similarity_between_texts
-
     txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
 
     cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
@@ -201,8 +193,6 @@ def test_cosine_similarity_between_texts():
 
 
 def test_find_matched_str():
-    from pyhelpers.text import find_matched_str
-
     lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
     res = find_matched_str('apple', lookup_lst)
     assert list(res) == []
@@ -218,7 +208,7 @@ def test_find_matched_str():
 
 
 def test_find_similar_str():
-    from pyhelpers.text import find_similar_str, _find_str_by_rapidfuzz
+    from pyhelpers.text.analyser import _find_str_by_rapidfuzz
 
     lookup_lst = [
         'Anglia',
