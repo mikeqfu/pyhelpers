@@ -16,9 +16,10 @@ Directory navigation
     :template: function.rst
 
     cd
-    go_from_altered_cwd
+    ccd
     cdd
     cd_data
+    find_executable
 
 Directory validation
 --------------------
@@ -32,6 +33,8 @@ Directory validation
     is_dir
     validate_dir
     validate_filename
+    get_file_pathnames
+    check_files_exist
 
 Directory/file control
 ----------------------
@@ -40,6 +43,4 @@ Directory/file control
     :toctree: _generated/
     :template: function.rst
 
-    get_file_pathnames
-    check_files_exist
     delete_dir

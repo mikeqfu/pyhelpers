@@ -11,12 +11,13 @@ geom
 Geometric data transformation
 -----------------------------
 
-.. rubric:: Geometric type
+.. rubric:: Data type
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
-    transform_geom_point_type
+    transform_point_type
+    get_coordinates_as_array
 
 .. rubric:: Coordinate system
 .. autosummary::

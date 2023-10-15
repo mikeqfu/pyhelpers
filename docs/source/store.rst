@@ -8,7 +8,7 @@ store
     :no-members:
     :no-inherited-members:
 
-Data saving
+Saving data
 -----------
 
 .. autosummary::
@@ -23,10 +23,10 @@ Data saving
     save_feather
     save_svg_as_emf
     save_fig
-    save_web_page_as_pdf
+    save_html_as_pdf
     save_data
 
-Data loading
+Loading data
 ------------
 
 .. autosummary::
@@ -41,8 +41,8 @@ Data loading
     load_feather
     load_data
 
-File decompression
-------------------
+Transforming data files
+-----------------------
 
 .. autosummary::
     :toctree: _generated/
@@ -50,13 +50,5 @@ File decompression
 
     unzip
     seven_zip
-
-File conversion
----------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
     markdown_to_rst
     xlsx_to_csv

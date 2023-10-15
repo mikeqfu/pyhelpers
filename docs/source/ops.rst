@@ -8,8 +8,8 @@ ops
     :no-members:
     :no-inherited-members:
 
-General use
------------
+General usage
+-------------
 
 .. autosummary::
     :toctree: _generated/
@@ -18,14 +18,23 @@ General use
     confirmed
     get_obj_attr
     eval_dtype
-    gps_to_utc
-    parse_size
-    get_number_of_chunks
-    get_relative_path
-    find_executable
     hash_password
     verify_password
     func_running_time
+
+Basic computation / conversion
+------------------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    gps_time_to_utc
+    parse_size
+    get_number_of_chunks
+    get_extreme_outlier_bounds
+    interquartile_range
+    find_closest_date
 
 Basic data manipulation
 -----------------------
@@ -58,21 +67,10 @@ Basic data manipulation
     swap_cols
     swap_rows
     np_shift
+    cmap_discretisation
+    colour_bar_index
 
-Basic computation
------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    get_extreme_outlier_bounds
-    interquartile_range
-    find_closest_date
-
-Graph plotting
---------------
-
+.. rubric:: Graph plotting
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
@@ -80,8 +78,8 @@ Graph plotting
     cmap_discretisation
     colour_bar_index
 
-Web data extraction
--------------------
+Web data manipulation
+---------------------
 
 .. autosummary::
     :toctree: _generated/

@@ -13,14 +13,14 @@ This quick-start tutorial provides a few examples for each of the :doc:`modules`
 Preparation - Create a data set
 ===============================
 
-To begin with, let's create an example data set using `NumPy`_ and `Pandas`_. This data set will be used throughout this tutorial.
+To begin with, let's create an example data set using `NumPy`_ and `Pandas`_.
 
 .. _`NumPy`: https://numpy.org/
 .. _`Pandas`: https://pandas.pydata.org/
 
 .. note::
 
-    - `NumPy`_ and `Pandas`_ are automatically installed when we install `pyhelpers`_ since they are among the the package's dependencies.
+    - `NumPy`_ and `Pandas`_ are automatically installed when we install `pyhelpers`_, as they are among the the package's dependencies.
 
 For the purpose of demonstration, firstly, we can use the function `numpy.random.rand`_ to generate a 100-by-100 Numpy array of random samples drawn from a standard uniform distribution; let's name the array ``random_array``:
 
@@ -516,16 +516,18 @@ The module :mod:`pyhelpers.text` can assist us in manipulating textual data. For
     >>> from pyhelpers.text import find_similar_str
 
     >>> word = 'angle'
-    >>> lookup_list = ['Anglia',
-    ...                'East Coast',
-    ...                'East Midlands',
-    ...                'North and East',
-    ...                'London North Western',
-    ...                'Scotland',
-    ...                'South East',
-    ...                'Wales',
-    ...                'Wessex',
-    ...                'Western']
+    >>> lookup_list = [
+    ...     'Anglia',
+    ...     'East Coast',
+    ...     'East Midlands',
+    ...     'North and East',
+    ...     'London North Western',
+    ...     'Scotland',
+    ...     'South East',
+    ...     'Wales',
+    ...     'Wessex',
+    ...     'Western',
+    ... ]
 
     >>> # Find the most similar word to 'angle'
     >>> result_1 = find_similar_str(word, lookup_list)
@@ -767,9 +769,9 @@ With the established connection to the database, we can use the method :meth:`~p
 .. code-block:: python
 
     >>> postgres.import_data(data=data_frame, table_name="df_table", verbose=2)
-    To import data into "public"."df_table" at postgres:***@localhost:5432/pyhelpers_tutorial
+    To import data into the table "public"."df_table" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
-    Importing the data into the table "public"."df_table" ... Done.
+    Importing the data into "public"."df_table" ... Done.
 
 We should now be able to see the table in pgAdmin, as illustrated in :numref:`quickstart-dbms-examples-df_table`:
 
@@ -790,9 +792,9 @@ Let's now try to import the same data into a table named "*df_table_alt*" by set
 
     >>> postgres.import_data(
     ...     data=data_frame, table_name="df_table_alt", method=postgres.psql_insert_copy, verbose=2)
-    To import data into "public"."df_table_alt" at postgres:***@localhost:5432/pyhelpers_tutorial
+    To import data into the table "public"."df_table_alt" at postgres:***@localhost:5432/pyhelpers_tutorial
     ? [No]|Yes: yes
-    Importing the data into the table "public"."df_table_alt" ... Done.
+    Importing the data into "public"."df_table_alt" ... Done.
 
 In pgAdmin, we can see the table has been added to the *Tables* list, as illustrated in :numref:`quickstart-dbms-examples-df_table_alt`:
 
