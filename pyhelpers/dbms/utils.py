@@ -5,11 +5,13 @@ Database tools/utilities.
 import copy
 import gc
 import inspect
+import re
 import sys
 
+import pandas as pd
 import sqlalchemy.dialects
 
-from .._cache import _check_dependency, _confirmed
+from .._cache import _check_dependency, _confirmed, _print_failure_msg
 
 
 def make_database_address(host, port, username, database_name=""):
@@ -19,11 +21,11 @@ def make_database_address(host, port, username, database_name=""):
     :param host: host name/address of a PostgreSQL server
     :type host: str
     :param port: listening port used by PostgreSQL
-    :type port: int or str
+    :type port: int | str
     :param username: username of a PostgreSQL server
     :type username: str
     :param database_name: name of a database, defaults to ``""``
-    :type database_name: str or None
+    :type database_name: str | None
     :return: address of a database
     :rtype: str
 
@@ -71,6 +73,62 @@ def get_default_database_address(db_cls):
         args_dict['host'], args_dict['port'], args_dict['username'], args_dict['database_name'])
 
     return database_address
+
+
+def _add_sql_query_args(arg, val, tbl_name):
+    if isinstance(val, str):
+        x = f' {tbl_name}"{arg}"=\'{val}\''
+
+    elif isinstance(val, (tuple, list)):
+        x = f' {tbl_name}"{arg}" IN {tuple(x for x in val if x is not None)}'
+
+    elif isinstance(val, pd.DatetimeIndex):
+        x = f' {tbl_name}"{arg}" IN {tuple(str(x) for x in val)}'
+
+    else:
+        x = ''
+
+    return x
+
+
+def add_sql_query_condition(sql_query, add_table_name=None, **kwargs):
+    """
+    Add a condition to a given SQL query statement.
+
+    :param sql_query: SQL query statement
+    :type sql_query: str
+    :param add_table_name: add a table name to each of the column names, defaults to ``None``
+    :type add_table_name: str | None
+    :return: updated SQL query statement with specific conditions
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.dbms.utils import add_sql_query_condition
+        >>> query = 'SELECT * FROM a_table'
+        >>> query
+        'SELECT * FROM a_table'
+        >>> add_sql_query_condition(query)
+        'SELECT * FROM a_table'
+        >>> add_sql_query_condition(query, COL_NAME_1='A')
+        'SELECT * FROM a_table WHERE "COL_NAME_1"=\'A\''
+        >>> add_sql_query_condition(query, COL_NAME_1='A', COL_NAME_2=['B', 'C'])
+        'SELECT * FROM a_table WHERE "COL_NAME_1"=\'A\' AND "COL_NAME_2" IN (\'B\', \'C\')'
+        >>> add_sql_query_condition(query, COL_NAME_1='A', add_table_name='t1')
+        'SELECT * FROM a_table WHERE t1."COL_NAME_1"=\'A\''
+    """
+
+    locals().update(kwargs)
+
+    for k, v in locals().items():
+        if k not in {'sql_query', 'add_table_name', 'tbl_name'}:
+            argument = _add_sql_query_args(k, v, '' if add_table_name is None else f'{add_table_name}.')
+            if argument:
+                sql_query += \
+                    f' {"AND" if re.search(r"where", sql_query, re.IGNORECASE) else "WHERE"}' \
+                    f'{argument}'
+
+    return sql_query
 
 
 def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_name, mssql_table_name,
@@ -156,24 +214,24 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
     :param postgres: name of a PostgreSQL (destination) database
     :type postgres: pyhelpers.dbms.PostgreSQL
     :param mssql_schema: name of a schema to be migrated from the SQl Server
-    :type mssql_schema: str or None
+    :type mssql_schema: str | None
     :param postgres_schema: name of a schema to store the migrated data in the PostgreSQL server
-    :type postgres_schema: str or None
+    :type postgres_schema: str | None
     :param chunk_size: number of rows in each batch to be read/written at a time, defaults to ``None``
-    :type chunk_size: int or None
+    :type chunk_size: int | None
     :param excluded_tables: names of tables that are excluded from the data migration
-    :type excluded_tables: list or None
+    :type excluded_tables: list | None
     :param file_tables: whether to include FileTables, defaults to ``False``
     :type file_tables: bool
     :param memory_threshold: threshold (in GiB) beyond which the data is migrated by partitions,
         defaults to ``2.``
-    :type memory_threshold: float or int
+    :type memory_threshold: float | int
     :param update: whether to redo the transfer between the database servers, defaults to ``False``
     :type update: bool
     :param confirmation_required: whether asking for confirmation to proceed, defaults to ``True``
     :type confirmation_required: bool
     :param verbose: whether to print relevant information, defaults to ``True``
-    :type verbose: bool or int
+    :type verbose: bool | int
 
     **Examples**::
 
@@ -226,7 +284,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
         >>> # For now, the newly-created database doesn't contain any tables
         >>> postgres_testdb.get_table_names()
-        []
+        {'public': []}
 
         >>> # Copy the example data from the SQL Server to the PostgreSQL "testdb" (under "public")
         >>> mssql_to_postgresql(mssql=mssql_testdb, postgres=postgres_testdb)
@@ -237,7 +295,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
         Completed.
 
         >>> postgres_testdb.get_table_names()
-        ['example_df']
+        {'public': ['example_df']}
 
     .. figure:: ../_images/dbms-mssql_to_postgresql-demo-2.*
         :name: dbms-mssql_to_postgresql-demo-2
@@ -266,7 +324,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
         # MSSQL
         mssql_schema_name = mssql._schema_name(schema_name=mssql_schema)
-        mssql_table_names = mssql.get_table_names(schema_name=mssql_schema_name)
+        mssql_table_names = mssql.get_table_names(schema_name=mssql_schema_name)[mssql_schema_name]
 
         # PostgreSQL
         postgres_schema_name = postgres.DEFAULT_SCHEMA if postgres_schema is None else postgres_schema
@@ -332,8 +390,175 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
             table_counter += 1
 
-        if verbose:
-            print("Completed.")
-
         if bool(error_log):
             return error_log
+        else:
+            if verbose:
+                print("Completed.")
+
+
+def import_data(db_instance, data, schema_name, table_name, data_name="data", prefix='', suffix='',
+                confirmation_required=True, verbose=False, **kwargs):
+    """
+    Import data into the project database.
+
+    :param db_instance: a class instance for handling with a database
+    :type db_instance: typing.Any
+    :param data: data (from a local directory)
+    :type data: pandas.DataFrame
+    :param schema_name: name of a schema
+    :type schema_name: str
+    :param table_name: name of a table
+    :type table_name: str
+    :param data_name: name of the data, defaults to ``"data"``
+    :type data_name: str
+    :param prefix: prefix for ``data_name``, defaults to ``''``
+    :type prefix: str
+    :param suffix: suffix for ``data_name``, defaults to ``''``
+    :type suffix: str
+    :param confirmation_required: whether asking for confirmation to proceed, defaults to ``True``
+    :type confirmation_required: bool
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :param kwargs: [optional] parameters of the method `pyhelpers.dbms.PostgreSQL.import_data`_
+
+    .. _`pyhelpers.dbms.PostgreSQL.import_data`:
+        https://pyhelpers.readthedocs.io/en/latest/_generated/
+        pyhelpers.dbms.PostgreSQL.import_data.html
+
+    .. seealso::
+
+        - Examples for the method :func:`~pyhelpers.dbms.utils.read_data`.
+    """
+
+    tbl_name = f'"{schema_name}"."{table_name}"'
+    data_name_ = f'{prefix}{data_name}{suffix}'
+    if _confirmed(f"To import {data_name_} into {tbl_name}?\n", confirmation_required):
+
+        if verbose:
+            if not confirmation_required:
+                print(f"Importing {data_name_} into {tbl_name}", end=" ... ")
+            else:
+                print("Importing the data", end=" ... ")
+
+        try:
+            import_args = {
+                'data': data,
+                'schema_name': schema_name,
+                'table_name': table_name,
+                'method': db_instance.psql_insert_copy,
+                'confirmation_required': False,
+            }
+            kwargs.update(import_args)
+            db_instance.import_data(**kwargs)
+
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+
+
+def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="data", prefix='',
+              suffix='', verbose=False, **kwargs):
+    """
+    Load data from the project database.
+
+    :param db_instance: a class instance for handling a database
+    :type db_instance: typing.Any
+    :param schema_name: name of a schema
+    :type schema_name: str
+    :param table_name: name of a table
+    :type table_name: str
+    :param sql_query: SQL statement for querying data, defaults to ``None``
+    :type sql_query: str | None
+    :param data_name: name of the data, defaults to ``"data"``
+    :type data_name: str
+    :param prefix: prefix for ``data_name``, defaults to ``''``
+    :type prefix: str
+    :param suffix: suffix for ``data_name``, defaults to ``''``
+    :type suffix: str
+    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :type verbose: bool | int
+    :param kwargs: [optional] parameters of the method `pyhelpers.dbms.PostgreSQL.read_sql_query`_
+        or `pyhelpers.dbms.MSSQL.read_table`_
+    :return: queried data
+    :rtype: pandas.DataFrame | None
+
+    .. _`pyhelpers.dbms.PostgreSQL.read_sql_query`:
+        https://pyhelpers.readthedocs.io/en/latest/_generated/
+        pyhelpers.dbms.PostgreSQL.read_sql_query.html
+    .. _`pyhelpers.dbms.MSSQL.read_table`:
+        https://pyhelpers.readthedocs.io/en/latest/_generated/
+        pyhelpers.dbms.MSSQL.read_table.html
+
+    **Examples**::
+
+        >>> from pyhelpers.dbms.utils import import_data, read_data
+        >>> from pyhelpers.dbms import PostgreSQL
+        >>> from pyhelpers._cache import example_dataframe
+
+        >>> testdb_name = 'testdb'
+        >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name=testdb_name)
+        Password (postgres@localhost:5432): ***
+        Creating a database: "testdb" ... Done.
+        Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
+        >>> # Import an example dataframe into a table named "points"."England"
+        >>> example_df = example_dataframe()
+        >>> test_schema_name = 'points'
+        >>> test_table_name = 'England'
+        >>> test_data_name = 'the data of "England points"'
+        >>> import_data(
+        ...     testdb, example_df, test_schema_name, test_table_name, test_data_name, index=True,
+        ...     verbose=True)
+        To import the data of "England points" into "points"."England"?
+         [No]|Yes: yes
+        Importing the data ... Done.
+
+        >>> # Retrieve the data
+        >>> example_df_ = read_data(
+        ...     testdb, test_schema_name, test_table_name, data_name=test_data_name,
+        ...     index_col='City', verbose=True)
+        Reading the data of "England points" from "points"."England" ... Done.
+
+        >>> # Check whether the retrieved data is the same as the original example dataframe
+        >>> example_df_.equals(example_df)
+        True
+
+        >>> # Delete the database "testdb"
+        >>> testdb.drop_database(verbose=True)
+        To drop the database "testdb" from postgres:***@localhost:5432
+        ? [No]|Yes: yes
+        Dropping "testdb" ... Done.
+    """
+
+    tbl = f'"{schema_name}"."{table_name}"'
+
+    if not db_instance.table_exists(table_name=table_name, schema_name=schema_name):
+        if verbose:
+            print(f"The table {tbl} does not exist.")
+        data = None
+
+    else:
+        try:
+            if verbose:
+                print(f'Reading {prefix}{data_name}{suffix} from {tbl}', end=" ... ")
+
+            # noinspection PyBroadException
+            try:
+                sql_query_ = f'SELECT * FROM {tbl}' if sql_query is None else sql_query
+                data = db_instance.read_sql_query(sql_query=sql_query_, **kwargs)
+
+            except Exception:
+                kwargs.update({'table_name': table_name, 'schema_name': schema_name})
+                data = db_instance.read_table(**kwargs)
+
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+            data = None
+
+    return data

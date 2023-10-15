@@ -14,6 +14,7 @@ import warnings
 import pandas as pd
 import sqlalchemy
 import sqlalchemy.dialects
+import sqlalchemy.exc
 
 from ._base import _Base
 from .._cache import _check_dependency, _confirmed, _print_failure_msg
@@ -26,26 +27,42 @@ class MSSQL(_Base):
     .. _`Microsoft SQL Server`: https://www.microsoft.com/en-gb/sql-server/
     """
 
-    #: Default dialect.
+    #: str: Default dialect.
     #: The dialect that SQLAlchemy uses to communicate with Microsoft SQL Server; see also
     #: [`DBMS-MS-1 <https://docs.sqlalchemy.org/en/14/dialects/mssql.html>`_].
     DEFAULT_DIALECT = 'mssql'
-    #: Default name of database driver. See also
+    #: str: Default name of database driver. See also
     #: [`DBMS-MS-2
     #: <https://docs.sqlalchemy.org/dialects/mssql.html#module-sqlalchemy.dialects.mssql.pyodbc>`_].
     DEFAULT_DRIVER = 'pyodbc'
-    #: Default ODBC driver.
+    #: str: Default ODBC driver.
     DEFAULT_ODBC_DRIVER = 'ODBC Driver 17 for SQL Server'
-    #: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``
+    #: str: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
     DEFAULT_HOST = 'localhost'
-    #: Default listening port used by Microsoft SQL Server.
+    #: str: Default listening port used by Microsoft SQL Server.
     DEFAULT_PORT = 1433
-    #: Default username.
+    #: str: Default username.
     DEFAULT_USERNAME = 'sa'
-    #: Default database name.
+    #: str: Default database name.
     DEFAULT_DATABASE = 'master'
-    #: Default schema name.
+    #: str: Default schema name.
     DEFAULT_SCHEMA = 'dbo'
+    #: set: Names of built-in schemas of Microsoft SQL Server.
+    BUILTIN_SCHEMAS = {
+        'db_accessadmin',
+        'db_backupoperator',
+        'db_datareader',
+        'db_datawriter',
+        'db_ddladmin',
+        'db_denydatareader',
+        'db_denydatawriter',
+        'db_owner',
+        'db_securityadmin',
+        'dbo',
+        'guest',
+        'INFORMATION_SCHEMA',
+        'sys',
+    }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
                  confirm_db_creation=False, verbose=True):
@@ -53,31 +70,31 @@ class MSSQL(_Base):
         :param host: name of the server running the SQL Server,
             e.g. ``'localhost'`` or ``'127.0.0.1'``;
             when ``host=None`` (default), it is initialized as ``'localhost'``
-        :type host: str or None
+        :type host: str | None
         :param port: listening port; when ``port=None`` (default),
             it is initialized as ``1433`` (default by installation of the SQL Server)
-        :type port: int or None
+        :type port: int | None
         :param username: name of the user or login used to connect; when ``username=None`` (default),
             the instantiation relies on Windows Authentication
-        :type username: str or None
+        :type username: str | None
         :param password: user's password; when ``password=None`` (default),
-            it is required to mannually type in the correct password to connect the PostgreSQL server
-        :type password: str or int or None
+            it is required to mannually type in the correct password to connect the SQL server
+        :type password: str | int | None
         :param database_name: name of a database; when ``database=None`` (default),
             it is initialized as ``'master'``
-        :type database_name: str or None
+        :type database_name: str | None
         :param confirm_db_creation: whether to prompt a confirmation before creating a new database
             (if the specified database does not exist), defaults to ``False``
         :type confirm_db_creation: bool
         :param verbose: whether to print relevant information in console, defaults to ``True``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         :ivar str host: host name/address
-        :ivar str port: listening port used by PostgreSQL
+        :ivar str port: listening port used by SQL Server
         :ivar str username: username
         :ivar str database_name: name of a database
         :ivar dict credentials: basic information about the server/database being connected
-        :ivar str or None auth: authentication method (used for establish the connection)
+        :ivar str | None auth: authentication method (used for establish the connection)
         :ivar str address: representation of the database address
         :ivar sqlalchemy.engine.Engine engine: a `SQLAlchemy`_ connectable engine to a SQL Server;
             see also [`DBMS-MS-3
@@ -155,7 +172,7 @@ class MSSQL(_Base):
             if database_name in self.get_database_names():
                 self.engine.url = self.engine.url.set(database=self.database_name)
             else:  # the database doesn't exist
-                self._create_db(confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[%s]')
+                self._create_db(confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[{}]')
             reconnect_db = True
 
         self.address = re.split(r'://|\?', self.engine.url.render_as_string(hide_password=True))[1]
@@ -166,12 +183,15 @@ class MSSQL(_Base):
             if reconnect_db:
                 self.engine = sqlalchemy.create_engine(
                     url=self.engine.url, isolation_level='AUTOCOMMIT')
+
             with self.engine.connect() as test_conn:
                 test_conn.close()
+
             if verbose:
                 print("Successfully.")
+
         except Exception as e:
-            _print_failure_msg(e)
+            _print_failure_msg(e=e, msg="Failed.")
 
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
@@ -179,13 +199,13 @@ class MSSQL(_Base):
 
         :param database_name: name of a database,
             defaults to the name of the currently-connected database when ``database=None``
-        :type database_name: str or None
+        :type database_name: str | None
         :param auth: authentication method (used for establish the connection),
             defaults to the current authentication method when ``auth=None``
-        :type auth: str or None
+        :type auth: str | None
         :param password: user's password; when ``password=None`` (default),
-            it is required to mannually type in the correct password to connect the PostgreSQL server
-        :type password: str or int or None
+            it is required to mannually type in the correct password to connect the SQL server
+        :type password: str | int | None
         :return: connection string
         :rtype: str
 
@@ -228,13 +248,13 @@ class MSSQL(_Base):
 
         :param database_name: name of a database,
             defaults to the name of the currently-connected database when ``database=None``
-        :type database_name: str or None
+        :type database_name: str | None
         :param auth: authentication method (used for establish the connection),
             defaults to the current authentication method when ``auth=None``
-        :type auth: str or None
+        :type auth: str | None
         :param password: user's password; when ``password=None`` (default),
-            it is required to manually type in the correct password to connect the PostgreSQL server
-        :type password: str or int or None
+            it is required to manually type in the correct password to connect the SQL server
+        :type password: str | int | None
         :return: a SQLAlchemy connectable engine
         :rtype: sqlalchemy.engine.Engine
 
@@ -274,29 +294,26 @@ class MSSQL(_Base):
 
         return engine
 
-    def create_connection(self, database_name=None, close_with_result=False, mode=None):
+    def create_connection(self, database_name=None, mode=None):
+        # noinspection PyTypeChecker
         """
         Create a SQLAlchemy connection.
 
         :param database_name: name of a database,
             defaults to the name of the currently-connected database when ``database=None``
-        :type database_name: str or None
-        :param close_with_result: parameter of the method `sqlalchemy.engine.Engine.connect()`_,
-            defaults to ``False``
-        :type close_with_result: bool
+        :type database_name: str | None
         :param mode: when ``mode=None`` (default), the method uses the existing engine;
             when ``mode='pyodbc'`` (optional), it uses `pyodbc.connect()`_
-        :type mode: None or str
+        :type mode: None | str
         :return: a SQLAlchemy connection to a Microsoft SQL Server
-        :rtype: sqlalchemy.engine.Connection or pyodbc.Connection
+        :rtype: sqlalchemy.engine.Connection | pyodbc.Connection
 
-        .. _`sqlalchemy.engine.Engine.connect()`:
-            https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Engine.connect
         .. _`pyodbc.connect()`: https://github.com/mkleehammer/pyodbc/wiki/The-pyodbc-Module#connect
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
+            >>> import sqlalchemy
 
             >>> mssql = MSSQL()
             Connecting <server_name>@localhost:1433/master ... Successfully.
@@ -306,30 +323,19 @@ class MSSQL(_Base):
             False
             >>> db_conn.closed
             False
-            >>> rslt = db_conn.execute('SELECT 1')
-            >>> rslt.fetchall()
+            >>> res = db_conn.execute(sqlalchemy.text('SELECT 1'))
+            >>> res.fetchall()
             [(1,)]
             >>> db_conn.closed
             False
             >>> db_conn.close()
             >>> db_conn.closed
             True
-
-            >>> db_conn = mssql.create_connection()
-            >>> db_conn.should_close_with_result
-            True
-            >>> db_conn.closed
-            False
-            >>> rslt = db_conn.execute('SELECT 1')
-            >>> rslt.fetchall()
-            [(1,)]
-            >>> db_conn.closed
-            True
         """
 
         if mode is None:  # (default)
             engine = self.create_engine(database_name=database_name)
-            conn = engine.connect(close_with_result=close_with_result)
+            conn = engine.connect()
 
         else:  # use 'pyodbc'
             pyodbc_ = _check_dependency(name='pyodbc')
@@ -346,7 +352,7 @@ class MSSQL(_Base):
 
         :param database_name: name of a database,
             defaults to the name of the currently-connected database when ``database=None``
-        :type database_name: str or None
+        :type database_name: str | None
         :return: a `pyodbc`_ cursor
         :rtype: pyodbc.Cursor
 
@@ -380,6 +386,8 @@ class MSSQL(_Base):
 
         return cursor
 
+    # == Database ==================================================================================
+
     def get_database_names(self, names_only=True):
         """
         Get names of all existing databases.
@@ -387,7 +395,7 @@ class MSSQL(_Base):
         :param names_only: whether to return only the names of the databases, defaults to ``True``
         :type names_only: bool
         :return: names of all existing databases
-        :rtype: list or pandas.DataFrame
+        :rtype: list | pandas.DataFrame
 
         **Examples**::
 
@@ -420,7 +428,7 @@ class MSSQL(_Base):
         Check whether a database exists.
 
         :param database_name: name of a database, defaults to ``None``
-        :type database_name: str or None
+        :type database_name: str | None
         :return: whether the database exists
         :rtype: bool
 
@@ -451,7 +459,7 @@ class MSSQL(_Base):
             'master'
         """
 
-        db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
+        db_name = self.database_name if database_name is None else str(database_name)
 
         with self.engine.connect() as connection:
             # noinspection PyBroadException
@@ -470,76 +478,6 @@ class MSSQL(_Base):
 
         return result
 
-    def connect_database(self, database_name=None, verbose=False):
-        """
-        Establish a connection to a database.
-
-        :param database_name: name of a database;
-            when ``database_name=None`` (default), the database name is input manually
-        :type database_name: str or None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
-
-        **Examples**::
-
-            >>> from pyhelpers.dbms import MSSQL
-
-            >>> testdb = MSSQL(database_name='testdb')
-            Creating a database: [testdb] ... Done.
-            Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
-            >>> testdb.connect_database(verbose=True)
-            Being connected with <server_name>@localhost:1433/testdb.
-
-            >>> testdb.connect_database(database_name='master', verbose=True)
-            Connecting <server_name>@localhost:1433/master ... Successfully.
-            >>> testdb.database_name
-            'master'
-
-            >>> testdb.connect_database(database_name='testdb', verbose=True)
-            Connecting <server_name>@localhost:1433/testdb ... Successfully.
-            >>> testdb.database_name
-            'testdb'
-
-            >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
-            To drop the database [testdb] from <server_name>@localhost:1433
-            ? [No]|Yes: yes
-            Dropping [testdb] ... Done.
-            >>> testdb.database_name
-            'master'
-        """
-
-        if database_name is not None:
-            self.database_name = str(database_name)
-
-            self.credentials.update({'database': self.database_name})
-
-            url_query = {'driver': self.odbc_driver}
-            if self.auth == 'Windows Authentication':
-                url_query.update({'Trusted_Connection': 'yes'})
-
-            url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
-            self.address = re.split(r'://|\?', url.render_as_string(hide_password=True))[1]
-
-            if verbose:
-                print(f"Connecting {self.address}", end=" ... ")
-
-            try:
-                if not self.database_exists(self.database_name):
-                    self.create_database(database_name=self.database_name)
-
-                self.engine = sqlalchemy.create_engine(url=url, isolation_level='AUTOCOMMIT')
-
-                if verbose:
-                    print("Successfully.")
-
-            except Exception as e:
-                _print_failure_msg(e)
-
-        else:
-            if verbose:
-                print(f"Being connected with {self.address}.")
-
     def create_database(self, database_name, verbose=False):
         """
         Create a database.
@@ -547,7 +485,7 @@ class MSSQL(_Base):
         :param database_name: name of a database
         :type database_name: str
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         **Examples**::
 
@@ -582,7 +520,79 @@ class MSSQL(_Base):
             'master'
         """
 
-        self._create_database(database_name=database_name, verbose=verbose, fmt='[%s]')
+        self._create_database(database_name=database_name, verbose=verbose, fmt='[{}]')
+
+    def connect_database(self, database_name=None, verbose=False):
+        """
+        Establish a connection to a database.
+
+        :param database_name: name of a database;
+            when ``database_name=None`` (default), the database name is input manually
+        :type database_name: str | None
+        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :type verbose: bool | int
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import MSSQL
+
+            >>> testdb = MSSQL(database_name='testdb')
+            Creating a database: [testdb] ... Done.
+            Connecting <server_name>@localhost:1433/testdb ... Successfully.
+
+            >>> testdb.connect_database(verbose=True)
+            Being connected with <server_name>@localhost:1433/testdb.
+
+            >>> testdb.connect_database(database_name='master', verbose=True)
+            Connecting <server_name>@localhost:1433/master ... Successfully.
+            >>> testdb.database_name
+            'master'
+
+            >>> testdb.connect_database(database_name='testdb', verbose=True)
+            Connecting <server_name>@localhost:1433/testdb ... Successfully.
+            >>> testdb.database_name
+            'testdb'
+
+            >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
+            To drop the database [testdb] from <server_name>@localhost:1433
+            ? [No]|Yes: yes
+            Dropping [testdb] ... Done.
+            >>> testdb.database_name
+            'master'
+        """
+
+        if database_name is not None:
+            db_name = str(database_name)  # self.database_name = str(database_name)
+
+            self.credentials.update({'database': db_name})
+
+            url_query = {'driver': self.odbc_driver}
+            if self.auth == 'Windows Authentication':
+                url_query.update({'Trusted_Connection': 'yes'})
+
+            url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
+            self.address = re.split(r'://|\?', url.render_as_string(hide_password=True))[1]
+
+            if verbose:
+                print(f"Connecting {self.address}", end=" ... ")
+
+            try:
+                if not self.database_exists(database_name=db_name):
+                    self.create_database(database_name=db_name)
+
+                self.engine = sqlalchemy.create_engine(url=url, isolation_level='AUTOCOMMIT')
+
+                if verbose:
+                    print("Successfully.")
+
+                self.database_name = self.credentials['database']
+
+            except Exception as e:
+                _print_failure_msg(e=e, msg="Failed.")
+
+        else:
+            if verbose:
+                print(f"Being connected with {self.address}.")
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
@@ -590,9 +600,9 @@ class MSSQL(_Base):
 
         :param database_name: name of database to disconnect from;
             if ``database_name=None`` (default), disconnect the current database.
-        :type database_name: str or None
+        :type database_name: str | None
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         **Examples**::
 
@@ -619,33 +629,39 @@ class MSSQL(_Base):
             The database [testdb] does not exist.
         """
 
-        db_name = copy.copy(self.database_name) if database_name is None else str(database_name)
+        db_name = self.database_name if database_name is None else str(database_name)
 
-        if verbose:
-            print("Disconnecting the database \"{}\" ... ".format(db_name), end="")
-
-        try:
-            # with self.engine.connect() as connection:
-            #     query = sqlalchemy.text(
-            #         f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
-            #         f'ALTER DATABASE {db_name} SET MULTI_USER;')
-            #     connection.execute(query)
-
-            self.connect_database(database_name=self.DEFAULT_DATABASE)
-
-            with self.engine.connect() as connection:
-                query = sqlalchemy.text(
-                    f"DECLARE @kill varchar(8000) = ''; "
-                    f"SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';' "
-                    f"FROM sys.dm_exec_sessions WHERE database_id  = db_id('{db_name}') "
-                    f"EXEC(@kill);")
-                connection.execute(query)
-
+        if db_name != self.DEFAULT_DATABASE:
             if verbose:
-                print("Done.")
+                print(f'Disconnecting the database "{db_name}" ... ', end="")
 
-        except Exception as e:
-            _print_failure_msg(e)
+            try:
+                # with self.engine.connect() as connection:
+                #     query = sqlalchemy.text(
+                #         f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
+                #         f'ALTER DATABASE {db_name} SET MULTI_USER;')
+                #     connection.execute(query)
+
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(
+                        f"USE [master]; "
+                        f"DECLARE @kill varchar(8000) = ''; "
+                        f"SELECT @kill = @kill + 'kill ' + CONVERT(varchar(5), session_id) + ';' "
+                        f"FROM sys.dm_exec_sessions WHERE database_id  = db_id('{db_name}') "
+                        f"EXEC(@kill);")
+                    connection.execute(query)
+
+                if verbose:
+                    print("Done.")
+
+                self.connect_database(database_name=self.DEFAULT_DATABASE)
+
+            except Exception as e:
+                _print_failure_msg(e=e, msg="Failed.")
+
+        else:
+            if verbose:
+                print(f"Being connected with {self.address}.")
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
@@ -653,12 +669,12 @@ class MSSQL(_Base):
 
         :param database_name: database to be disconnected;
             if ``database_name=None`` (default), drop the database being currently currented
-        :type database_name: str or None
+        :type database_name: str | None
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         **Examples**::
 
@@ -684,8 +700,10 @@ class MSSQL(_Base):
         """
 
         self._drop_database(
-            database_name=database_name, fmt='[%s]', confirmation_required=confirmation_required,
+            database_name=database_name, fmt='[{}]', confirmation_required=confirmation_required,
             verbose=verbose)
+
+    # == Schema ====================================================================================
 
     def schema_exists(self, schema_name):
         """
@@ -733,7 +751,7 @@ class MSSQL(_Base):
         :param schema_name: name of a schema in the currently-connected database
         :type schema_name: str
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         **Examples**::
 
@@ -770,7 +788,7 @@ class MSSQL(_Base):
                 if verbose:
                     print("Done.")
             except Exception as e:
-                _print_failure_msg(e)
+                _print_failure_msg(e=e, msg="Failed.")
 
         else:
             print(f"The schema {s_name} already exists.")
@@ -785,11 +803,11 @@ class MSSQL(_Base):
         :type include_all: bool
         :param column_names: column names of the returned dataframe if ``names_only=False``;
             when ``column_names=None``, it defaults to ``['schema_name', 'schema_id', 'role']``
-        :type column_names: None or list
+        :type column_names: None | list
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
         :return: schema names
-        :rtype: list or pandas.DataFrame or None
+        :rtype: list | pandas.DataFrame | None
 
         **Examples**::
 
@@ -932,35 +950,55 @@ class MSSQL(_Base):
             Dropping "testdb" ... Done.
         """
 
+        declare_statement = \
+            ("DECLARE @sql_statement1 NVARCHAR(MAX); "
+             "DECLARE @sql_statement2 NVARCHAR(MAX); "
+             "DECLARE @db_schema NVARCHAR(200); "
+             "SET @db_schema = '{}'; ")
+
+        alter_table_statement = \
+            ("COALESCE(@sql_statement1, N'') + "
+             "N'ALTER TABLE ' + tc.TABLE_NAME + ' DROP CONSTRAINT ' + tc.constraint_name + ';' + "
+             "CHAR(13)")
         select1 = \
-            "SELECT " \
-            "('ALTER TABLE ' + tc.table_name + ' DROP CONSTRAINT ' + tc.constraint_name + ';') " \
+            "SELECT @sql_statement1 = " + alter_table_statement + \
             "FROM INFORMATION_SCHEMA.TABLES t, INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc " \
             "WHERE " \
-            "t.table_name = tc.table_name AND " \
-            "tc.constraint_name not like '%%_pk' AND " \
+            "t.TABLE_NAME = tc.TABLE_NAME AND " \
+            "tc.CONSTRAINT_NAME NOT LIKE '%%_pk' AND " \
             "CONSTRAINT_TYPE <> 'PRIMARY KEY' AND " \
-            "t.table_catalog='{}'"
+            "t.TABLE_CATALOG='{}'; " \
+            "EXEC sp_executesql @sql_statement1; "
 
+        drop_tables_statement = \
+            ("COALESCE(@sql_statement2, N'') + "
+             "N'DROP TABLE ' +'[' + @db_schema +']' + '.' + QUOTENAME(TABLE_NAME) + N';' + "
+             "CHAR(13)")
         select2 = \
-            "SELECT ('DROP TABLE ' + t.table_name + ';') FROM INFORMATION_SCHEMA.TABLES t " \
-            "WHERE t.table_catalog='{}'"
+            "SELECT @sql_statement2 = " + drop_tables_statement + \
+            "FROM INFORMATION_SCHEMA.TABLES " \
+            "WHERE TABLE_SCHEMA = @db_schema AND TABLE_TYPE = 'BASE TABLE' " \
+            "EXEC sp_executesql @sql_statement2; "
 
-        query_fmt = f'({select1}) UNION ({select2}); ' + 'DROP SCHEMA IF EXISTS [{}];'
+        query_ = declare_statement + select1 + select2 + 'DROP SCHEMA IF EXISTS [{}];'
 
         self._drop_schema(
-            schema_names=schema_names, fmt='[{}]', query_fmt=query_fmt,
+            schema_names=schema_names, fmt='[{}]', query_=query_,
             confirmation_required=confirmation_required, verbose=verbose)
 
-    def get_table_names(self, schema_name=None):
+    # == Table =====================================================================================
+
+    def get_table_names(self, schema_name=None, verbose=False):
         """
         Get names of all tables stored in a schema.
 
-        :param schema_name: name of a schema,
+        :param schema_name: name of a schema, or names a multiple schemas,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or list or None
-        :return: names of tables in the given schema ``mssql_schema_name``
-        :rtype: list
+        :type schema_name: str | list | None
+        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :type verbose: bool | int
+        :return: table names of the given schema(s) ``schema_name``
+        :rtype: dict
 
         **Examples**::
 
@@ -970,27 +1008,30 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor',
+              'test_table']}
 
             >>> mssql.get_table_names(schema_name=['dbo', 'sys'])
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor',
+              'test_table'],
+             'sys': []}
         """
 
-        inspector = sqlalchemy.inspection.inspect(self.engine)
+        table_names = super().get_table_names(schema_name=schema_name, verbose=verbose)
 
-        schema_name_ = self._schema_name(schema_name=schema_name)
-        if isinstance(schema_name_, str):
-            table_names = inspector.get_table_names(schema=schema_name_)
-        else:
-            table_names = [
-                (schema, inspector.get_table_names(schema=schema)) for schema in schema_name_]
         return table_names
 
-    def _table_name(self, table_name, schema_name, fmt='[%s].[%s]'):
+    def _table_name(self, table_name, schema_name=None, fmt='[{}].[{}]'):
         table_name_ = super()._table_name(table_name=table_name, schema_name=schema_name, fmt=fmt)
+
         return table_name_
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False):
@@ -1003,9 +1044,9 @@ class MSSQL(_Base):
         :type column_specs: str
         :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
             :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
-        :type schema_name: str or None
+        :type schema_name: str | None
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         **Examples**::
 
@@ -1015,17 +1056,26 @@ class MSSQL(_Base):
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
 
+            >>> # Create a new table named 'test_table'
             >>> tbl_name = 'test_table'
             >>> col_spec = 'col_name_1 INT, col_name_2 varchar(255)'
-
             >>> testdb.create_table(table_name=tbl_name, column_specs=col_spec, verbose=True)
             Creating a table: [dbo].[test_table] ... Done.
-
             >>> testdb.table_exists(table_name=tbl_name)
             True
-
             >>> testdb.get_column_names(table_name=tbl_name)
             ['col_name_1', 'col_name_2']
+            >>> test_tbl_col_info = testdb.get_column_info(table_name=tbl_name, as_dict=False)
+            >>> test_tbl_col_info.head()
+                                column_0    column_1
+            TABLE_CATALOG         testdb      testdb
+            TABLE_SCHEMA             dbo         dbo
+            TABLE_NAME        test_table  test_table
+            COLUMN_NAME       col_name_1  col_name_2
+            ORDINAL_POSITION           1           2
+
+            >>> testdb.validate_column_names(table_name=tbl_name)
+            '"col_name_1", "col_name_2"'
 
             >>> # Drop the table [dbo].[test_table]
             >>> testdb.drop_table(table_name=tbl_name, verbose=True)
@@ -1062,7 +1112,7 @@ class MSSQL(_Base):
                     print("Done.")
 
             except Exception as e:
-                _print_failure_msg(e)
+                _print_failure_msg(e=e, msg="Failed.")
 
     def table_exists(self, table_name, schema_name=None):
         """
@@ -1072,7 +1122,7 @@ class MSSQL(_Base):
         :type table_name: str
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :return: whether the table exists in the currently-connected database
         :rtype: bool
 
@@ -1087,11 +1137,11 @@ class MSSQL(_Base):
             False
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql.table_exists(table_name='MSreplication_options')
             True
@@ -1118,7 +1168,7 @@ class MSSQL(_Base):
         :param names_only: whether to return *FileTables* names only, defaults to ``True``
         :type names_only: bool
         :return: information about *FileTables* (if available)
-        :rtype: list or pandas.DataFrame
+        :rtype: list | pandas.DataFrame
 
         **Examples**::
 
@@ -1150,7 +1200,7 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param schema_name: schema name of the given table, defaults to ``None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :return: count of rows in the given table
         :rtype: int
 
@@ -1162,11 +1212,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql.get_row_count(table_name='MSreplication_options')
             3
@@ -1189,7 +1239,7 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param schema_name: defaults to ``None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :return: a list of column names
         :rtype: list
 
@@ -1201,11 +1251,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql.get_column_names(table_name='MSreplication_options')
             ['optname',
@@ -1228,61 +1278,51 @@ class MSSQL(_Base):
 
         return col_names
 
-    def get_primary_keys(self, table_name=None, schema_name=None, table_type='TABLE'):
+    def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Get the primary keys of table(s).
+        Get information about columns of a table.
 
-        :param table_name: name of a table in the currently-connected database;
-             when ``table_name=None`` (default), get the primary keys of all existing tables
-        :type table_name: str or None
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
-        :param table_type: table type, defaults to ``'TABLE'``
-        :type table_type: str
-        :return: a list of primary keys
-        :rtype: list
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :type schema_name: str | None
+        :param as_dict: whether to return the column information as a dictionary, defaults to ``True``
+        :type as_dict: bool
+        :return: information about all columns of the given table
+        :rtype: pandas.DataFrame | dict
 
-        **Examples**::
+        .. seealso::
 
-            >>> from pyhelpers.dbms import MSSQL
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
+        """
+        column_info = super().get_column_info(
+            table_name=table_name, schema_name=schema_name, as_dict=as_dict)
 
-            >>> mssql = MSSQL()
-            Connecting <server_name>@localhost:1433/master ... Successfully.
+        return column_info
 
-            >>> mssql.get_primary_keys()
-            {}
+    def validate_column_names(self, table_name, schema_name=None, column_names=None):
+        """
+        Validate column names for query statement.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema, defaults to ``None``
+        :type schema_name: str
+        :param column_names: column name(s) for a dataframe
+        :type column_names: str | list | tuple | None
+        :return: column names for SQL query statement
+        :rtype: str
+
+        .. seealso::
+
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
         """
 
-        try:
-            cursor = self.create_cursor(self.database_name)
+        column_names_ = super().validate_column_names(
+            schema_name=schema_name, table_name=table_name, column_names=column_names)
 
-            schema_name_ = self._schema_name(schema_name=schema_name)
-            # noinspection PyArgumentList
-            table_names_ = cursor.tables(schema=schema_name_, tableType=table_type)
-            table_names = [table.table_name for table in table_names_]  # Get all table names
-
-            # noinspection PyArgumentList
-            tbl_pks = [  # Get primary keys for each table
-                {k.table_name: k.column_name} for tbl_name in table_names
-                for k in cursor.primaryKeys(table=tbl_name)]
-
-            # Close the cursor
-            cursor.close()
-
-            # Each element of 'tbl_pks' (as a dict) is in the format of {'table_name': 'primary key'}
-            # noinspection PyTypeChecker
-            tbl_names_set = functools.reduce(operator.or_, (set(d.keys()) for d in tbl_pks), set())
-            # Find all primary keys for each table
-            tbl_pk_dict = dict((tbl, [d[tbl] for d in tbl_pks if tbl in d]) for tbl in tbl_names_set)
-
-            if table_name:
-                tbl_pk_dict = tbl_pk_dict[table_name]
-
-        except KeyError:  # Most likely that the table (i.e. 'table_name') does not have any primary key
-            tbl_pk_dict = None
-
-        return tbl_pk_dict
+        return column_names_
 
     def _has_dtypes(self, table_name, dtypes, schema_name=None):
         """
@@ -1291,10 +1331,10 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param dtypes: data type(s), such as ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``
-        :type dtypes: str or list
+        :type dtypes: str | list
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :return: whether the table contains any of the given data types, and the names of those tables
         :rtype: tuple[bool, list]
 
@@ -1306,11 +1346,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql._has_dtypes(table_name='MSreplication_options', dtypes='varbinary')
             (False, [])
@@ -1348,10 +1388,10 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param dtypes: data types, such as ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``
-        :type dtypes: str or typing.Sequence[str]
+        :type dtypes: str | typing.Sequence[str]
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :return: data type, whether the table has this data type and the corresponding column names
         :rtype: typing.Generator[str, bool, list]
 
@@ -1363,18 +1403,18 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
-            >>> rslt = mssql.has_dtypes(table_name='spt_monitor', dtypes='varbinary')
-            >>> list(rslt)
+            >>> res = mssql.has_dtypes(table_name='spt_monitor', dtypes='varbinary')
+            >>> list(res)
             [('varbinary', False, [])]
 
-            >>> rslt = mssql.has_dtypes(table_name='spt_monitor', dtypes=['geometry', 'int'])
-            >>> list(rslt)
+            >>> res = mssql.has_dtypes(table_name='spt_monitor', dtypes=['geometry', 'int'])
+            >>> list(res)
             [('geometry', False, []),
              ('int',
               True,
@@ -1421,10 +1461,10 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param column_names: a list of column names of the specified table, defaults to ``None``
-        :type column_names: list or None
+        :type column_names: list | None
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :param exclude: name(s) of column(s) to be excluded from the specifying the query statement
         :return: formatted column names in a SQL query statement, and a list of target column names
         :rtype: tuple[str, list]
@@ -1437,11 +1477,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql._column_names_in_query('MSreplication_options', column_names=['optname'])
             ('[dbo].[optname]',
@@ -1473,9 +1513,140 @@ class MSSQL(_Base):
 
         return column_names_in_query, column_name_list
 
+    def get_primary_keys(self, table_name=None, schema_name=None, table_type='TABLE'):
+        """
+        Get the primary keys of table(s).
+
+        :param table_name: name of a table in the currently-connected database;
+             when ``table_name=None`` (default), get the primary keys of all existing tables
+        :type table_name: str | None
+        :param schema_name: name of a schema,
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :type schema_name: str | None
+        :param table_type: table type, defaults to ``'TABLE'``
+        :type table_type: str
+        :return: a list of primary keys
+        :rtype: list
+
+        **Examples**::
+
+            >>> from pyhelpers.dbms import MSSQL
+
+            >>> mssql = MSSQL()
+            Connecting <server_name>@localhost:1433/master ... Successfully.
+
+            >>> mssql.get_primary_keys()
+            {}
+        """
+
+        try:
+            cursor = self.create_cursor(self.database_name)
+
+            schema_name_ = self._schema_name(schema_name=schema_name)
+            # noinspection PyArgumentList
+            table_names_ = cursor.tables(schema=schema_name_, tableType=table_type)
+            table_names = [table.table_name for table in table_names_]  # Get all table names
+
+            # noinspection PyArgumentList
+            tbl_pks = [  # Get primary keys for each table
+                {k.table_name: k.column_name} for tbl_name in table_names
+                for k in cursor.primaryKeys(table=tbl_name)]
+
+            # Close the cursor
+            cursor.close()
+
+            # Each element of 'tbl_pks' (as a dict) is in the format of {'table_name': 'primary key'}
+            # noinspection PyTypeChecker
+            tbl_names_set = functools.reduce(operator.or_, (set(d.keys()) for d in tbl_pks), set())
+            # Find all primary keys for each table
+            tbl_pk_dict = dict((tbl, [d[tbl] for d in tbl_pks if tbl in d]) for tbl in tbl_names_set)
+
+            if table_name:
+                tbl_pk_dict = tbl_pk_dict[table_name]
+
+        except KeyError:  # Most likely that the table (i.e. 'table_name') does not have any primary key
+            tbl_pk_dict = None
+
+        return tbl_pk_dict
+
+    def add_primary_key(self, column_name, table_name, schema_name=None):
+        """
+        Add a primary key to a table.
+
+        :param column_name: name of a column to be set as a primary key
+        :type column_name: str
+        :param table_name: name of a table
+        :type table_name: str
+        :param schema_name: name of a schema, defaults to ``None``
+        :type schema_name: str | None
+        """
+
+        schema_name_ = self.DEFAULT_SCHEMA if schema_name is None else schema_name
+        column_type_query = \
+            f"SELECT DATA_TYPE, CHARACTER_OCTET_LENGTH AS OCTET_LENGTH " \
+            f"FROM INFORMATION_SCHEMA.COLUMNS " \
+            f"WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name_}' " \
+            f"AND COLUMN_NAME = '{column_name}';"
+
+        with self.engine.connect() as connection:
+            col_typ_ = connection.execute(sqlalchemy.text(column_type_query))
+            data_type, octet_len = col_typ_.fetchone()
+
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name_)
+
+        with self.engine.connect() as connection:
+            if data_type == 'varchar' and (octet_len == -1 or octet_len > 900):
+                alter_column_query = \
+                    f"ALTER TABLE {table_name_} ALTER COLUMN {column_name} VARCHAR(500) NOT NULL;"
+                connection.execute(sqlalchemy.text(alter_column_query))
+
+            query = f'ALTER TABLE {table_name_} ADD PRIMARY KEY ({column_name});'
+            connection.execute(sqlalchemy.text(query))
+
+    def varchar_to_geometry_dtype(self, table_name, geom_column_name, srid=None, schema_name=None):
+        """
+        Alter a VARCHAR column (of geometry data) to geometry data type.
+
+        :param table_name: name of a table
+        :type table_name: str
+        :param geom_column_name: name of geometry column, defaults to ``None``
+        :type geom_column_name: str | None
+        :param srid: spatial reference identifier (SRID) - a unique identifier associated with
+            a specific coordinate system, tolerance, and resolution, defaults to ``None``
+        :type srid: int | None
+        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
+            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :type schema_name: str | None
+        """
+
+        if geom_column_name:
+            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+            temp_col_name = 'temp_geom'
+            srid_ = srid if srid else 0
+
+            # Reference: https://stackoverflow.com/questions/64257958/
+
+            add_temp_col = f"ALTER TABLE {table_name_} ADD [{temp_col_name}] GEOMETRY;"
+
+            update_dtype = \
+                f"UPDATE {table_name_} " \
+                f"SET [{temp_col_name}] = " \
+                f"geometry::STGeomFromText(CONVERT(varchar(max), [{geom_column_name}]), {srid_}) " \
+                f"FROM {table_name_};"
+
+            alter_column = \
+                f"ALTER TABLE {table_name_} DROP COLUMN [{geom_column_name}]; " \
+                f"EXEC sp_rename '{table_name_}.{temp_col_name}', '{geom_column_name}', 'COLUMN';"
+
+            with self.engine.connect() as connection:
+                for query in [add_temp_col, update_dtype, alter_column]:
+                    connection.execute(sqlalchemy.text(query))
+
     def import_data(self, data, table_name, schema_name=None, if_exists='fail',
                     force_replace=False, chunk_size=None, col_type=None, method='multi',
-                    index=False, confirmation_required=True, verbose=False, **kwargs):
+                    index=False, geom_column_name=None, srid=None, confirmation_required=True,
+                    verbose=False, **kwargs):
         """
         Import tabular data into a table.
 
@@ -1487,8 +1658,8 @@ class MSSQL(_Base):
         :param table_name: name of a table
         :type table_name: str
         :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
-        :type schema_name: str or None
+            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :type schema_name: str | None
         :param if_exists: if the table already exists, to ``'replace'``, ``'append'``
             or, by default, ``'fail'`` and do nothing but raise a ValueError.
         :type if_exists: str
@@ -1502,13 +1673,16 @@ class MSSQL(_Base):
         :param method: method for SQL insertion clause, defaults to ``'multi'``
 
             - ``None``: uses standard SQL ``INSERT`` clause (one per row);
-            - ``'multi'``: pass multiple values in a single ``INSERT`` clause;
-            - callable (e.g. ``PostgreSQL.psql_insert_copy``)
-              with signature ``(pd_table, conn, keys, data_iter)``.
+            - ``'multi'``: pass multiple values in a single ``INSERT`` clause.
 
         :type method: str | None | typing.Callable
         :param index: whether to dump the index as a column
         :type index: bool
+        :param geom_column_name: name of geometry column, defaults to ``None``
+        :type geom_column_name: str | None
+        :param srid: spatial reference identifier (SRID) - a unique identifier associated with
+            a specific coordinate system, tolerance, and resolution, defaults to ``None``
+        :type srid: int | None
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
@@ -1573,15 +1747,45 @@ class MSSQL(_Base):
             - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.read_table`.
         """
 
-        if index is True:
-            dat = data.reset_index()
-        else:
-            dat = data
+        dat = data.reset_index() if index is True else data
 
-        self._import_data(
-            data=dat, table_name=table_name, schema_name=schema_name, if_exists=if_exists,
-            force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
-            index=False, confirmation_required=confirmation_required, verbose=verbose, **kwargs)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=sqlalchemy.exc.SAWarning)
+
+            self._import_data(
+                data=dat, table_name=table_name, schema_name=schema_name, if_exists=if_exists,
+                force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
+                index=False, confirmation_required=confirmation_required, verbose=verbose, **kwargs)
+
+        self.varchar_to_geometry_dtype(
+            table_name=table_name, schema_name=schema_name, geom_column_name=geom_column_name,
+            srid=srid)
+
+    @staticmethod
+    def _dtype_read_fmt(dtype):
+        if dtype == 'hierarchyid':
+            fmt = 'CONVERT(NVARCHAR(max), CONVERT(VARBINARY(max), [{x}], 1), 1) AS [{x}]'
+        elif dtype == 'varbinary':
+            fmt = 'CONVERT(VARCHAR(max), [{x}], 2) AS [{x}]'
+        elif dtype == 'geometry':
+            fmt = '[{x}].STAsText() AS [{x}]'
+        else:
+            fmt = '[{x}]'
+        return fmt
+
+    def _read_column_names(self, table_name, schema_name, column_names):
+        col_names = [column_names] if isinstance(column_names, str) else column_names.copy()
+
+        column_info = self.get_column_info(table_name=table_name, schema_name=schema_name)
+        column_info_col_names = list(map(str.lower, column_info['COLUMN_NAME']))
+
+        col_idx = [column_info_col_names.index(x) for x in map(str.lower, col_names)]
+        dtypes = [column_info['DATA_TYPE'][i] for i in col_idx]
+
+        fmts = [self._dtype_read_fmt(dtype) for dtype in dtypes]
+        col_names_ = ', '.join(fmt.format(x=x) for fmt, x in zip(fmts, col_names))
+
+        return col_names, col_names_
 
     def read_columns(self, table_name, column_names, dtype=None, schema_name=None, chunk_size=None,
                      **kwargs):
@@ -1591,16 +1795,16 @@ class MSSQL(_Base):
         :param table_name: name of a table in the currently-connected database
         :type table_name: str
         :param column_names: column name(s) of the specified table
-        :type column_names: list or tuple
+        :type column_names: list | tuple
         :param dtype: data type, defaults to ``None``;
             options include ``'hierarchyid'``, ``'varbinary'`` and ``'geometry'``
-        :type dtype: str or None
+        :type dtype: str | None
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :param chunk_size: number of rows to include in each chunk (if specified),
             defaults to ``None``
-        :type chunk_size: int or None
+        :type chunk_size: int | None
         :param kwargs: [optional] parameters of `pandas.read_sql`_
         :return: data of specific columns of the queried table
         :rtype: pandas.DataFrame
@@ -1616,11 +1820,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql.read_columns('MSreplication_options', column_names=['optname', 'value'])
                       optname  value
@@ -1633,18 +1837,8 @@ class MSSQL(_Base):
             - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.read_table`.
         """
 
-        col_names = [column_names] if isinstance(column_names, str) else copy.copy(column_names)
-
-        if dtype == 'hierarchyid':
-            fmt = 'CONVERT(NVARCHAR(max), CONVERT(VARBINARY(max), [{x}], 1), 1) AS [{x}]'
-        elif dtype == 'varbinary':
-            fmt = 'CONVERT(VARCHAR(max), [{x}], 2) AS [{x}]'
-        elif dtype == 'geometry':
-            fmt = '[{x}].STAsText() AS [{x}]'
-        else:
-            fmt = '[{x}]'
-        col_names_ = ', '.join(fmt.format(x=x) for x in col_names)
-
+        col_names, col_names_ = self._read_column_names(
+            table_name=table_name, schema_name=schema_name, column_names=column_names)
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
         with self.engine.connect() as connection:
@@ -1656,15 +1850,13 @@ class MSSQL(_Base):
 
         if dtype == 'geometry':
             shapely_wkt = _check_dependency(name='shapely.wkt')
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                data[col_names] = data[col_names].applymap(shapely_wkt.loads)
+            data[col_names] = data[col_names].map(shapely_wkt.loads)
 
         return data
 
     def read_table(self, table_name, schema_name=None, column_names=None, conditions=None,
-                   chunk_size=None, save_as=None, data_dir=None, verbose=False, **kwargs):
+                   chunk_size=None, save_as=None, data_dir=None, save_args=None, verbose=False,
+                   **kwargs):
         """
         Read data from a table.
 
@@ -1672,26 +1864,28 @@ class MSSQL(_Base):
         :type table_name: str
         :param schema_name: name of a schema,
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
-        :type schema_name: str or None
+        :type schema_name: str | None
         :param column_names: column name(s), defaults to all columns when ``column_names=None``
-        :type column_names: list or tuple or None
+        :type column_names: list | tuple | None
         :param conditions: conditions in a SQL query statement, defaults to ``None``
-        :type conditions: str or None
+        :type conditions: str | None
         :param chunk_size: number of rows to include in each chunk (if specified),
             defaults to ``None``
-        :type chunk_size: int or None
+        :type chunk_size: int | None
         :param save_as: file extension (if specified) for saving table data locally,
             defaults to ``None``
-        :type save_as: str or None
+        :type save_as: str | None
         :param data_dir: directory where the table data is to be saved, defaults to ``None``
-        :type data_dir: str or None
+        :type data_dir: str | None
+        :param save_args: optional parameters of the function :func:`pyhelpers.store.save_data`,
+            defaults to ``None``
+        :type save_args: dict | None
         :param verbose: whether to print relevant information in console, defaults to ``False``
         :type verbose: bool | int
-        :param kwargs: [optional] parameters of `pandas.read_sql`_
+        :param kwargs: [optional] parameters of
+            `pandas.read_sql <https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html>`_
         :return: data of the queried table
         :rtype: pandas.DataFrame
-
-        .. _`pandas.read_sql`: https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html
 
         **Examples**::
 
@@ -1702,11 +1896,11 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
 
             >>> mssql.get_table_names()
-            ['MSreplication_options',
-             'spt_fallback_db',
-             'spt_fallback_dev',
-             'spt_fallback_usg',
-             'spt_monitor']
+            {'dbo': ['MSreplication_options',
+              'spt_fallback_db',
+              'spt_fallback_dev',
+              'spt_fallback_usg',
+              'spt_monitor']}
 
             >>> mssql.read_table(table_name='MSreplication_options')
                       optname  value  ...  revision  install_failures
@@ -1767,27 +1961,19 @@ class MSSQL(_Base):
         else:
             column_names_ = list(column_names)
 
-        check_dtypes = ['hierarchyid', 'varbinary', 'geometry']
-        check_dtypes_rslt = self.has_dtypes(table_name, dtypes=check_dtypes)
+        check_dtypes = self.has_dtypes(table_name, dtypes=['hierarchyid', 'varbinary', 'geometry'])
 
         solo_column_names = []
         column_names_in_query = column_names_.copy()
-        for dtype, if_exists, col_names in check_dtypes_rslt:
+        for dtype, if_exists, col_names in check_dtypes:
             if if_exists:
-                if dtype == 'hierarchyid':
-                    fmt = 'CONVERT(NVARCHAR(max), CONVERT(VARBINARY(max), [{x}], 1), 1) AS [{x}]'
-                elif dtype == 'varbinary':
-                    fmt = 'CONVERT(VARCHAR(max), [{x}], 2) AS [{x}]'
-                elif dtype == 'geometry':
-                    fmt = '[{x}].STAsText() AS [{x}]'
-                else:
-                    fmt = '[{x}]'
+                fmt = self._dtype_read_fmt(dtype)
                 col_names_ = ', '.join(fmt.format(x=x) for x in col_names)
-
                 solo_column_names.append(col_names_)
                 column_names_in_query = list(set(column_names_in_query) - set(col_names))
 
-        column_names_in_query = ', '.join([f'[{x}]' for x in column_names_in_query] + solo_column_names)
+        column_names_in_query = ', '.join(
+            [f'[{x}]' for x in column_names_in_query] + solo_column_names)
 
         # Specify a SQL query statement
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -1813,7 +1999,9 @@ class MSSQL(_Base):
             data_dir_ = validate_dir(data_dir)
             path_to_file = os.path.join(data_dir_, table_name + save_as)
 
-            save_data(data, path_to_file=path_to_file, verbose=verbose)
+            save_args_ = {} if save_args is None else save_args
+            save_args_.update({'data': data, 'path_to_file': path_to_file, 'verbose': verbose})
+            save_data(**save_args_)
 
         return data
 
@@ -1825,12 +2013,12 @@ class MSSQL(_Base):
         :type table_name: str
         :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
             :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
-        :type schema_name: str or None
+        :type schema_name: str | None
         :param confirmation_required: whether to prompt a message for confirmation to proceed,
             defaults to ``True``
         :type confirmation_required: bool
         :param verbose: whether to print relevant information in console, defaults to ``False``
-        :type verbose: bool or int
+        :type verbose: bool | int
 
         .. seealso::
 
@@ -1841,26 +2029,25 @@ class MSSQL(_Base):
 
         if not self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
-                print("The table {} does not exist.".format(table_name_))
+                print(f"The table {table_name_} does not exist.")
 
         else:
-            if _confirmed("To drop the table {} from {}\n?".format(table_name_, self.address),
+            if _confirmed(f"To drop the table {table_name_} from {self.address}\n?",
                           confirmation_required=confirmation_required):
 
                 if verbose:
                     if confirmation_required:
-                        log_msg = "Dropping {}".format(table_name_)
+                        log_msg = f"Dropping {table_name_}"
                     else:
-                        log_msg = "Dropping the table {} from {}".format(table_name_, self.address)
+                        log_msg = f"Dropping the table {table_name_} from {self.address}"
                     print(log_msg, end=" ... ")
 
                 try:
                     with self.engine.connect() as connection:
-                        query = sqlalchemy.text(f'DROP TABLE {table_name_};')
-                        connection.execute(query)
+                        connection.execute(sqlalchemy.text(f'DROP TABLE {table_name_};'))
 
                     if verbose:
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_msg(e)
+                    _print_failure_msg(e=e, msg="Failed.")
