@@ -318,6 +318,23 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         print("An error occurred: {}".format(e))
 
 
+def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
+    if vbscript is None:
+        vbscript_ = str(importlib.resources.files(__package__).joinpath("../data/xlsx2csv.vbs"))
+    else:
+        vbscript_ = copy.copy(vbscript)
+
+    if path_to_csv is None:
+        temp_file = tempfile.NamedTemporaryFile()
+        csv_pathname = temp_file.name + ".csv"
+    elif path_to_csv == "":
+        csv_pathname = str(path_to_xlsx).replace(".xlsx", ".csv")
+    else:
+        csv_pathname = copy.copy(path_to_csv)
+
+    return vbscript_, csv_pathname
+
+
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
     Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file
@@ -437,16 +454,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if engine is None:
-        if vbscript is None:
-            vbscript = str(importlib.resources.files(__package__).joinpath("../data/xlsx2csv.vbs"))
-
-        if path_to_csv is None:
-            temp_file = tempfile.NamedTemporaryFile()
-            csv_pathname = temp_file.name + ".csv"
-        elif path_to_csv == "":
-            csv_pathname = str(path_to_xlsx).replace(".xlsx", ".csv")
-        else:
-            csv_pathname = copy.copy(path_to_csv)
+        vbscript_, csv_pathname = _xlsx_to_csv_prep(
+            path_to_xlsx=path_to_xlsx, path_to_csv=path_to_csv, vbscript=vbscript)
 
         if os.path.exists(csv_pathname):
             if if_exists == 'replace':
@@ -458,7 +467,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
 
         ret_code = _xlsx_to_csv(
             xlsx_pathname=path_to_xlsx, csv_pathname=csv_pathname, sheet_name=sheet_name,
-            vbscript=vbscript, **kwargs)
+            vbscript=vbscript_, **kwargs)
 
         if verbose:
             print("Done." if ret_code == 0 else "Failed.")
