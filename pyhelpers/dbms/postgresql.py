@@ -739,15 +739,10 @@ class PostgreSQL(_Base):
                         "AND nspname NOT LIKE 'pg_temp%%' "
 
         with self.engine.connect() as connection:
-            # query = sqlalchemy.text(
-            #     f"SELECT s.nspname, s.oid, u.usename FROM pg_catalog.pg_namespace s "
-            #     f"JOIN pg_catalog.pg_user u ON u.usesysid = s.nspowner "
-            #     f"{condition} "
-            #     f"ORDER BY s.nspname;")
             query = sqlalchemy.text(
                 f"SELECT s.schema_name, s.schema_owner, c.oid, c.nspowner "
                 f"FROM pg_catalog.pg_namespace c "
-                f"JOIN information_schema.schemata s ON POSITION(c.nspname IN s.schema_name) > 0 "
+                f"JOIN information_schema.schemata s ON c.nspname = s.schema_name "
                 f"{condition}"
                 f"ORDER BY s.schema_owner;")
             result = connection.execute(query)
