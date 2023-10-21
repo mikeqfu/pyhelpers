@@ -5,7 +5,6 @@ Directory/file navigation.
 import copy
 import importlib.resources
 import os
-import pathlib
 
 from .._cache import _check_file_pathname
 

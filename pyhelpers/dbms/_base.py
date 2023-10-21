@@ -371,6 +371,26 @@ class _Base:
     def schema_exists(self, schema_name):
         pass
 
+    def __drop_schema(self, schema_name, query_, verbose):
+        if schema_name in self.BUILTIN_SCHEMAS:
+            if verbose:
+                print("(Built-in schemas which cannot be deleted.)")
+
+        else:
+            try:  # e.g. query_ = 'DROP SCHEMA "{}" CASCADE;'
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(query_.format(*(query_.count('{}') * [schema_name])))
+                    connection.execute(query)
+
+                if verbose:
+                    if not self.schema_exists(schema_name=schema_name):
+                        print("Done.")
+                    else:
+                        print("Failed.")
+
+            except Exception as e:
+                _print_failure_msg(e=e, msg="Failed.")
+
     def _drop_schema(self, schema_names, fmt, query_, confirmation_required=True, verbose=False):
         schema_names_, print_plural, print_schema = self._msg_for_multi_items(
             item_names=schema_names, desc='schema', fmt=fmt)
@@ -406,23 +426,7 @@ class _Base:
                     if len(schema_names_) > 1 and verbose:
                         print(f"\t\"{schema_name}\"", end=" ... ")
 
-                    if schema_name in self.BUILTIN_SCHEMAS:
-                        if verbose:
-                            print("(Built-in schemas which cannot be deleted.)")
-
-                    else:
-                        try:  # e.g. query_ = 'DROP SCHEMA "{}" CASCADE;'
-                            with self.engine.connect() as connection:
-                                query = sqlalchemy.text(
-                                    query_.format(*(query_.count('{}') * [schema_name])))
-                                connection.execute(query)
-
-                            if verbose:
-                                schema_exists = self.schema_exists(schema_name=schema_name)
-                                print("Done.") if not schema_exists else print("Failed.")
-
-                        except Exception as e:
-                            _print_failure_msg(e=e, msg="Failed.")
+                    self.__drop_schema(schema_name=schema_name, query_=query_, verbose=verbose)
 
     def get_table_names(self, schema_name, verbose=False):
         """
