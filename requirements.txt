@@ -6,7 +6,7 @@ jsonpointer==2.4
 matplotlib==3.7.3
 networkx==3.1
 nltk==3.8.1
-notebook==7.0.3
+notebook==7.0.7
 odfpy==1.4.1
 openpyxl==3.1.2
 orjson==3.9.7
