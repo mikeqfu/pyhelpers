@@ -175,9 +175,10 @@ class MSSQL(_Base):
                 self._create_db(confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[{}]')
             reconnect_db = True
 
-        self.address = re.split(r'://|\?', self.engine.url.render_as_string(hide_password=True))[1]
+        self.address = re.split(
+            r'://|\?', self.engine.url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
         if verbose:
-            print("Connecting {}".format(self.address), end=" ... ")
+            print(f"Connecting {self.address}", end=" ... ")
 
         try:
             if reconnect_db:
@@ -571,7 +572,8 @@ class MSSQL(_Base):
                 url_query.update({'Trusted_Connection': 'yes'})
 
             url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
-            self.address = re.split(r'://|\?', url.render_as_string(hide_password=True))[1]
+            self.address = re.split(
+                r'://|\?', url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
 
             if verbose:
                 print(f"Connecting {self.address}", end=" ... ")
@@ -1777,9 +1779,11 @@ class MSSQL(_Base):
         col_names = [column_names] if isinstance(column_names, str) else column_names.copy()
 
         column_info = self.get_column_info(table_name=table_name, schema_name=schema_name)
-        column_info_col_names = list(map(str.lower, column_info['COLUMN_NAME']))
+        # column_info_col_names = list(map(str.lower, column_info['COLUMN_NAME']))
+        column_info_col_names = [x.lower() for x in column_info['COLUMN_NAME']]
 
-        col_idx = [column_info_col_names.index(x) for x in map(str.lower, col_names)]
+        # col_idx = [column_info_col_names.index(x) for x in map(str.lower, col_names)]
+        col_idx = [column_info_col_names.index(x) for x in (y.lower() for y in col_names)]
         dtypes = [column_info['DATA_TYPE'][i] for i in col_idx]
 
         fmts = [self._dtype_read_fmt(dtype) for dtype in dtypes]
