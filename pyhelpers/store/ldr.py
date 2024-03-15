@@ -5,8 +5,6 @@ Load data.
 import copy
 import csv
 import operator
-import os
-import pathlib
 import pickle
 import sys
 import warnings
@@ -20,11 +18,11 @@ def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
     """
     Check about loading a file from a specified pathname.
 
-    :param path_to_file: path where a file is saved
+    :param path_to_file: Path where a file is saved.
     :type path_to_file: str | pathlib.Path
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
+    :param verbose_end: A string passed to ``end`` for ``print()``; defaults to ``" ... "``.
     :type verbose_end: str
 
     **Tests**::
@@ -47,13 +45,13 @@ def _set_index(data, index=None):
     """
     Set index of a dataframe.
 
-    :param data: any dataframe
+    :param data: A dataframe.
     :type data: pandas.DataFrame
-    :param index: column index or a list of column indices, defaults to ``None``;
-        when ``index=None``, set the first column to be the index
-        if the column name is an empty string
+    :param index: Column index or a list of column indices; defaults to ``None``.
+        When ``index=None``, set the first column to be the index
+        if the column name is an empty string.
     :type index: int | list | None
-    :return: an updated dataframe
+    :return: An updated dataframe.
     :rtype: pandas.DataFrame
 
     **Tests**::
@@ -107,18 +105,17 @@ def _set_index(data, index=None):
     return data_
 
 
-# Pickle file
 def load_pickle(path_to_file, verbose=False, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
-    :param path_to_file: path where a pickle file is saved
+    :param path_to_file: Path where a pickle file is saved.
     :type path_to_file: str | os.PathLike
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pickle.load`_
-    :return: data retrieved from the specified path ``path_to_pickle``
-    :rtype: any
+    :param kwargs: [Optional] parameters of `pickle.load`_.
+    :return: Data retrieved from the specified path ``path_to_file``.
+    :rtype: Any
 
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
     .. _`pickle.load`: https://docs.python.org/3/library/pickle.html#pickle.load
@@ -147,8 +144,11 @@ def load_pickle(path_to_file, verbose=False, **kwargs):
     _check_loading_path(path_to_file=path_to_file, verbose=verbose)
 
     try:
-        with open(file=path_to_file, mode='rb') as pickle_in:
-            pickle_data = pickle.load(pickle_in, **kwargs)
+        try:
+            with open(file=path_to_file, mode='rb') as pickle_in:
+                pickle_data = pickle.load(pickle_in, **kwargs)
+        except ModuleNotFoundError:
+            pickle_data = pd.read_pickle(path_to_file)
 
         if verbose:
             print("Done.")
@@ -159,26 +159,25 @@ def load_pickle(path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Spreadsheet
 def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, **kwargs):
     """
     Load data from a `CSV`_ file.
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
 
-    :param path_to_file: pathname of a `CSV`_ file
+    :param path_to_file: Pathname of a `CSV`_ file.
     :type path_to_file: str | os.PathLike
-    :param delimiter: delimiter used between values in the data file, defaults to ``','``
+    :param delimiter: Delimiter used between values in the data file; defaults to ``','``
     :type delimiter: str
-    :param header: index number of the rows used as column names, defaults to ``0``
+    :param header: Index number of the rows used as column names; defaults to ``0``.
     :type header: int | typing.List[int] | None
-    :param index: index number of the column(s) to use as the row labels of the dataframe,
-        defaults to ``None``
+    :param index: Index number of the column(s) to use as the row labels of the dataframe,
+        defaults to ``None``.
     :type index: str | int | list | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `csv.reader()`_ or `pandas.read_csv()`_
-    :return: data retrieved from the specified path ``path_to_csv``
+    :param kwargs: [Optional] parameters of `csv.reader()`_ or `pandas.read_csv()`_.
+    :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: pandas.DataFrame | None
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
@@ -260,14 +259,14 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
     """
     Load multiple sheets of an `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
-    :param path_to_file: path where a spreadsheet is saved
+    :param path_to_file: Path where a spreadsheet is saved.
     :type path_to_file: str | os.PathLike
-    :param as_dict: whether to return the retrieved data as a dictionary type, defaults to ``True``
+    :param as_dict: Whether to return the retrieved data as a dictionary type; defaults to ``True``.
     :type as_dict: bool
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pandas.ExcelFile.parse`_
-    :return: all worksheet in an Excel workbook from the specified file path ``path_to_spreadsheet``
+    :param kwargs: [Optional] parameters of `pandas.ExcelFile.parse`_
+    :return: Data of all worksheets in the file from the specified pathname ``path_to_file``.
     :rtype: list | dict
 
     .. _`Microsoft Excel`:
@@ -363,23 +362,22 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
     return workbook_data
 
 
-# JSON file
 def load_json(path_to_file, engine=None, verbose=False, **kwargs):
     """
     Load data from a `JSON`_ file.
 
-    :param path_to_file: path where a json file is saved
+    :param path_to_file: Path where a JSON file is saved.
     :type path_to_file: str | os.PathLike
-    :param engine: an open-source Python package for JSON serialization, options include
+    :param engine: An open-source Python package for JSON serialization; valid options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
-        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
+        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_).
     :type engine: str | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `json.load()`_ (if ``engine=None``),
+    :param kwargs: [Optional] parameters of `json.load()`_ (if ``engine=None``),
         `orjson.loads()`_ (if ``engine='orjson'``), `ujson.load()`_ (if ``engine='ujson'``) or
-        `rapidjson.load()`_ (if ``engine='rapidjson'``)
-    :return: data retrieved from the specified path ``path_to_json``
+        `rapidjson.load()`_ (if ``engine='rapidjson'``).
+    :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: dict
 
     .. _`JSON`: https://www.json.org/json-en.html
@@ -438,18 +436,17 @@ def load_json(path_to_file, engine=None, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Joblib
 def load_joblib(path_to_file, verbose=False, **kwargs):
     """
     Load data from a `joblib`_ file.
 
-    :param path_to_file: path where a joblib file is saved
+    :param path_to_file: Path where a joblib file is saved.
     :type path_to_file: str | os.PathLike
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `joblib.load`_
-    :return: data retrieved from the specified path ``path_to_joblib``
-    :rtype: any
+    :param kwargs: [Optional] parameters of `joblib.load`_.
+    :return: Data retrieved from the specified path ``path_to_file``.
+    :rtype: Any
 
     .. _`joblib`: https://pypi.org/project/joblib/
     .. _`joblib.load`: https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
@@ -498,24 +495,23 @@ def load_joblib(path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Feather file
 def load_feather(path_to_file, verbose=False, index=None, **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
 
-    :param path_to_file: path where a feather file is saved
+    :param path_to_file: Path where a feather file is saved.
     :type path_to_file: str | os.PathLike
-    :param index: index number of the column(s) to use as the row labels of the dataframe,
-        defaults to ``None``
+    :param index: Index number of the column(s) to use as the row labels of the dataframe;
+        defaults to ``None``.
     :type index: str | int | list | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pandas.read_feather`_
+    :param kwargs: [Optional] parameters of `pandas.read_feather`_:
 
         * columns: a sequence of column names, if ``None``, all columns
-        * use_threads: whether to parallelize reading using multiple threads, defaults to ``True``
+        * use_threads: whether to parallelize reading using multiple threads; defaults to ``True``
 
-    :return: data retrieved from the specified path ``path_to_feather``
+    :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: pandas.DataFrame
 
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
@@ -574,22 +570,22 @@ def load_data(path_to_file, err_warning=True, **kwargs):
     """
     Load data from a file.
 
-    :param path_to_file: pathname of a file;
+    :param path_to_file: Pathname of a file;
         supported file formats include
-        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_
+        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_.
     :type path_to_file: str | os.PathLike
-    :param err_warning: whether to show a warning message if any unknown error occurs,
-        defaults to ``True``
+    :param err_warning: Whether to show a warning message if any unknown error occurs;
+        defaults to ``True``.
     :type err_warning: bool
-    :param kwargs: [optional] parameters of one of the following functions:
+    :param kwargs: [Optional] parameters of one of the following functions:
         :func:`~pyhelpers.store.load_pickle`,
         :func:`~pyhelpers.store.load_csv`,
         :func:`~pyhelpers.store.load_multiple_spreadsheets`,
         :func:`~pyhelpers.store.load_json`,
         :func:`~pyhelpers.store.load_joblib` or
-        :func:`~pyhelpers.store.load_feather`
-    :return: loaded data
-    :rtype: any
+        :func:`~pyhelpers.store.load_feather`.
+    :return: Data retrieved from the specified path ``path_to_file``.
+    :rtype: Any
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
