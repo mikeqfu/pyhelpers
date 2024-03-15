@@ -19,15 +19,15 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
     """
     Check about a specified file pathname.
 
-    :param path_to_file: path where a file is saved
+    :param path_to_file: Path where a file is saved.
     :type path_to_file: str | pathlib.Path
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param verbose_end: a string passed to ``end`` for ``print``, defaults to ``" ... "``
+    :param verbose_end: A string passed to ``end`` for ``print``; defaults to ``" ... "``.
     :type verbose_end: str
-    :param ret_info: whether to return the file path information, defaults to ``False``
+    :param ret_info: Whether to return the file path information; defaults to ``False``.
     :type ret_info: bool
-    :return: a relative path and a filename (if ``ret_info=True``)
+    :return: A relative path and, if ``ret_info=True``, a filename.
     :rtype: tuple
 
     **Tests**::
@@ -103,13 +103,13 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
-    :param data: data that could be dumped by the built-in module `pickle.dump`_
-    :type data: any
-    :param path_to_file: path where a pickle file is saved
+    :param data: Data that could be dumped by the built-in module `pickle.dump`_.
+    :type data: Any
+    :param path_to_file: Path where a pickle file is saved.
     :type path_to_file: str | os.PathLike
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pickle.dump`_
+    :param kwargs: [Optional] parameters of `pickle.dump`_.
 
     .. _`pickle.dump`: https://docs.python.org/3/library/pickle.html#pickle.dump
 
@@ -159,7 +159,7 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
 
 # Spreadsheet
 def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',', verbose=False,
-                     **kwargs):
+                     writer_kwargs=None, **kwargs):
     """
     Save data to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
     an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_, or
@@ -168,27 +168,30 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     The file extension can be `".txt"`, `".csv"`, `".xlsx"`, or `".xls"`;
     and engines may rely on `xlsxwriter`_, `openpyxl`_, or `odfpy`_.
 
-    :param data: data that could be saved as a spreadsheet
-        (e.g. with a file extension ".xlsx" or ".csv")
+    :param data: Data that could be saved as a spreadsheet
+        (e.g. with a file extension ".xlsx" or ".csv").
     :type data: pandas.DataFrame
-    :param path_to_file: path where a spreadsheet is saved
+    :param path_to_file: Path where a spreadsheet is saved.
     :type path_to_file: str | os.PathLike | None
-    :param index: whether to include the index as a column, defaults to ``False``
+    :param index: Whether to include the index as a column; defaults to ``False``.
     :type index: bool
-    :param engine: options include ``'openpyxl'`` and `'xlsxwriter'` for Excel file formats
-        such as ".xlsx" (or ".xls"), and ``'odf'`` for OpenDocument file format such as ".ods",
-        defaults to ``None``
+    :param engine: Valid options include ``'openpyxl'`` and `'xlsxwriter'` for Excel file formats
+        such as ".xlsx" (or ".xls"), and ``'odf'`` for OpenDocument file format such as ".ods";
+        defaults to ``None``.
     :type engine: str | None
-    :param delimiter: separator for saving ``data`` as a `".csv"`, `".txt"`, or `".odt"` file,
-        defaults to ``','``
+    :param delimiter: A separator for saving ``data`` as a `".csv"`, `".txt"`, or `".odt"` file;
+        defaults to ``','``.
     :type delimiter: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param writer_kwargs: Optional parameters for `pandas.ExcelWriter`_; defatuls to ``None``.
+    :type writer_kwargs: dict | None
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_
+    :param kwargs: [Optional] parameters of `pandas.DataFrame.to_excel`_ or `pandas.DataFrame.to_csv`_.
 
     .. _`xlsxwriter`: https://pypi.org/project/XlsxWriter/
     .. _`openpyxl`: https://pypi.org/project/openpyxl/
     .. _`odfpy`: https://pypi.org/project/odfpy/
+    .. _`pandas.ExcelWriter`: https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html
     .. _`pandas.DataFrame.to_excel`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv`:
@@ -230,22 +233,27 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
 
     try:  # to save the data
-        if ext.startswith(".xls"):  # a .xlsx file or a .xls file
-            kwargs.update({'excel_writer': path_to_file, 'index': index, 'engine': engine})
+        if ext in {".csv", ".txt", ".odt"}:  # a .csv file
+            data.to_csv(path_or_buf=path_to_file, sep=delimiter, **kwargs)
 
-            if engine in {None, 'xlwt'}:
+        else:
+            if writer_kwargs is None:
+                writer_kwargs = {'path': path_to_file}
+            else:
+                writer_kwargs.update({'path': path_to_file})
+
+            if ext.startswith(".xls"):  # a .xlsx file or a .xls file
                 _ = _check_dependency(name='openpyxl')
-                kwargs.update({'engine': 'openpyxl'})
-            data.to_excel(**kwargs)
-
-        elif ext == ".ods":
-            if engine not in {None, 'odf'}:  # engine in {'openpyxl', 'xlsxwriter'}:
+                writer_kwargs.update({'engine': 'openpyxl'})
+            elif ext == ".ods":
                 _ = _check_dependency(name='odf')
-                kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
-            data.to_excel(excel_writer=path_to_file, index=index, **kwargs)
+                writer_kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
+            else:
+                writer_kwargs.update({'engine': engine})
 
-        elif ext in {".csv", ".txt", ".odt"}:  # a .csv file
-            data.to_csv(path_or_buf=path_to_file, index=index, sep=delimiter, **kwargs)
+            with pd.ExcelWriter(**writer_kwargs) as writer:
+                kwargs.update({'excel_writer': writer, 'index': index})
+                data.to_excel(**kwargs)
 
         if verbose:
             print("Done.")
@@ -261,22 +269,22 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
 
     The file extension can be `".xlsx"` (or `".xls"`) or `".ods"`.
 
-    :param data: a sequence of ``pandas.DataFrame``
+    :param data: A sequence of dataframes.
     :type data: list | tuple | iterable
-    :param path_to_file: path where a spreadsheet is saved
+    :param path_to_file: Path where a spreadsheet is saved.
     :type path_to_file: str | os.PathLike
-    :param sheet_names: all sheet names of an Excel workbook
+    :param sheet_names: All sheet names of an Excel workbook.
     :type sheet_names: list | tuple | iterable
-    :param mode: mode to write to an Excel file;
+    :param mode: Mode to write to an Excel file;
         ``'w'`` (default) for 'write' and ``'a'`` for 'append';
-        note that the 'append' mode is not supported with OpenDocument
+        note that the 'append' mode is not supported with OpenDocument.
     :type mode: str
-    :param if_sheet_exists: indicate the behaviour when trying to write to an existing sheet;
-        see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_
+    :param if_sheet_exists: Indicate the behaviour when trying to write to an existing sheet;
+        see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_.
     :type if_sheet_exists: None | str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pandas.DataFrame.to_excel`_
+    :param kwargs: [Optional] parameters of `pandas.DataFrame.to_excel`_.
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`OpenDocument`: https://en.wikipedia.org/wiki/OpenDocument
@@ -353,45 +361,43 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         engine = 'openpyxl'
     else:
         engine = 'odf'
-    writer = pd.ExcelWriter(path=path_to_file, engine=engine, mode=mode)
 
-    if verbose:
-        print("")
-
-    for sheet_data, sheet_name in zip(data, sheet_names):
-        # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
+    with pd.ExcelWriter(path=path_to_file, engine=engine, mode=mode) as writer:
         if verbose:
-            print(f"\t'{sheet_name}'", end=" ... ")
+            print("")
 
-        if sheet_name in cur_sheet_names:
-            if if_sheet_exists is None:
-                if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
-            else:
-                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}
-                if_sheet_exists_ = copy.copy(if_sheet_exists)
-
-            if if_sheet_exists_ != 'pass':
-                writer._if_sheet_exists = if_sheet_exists_
-
-        try:
-            sheet_data.to_excel(excel_writer=writer, sheet_name=sheet_name, **kwargs)
-
-            if writer._if_sheet_exists == 'new':
-                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
-                prefix = "\t\t" if if_sheet_exists is None else ""
-                add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
-            else:
-                add_msg = "Done."
-
+        for sheet_data, sheet_name in zip(data, sheet_names):
+            # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
             if verbose:
-                print(add_msg)
+                print(f"\t'{sheet_name}'", end=" ... ")
 
-            cur_sheet_names = list(writer.sheets.keys())
+            if sheet_name in cur_sheet_names:
+                if if_sheet_exists is None:
+                    if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
+                else:
+                    assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}
+                    if_sheet_exists_ = copy.copy(if_sheet_exists)
 
-        except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+                if if_sheet_exists_ != 'pass':
+                    writer._if_sheet_exists = if_sheet_exists_
 
-    writer.close()
+            try:
+                sheet_data.to_excel(excel_writer=writer, sheet_name=sheet_name, **kwargs)
+
+                if writer._if_sheet_exists == 'new':
+                    new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
+                    prefix = "\t\t" if if_sheet_exists is None else ""
+                    add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
+                else:
+                    add_msg = "Done."
+
+                if verbose:
+                    print(add_msg)
+
+                cur_sheet_names = list(writer.sheets.keys())
+
+            except Exception as e:
+                _print_failure_msg(e=e, msg="Failed.")
 
 
 # JSON file
@@ -399,19 +405,19 @@ def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
-    :param data: data that could be dumped by as a JSON file
-    :type data: any json data
-    :param path_to_file: path where a json file is saved
+    :param data: Data that could be dumped by as a JSON file.
+    :type data: Any
+    :param path_to_file: Path where a JSON file is saved.
     :type path_to_file: str | os.PathLike
-    :param engine: an open-source module used for JSON serialization, options include
+    :param engine: An open-source module used for JSON serialization; valid options include
         ``None`` (default, for the built-in `json module`_), ``'ujson'`` (for `UltraJSON`_),
-        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_)
+        ``'orjson'`` (for `orjson`_) and ``'rapidjson'`` (for `python-rapidjson`_).
     :type engine: str | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `json.dump()`_ (if ``engine=None``),
+    :param kwargs: [Optional] parameters of `json.dump()`_ (if ``engine=None``),
         `orjson.dumps()`_ (if ``engine='orjson'``), `ujson.dump()`_ (if ``engine='ujson'``) or
-        `rapidjson.dump()`_ (if ``engine='rapidjson'``)
+        `rapidjson.dump()`_ (if ``engine='rapidjson'``).
 
     .. _`json module`: https://docs.python.org/3/library/json.html
     .. _`UltraJSON`: https://pypi.org/project/ujson/
@@ -501,13 +507,13 @@ def save_joblib(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
-    :param data: data that could be dumped by `joblib.dump`_
-    :type data: any
-    :param path_to_file: path where a pickle file is saved
+    :param data: Data that could be dumped by `joblib.dump`_.
+    :type data: Any
+    :param path_to_file: Path where a pickle file is saved.
     :type path_to_file: str | os.PathLike
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `joblib.dump`_
+    :param kwargs: [Optional] parameters of `joblib.dump`_.
 
     .. _`joblib.dump`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
 
@@ -576,15 +582,15 @@ def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
-    :param data: a dataframe to be saved as a feather-formatted file
+    :param data: A dataframe to be saved as a feather-formatted file
     :type data: pandas.DataFrame
-    :param path_to_file: path where a feather file is saved
+    :param path_to_file: Path where a feather file is saved
     :type path_to_file: str | os.PathLike
-    :param index: whether to include the index as a column, defaults to ``False``
+    :param index: Whether to include the index as a column; defaults to ``False``.
     :type index: bool
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pandas.DataFrame.to_feather`_
+    :param kwargs: [Optional] parameters of `pandas.DataFrame.to_feather`_
 
     .. _`pandas.DataFrame.to_feather`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_feather.html
@@ -640,18 +646,18 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
 
-    :param path_to_svg: path where a .svg file is saved
+    :param path_to_svg: Path where a .svg file is saved.
     :type path_to_svg: str
-    :param path_to_emf: path where a .emf file is saved
+    :param path_to_emf: Path where a .emf file is saved.
     :type path_to_emf: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param inkscape_exe: absolute path to 'inkscape.exe', defaults to ``None``;
+    :param inkscape_exe: An absolute path to 'inkscape.exe'; defaults to ``None``;
         when ``inkscape_exe=None``, use the default installation path, e.g. (on Windows)
         "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*"
-        or "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*"
+        or "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*".
     :type inkscape_exe: str | None
-    :param kwargs: [optional] parameters of `subprocess.run`_
+    :param kwargs: [Optional] parameters of `subprocess.run`_.
 
     .. _`subprocess.run`:
         https://docs.python.org/3/library/subprocess.html#subprocess.run
@@ -748,15 +754,16 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
 
     This function relies on `matplotlib.pyplot.savefig`_ (and `Inkscape`_).
 
-    :param path_to_file: path where a figure file is saved
+    :param path_to_file: Path where a figure file is saved.
     :type path_to_file: str | os.PathLike
-    :param dpi: the resolution in dots per inch; if ``None`` (default), use ``rcParams['savefig.dpi']``
+    :param dpi: Resolution in dots per inch;
+        when ``dpi=None`` (default), it uses ``rcParams['savefig.dpi']``.
     :type dpi: int | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param conv_svg_to_emf: whether to convert a .svg file to a .emf file, defaults to ``False``
+    :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
     :type conv_svg_to_emf: bool
-    :param kwargs: [optional] parameters of `matplotlib.pyplot.savefig`_
+    :param kwargs: [Optional] parameters of `matplotlib.pyplot.savefig`_.
 
     .. _`matplotlib.pyplot.savefig`:
         https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
@@ -795,7 +802,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
         Saving "store-save_fig-demo.png" to "tests\\images\\" ... Done.
 
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
-        >>> save_fig(svg_file_pathname, dpi=600, verbose=True, conv_svg_to_emf=True)
+        >>> save_fig(svg_file_pathname, verbose=True, conv_svg_to_emf=True)
         Saving "store-save_fig-demo.svg" to "tests\\images\\" ... Done.
         Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
 
@@ -803,8 +810,6 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
     """
 
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
-
-    file_ext = pathlib.Path(path_to_file).suffix
 
     try:
         mpl_plt = _check_dependency(name='matplotlib.pyplot')
@@ -817,41 +822,42 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
     except Exception as e:
         _print_failure_msg(e=e, msg="Failed.")
 
+    file_ext = pathlib.Path(path_to_file).suffix
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
 
 
 # Web page
-def save_html_as_pdf(html_page, path_to_pdf, if_exists='replace', page_size='A4', zoom=1.0,
+def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zoom=1.0,
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
                      verbose=False, **kwargs):
     """
     Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     by `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
-    :param html_page: URL of a web page or pathname of an HTML file
-    :type html_page: str
-    :param path_to_pdf: path where a .pdf is saved
-    :type path_to_pdf: str
-    :param if_exists: indicate the action if the .pdf file exsits, defaults to ``'replace'``;
-        options include ``{'replace', 'pass', 'append'}``
+    :param data: URL of a web page or pathname of an HTML file.
+    :type data: str
+    :param path_to_file: Path where a PDF file is saved.
+    :type path_to_file: str
+    :param if_exists: Indicate the action if the .pdf file exsits; defaults to ``'replace'``;
+        valid options include ``'replace'``, ``'pass'`` and ``'append'``.
     :type if_exists: str
-    :param page_size: page size, defaults to ``'A4'``
+    :param page_size: Page size; defaults to ``'A4'``.
     :type page_size: str
-    :param zoom: a parameter to zoom in/out, defaults to ``1.0``
+    :param zoom: Magnification for zooming in/out; defaults to ``1.0``.
     :type zoom: float
-    :param encoding: encoding format defaults to ``'UTF-8'``
+    :param encoding: Encoding format; defaults to ``'UTF-8'``.
     :type encoding: str
-    :param wkhtmltopdf_options: specify `wkhtmltopdf options`_, defaults to ``None``;
-        check also the project description of `pdfkit`_
+    :param wkhtmltopdf_options: Specify `wkhtmltopdf options`_; defaults to ``None``;
+        check also the project description of `pdfkit`_.
     :type wkhtmltopdf_options: dict | None
-    :param wkhtmltopdf_path: absolute path to 'wkhtmltopdf.exe', defaults to ``None``;
+    :param wkhtmltopdf_path: An absolute path to 'wkhtmltopdf.exe'; defaults to ``None``;
         when ``wkhtmltopdf_exe=None``, use the default installation path, such as
-        "*C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe*" (on Windows)
+        "*C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe*" (on Windows).
     :type wkhtmltopdf_path: str | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `pdfkit.from_url`_
+    :param kwargs: [Optional] parameters of `pdfkit.from_url`_.
 
     .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
     .. _`pdfkit`: https://pypi.org/project/pdfkit/
@@ -886,7 +892,7 @@ def save_html_as_pdf(html_page, path_to_pdf, if_exists='replace', page_size='A4'
         >>> subprocess.Popen(pdf_pathname, shell=True)
     """
 
-    if os.path.isfile(path_to_pdf) and if_exists == 'pass':
+    if os.path.isfile(path_to_file) and if_exists == 'pass':
         return None
 
     else:
@@ -901,13 +907,13 @@ def save_html_as_pdf(html_page, path_to_pdf, if_exists='replace', page_size='A4'
         if wkhtmltopdf_exists:
             pdfkit_ = _check_dependency(name='pdfkit')
 
-            if os.path.dirname(path_to_pdf):
-                os.makedirs(os.path.dirname(path_to_pdf), exist_ok=True)
+            if os.path.dirname(path_to_file):
+                os.makedirs(os.path.dirname(path_to_file), exist_ok=True)
 
             verbose_, verbose_end = (True, " ... \n") if verbose == 2 else (False, " ... ")
 
             _check_saving_path(
-                path_to_file=path_to_pdf, verbose=verbose, verbose_end=verbose_end, ret_info=False)
+                path_to_file=path_to_file, verbose=verbose, verbose_end=verbose_end, ret_info=False)
 
             options = {
                 'enable-local-file-access': None,
@@ -922,15 +928,15 @@ def save_html_as_pdf(html_page, path_to_pdf, if_exists='replace', page_size='A4'
             if isinstance(wkhtmltopdf_options, dict):
                 options.update(wkhtmltopdf_options)
             configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
-            kwargs.update({'configuration': configuration, 'options': options})
+            kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
 
             from pyhelpers.ops import is_url
 
             try:
-                if is_url(html_page):
-                    status = pdfkit_.from_url(html_page, path_to_pdf, verbose=verbose_, **kwargs)
-                elif os.path.isfile(html_page):
-                    status = pdfkit_.from_file(html_page, path_to_pdf, verbose=verbose_, **kwargs)
+                if is_url(data):
+                    status = pdfkit_.from_url(data, path_to_file, **kwargs)
+                elif os.path.isfile(data):
+                    status = pdfkit_.from_file(data, path_to_file, **kwargs)
                 else:
                     status = None
 
@@ -953,25 +959,26 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     """
     Save data to a file of a specific format.
 
-    :param data: data that could be saved to
+    :param data: Data that could be saved to
         a file of `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_ or `Feather`_ format;
-        a URL of a web page or an `HTML file`_; or an image file of a `Matplotlib`-supported format
-    :type data: any
-    :param path_to_file: pathname of a file that stores the ``data``
+        a URL of a web page or an `HTML file`_; or an image file of a `Matplotlib`_-supported format.
+    :type data: Any
+    :param path_to_file: Pathname of a file that stores the ``data``.
     :type path_to_file: str | os.PathLike
-    :param err_warning: whether to show a warning message if any unknown error occurs,
-        defaults to ``True``
+    :param err_warning: Whether to show a warning message if any unknown error occurs;
+        defaults to ``True``.
     :type err_warning: bool
-    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
+    :param confirmation_required: Whether to require users to confirm and proceed;
+        defaults to ``True``.
     :type confirmation_required: bool
-    :param kwargs: [optional] parameters of one of the following functions:
+    :param kwargs: [Optional] parameters of one of the following functions:
         :func:`~pyhelpers.store.save_pickle`,
         :func:`~pyhelpers.store.save_spreadsheet`,
         :func:`~pyhelpers.store.save_json`,
         :func:`~pyhelpers.store.save_joblib`,
         :func:`~pyhelpers.store.save_feather`,
         :func:`~pyhelpers.store.save_fig` or
-        :func:`~pyhelpers.store.save_web_page_as_pdf`
+        :func:`~pyhelpers.store.save_web_page_as_pdf`.
 
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
@@ -1045,26 +1052,27 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     path_to_file_ = str(path_to_file).lower()
 
+    kwargs.update({'data': data, 'path_to_file': path_to_file})
+
     if path_to_file_.endswith((".pkl", ".pickle")):
-        save_pickle(data, path_to_file=path_to_file, **kwargs)
+        save_pickle(**kwargs)
 
     elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        save_spreadsheet(data, path_to_file=path_to_file, **kwargs)
+        save_spreadsheet(**kwargs)
 
     elif path_to_file_.endswith(".json"):
-        save_json(data, path_to_file=path_to_file, **kwargs)
+        save_json(**kwargs)
 
     elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        save_joblib(data, path_to_file=path_to_file, **kwargs)
+        save_joblib(**kwargs)
 
     elif path_to_file_.endswith((".fea", ".feather")):
-        save_feather(data, path_to_file=path_to_file, **kwargs)
+        save_feather(**kwargs)
 
-    elif path_to_file_.endswith(".pdf"):
-        from pyhelpers.ops import is_url
-
-        if is_url(data) or os.path.isfile(data):
-            save_html_as_pdf(data, path_to_pdf=path_to_file_, **kwargs)
+    elif (path_to_file_.endswith(".pdf") and
+          all(x not in data.__class__.__module__ for x in {'seaborn', 'matplotlib'})):
+        # noinspection PyBroadException
+        save_html_as_pdf(**kwargs)
 
     elif path_to_file_.endswith(
             ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
@@ -1078,4 +1086,4 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
                 "`pyhelpers.store.save_data`.")
 
         if _confirmed("To save the data as a pickle file\n?", confirmation_required):
-            save_pickle(data, path_to_file=path_to_file, **kwargs)
+            save_pickle(**kwargs)
