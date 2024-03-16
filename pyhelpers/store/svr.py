@@ -98,7 +98,6 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
         return rel_path, filename
 
 
-# Pickle file
 def save_pickle(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
@@ -157,7 +156,6 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Spreadsheet
 def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',', verbose=False,
                      writer_kwargs=None, **kwargs):
     """
@@ -400,7 +398,6 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                 _print_failure_msg(e=e, msg="Failed.")
 
 
-# JSON file
 def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -502,7 +499,6 @@ def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Joblib file
 def save_joblib(data, path_to_file, verbose=False, **kwargs):
     """
     Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
@@ -577,7 +573,6 @@ def save_joblib(data, path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Feather file
 def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
@@ -640,7 +635,6 @@ def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-# Image
 def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -827,7 +821,89 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
         save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
 
 
-# Web page
+def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Save a figure object to a file of a supported file format.
+    (An alternative to :func:`~pyhelpers.store.save_fig`.)
+
+    :param data: A figure object.
+    :type data: matplotlib.Figure | seaborn.FacetGrid
+    :param path_to_file: Path where a figure file is saved.
+    :type path_to_file: str | os.PathLike
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
+    :type verbose: bool | int
+    :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
+    :type conv_svg_to_emf: bool
+    :param kwargs: [Optional] parameters of `matplotlib.pyplot.savefig`_.
+
+    .. _`matplotlib.pyplot.savefig`:
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_figure
+        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers.settings import mpl_preferences
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+
+        >>> mpl_preferences()
+
+        >>> x = np.linspace(-5, 5)
+        >>> y = 1 / (1 + np.exp(-x))
+
+        >>> fig = plt.figure()
+        >>> plt.plot(x, y)
+        >>> plt.show()
+
+    The above exmaple is illustrated in :numref:`store-save_figure-demo-3`:
+
+    .. figure:: ../_images/store-save_figure-demo.*
+        :name: store-save_figure-demo-3
+        :align: center
+        :width: 75%
+
+        An example figure created for the function :func:`~pyhelpers.store.save_figure`.
+
+    .. code-block:: python
+
+        >>> img_dir = cd("tests\\images")
+
+        >>> png_file_pathname = cd(img_dir, "store-save_figure-demo.png")
+        >>> save_figure(fig, png_file_pathname, dpi=600, verbose=True)
+        Saving "store-save_figure-demo.png" to "tests\\images\\" ... Done.
+
+        >>> svg_file_pathname = cd(img_dir, "store-save_figure-demo.svg")
+        >>> save_figure(fig, svg_file_pathname, verbose=True, conv_svg_to_emf=True)
+        Saving "store-save_figure-demo.svg" to "tests\\images\\" ... Done.
+        Saving the .svg file as "tests\\images\\store-save_figure-demo.emf" ... Done.
+
+        >>> plt.close()
+    """
+
+    assert 'savefig' in dir(data), \
+        ("The `fig` object does not have attribute `.savefig`. \n"
+         "Check `fig`, or try `save_fig()` instead.")
+
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+
+    try:
+        data.savefig(path_to_file, **kwargs)
+        if verbose:
+            print("Done.")
+    except Exception as e:
+        _print_failure_msg(e=e, msg="Failed.")
+
+    if conv_svg_to_emf:
+        file_ext = pathlib.Path(path_to_file).suffix
+        if file_ext != ".svg":
+            kwargs.update({'conv_svg_to_emf': False})
+            save_figure(data, path_to_file.replace(file_ext, ".svg"), **kwargs)
+
+        save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
+
+
 def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zoom=1.0,
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
                      verbose=False, **kwargs):
@@ -954,7 +1030,6 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                   "however, it is not found on this device.\nInstall it and then try again.")
 
 
-# A comprehensive function
 def save_data(data, path_to_file, err_warning=True, confirmation_required=True, **kwargs):
     """
     Save data to a file of a specific format.
@@ -1077,7 +1152,11 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     elif path_to_file_.endswith(
             ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
              '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
-        save_fig(path_to_file=path_to_file, **kwargs)
+        # noinspection PyBroadException
+        try:
+            save_figure(**kwargs)
+        except Exception:
+            save_fig(path_to_file=path_to_file, **kwargs)
 
     else:
         if err_warning:

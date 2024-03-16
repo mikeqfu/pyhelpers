@@ -203,10 +203,10 @@ def test_save_svg_as_emf(capfd):
     os.remove(emf_pathname)
 
 
-def test_save_fig(capfd):
+def test_save_fig_and_figure(capfd):
     x, y = (1, 1), (2, 2)
 
-    plt.figure()
+    fig = plt.figure()
     plt.plot([x[0], y[0]], [x[1], y[1]])
 
     # img_dir = cd("tests\\images")
@@ -219,6 +219,10 @@ def test_save_fig(capfd):
     out, _ = capfd.readouterr()
     assert f'Saving "{png_filename}"' in out and "Done." in out
 
+    save_figure(fig, png_pathname, verbose=True)
+    out, _ = capfd.readouterr()
+    assert f'Updating "{png_filename}"' in out and "Done." in out
+
     os.remove(png_pathname)
 
     # svg_pathname = cd(img_dir, "store-save_fig-demo.svg")
@@ -226,7 +230,13 @@ def test_save_fig(capfd):
     svg_filename, emf_filename = map(os.path.basename, [svg_pathname, emf_pathname])
     save_fig(svg_pathname, verbose=True, conv_svg_to_emf=True)
     out, _ = capfd.readouterr()
-    assert f'Saving "{svg_filename}"' in out and f'Saving "{emf_filename}"' in out and "Done." in out
+    assert (f'Saving "{svg_filename}"' in out and
+            f'Saving "{emf_filename}"' in out and "Done." in out)
+
+    save_figure(fig, svg_pathname, verbose=True, conv_svg_to_emf=True)
+    out, _ = capfd.readouterr()
+    assert (f'Updating "{svg_filename}"' in out and
+            f'Updating "{emf_filename}"' in out and "Done." in out)
 
     plt.close()
 
@@ -263,9 +273,8 @@ def test_save_data(capfd, recwarn, ext):
     elif ext == ".pdf":
         dat = 'https://github.com/mikeqfu/pyhelpers#readme'
     elif ext == ".png":
-        dat = None
         x, y = (1, 1), (2, 2)
-        plt.figure()
+        dat = plt.figure()
         plt.plot([x[0], y[0]], [x[1], y[1]])
     else:
         dat = example_dataframe()
