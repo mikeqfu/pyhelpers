@@ -23,6 +23,7 @@ Saving data
     save_feather
     save_svg_as_emf
     save_fig
+    save_figure
     save_html_as_pdf
     save_data
 
