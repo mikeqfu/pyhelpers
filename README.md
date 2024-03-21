@@ -31,7 +31,7 @@ It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and p
 
 ## License
 
-PyHelpers is licensed under [GNU General Public License v3.0](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE) or later (GPLv3+).
+PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
 
 ## Cite as
 
