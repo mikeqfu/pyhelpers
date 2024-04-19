@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import zipfile
 
-from .._cache import _check_dependency, _check_file_pathname, _get_rel_pathname, _print_failure_msg
+from .._cache import _check_dependency, _check_file_pathname, _check_rel_pathname, _print_failure_msg
 
 
 # ==================================================================================================
@@ -267,7 +267,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
     if verbose:
         rel_input_path, rel_output_path = map(
-            lambda x: pathlib.Path(os.path.relpath(x)), (abs_input_path, abs_output_path))
+            lambda x: pathlib.Path(_check_rel_pathname(x)), (abs_input_path, abs_output_path))
 
         if not os.path.exists(abs_output_path):
             msg = f"Converting \"{rel_input_path}\" to \"{rel_output_path}\""
@@ -450,7 +450,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     """
 
     if verbose:
-        rel_path = _get_rel_pathname(path_to_xlsx)
+        rel_path = _check_rel_pathname(path_to_xlsx)
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if engine is None:
