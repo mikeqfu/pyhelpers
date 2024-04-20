@@ -3,19 +3,22 @@ Save data.
 """
 
 import copy
+import logging
 import os
 import pathlib
 import pickle
+import platform
 import subprocess
 import sys
-import warnings
 
 import pandas as pd
 
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_msg
 
 
-def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_info=False):
+def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
+                       state_prep="to", print_suffix="", print_end=" ... ", ret_info=False):
+    # noinspection PyShadowingNames
     """
     Check about a specified file pathname.
 
@@ -23,8 +26,17 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
     :type path_to_file: str | pathlib.Path
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param verbose_end: A string passed to ``end`` for ``print``; defaults to ``" ... "``.
-    :type verbose_end: str
+    :param print_prefix: Something prefixed to the default printing message; defaults to ``""`.
+    :type print_prefix: str
+    :param state_verb: Normally a word indicating either "saving" or "updating" a file;
+        defaults to ``"Saving"``.
+    :type state_verb: str
+    :param state_prep: A preposition associated with ``state_verb``; defaults to ``"to"``.
+    :type state_prep: str
+    :param print_suffix: Something suffixed to the default printing message; defaults to ``""`.
+    :type print_suffix: str
+    :param print_end: A string passed to ``end`` for ``print``; defaults to ``" ... "``.
+    :type print_end: str
     :param ret_info: Whether to return the file path information; defaults to ``False``.
     :type ret_info: bool
     :return: A relative path and, if ``ret_info=True``, a filename.
@@ -35,22 +47,32 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
         >>> from pyhelpers.store import _check_saving_path
         >>> from pyhelpers.dirs import cd
 
-        >>> file_path = cd()
+        >>> path_to_file = cd()
         >>> try:
-        ...     _check_saving_path(file_path, verbose=True)
+        ...     _check_saving_path(path_to_file, verbose=True)
         ... except AssertionError as e:
         ...     print(e)
         The input for `path_to_file` may not be a file path.
 
-        >>> file_path = cd("pyhelpers.pdf")
-        >>> _check_saving_path(file_path, verbose=True)
+        >>> path_to_file = "pyhelpers.pdf"
+        >>> _check_saving_path(path_to_file, verbose=True)
         >>> print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
 
-        >>> file_path = cd("tests\\documents", "pyhelpers.pdf")
-        >>> _check_saving_path(file_path, verbose=True)
+        >>> path_to_file = cd("tests\\documents", "pyhelpers.pdf")
+        >>> _check_saving_path(path_to_file, verbose=True)
         >>> print("Passed.")
         Saving "pyhelpers.pdf" to "tests\\" ... Passed.
+
+        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
+        >>> _check_saving_path(path_to_file, verbose=True)
+        >>> print("Passed.")
+        Saving "pyhelpers.pdf" to "C:\\Windows\\" ... Passed.
+
+        >>> path_to_file = "C:\\pyhelpers.pdf"
+        >>> _check_saving_path(path_to_file, verbose=True)
+        >>> print("Passed.")
+        Saving "pyhelpers.pdf" to "C:\\" ... Passed.
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
@@ -63,36 +85,34 @@ def _check_saving_path(path_to_file, verbose=False, verbose_end=" ... ", ret_inf
 
         if rel_path == rel_path.parent:
             rel_path = abs_path_to_file.parent
-            msg_fmt = "{} \"{}\""
-        else:
-            msg_fmt = "{} \"{}\" {} \"{}\\\""
-            # The specified path exists?
+        else:  # In case the specified path does not exist
             os.makedirs(abs_path_to_file.parent, exist_ok=True)
 
     except ValueError:
         if verbose == 2:
-            warnings.warn(
-                f"\"{abs_path_to_file.parent}\" is outside the current working directory",
-                stacklevel=2)
+            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+            logging.warning(f'\n\t"{abs_path_to_file.parent}" is outside the current working directory.')
 
         rel_path = abs_path_to_file.parent
-        msg_fmt = "{} \"{}\""
 
     if verbose:
         if os.path.exists(abs_path_to_file):
-            status_msg, prep = "Updating", "at"
-        else:
-            status_msg, prep = "Saving", "to"
+            state_verb, state_prep = "Updating", "at"
 
-        if verbose_end:
-            verbose_end_ = verbose_end
-        else:
-            verbose_end_ = "\n"
+        slash = "\\" if platform.system() == 'Windows' else "/"
 
-        if rel_path == rel_path.parent:
-            print(msg_fmt.format(status_msg, filename), end=verbose_end_)
+        end = print_end if print_end else "\n"
+
+        if rel_path == rel_path.parent and rel_path.drive == pathlib.Path.cwd().drive:
+            msg_fmt = '{}{} "{}"{}'
+            print(msg_fmt.format(
+                print_prefix, state_verb, filename, print_suffix).replace(
+                ":\\\\", ":\\"), end=end)
         else:
-            print(msg_fmt.format(status_msg, filename, prep, rel_path), end=verbose_end_)
+            msg_fmt = '{}{} "{}" {} "{}' + slash + '"{}'
+            print(msg_fmt.format(
+                print_prefix, state_verb, filename, state_prep, rel_path, print_suffix).replace(
+                ":\\\\", ":\\"), end=end)
 
     if ret_info:
         return rel_path, filename
@@ -260,8 +280,8 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None, verbose=False,
-                      **kwargs):
+def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
+                      verbose=False, **kwargs):
     """
     Save data to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
@@ -986,10 +1006,10 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             if os.path.dirname(path_to_file):
                 os.makedirs(os.path.dirname(path_to_file), exist_ok=True)
 
-            verbose_, verbose_end = (True, " ... \n") if verbose == 2 else (False, " ... ")
+            verbose_, print_end = (True, " ... \n") if verbose == 2 else (False, " ... ")
 
             _check_saving_path(
-                path_to_file=path_to_file, verbose=verbose, verbose_end=verbose_end, ret_info=False)
+                path_to_file=path_to_file, verbose=verbose, print_end=print_end, ret_info=False)
 
             options = {
                 'enable-local-file-access': None,
@@ -1160,8 +1180,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     else:
         if err_warning:
-            warnings.warn(
-                "The specified file format (extension) is not recognisable by "
+            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+            logging.warning(
+                "\n\tThe specified file format (extension) is not recognisable by "
                 "`pyhelpers.store.save_data`.")
 
         if _confirmed("To save the data as a pickle file\n?", confirmation_required):
