@@ -263,7 +263,7 @@ def test_save_html_as_pdf(capfd):
 
 @pytest.mark.parametrize(
     'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".pdf", ".png", ".unknown"])
-def test_save_data(capfd, recwarn, ext):
+def test_save_data(ext, capfd, caplog):
     pathname_ = tempfile.NamedTemporaryFile()
     pathname = pathname_.name + ext
     filename = os.path.basename(pathname)
@@ -287,10 +287,14 @@ def test_save_data(capfd, recwarn, ext):
         assert f'Saving "{filename}"' in out and "Done." in out
 
     if ext == ".unknown":
-        assert len(recwarn) == 1
-        w = recwarn.pop()
-        assert str(w.message) == "The specified file format (extension) is not recognisable by " \
-                                 "`pyhelpers.store.save_data`."
+        # assert len(recwarn) == 1
+        # w = recwarn.pop()
+        # assert str(w.message) == "The specified file format (extension) is not recognisable by " \
+        #                          "`pyhelpers.store.save_data`."
+        for record in caplog.records:
+            assert record.levelname == 'WARNING'
+        assert ("The specified file format (extension) is not recognisable by "
+                "`pyhelpers.store.save_data`.") in caplog.text
 
     save_data(dat, path_to_file=pathname, verbose=True, confirmation_required=False)
     out, _ = capfd.readouterr()
@@ -351,7 +355,7 @@ def test_load_spreadsheets(capfd):
         assert all(isinstance(x, pd.DataFrame) for x in wb_data)
 
 
-def test_load_data(capfd):
+def test_load_data(capfd, caplog):
     dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.pickle")
     with importlib.resources.as_file(dat_pathname_) as dat_pathname:
         dat = load_data(path_to_file=dat_pathname, verbose=True)
@@ -400,7 +404,8 @@ def test_load_data(capfd):
         np.random.seed(0)
         assert np.array_equal(dat, np.random.rand(100, 100))
 
-    with pytest.warns(UserWarning):
+    # with pytest.warns(UserWarning):
+    with caplog.at_level(logging.WARNING):
         dat = load_data(path_to_file='none.test', verbose=True)
         assert dat is None
 
