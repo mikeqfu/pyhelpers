@@ -8,7 +8,7 @@ import pathlib
 import re
 
 from .nav import cd
-from .._cache import _get_rel_pathname
+from .._cache import _check_rel_pathname
 
 
 def path2linux(path):
@@ -173,7 +173,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
         else:
             assert os.path.isabs(path_to_dir_), msg
-            data_dir_ = _get_rel_pathname(path_to_dir_.lstrip('.\\.'))
+            data_dir_ = _check_rel_pathname(path_to_dir_.lstrip('.\\.'))
 
     else:
         data_dir_ = cd(subdir, **kwargs) if subdir else cd()

@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .._cache import _check_dependency, _get_rel_pathname, _print_failure_msg
+from .._cache import _check_dependency, _check_rel_pathname, _print_failure_msg
 
 
 # Iterable
@@ -657,8 +657,8 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     scipy_sparse = _check_dependency(name='scipy.sparse')
 
     if verbose:
-        path_to_csr_ = _get_rel_pathname(path_to_csr)
-        print(f'Loading "\\{path_to_csr_}"', end=" ... ")
+        rel_path_to_csr = _check_rel_pathname(path_to_csr)
+        print(f'Loading "\\{rel_path_to_csr}"', end=" ... ")
 
     try:
         csr_loader = np.load(path_to_csr, **kwargs)

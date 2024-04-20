@@ -20,7 +20,7 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from .._cache import _check_dependency, _format_err_msg, _get_rel_pathname, _print_failure_msg, \
+from .._cache import _check_dependency, _check_rel_pathname, _format_err_msg, _print_failure_msg, \
     _USER_AGENT_STRINGS
 
 
@@ -511,7 +511,7 @@ def _download_file_from_url(response, path_to_file):
     total_iter = file_size // chunk_size
 
     pg_args = {
-        'desc': f'"{_get_rel_pathname(path_to_file)}"',
+        'desc': f'"{_check_rel_pathname(path_to_file)}"',
         'total': total_iter,
         'unit': 'B',
         'unit_scale': True,

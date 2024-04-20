@@ -27,18 +27,16 @@ def test__check_rel_pathname():
     from pyhelpers._cache import _check_rel_pathname
 
     pathname = ""
-    pathname_ = _check_rel_pathname(pathname=pathname)
-    assert pathname_ == pathname
+    rel_pathname = _check_rel_pathname(pathname=pathname)
+    assert rel_pathname == pathname
 
+    pathname = os.path.curdir
+    rel_pathname = _check_rel_pathname(os.path.curdir)
+    assert rel_pathname == pathname
 
-def test__get_rel_pathname():
-    from pyhelpers._cache import _get_rel_pathname
-
-    res = _get_rel_pathname(os.path.curdir)
-    assert res == '.'
-
-    res = _get_rel_pathname("C:\\Windows")
-    assert res == "C:\\Windows"
+    pathname = "C:\\Windows"
+    rel_pathname = _check_rel_pathname("C:\\Windows")
+    assert rel_pathname == pathname
 
 
 def test__check_file_pathname():

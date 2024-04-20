@@ -30,6 +30,55 @@ _OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
 }
 
 
+def _confirmed(prompt=None, confirmation_required=True, resp=False):
+    """
+    Type to confirm whether to proceed or not.
+
+    See also [`OPS-C-1 <https://code.activestate.com/recipes/541096/>`_].
+
+    :param prompt: a message that prompts a response (Yes/No), defaults to ``None``
+    :type prompt: str | None
+    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
+    :type confirmation_required: bool
+    :param resp: default response, defaults to ``False``
+    :type resp: bool
+    :return: a response
+    :rtype: bool
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _confirmed
+
+        >>> if _confirmed(prompt="Testing if the function works?", resp=True):
+        ...     print("Passed.")
+        Testing if the function works? [Yes]|No: yes
+        Passed.
+    """
+
+    if confirmation_required:
+        if prompt is None:
+            prompt_ = "Confirmed?"
+        else:
+            prompt_ = copy.copy(prompt)
+
+        if resp is True:  # meaning that default response is True
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "Yes", "No")
+        else:
+            prompt_ = "{} [{}]|{}: ".format(prompt_, "No", "Yes")
+
+        ans = input(prompt_)
+        if not ans:
+            return resp
+
+        if re.match('[Yy](es)?', ans):
+            return True
+        if re.match('[Nn](o)?', ans):
+            return False
+
+    else:
+        return True
+
+
 def _check_dependency(name, package=None):
     """
     Import optional dependency package.
@@ -96,12 +145,12 @@ def _check_dependency(name, package=None):
 
 def _check_rel_pathname(pathname):
     """
-    Check for the relative pathname (if a pathname is within the current working directory).
+    Check for the relative pathname (to the current working directory).
 
-    :param pathname: pathname
-    :type pathname: str or os.PathLike[str]
-    :return: relative pathname of the input ``pathname`` if it is within the current working directory;
-        otherwise, a copy of the input
+    :param pathname: A pathname (of a file or a directory).
+    :type pathname: str | bytes | pathlib.Path
+    :return: A relative pathname of the input ``pathname`` to the current working directory
+        if it is within the current working directory; otherwise, a copy of the input.
     :rtype: str
 
     **Tests**::
@@ -115,96 +164,17 @@ def _check_rel_pathname(pathname):
         '.'
         >>> _check_rel_pathname("C:\\Program Files")
         'C:\\Program Files'
-    """
-
-    try:
-        pathname_ = os.path.relpath(pathname)
-    except ValueError:
-        pathname_ = copy.copy(pathname)
-
-    return pathname_
-
-
-def _confirmed(prompt=None, confirmation_required=True, resp=False):
-    """
-    Type to confirm whether to proceed or not.
-
-    See also [`OPS-C-1 <https://code.activestate.com/recipes/541096/>`_].
-
-    :param prompt: a message that prompts a response (Yes/No), defaults to ``None``
-    :type prompt: str | None
-    :param confirmation_required: whether to require users to confirm and proceed, defaults to ``True``
-    :type confirmation_required: bool
-    :param resp: default response, defaults to ``False``
-    :type resp: bool
-    :return: a response
-    :rtype: bool
-
-    **Examples**::
-
-        >>> from pyhelpers._cache import _confirmed
-
-        >>> if _confirmed(prompt="Testing if the function works?", resp=True):
-        ...     print("Passed.")
-        Testing if the function works? [Yes]|No: yes
-        Passed.
-    """
-
-    if confirmation_required:
-        if prompt is None:
-            prompt_ = "Confirmed?"
-        else:
-            prompt_ = copy.copy(prompt)
-
-        if resp is True:  # meaning that default response is True
-            prompt_ = "{} [{}]|{}: ".format(prompt_, "Yes", "No")
-        else:
-            prompt_ = "{} [{}]|{}: ".format(prompt_, "No", "Yes")
-
-        ans = input(prompt_)
-        if not ans:
-            return resp
-
-        if re.match('[Yy](es)?', ans):
-            return True
-        if re.match('[Nn](o)?', ans):
-            return False
-
-    else:
-        return True
-
-
-def _get_rel_pathname(pathname):
-    """
-    Get the relative or absolute path of ``pathname`` to the current working directory.
-
-    :param pathname: pathname (of a file or a directory)
-    :type pathname: str | os.PathLike[str]
-    :return: the relative or absolute path of ``path_to_file`` to the current working directory
-    :rtype: str | os.PathLike[str]
-
-    **Examples**::
-
-        >>> from pyhelpers._cache import _get_rel_pathname
-        >>> import os
-
-        >>> rel_pathname = _get_rel_pathname(pathname="")
-        >>> rel_pathname
-        ''
-        >>> rel_pathname = _get_rel_pathname(pathname=os.path.join(os.getcwd(), "tests"))
-        >>> rel_pathname
-        'tests'
-
-        >>> # On Windows OS
-        >>> rel_pathname = _get_rel_pathname(pathname="C:/Windows")
-        >>> rel_pathname
-        "C:/Windows"
+        >>> _check_rel_pathname(pathname="C:/Windows")
+        'C:/Windows'
     """
 
     try:
         rel_path = os.path.relpath(pathname)
     except ValueError:
-        rel_path = pathname
+        rel_path = copy.copy(pathname)
+
+    if not isinstance(rel_path, str):
+        rel_path = str(rel_path, encoding='utf-8')
 
     return rel_path
 
@@ -222,7 +192,7 @@ def _check_file_pathname(name, options=None, target=None):
     :return: whether the specified executable file exists and its pathname
     :rtype: tuple[bool, str]
 
-    **Examples**::
+    **Tests**::
 
         >>> from pyhelpers._cache import _check_file_pathname
         >>> import os
@@ -334,7 +304,7 @@ def _format_err_msg(e=None, msg=""):
     :return: an error message
     :rtype: str
 
-    **Examples**::
+    **Tests**::
 
         >>> from pyhelpers._cache import _format_err_msg
 
