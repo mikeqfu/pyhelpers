@@ -4,41 +4,50 @@ Load data.
 
 import copy
 import csv
+import logging
 import operator
 import pickle
 import sys
-import warnings
 
 import pandas as pd
 
 from .._cache import _check_dependency, _check_rel_pathname, _print_failure_msg
 
 
-def _check_loading_path(path_to_file, verbose=False, verbose_end=" ... "):
+def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb="Loading",
+                        print_suffix="", print_end=" ... "):
+    # noinspection PyShadowingNames
     """
     Check about loading a file from a specified pathname.
 
     :param path_to_file: Path where a file is saved.
-    :type path_to_file: str | pathlib.Path
+    :type path_to_file: str | bytes | pathlib.Path
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
-    :param verbose_end: A string passed to ``end`` for ``print()``; defaults to ``" ... "``.
-    :type verbose_end: str
+    :param print_prefix: Something prefixed to the default printing message; defaults to ``""`.
+    :type print_prefix: str
+    :param state_verb: Normally a word indicating either "loading" or "reading" a file;
+        defaults to ``"Loading"``.
+    :type state_verb: str
+    :param print_suffix: Something suffixed to the default printing message; defaults to ``""`.
+    :type print_suffix: str
+    :param print_end: A string passed to ``end`` for ``print()``; defaults to ``" ... "``.
+    :type print_end: str
 
     **Tests**::
 
         >>> from pyhelpers.store import _check_loading_path
         >>> from pyhelpers.dirs import cd
 
-        >>> file_path = cd("test_func.py")
-        >>> _check_loading_path(file_path, verbose=True)
+        >>> path_to_file = cd("test_func.py")
+        >>> _check_loading_path(path_to_file, verbose=True)
         >>> print("Passed.")
         Loading "test_func.py" ... Passed.
     """
 
     if verbose:
         rel_pathname = _check_rel_pathname(path_to_file)
-        print("Loading \"{}\"".format(rel_pathname), end=verbose_end)
+        print(f'{print_prefix}{state_verb} "{rel_pathname}"{print_suffix}', end=print_end)
 
 
 def _set_index(data, index=None):
@@ -105,7 +114,7 @@ def _set_index(data, index=None):
     return data_
 
 
-def load_pickle(path_to_file, verbose=False, **kwargs):
+def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
@@ -113,6 +122,9 @@ def load_pickle(path_to_file, verbose=False, **kwargs):
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `pickle.load`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: Any
@@ -141,7 +153,9 @@ def load_pickle(path_to_file, verbose=False, **kwargs):
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
         try:
@@ -159,7 +173,8 @@ def load_pickle(path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, **kwargs):
+def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
+             **kwargs):
     """
     Load data from a `CSV`_ file.
 
@@ -176,6 +191,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, *
     :type index: str | int | list | None
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `csv.reader()`_ or `pandas.read_csv()`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: pandas.DataFrame | None
@@ -225,7 +243,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, *
         2       Leeds  582044   152953
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
         with open(path_to_file, mode='r') as csv_file:
@@ -233,7 +253,8 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, *
             csv_rows = [row for row in csv_data_]
 
         if header is not None:
-            col_names = operator.itemgetter(*[header] if isinstance(header, int) else header)(csv_rows)
+            col_names = operator.itemgetter(
+                *[header] if isinstance(header, int) else header)(csv_rows)
             dat = [x for x in csv_rows if (x not in col_names and x != col_names)]
             csv_data = pd.DataFrame(data=dat, columns=list(col_names))
         else:
@@ -255,7 +276,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, *
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
+def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None, **kwargs):
     """
     Load multiple sheets of an `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
@@ -265,6 +286,9 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
     :type as_dict: bool
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `pandas.ExcelFile.parse`_
     :return: Data of all worksheets in the file from the specified pathname ``path_to_file``.
     :rtype: list | dict
@@ -335,7 +359,10 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, verbose_end=" ... \n")
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(
+        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **prt_kwargs)
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -362,7 +389,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, **kwargs):
     return workbook_data
 
 
-def load_json(path_to_file, engine=None, verbose=False, **kwargs):
+def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwargs):
     """
     Load data from a `JSON`_ file.
 
@@ -374,6 +401,9 @@ def load_json(path_to_file, engine=None, verbose=False, **kwargs):
     :type engine: str | None
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `json.load()`_ (if ``engine=None``),
         `orjson.loads()`_ (if ``engine='orjson'``), `ujson.load()`_ (if ``engine='ujson'``) or
         `rapidjson.load()`_ (if ``engine='rapidjson'``).
@@ -416,7 +446,9 @@ def load_json(path_to_file, engine=None, verbose=False, **kwargs):
     else:
         mod = sys.modules.get('json')
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
         if engine == 'orjson':
@@ -436,7 +468,7 @@ def load_json(path_to_file, engine=None, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def load_joblib(path_to_file, verbose=False, **kwargs):
+def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     """
     Load data from a `joblib`_ file.
 
@@ -444,6 +476,9 @@ def load_joblib(path_to_file, verbose=False, **kwargs):
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `joblib.load`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: Any
@@ -481,7 +516,9 @@ def load_joblib(path_to_file, verbose=False, **kwargs):
 
     joblib_ = _check_dependency(name='joblib')
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
         joblib_data = joblib_.load(filename=path_to_file, **kwargs)
@@ -495,7 +532,7 @@ def load_joblib(path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def load_feather(path_to_file, verbose=False, index=None, **kwargs):
+def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
 
@@ -506,6 +543,9 @@ def load_feather(path_to_file, verbose=False, index=None, **kwargs):
     :type index: str | int | list | None
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
     :type verbose: bool | int
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of `pandas.read_feather`_:
 
         * columns: a sequence of column names, if ``None``, all columns
@@ -539,7 +579,9 @@ def load_feather(path_to_file, verbose=False, index=None, **kwargs):
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose)
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
         feather_data = pd.read_feather(path_to_file, **kwargs)
@@ -566,7 +608,7 @@ def load_feather(path_to_file, verbose=False, index=None, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def load_data(path_to_file, err_warning=True, **kwargs):
+def load_data(path_to_file, err_warning=True, prt_kwargs=None, **kwargs):
     """
     Load data from a file.
 
@@ -577,6 +619,9 @@ def load_data(path_to_file, err_warning=True, **kwargs):
     :param err_warning: Whether to show a warning message if any unknown error occurs;
         defaults to ``True``.
     :type err_warning: bool
+    :param prt_kwargs: [Optional] parameters of :func:`pyhelpers.store.ldr.__check_loading_path`;
+        defaults to ``None``.
+    :type prt_kwargs: dict | None
     :param kwargs: [Optional] parameters of one of the following functions:
         :func:`~pyhelpers.store.load_pickle`,
         :func:`~pyhelpers.store.load_csv`,
@@ -668,30 +713,33 @@ def load_data(path_to_file, err_warning=True, **kwargs):
 
     path_to_file_ = str(path_to_file).lower()
 
+    kwargs.update({'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs})
+
     if path_to_file_.endswith((".pkl", ".pickle")):
-        data = load_pickle(path_to_file, **kwargs)
+        data = load_pickle(**kwargs)
 
     elif path_to_file_.endswith((".csv", ".txt")):
-        data = load_csv(path_to_file, **kwargs)
+        data = load_csv(**kwargs)
 
     elif path_to_file_.endswith((".xlsx", ".xls")):
-        data = load_spreadsheets(path_to_file, **kwargs)
+        data = load_spreadsheets(**kwargs)
 
     elif path_to_file_.endswith(".json"):
-        data = load_json(path_to_file, **kwargs)
+        data = load_json(**kwargs)
 
     elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        data = load_joblib(path_to_file, **kwargs)
+        data = load_joblib(**kwargs)
 
     elif path_to_file_.endswith((".fea", ".feather")):
-        data = load_feather(path_to_file, **kwargs)
+        data = load_feather(**kwargs)
 
     else:
         data = None
 
         if err_warning:
-            warnings.warn(
-                "\nThe specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.load_data()`.", stacklevel=2)
+            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+            logging.warning(
+                "\n\tThe specified file format (extension) is not recognisable by "
+                "`pyhelpers.store.load_data()`.")
 
     return data
