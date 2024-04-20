@@ -184,12 +184,8 @@ def _auto_adjust_column_width(writer, writer_kwargs, **kwargs):
             max_length = 0
             column_letter = column[0].column_letter
             for cell in column:
-                # noinspection PyBroadException
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except Exception:
-                    pass
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
             ws.column_dimensions[column_letter].width = (max_length + 2) * 1.1
 
 
