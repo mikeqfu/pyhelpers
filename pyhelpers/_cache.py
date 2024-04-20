@@ -258,41 +258,6 @@ def _check_file_pathname(name, options=None, target=None):
     return file_exists, file_pathname
 
 
-# def _check_exe_pathname(exe_name, exe_pathname, possible_pathnames):
-#     """
-#     Check about a specified executable file pathname.
-#
-#     :param exe_name: filename of an executable file
-#     :type exe_name: str
-#     :param exe_pathname: pathname of an executable file
-#     :type exe_pathname: str | None
-#     :param possible_pathnames: a number of possible pathnames of the executable file
-#     :type possible_pathnames: list | set
-#     :return: whether the specified executable file exists and its pathname
-#     :rtype: typing.Tuple[bool, str]
-#
-#     **Tests**::
-#
-#         >>> from pyhelpers._cache import _check_exe_pathname
-#         >>> import os
-#
-#         >>> options = ["C:\\Python39\\python.exe", "C:\\Program Files\\Python39\\python.exe"]
-#
-#         >>> python_exists, path_to_exe = _check_exe_pathname("python.exe", None, options)
-#         >>> python_exists
-#         True
-#         >>> os.path.basename(path_to_exe)
-#         'python.exe'
-#     """
-#
-#     if exe_pathname is None:
-#         exe_exists, exe_pathname_ = _find_file(exe_name, options=possible_pathnames)
-#     else:
-#         exe_exists, exe_pathname_ = os.path.exists(exe_pathname), copy.copy(exe_pathname)
-#
-#     return exe_exists, exe_pathname_
-
-
 def _format_err_msg(e=None, msg=""):
     """
     Format an error message.
