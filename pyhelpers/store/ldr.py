@@ -161,8 +161,10 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
         try:
             with open(file=path_to_file, mode='rb') as pickle_in:
                 pickle_data = pickle.load(pickle_in, **kwargs)
-        except ModuleNotFoundError:
+        except Exception as e:
             pickle_data = pd.read_pickle(path_to_file)
+            if verbose:
+                _print_failure_msg(e)
 
         if verbose:
             print("Done.")
