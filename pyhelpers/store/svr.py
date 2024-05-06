@@ -265,7 +265,8 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
 
     try:  # to save the data
         if ext in {".csv", ".txt", ".odt"}:  # a .csv file
-            data.to_csv(path_or_buf=path_to_file, sep=delimiter, **kwargs)
+            kwargs.update({'path_or_buf': path_to_file, 'sep': delimiter, 'index': index})
+            data.to_csv(**kwargs)
 
         else:
             if writer_kwargs is None:
