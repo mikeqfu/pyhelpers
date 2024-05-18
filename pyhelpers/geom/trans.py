@@ -195,9 +195,9 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
 
     :param longitudes: the longitude (abbr: long., λ, or lambda) of a point on Earth's surface
-    :type longitudes: int | float | typing.Iterable[int, float]
+    :type longitudes: int | float | typing.Iterable
     :param latitudes: the latitude (abbr: lat., φ, or phi) of a point on Earth's surface
-    :type latitudes: int | float | typing.Iterable[int, float]
+    :type latitudes: int | float | typing.Iterable
     :param as_array: whether to return an array, defaults to ``False``
     :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
@@ -273,9 +273,9 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     .. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
 
     :param eastings: Easting (X), eastward-measured distance (or the x-coordinate)
-    :type eastings: int | float | typing.Iterable[int, float]
+    :type eastings: int | float | typing.Iterable
     :param northings: Northing (Y), northward-measured distance (or the y-coordinate)
-    :type northings: int | float | typing.Iterable[int, float]
+    :type northings: int | float | typing.Iterable
     :param as_array: whether to return an array, defaults to ``False``
     :type as_array: bool
     :param kwargs: [optional] parameters of `pyproj.Transformer.transform`_
