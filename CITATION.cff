@@ -3,9 +3,10 @@ title: >-
   PyHelpers: An open-source toolkit for facilitating Python
   users' data manipulation tasks
 message: >-
-  If you use PyHelpers, please cite it using the metadata
-  from this file. Please also refer to the export options
-  from Zenodo
+  If you use PyHelpers and/or any code in its GitHub
+  repository, please cite it using the metadata provided in
+  this file. Additionally, refer to the export options on
+  Zenodo
   (https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True)
   to reference the specific version of PyHelpers as
   appropriate.
