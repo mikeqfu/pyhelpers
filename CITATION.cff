@@ -1,13 +1,14 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
 cff-version: 1.2.0
 title: >-
-  PyHelpers: an open-source toolkit for facilitating Python
+  PyHelpers: An open-source toolkit for facilitating Python
   users' data manipulation tasks
 message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
+  If you use PyHelpers, please cite it using the metadata
+  from this file. Please also refer to the export options
+  from Zenodo
+  (https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True)
+  to reference the specific version of PyHelpers as
+  appropriate.
 type: software
 authors:
   - given-names: Qian
@@ -19,8 +20,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.4017438
 repository-code: 'https://github.com/mikeqfu/pyhelpers'
+url: 'https://pyhelpers.readthedocs.io'
 abstract: >-
-  PyHelpers is a lightweight open-source Python package
+  PyHelpers is a lightweight, open-source Python package
   designed as a versatile toolkit for simplifying data
   (pre)processing tasks. It offers a comprehensive range of
   practical utilities to facilitate common data manipulation
@@ -34,4 +36,8 @@ keywords:
   - Utilities
   - Data preprocessing
   - Data manipulation
+  - Python utilities
+  - Python utils
+  - Python utility
 license: MIT
+date-released: '2019-09-03'
