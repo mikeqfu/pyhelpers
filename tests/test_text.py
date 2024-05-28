@@ -1,37 +1,61 @@
 """Test the module :mod:`~pyhelpers.text`."""
 
 import pytest
+import functools
 
 from pyhelpers.text import *
 
 
-def test_get_acronym():
+@pytest.mark.parametrize('rm_whitespace', [True, False])
+def test_remove_punctuation(rm_whitespace):
+    raw_text = 'Hello world!\tThis is a test. :-)'
+    text = remove_punctuation(raw_text, rm_whitespace)
+
+    if rm_whitespace:
+        assert text == 'Hello world This is a test'
+    else:
+        assert text == 'Hello world \tThis is a test'
+
+
+@pytest.mark.parametrize('only_capitals', [False, True])
+@pytest.mark.parametrize('capitals_in_words', [False, True])
+@pytest.mark.parametrize('keep_punctuation', [False, True])
+def test_get_acronym(only_capitals, capitals_in_words, keep_punctuation):
     text_a = 'This is an apple.'
     assert get_acronym(text_a) == 'TIAA'
 
     text_b = "I'm at the University of Birmingham."
-    assert get_acronym(text_b, only_capitals=True) == 'IUB'
+    acron_b = get_acronym(text_b, only_capitals=only_capitals)
+    if not only_capitals:
+        assert acron_b == 'IMATUOB'
+    else:
+        assert acron_b == 'IUB'
 
     text_c = 'There is a "ConnectionError"!'
-    assert get_acronym(text_c, capitals_in_words=True) == 'TCE'
+    acron_c = get_acronym(text_c, only_capitals, capitals_in_words, keep_punctuation)
+    if capitals_in_words and not (only_capitals or keep_punctuation):
+        assert acron_c == 'TIACE'
+    if only_capitals and capitals_in_words and not keep_punctuation:
+        assert acron_c == 'TCE'
+    if only_capitals and keep_punctuation and not capitals_in_words:
+        assert acron_c == 'T"C"!'
+    if capitals_in_words and keep_punctuation and not only_capitals:
+        assert acron_c == 'TIA"CE"!'
+    if all([only_capitals, capitals_in_words, keep_punctuation]):
+        assert acron_c == 'T"CE"!'
 
 
-def test_remove_punctuation():
-    raw_text = 'Hello world!\tThis is a test. :-)'
+@pytest.mark.parametrize('join_with', [None, ' '])
+def test_extract_words1upper(join_with):
+    x1, x2 = 'Network_Waymarks', 'NetworkRailRetainingWall'
+    y1, y2 = map(functools.partial(extract_words1upper, join_with=join_with), [x1, x2])
 
-    result_1 = remove_punctuation(raw_text)
-    assert result_1 == 'Hello world This is a test'
-
-    result_2 = remove_punctuation(raw_text, rm_whitespace=False)
-    assert result_2 == 'Hello world \tThis is a test'
-
-
-def test_extract_words1upper():
-    x1 = 'Network_Waymarks'
-    assert extract_words1upper(x1) == ['Network', 'Waymarks']
-
-    x2 = 'NetworkRailRetainingWall'
-    assert extract_words1upper(x2, join_with=' ') == 'Network Rail Retaining Wall'
+    if join_with:
+        assert y1 == 'Network Waymarks'
+        assert y2 == 'Network Rail Retaining Wall'
+    else:
+        assert y1 == ['Network', 'Waymarks']
+        assert y2 == ['Network', 'Rail', 'Retaining', 'Wall']
 
 
 def test__english_numerals():
@@ -85,54 +109,56 @@ def test_count_words():
     }
 
 
-def test_calculate_idf():
+@pytest.mark.parametrize('rm_punc', [False, True])
+def test_calculate_idf(rm_punc):
     raw_doc = [
         'This is an apple.',
         'That is a pear.',
         'It is human being.',
         'Hello world!']
+    docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=rm_punc)
 
-    docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=False)
-    assert docs_tf_ == [
-        {'This': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
-        {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
-        {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
-        {'Hello': 1, 'world': 1, '!': 1}]
-    assert corpus_idf_ == {
-        'This': 0.6931471805599453,
-        'is': 0.0,
-        'an': 0.6931471805599453,
-        'apple': 0.6931471805599453,
-        '.': 0.0,
-        'That': 0.6931471805599453,
-        'a': 0.6931471805599453,
-        'pear': 0.6931471805599453,
-        'It': 0.6931471805599453,
-        'human': 0.6931471805599453,
-        'being': 0.6931471805599453,
-        'Hello': 0.6931471805599453,
-        'world': 0.6931471805599453,
-        '!': 0.6931471805599453}
+    if not rm_punc:
+        assert docs_tf_ == [
+            {'This': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
+            {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
+            {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
+            {'Hello': 1, 'world': 1, '!': 1}]
+        assert corpus_idf_ == {
+            'This': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            '.': 0.0,
+            'That': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'It': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'Hello': 0.6931471805599453,
+            'world': 0.6931471805599453,
+            '!': 0.6931471805599453}
 
-    docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=True)
-    assert docs_tf_ == [
-        {'This': 1, 'is': 1, 'an': 1, 'apple': 1},
-        {'That': 1, 'is': 1, 'a': 1, 'pear': 1},
-        {'It': 1, 'is': 1, 'human': 1, 'being': 1},
-        {'Hello': 1, 'world': 1}]
-    assert corpus_idf_ == {
-        'This': 0.6931471805599453,
-        'is': 0.0,
-        'an': 0.6931471805599453,
-        'apple': 0.6931471805599453,
-        'That': 0.6931471805599453,
-        'a': 0.6931471805599453,
-        'pear': 0.6931471805599453,
-        'It': 0.6931471805599453,
-        'human': 0.6931471805599453,
-        'being': 0.6931471805599453,
-        'Hello': 0.6931471805599453,
-        'world': 0.6931471805599453}
+    else:
+        assert docs_tf_ == [
+            {'This': 1, 'is': 1, 'an': 1, 'apple': 1},
+            {'That': 1, 'is': 1, 'a': 1, 'pear': 1},
+            {'It': 1, 'is': 1, 'human': 1, 'being': 1},
+            {'Hello': 1, 'world': 1}]
+        assert corpus_idf_ == {
+            'This': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            'That': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'It': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'Hello': 0.6931471805599453,
+            'world': 0.6931471805599453}
 
 
 def test_calculate_tf_idf():
