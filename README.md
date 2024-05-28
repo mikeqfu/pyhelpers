@@ -7,7 +7,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
-PyHelpers is a lightweight open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
+PyHelpers is a lightweight, open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
 
 ## Installation
 
@@ -17,11 +17,11 @@ To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/
 pip install --upgrade pyhelpers
 ```
 
-Please also refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html) for more information. 
+*Also refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html) for more information.* 
 
 ## Quick start
 
-For a concise guide on how to utilise PyHelpers, we recommend checking out the [quick-start tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html), which features multiple illustrative examples for each of the [modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples effectively demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining your work processes.
+For a concise guide on how to utilise PyHelpers, we recommend checking out the [Quick-start Tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html), which features multiple illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples effectively demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining your work processes.
 
 ## Documentation
 
@@ -35,12 +35,12 @@ PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mike
 
 ## Cite as
 
-Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438)
+Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438)
 
 ```bibtex
-@software{qian_fu_pyhelpers_4017438,
-  author    = {Qian Fu},
-  title     = {{PyHelpers: an open-source toolkit for facilitating
+@software{Fu_PyHelpers_4017438,
+  author    = {Fu, Qian},
+  title     = {{PyHelpers: An open-source toolkit for facilitating
                 Python users' data manipulation tasks}},
   year      = 2020,
   publisher = {Zenodo},
@@ -49,7 +49,7 @@ Fu, Q. (2020). PyHelpers: an open-source toolkit for facilitating Python users' 
 }
 ```
 
-(Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.)
+*Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.*
 
 ## Contributors
 
