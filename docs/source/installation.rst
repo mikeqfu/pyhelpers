@@ -6,14 +6,14 @@ To install the latest release of PyHelpers from `PyPI <https://pypi.org/project/
 
 .. code-block:: console
 
-    pip install --upgrade pyhelpers
+    $ pip install --upgrade pyhelpers
 
 
 To install the most recent version of PyHelpers hosted on `GitHub <https://github.com/mikeqfu/pyhelpers>`_:
 
 .. code-block:: console
 
-    pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
+    $ pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
 
 .. note::
@@ -40,7 +40,6 @@ To check whether pyhelpers has been correctly installed, try to import the packa
     :name: cmd current version
 
     >>> import pyhelpers
-
     >>> pyhelpers.__version__  # Check the latest version
 
 .. parsed-literal::

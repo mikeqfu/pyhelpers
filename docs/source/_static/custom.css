@@ -1,4 +1,5 @@
 @media screen and (min-width: 767px) {
+<<<<<<< Updated upstream:docs/source/_static/custom.css
 
    .wy-table-responsive table td {
       /* !important prevents the common CSS stylesheets from overriding
@@ -22,82 +23,219 @@
 
 /* Copy buttons */
 button.copybtn {
+=======
+    h1 {
+        font-size: 1.65em;
+        color: #405D72;
+    }
+
+    h2 {
+        font-size: 1.35em;
+        margin-bottom: 0.75em;
+    }
+
+    h3 {
+        font-size: 1.05em;
+    }
+
+    .content {
+        width: 50em;
+    }
+
+    footer {
+        font-size: var(--font-size--normal) !important;
+    }
+
+    .toc-title {
+        font-size: large;
+    }
+
+    .toc-tree a.reference {
+        font-size: medium;
+        color: firebrick;
+    }
+
+    .toctree-wrapper.compound .caption,
+    .toctree-wrapper.compound :not(.caption)>.caption-text {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        text-transform: none;
+        font-size: larger;
+        font-weight: 700;
+        color: steelblue;
+    }
+
+    .sidebar-container {
+        position: sticky;
+    }
+
+    .sidebar-brand-text {
+        color: cadetblue;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .sidebar-tree li {
+        font-size: 1.125em;
+    }
+
+    .toctree-checkbox:checked~ul {
+        font-size: 0.95em;
+    }
+
+    .sidebar-tree li.toctree-l3 {
+        font-size: smaller;
+    }
+
+    .sidebar-tree .caption,
+    .sidebar-tree :not(.caption)>.caption-text {
+        font-size: medium;
+        color: cadetblue;
+    }
+
+    body {
+        --color-code-background: ivory !important;
+        --color-api-name: firebrick;
+        --color-api-pre-name: firebrick;
+    }
+
+    p .sig-inline,
+    p code.literal {
+        font-size: var(--font-size--small);
+    }
+
+    .sig-param {
+        font-style: italic;
+        color: darkgoldenrod;
+    }
+
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt {
+        font-size: medium;
+    }
+
+    dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dd>:first-child {
+        margin-top: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    div.highlight {
+        background-color: ivory;
+        font-size: 1.145em;
+        position: relative;
+    }
+
+    p.rubric {
+        font-size: 0.95em;
+        margin-top: 2em;
+        margin-bottom: -0.75em;
+    }
+
+    .autosummary table,
+    .autosummary table {
+        text-align: left;
+        vertical-align: top;
+        margin-left: 0;
+        width: auto;
+    }
+
+    figcaption {
+        padding-bottom: 1.75em;
+    }
+
+    dl dd p.rubric {
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: -1em;
+        color: navy;
+    }
+
+    dl dd p strong {
+        text-transform: uppercase;
+        font-size: var(--font-size--small);
+        font-weight: 700;
+        color: navy;
+    }
+
+    .field-list dt {
+        color: navy;
+    }
+
+    .field-list dt,
+    .option-list dt,
+    dl.footnote dt,
+    dl.glossary dt,
+    dl.simple dt,
+    dl:not([class]) dt {
+        font-weight: 700;
+    }
+
+    ul.simple li p strong,
+    dd dl.field-list.simple dd p strong {
+        text-transform: none;
+        font-size: unset;
+        font-weight: 500;
+        font-style: italic;
+    }
+
+    dd dl.field-list.simple dd p strong {
+        color: darkgoldenrod;
+    }
+
+    span.examples-colon {
+        color: navy;
+        font-weight: 500;
+    }
+
+    dd p.rubric {
+        font-weight: 500;
+        line-height: 2;
+    }
+
+    .admonition p.admonition-title,
+    p.topic-title,
+    div.admonition {
+        font-size: medium;
+    }
+
+    .admonition p.admonition-title:before,
+    p.topic-title:before {
+        height: 1.05rem;
+        width: 1.05rem;
+    }
+
+    span.caption-number:after {
+       content: ": ";
+       margin-left: -0.25em;
+    }
+
+    .wy-table-responsive table td,
+    .wy-table-responsive table th {
+        white-space: normal !important;
+    }
+
+    .wy-table-responsive {
+        overflow: visible !important;
+    }
+
+    .wy-nav-content {
+        max-width: 100% !important;
+    }
+}
+
+.copybtn {
+>>>>>>> Stashed changes:docs/source/_static/copy_button.css
     position: absolute;
-    display: flex;
-    top: auto;
-    bottom: .5em;  /* 1.5em; */
-    right: .2em;  /* 2.0em; */
-    width: 1.7em;
-    height: 1.7em;
-	opacity: 0;
-    transition: opacity 0.3s, border .3s, background-color .3s;
-    user-select: none;
-    padding: 0;
-    border: none;  /* #e1e1e1 1px solid; */
-    outline: none;
-    border-radius: 0.4em;
-    background-color: rgb(245, 245, 245);
+    right: 10px;
+    bottom: 10px;
+    background-color: #f3f3f3;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    z-index: 10;
 }
 
-button.copybtn.success {
-    border-color: #22863a;
-}
-
-button.copybtn img {
-    width: 100%;
-    padding: .2em;
-}
-
-div.highlight  {
-    position: relative;
-}
-
-.highlight:hover button.copybtn {
-	opacity: 1;
-}
-
-.highlight button.copybtn:hover {
-    background-color: rgb(235, 235, 235);
-}
-
-.highlight button.copybtn:active {
-    background-color: rgb(187, 187, 187);
-}
-
-/**
- * A minimal CSS-only tooltip copied from:
- *   https://codepen.io/mildrenben/pen/rVBrpK
- *
- * To use, write HTML like the following:
- *
- * <p class="o-tooltip--left" data-tooltip="Hey">Short</p>
- */
- .o-tooltip--left {
-  position: relative;
- }
-
- .o-tooltip--left:after {
-    opacity: 0;
-    visibility: hidden;
-    position: absolute;
-    content: attr(data-tooltip);
-    padding: .2em;
-    font-size: .8em;
-    left: -.2em;
-    background: grey;
-    color: white;
-    white-space: nowrap;
-    z-index: 2;
-    border-radius: 2px;
-    transform: translateX(-102%) translateY(0);
-    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
-}
-
-.o-tooltip--left:hover:after {
-    display: block;
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-100%) translateY(0);
-    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
-    transition-delay: .5s;
+.highlight button.copybtn {
+    height: 0.45em;
+    right: 0.15em;
 }

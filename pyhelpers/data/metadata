@@ -1,10 +1,10 @@
 {
     "Project": "PyHelpers",
+    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
     "Package": "pyhelpers",
     "Author": "Qian Fu",
     "Affiliation": "School of Engineering, University of Birmingham",
     "Email": "q.fu@bham.ac.uk",
-    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
     "Version": "2.0.0rc1",
     "License": "MIT License",
     "First release date": "September 2019"

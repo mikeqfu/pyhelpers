@@ -10,24 +10,9 @@ import re
 import shutil
 import sys
 
-_OPTIONAL_DEPENDENCY = {  # import name: (package/module name, install name)
-    "rapidfuzz": ("RapidFuzz", "rapidfuzz"),
-    "tqdm": ("tqdm", "tqdm"),
-    "matplotlib": ("Matplotlib", "matplotlib"),
-    "nltk": ("NLTK", "nltk"),
-    "joblib": ("Joblib", "joblib"),
-    "openpyxl": ("openpyxl", "openpyxl"),
-    "xlsxwriter": ("XlsxWriter", "xlsxwriter"),
-    "odf": ("odfpy", "odfpy"),
-    "pyarrow": ("PyArrow", "pyarrow"),
-    "orjson": ("orjson", "orjson"),
-    "rapidjson": ("python-rapidjson", "python-rapidjson"),
-    "ujson": ("UltraJSON", "ujson"),
-    "pypandoc": ("Pypandoc", "pypandoc"),
-    "pdfkit": ("pdfkit", "pdfkit"),
-    "psycopg2": ("psycopg2", "psycopg2"),
-    "pyodbc": ("pyodbc", "pyodbc"),
-}
+# import name: (package/module name, install name)
+_OPTIONAL_DEPENDENCY = json.loads(
+    pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
 
 
 def _confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -368,6 +353,8 @@ def example_dataframe(osgb36=False):
     return _example_dataframe
 
 
-_USER_AGENT_STRINGS = json.loads(pkgutil.get_data(__name__, "data/user-agent-strings.json").decode())
+_USER_AGENT_STRINGS = json.loads(
+    pkgutil.get_data(__name__, "data/user-agent-strings.json").decode())
 
-_ENGLISH_NUMERALS = json.loads(pkgutil.get_data(__name__, "data/english-numerals.json").decode())
+_ENGLISH_NUMERALS = json.loads(
+    pkgutil.get_data(__name__, "data/english-numerals.json").decode())
