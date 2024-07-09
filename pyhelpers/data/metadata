@@ -2,10 +2,10 @@
     "Project": "PyHelpers",
     "Package": "pyhelpers",
     "Author": "Qian Fu",
-    "Affiliation": "Birmingham Centre for Railway Research and Education, School of Engineering, University of Birmingham",
+    "Affiliation": "School of Engineering, University of Birmingham",
     "Email": "q.fu@bham.ac.uk",
     "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
     "Version": "2.0.0rc1",
     "License": "MIT License",
-    "First release": "September 2019"
+    "First release date": "September 2019"
 }

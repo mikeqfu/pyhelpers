@@ -382,20 +382,19 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert path_to_file.endswith((".xlsx", ".xls", ".ods"))
+    assert path_to_file.endswith((".xlsx", ".xls", ".ods")), "File must be an Excel or ODS file."
 
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     if os.path.isfile(path_to_file) and mode == 'a':
-        with pd.ExcelFile(path_or_buffer=path_to_file) as f:
+        with pd.ExcelFile(path_to_file) as f:
             cur_sheet_names = f.sheet_names
     else:
         cur_sheet_names = []
+        if mode == 'a':
+            pd.DataFrame().to_excel(path_to_file, sheet_name=sheet_names[0])
 
-    if path_to_file.endswith((".xlsx", ".xls")):
-        engine = 'openpyxl'
-    else:
-        engine = 'odf'
+    engine = 'openpyxl' if path_to_file.endswith((".xlsx", ".xls")) else 'odf'
 
     if writer_kwargs is None:
         writer_kwargs = {}
@@ -415,7 +414,8 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                 if if_sheet_exists is None:
                     if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
                 else:
-                    assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}
+                    assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
+                        "Invalid option for `if_sheet_exists`."
                     if_sheet_exists_ = copy.copy(if_sheet_exists)
 
                 if if_sheet_exists_ != 'pass':
