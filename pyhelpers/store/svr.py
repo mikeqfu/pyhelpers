@@ -176,7 +176,7 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def _auto_adjust_column_width(writer, writer_kwargs, **kwargs):
+def _autofit_column_width(writer, writer_kwargs, **kwargs):
     if 'sheet_name' in kwargs and writer_kwargs['engine'] == 'openpyxl':
         # Reference: https://stackoverflow.com/questions/39529662/
         ws = writer.sheets[kwargs['sheet_name']]
@@ -190,7 +190,7 @@ def _auto_adjust_column_width(writer, writer_kwargs, **kwargs):
 
 
 def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',',
-                     writer_kwargs=None, verbose=False, **kwargs):
+                     autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
     """
     Save data to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
     an `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_, or
@@ -213,6 +213,8 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     :param delimiter: A separator for saving ``data`` as a `".csv"`, `".txt"`, or `".odt"` file;
         defaults to ``','``.
     :type delimiter: str
+    :param autofit_column_width: Whether to autofit column width; defaults to ``True``.
+    :type autofit_column_width: bool
     :param writer_kwargs: Optional parameters for `pandas.ExcelWriter`_; defatuls to ``None``.
     :type writer_kwargs: dict | None
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
@@ -286,7 +288,9 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
             with pd.ExcelWriter(**writer_kwargs) as writer:
                 kwargs.update({'excel_writer': writer, 'index': index})
                 data.to_excel(**kwargs)
-                _auto_adjust_column_width(writer, writer_kwargs, **kwargs)
+
+                if autofit_column_width:
+                    _autofit_column_width(writer, writer_kwargs, **kwargs)
 
         if verbose:
             print("Done.")
@@ -296,7 +300,7 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
 
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
-                      writer_kwargs=None, verbose=False, **kwargs):
+                      autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
     """
     Save data to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
@@ -315,6 +319,8 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
     :param if_sheet_exists: Indicate the behaviour when trying to write to an existing sheet;
         see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter`_.
     :type if_sheet_exists: None | str
+    :param autofit_column_width: Whether to autofit column width; defaults to ``True``.
+    :type autofit_column_width: bool
     :param writer_kwargs: Optional parameters for `pandas.ExcelWriter`_; defatuls to ``None``.
     :type writer_kwargs: dict | None
     :param verbose: Whether to print relevant information in console; defaults to ``False``.
@@ -424,7 +430,9 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             try:
                 kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
                 sheet_data.to_excel(**kwargs)
-                _auto_adjust_column_width(writer, writer_kwargs, **kwargs)
+
+                if autofit_column_width:
+                    _autofit_column_width(writer, writer_kwargs, **kwargs)
 
                 if writer._if_sheet_exists == 'new':
                     new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
