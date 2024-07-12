@@ -9,6 +9,29 @@ from .._cache import _check_dependency
 
 
 def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs):
+    """
+    Generate annotation parameters for annotating a point on a square plot.
+
+    This function constructs annotation parameters for annotating a point ``(x, y)``
+    on a square plot. The annotation text format is defined by the precision parameter,
+    with a default of ``2`` decimal places.
+
+    :param x: X-coordinate of the point to annotate.
+    :type x: float
+    :param y: Y-coordinate of the point to annotate.
+    :type y: float
+    :param fontsize: Font size of the annotation text.
+    :type fontsize: int
+    :param margin: Margin distance from the annotated point to the annotation text;
+        defaults to ``0.025``.
+    :type margin: float
+    :param precision: Number of decimal places to display in the annotation text; defaults to ``2``.
+    :type precision: int
+    :param kwargs: [Optional] additional parameters for annotation customisation.
+    :return: Updated ``kwargs`` dictionary containing annotation parameters.
+    :rtype: dict
+    """
+
     p = '{' + '0:.{}f'.format(precision) + '}'
     text = f'({p}, {p})'
     args = {
@@ -26,27 +49,29 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
 def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False, annot_font_size=12,
                   fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
     """
-    Sketch a square given its centre point, four vertices and rotation angle (in degree).
+    Sketch a square on a plot given its centre coordinates, side length and rotation angle.
 
-    :param ctr_x: x coordinate of a square centre
+    This function plots a square with its centre at coordinates ``(ctr_x, ctr_y)``,
+    side length ``side_length``, and rotated by `rotation_theta` degrees (anticlockwise).
+
+    :param ctr_x: X coordinate of the centre of the square.
     :type ctr_x: int | float
-    :param ctr_y: y coordinate of a square centre
+    :param ctr_y: Y coordinate of the centre of the square.
     :type ctr_y: int | float
-    :param side_length: side length of a square
+    :param side_length: Side length of the square.
     :type side_length: int | float
-    :param rotation_theta: rotate (anticlockwise) the square by ``rotation_theta`` (in degree),
-        defaults to ``0``
+    :param rotation_theta: Rotation angle of the square in degrees; defaults to ``0``.
     :type rotation_theta: int | float
-    :param annotation: whether to annotate vertices of the square, defaults to ``True``
+    :param annotation: Whether to annotate vertices of the square; defaults to ``True``.
     :type annotation: bool
-    :param annot_font_size: font size annotation texts, defaults to ``12``
+    :param annot_font_size: Font size of annotation texts; defaults to ``12``.
     :type annot_font_size: int
-    :param fig_size: figure size, defaults to ``(6.4, 4.8)``
+    :param fig_size: Size of the figure; defaults to ``(6.4, 4.8)``.
     :type fig_size: tuple | list
-    :param ret_vertices: whether to return the vertices of the square, defaults to ``False``
+    :param ret_vertices: Whether to return the vertices of the square; defaults to ``False``.
     :type ret_vertices: bool
-    :param kwargs: [optional] parameters of `matplotlib.axes.Axes.annotate`_
-    :return: vertices of the square as an array([ll, ul, ur, lr])
+    :param kwargs: Additional parameters for ``matplotlib.axes.Axes.annotate``.
+    :return: Vertices of the square as an array([ll, ul, ur, lr]).
     :rtype: numpy.ndarray
 
     .. _`matplotlib.axes.Axes.annotate`:
@@ -57,14 +82,14 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         >>> from pyhelpers.geom import sketch_square
         >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
-
-        >>> mpl_preferences()
-
+        >>> mpl_preferences(backend='TkAgg')
         >>> c1, c2 = 1, 1
         >>> side_len = 2
-
         >>> sketch_square(c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5))
         >>> plt.show()
+        >>> # from pyhelpers.store import save_fig
+        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-1.svg", verbose=True)
+        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-1.pdf", verbose=True)
 
     The above exmaple is illustrated in :numref:`geom-sketch_square-demo-1`:
 
@@ -80,6 +105,8 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
 
         >>> sketch_square(c1, c2, side_len, rotation_theta=75, annotation=True, fig_size=(5, 5))
         >>> plt.show()
+        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-2.svg", verbose=True)
+        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-2.pdf", verbose=True)
 
     This second example is illustrated in :numref:`geom-sketch_square-demo-2`:
 
