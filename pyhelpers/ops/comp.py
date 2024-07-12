@@ -1,5 +1,5 @@
 """
-Basic computation / conversion.
+Basic computation/conversion.
 """
 
 import copy
@@ -15,17 +15,16 @@ import pandas as pd
 
 def gps_time_to_utc(gps_time):
     """
-    Convert standard GPS time to UTC time.
+    Convert GPS time to UTC time.
 
-    :param gps_time: standard GPS time
+    :param gps_time: Standard GPS time in seconds since GPS epoch (6 January 1980).
     :type gps_time: float
-    :return: UTC time
+    :return: Corresponding UTC time.
     :rtype: datetime.datetime
 
     **Examples**::
 
         >>> from pyhelpers.ops import gps_time_to_utc
-
         >>> utc_dt = gps_time_to_utc(gps_time=1271398985.7822514)
         >>> utc_dt
         datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
@@ -40,40 +39,36 @@ def gps_time_to_utc(gps_time):
 
 def parse_size(size, binary=True, precision=1):
     """
-    Parse size from / into readable format of bytes.
+    Parse size into human-readable format or vice versa.
 
-    :param size: human- or machine-readable format of size
+    :param size: Size to be parsed, either in human-readable format (e.g. ``'10 MB'``) or
+        as an integer.
     :type size: str | int | float
-    :param binary: whether to use binary (i.e. factorized by 1024) representation,
-        defaults to ``True``; if ``binary=False``, use the decimal (or metric) representation
-        (i.e. factorized by 10 ** 3)
+    :param binary: Whether to use binary (factorised by 1024) or decimal (factorised by 10 ** 3)
+        representation; defaults to ``True`` for binary representation.
     :type binary: bool
-    :param precision: number of decimal places (when converting ``size`` to human-readable format),
-        defaults to ``1``
+    :param precision: Number of decimal places when converting ``size`` to human-readable format;
+        defaults to ``1``.
     :type precision: int
-    :return: parsed size
+    :return: Parsed size, either as an integer (for machine-readable)
+        or a formatted string (for human-readable).
     :rtype: int | str
 
     **Examples**::
 
         >>> from pyhelpers.ops import parse_size
-
         >>> parse_size(size='123.45 MB')
         129446707
-
         >>> parse_size(size='123.45 MB', binary=False)
         123450000
-
         >>> parse_size(size='123.45 MiB', binary=True)
         129446707
         >>> # If a metric unit (e.g. 'MiB') is specified in the input,
-        >>> # the function returns a result accordingly, no matter whether `binary` is True or False
+        >>> # the function returns a result accordingly, regardless of `binary`
         >>> parse_size(size='123.45 MiB', binary=False)
         129446707
-
         >>> parse_size(size=129446707, precision=2)
         '123.45 MiB'
-
         >>> parse_size(size=129446707, binary=False, precision=2)
         '129.45 MB'
     """
@@ -109,30 +104,27 @@ def parse_size(size, binary=True, precision=1):
 
 def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     """
-    Get total number of chunks of a data file, given a minimum limit of chunk size.
+    Get the total number of chunks of a data file, given a minimum chunk size limit.
 
-    :param file_or_obj: absolute path to a file or an object
+    :param file_or_obj: Path to a file or an object representing the data.
     :type file_or_obj: typing.Any
-    :param chunk_size_limit: the minimum limit of file size
-        (in mebibyte i.e. MiB, or megabyte, i.e. MB) above which the function counts how many chunks
-        there could be, defaults to ``50``;
+    :param chunk_size_limit: Minimum limit of chunk size in megabytes (MB) or mebibytes (MiB)
+        above which the function counts the number of chunks; defaults to ``50``.
     :type chunk_size_limit: int | float | None
-    :param binary: whether to use binary (i.e. factorized by 1024) representation,
-        defaults to ``True``; if ``binary=False``, use the decimal (or metric) representation
-        (i.e. factorized by 10 ** 3)
+    :param binary: Whether to use binary (factorised by 1024) or decimal (factorised by 10 ** 3)
+        representation for size calculations; defaults to ``True`` for binary representation.
     :type binary: bool
-    :return: number of chunks
+    :return: Number of chunks, or ``None`` if ``file_or_obj`` is invalid
+        or chunk calculation is not applicable.
     :rtype: int | None
 
     **Examples**::
 
         >>> from pyhelpers.ops import get_number_of_chunks
         >>> import numpy
-
         >>> example_obj = numpy.zeros((1000, 1000))
         >>> get_number_of_chunks(example_obj, chunk_size_limit=5)
         2
-
         >>> file_path = "C:\\Program Files\\Python310\\python310.pdb"
         >>> get_number_of_chunks(file_path, chunk_size_limit=2)
         8
@@ -159,22 +151,22 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
+    # noinspection PyShadowingNames
     """
-    Get upper and lower bounds for extreme outliers.
+    Get the upper and lower bounds for extreme outliers using the interquartile range method.
 
-    :param num_dat: an array of numbers
+    :param num_dat: Array-like object containing numerical data.
     :type num_dat: array-like
-    :param k: a scale coefficient associated with interquartile range, defaults to ``1.5``
-    :type k: float, int
-    :return: lower and upper bound
+    :param k: Scale coefficient associated with the interquartile range; defaults to ``1.5``.
+    :type k: float | int
+    :return: Tuple containing the lower and upper bounds for extreme outliers.
     :rtype: tuple
 
     **Examples**::
 
         >>> from pyhelpers.ops import get_extreme_outlier_bounds
-        >>> import pandas
-
-        >>> data = pandas.DataFrame(range(100), columns=['col'])
+        >>> import pandas as pd
+        >>> data = pd.DataFrame(range(100), columns=['col'])
         >>> data
             col
         0     0
@@ -188,9 +180,7 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
         97   97
         98   98
         99   99
-
         [100 rows x 1 columns]
-
         >>> data.describe()
                       col
         count  100.000000
@@ -201,7 +191,6 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
         50%     49.500000
         75%     74.250000
         max     99.000000
-
         >>> lo_bound, up_bound = get_extreme_outlier_bounds(data, k=1.5)
         >>> lo_bound, up_bound
         (0.0, 148.5)
@@ -218,22 +207,20 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
 def interquartile_range(num_dat):
     """
-    Calculate interquartile range.
+    Calculate the interquartile range (IQR) of numerical data.
 
-    This function may be an alternative to
+    This function can serve as an alternative to
     `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
 
-    :param num_dat: an array of numbers
-    :type num_dat: numpy.ndarry | list | tuple
-    :return: interquartile range of ``num_dat``
+    :param num_dat: Array-like object containing numerical data.
+    :type num_dat: numpy.ndarray | list | tuple
+    :return: Interquartile range of `num_dat`.
     :rtype: float
 
     **Examples**::
 
         >>> from pyhelpers.ops import interquartile_range
-
         >>> data = list(range(100))
-
         >>> iqr_result = interquartile_range(data)
         >>> iqr_result
         49.5
@@ -246,24 +233,25 @@ def interquartile_range(num_dat):
 
 def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M:%S.%f'):
     """
-    Find the closest date of a given one from a list of dates.
+    Find the closest date to a given date from a list of dates.
 
-    :param date: a date
+    :param date: Date to find the closest match for.
     :type date: str | datetime.datetime
-    :param lookup_dates: an array of dates
+    :param lookup_dates: Iterable of dates to search within.
     :type lookup_dates: typing.Iterable
-    :param as_datetime: whether to return a datetime.datetime-formatted date, defaults to ``False``
+    :param as_datetime: Whether to return the closest date as a datetime.datetime object;
+        defaults to ``False`` which returns a string representation.
     :type as_datetime: bool
-    :param fmt: datetime format, defaults to ``'%Y-%m-%d %H:%M:%S.%f'``
+    :param fmt: Format string for datetime parsing and formatting;
+        defaults to ``'%Y-%m-%d %H:%M:%S.%f'``.
     :type fmt: str
-    :return: the date that is closest to the given ``date``
+    :return: Closest date to the given `date`.
     :rtype: str | datetime.datetime
 
     **Examples**::
 
         >>> from pyhelpers.ops import find_closest_date
         >>> import pandas
-
         >>> example_dates = pandas.date_range('2019-01-02', '2019-12-31')
         >>> example_dates
         DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
@@ -274,12 +262,10 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
                        '2019-12-26', '2019-12-27', '2019-12-28', '2019-12-29',
                        '2019-12-30', '2019-12-31'],
                       dtype='datetime64[ns]', length=364, freq='D')
-
         >>> example_date = '2019-01-01'
         >>> closest_example_date = find_closest_date(example_date, example_dates)
         >>> closest_example_date
         '2019-01-02 00:00:00.000000'
-
         >>> example_date = pandas.to_datetime('2019-01-01')
         >>> closest_example_date = find_closest_date(example_date, example_dates, as_datetime=True)
         >>> closest_example_date

@@ -1,5 +1,5 @@
 """
-Utilities Internet-related tasks and manipulating data from online sources.
+Utilities for Internet-related tasks and data manipulation from online sources.
 """
 
 import copy
@@ -26,15 +26,14 @@ from .._cache import _check_dependency, _check_rel_pathname, _format_err_msg, _p
 
 def is_network_connected():
     """
-    Check whether the current machine can connect to the Internet.
+    Check whether the current machine is connected to the Internet.
 
-    :return: whether the Internet connection is currently working
+    :return: ``True`` if the Internet connection is currently working, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.ops import is_network_connected
-
         >>> is_network_connected()  # assuming the machine is currently connected to the Internet
         True
     """
@@ -52,36 +51,30 @@ def is_network_connected():
 
 def is_url(url, partially=False):
     """
-    Check whether ``url`` is a valid URL.
+    Check if ``url`` is a valid URL.
 
-    See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_]
+    See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_].
 
-    :param url: a string-type variable
+    :param url: A string representing the URL to be checked.
     :type url: str
-    :param partially: whether to consider the input as partially valid, defaults to ``False``
+    :param partially: Whether to consider the input as partially valid; defaults to ``False``.
     :type partially: bool
-    :return: whether ``url`` is a valid URL
+    :return: ``True`` if the given URL is a valid URL; ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.ops import is_url
-
         >>> is_url(url='https://github.com/mikeqfu/pyhelpers')
         True
-
         >>> is_url(url='github.com/mikeqfu/pyhelpers')
         False
-
         >>> is_url(url='github.com/mikeqfu/pyhelpers', partially=True)
         True
-
         >>> is_url(url='github.com')
         False
-
         >>> is_url(url='github.com', partially=True)
         True
-
         >>> is_url(url='github', partially=True)
         False
     """
@@ -108,21 +101,19 @@ def is_url(url, partially=False):
 
 def is_url_connectable(url):
     """
-    Check whether the current machine can connect to a given URL.
+    Check if the current machine can connect to the given URL.
 
-    :param url: a (valid) URL
+    :param url: A valid URL.
     :type url: str
-    :return: whether the machine can currently connect to the given URL
+    :return: ``True`` if the machine can currently connect to the given URL, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.ops import is_url_connectable
-
         >>> url_0 = 'https://www.python.org/'
         >>> is_url_connectable(url_0)
         True
-
         >>> url_1 = 'https://www.python.org1/'
         >>> is_url_connectable(url_1)
         False
@@ -142,27 +133,25 @@ def is_url_connectable(url):
 
 def is_downloadable(url, request_field='content-type', **kwargs):
     """
-    Check whether a URL leads to a web page where there is downloadable contents.
+    Check if a URL leads to a webpage where downloadable content is available.
 
-    :param url: a valid URL
+    :param url: A valid URL.
     :type url: str
-    :param request_field: name of the field/header indicating the original media type of the resource,
-        defaults to ``'content-type'``
+    :param request_field: Name of the field/header indicating the original media type of the
+        resource; defaults to ``'content-type'``.
     :type request_field: str
-    :param kwargs: [optional] parameters of `requests.head`_
-    :return: whether the ``url`` leads to downloadable contents
+    :param kwargs: [Optional] additional parameters for the function `requests.head()`_.
+    :return: ``True`` if the given URL leads to downloadable content, ``False`` otherwise.
     :rtype: bool
 
-    .. _`requests.head`: https://2.python-requests.org/en/master/api/#requests.head
+    .. _`requests.head()`: https://2.python-requests.org/en/master/api/#requests.head
 
     **Examples**::
 
         >>> from pyhelpers.ops import is_downloadable
-
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> is_downloadable(logo_url)
         True
-
         >>> google_url = 'https://www.google.co.uk/'
         >>> is_downloadable(google_url)
         False
@@ -183,22 +172,24 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default', **kwargs):
     """
-    Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session.
+    Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session
+    with configurable retry behaviour.
 
-    :param url: a valid URL
+    :param url: A valid URL to establish the session.
     :type url: str
-    :param max_retries: maximum number of retries, defaults to ``5``
+    :param max_retries: Maximum number of retry attempts; defaults to ``5``.
     :type max_retries: int
-    :param backoff_factor: ``backoff_factor`` of `urllib3.util.Retry`_, defaults to ``0.1``
+    :param backoff_factor: Backoff factor for exponential backoff in retries; defaults to ``0.1``.
     :type backoff_factor: float
-    :param retry_status: a list of HTTP status codes that force to retry downloading,
-        inherited from ``status_forcelist`` of `urllib3.util.Retry`_;
-        when ``retry_status='default'``, the list defaults to ``[429, 500, 502, 503, 504]``
-    :param kwargs: [optional] parameters of `urllib3.util.Retry`_
-    :return: a `requests`_ session
-    :rtype: `requests.Session`_
+    :param retry_status: HTTP status codes that trigger retries,
+        derived from `urllib3.util.Retry`_;
+        defaults to ``[429, 500, 502, 503, 504]`` when ``retry_status='default'``.
+    :param kwargs: [Optional] additional parameters for the class `urllib3.util.Retry`_.
+    :return: A `requests.Session`_ instance configured with the specified retry settings.
+    :rtype: requests.Session
 
-    .. _`requests`: https://docs.python-requests.org/en/latest/
+    .. _`requests`:
+        https://docs.python-requests.org/en/latest/
     .. _`urllib3.util.Retry`:
         https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html#urllib3.util.Retry
     .. _`requests.Session`:
@@ -207,11 +198,8 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     **Examples**::
 
         >>> from pyhelpers.ops import init_requests_session
-
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-
         >>> s = init_requests_session(logo_url)
-
         >>> type(s)
         requests.sessions.Session
     """
@@ -274,17 +262,20 @@ class _FakeUserAgentParser(html.parser.HTMLParser):
 
 def _user_agent_strings(browser_names=None, dump_dat=True):
     """
-    Get a dictionary of user-agent strings for popular browsers.
+    Retrieve user-agent strings for popular web browsers.
 
-    :param browser_names: names of a list of popular browsers
-    :type browser_names: list
-    :return: a dictionary of user-agent strings for popular browsers
+    :param browser_names: Browser names to retrieve user-agent strings for;
+        defaults to a predefined list of popular browsers if not provided.
+    :type browser_names: list | None
+    :param dump_dat: Whether to dump additional data alongside the user-agent strings;
+        defaults to ``True``.
+    :type dump_dat: bool
+    :return: Dictionary containing user-agent strings for the specified browsers.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.ops.webutils import _user_agent_strings
-
         >>> uas = _user_agent_strings()
         >>> list(uas.keys())
         ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
@@ -316,42 +307,46 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
 
 def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
     """
-    Load user-agent strings of popular browsers.
+    Load user-agent strings for popular web browsers.
 
-    The current version collects a partially comprehensive list of user-agent strings for
-    `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_ and `Opera`_.
+    This function retrieves a partially comprehensive list of user-agent strings for
+    `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_, and `Opera`_.
 
-    :param shuffled: whether to randomly shuffle the user-agent strings, defaults to ``False``
+    :param shuffled: Whether to randomly shuffle the user-agent strings; defaults to ``False``.
     :type shuffled: bool
-    :param flattened: whether to make a list of all available user-agent strings, defaults to ``False``
+    :param flattened: Whether to return a flattened list of all user-agent strings;
+        defaults to ``False``.
     :type flattened: bool
-    :param update: whether to update the backup data of user-agent strings, defaults to ``False``
+    :param update: Whether to update the backup data of user-agent strings; defaults to ``False``.
     :type update: bool
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
-    :return: a dictionary of user agent strings for popular browsers
+    :return: Dictionary or list of user-agent strings, depending on the `flattened` parameter.
     :rtype: dict | list
 
-    .. _`Chrome`: https://useragentstring.com/pages/useragentstring.php?name=Chrome
-    .. _`Firefox`: https://useragentstring.com/pages/useragentstring.php?name=Firefox
-    .. _`Safari`: https://useragentstring.com/pages/useragentstring.php?name=Safari
-    .. _`Edge`: https://useragentstring.com/pages/useragentstring.php?name=Edge
-    .. _`Internet Explorer`: https://useragentstring.com/pages/useragentstring.php?name=Internet+Explorer
-    .. _`Opera`: https://useragentstring.com/pages/useragentstring.php?name=Opera
+    .. _`Chrome`:
+        https://useragentstring.com/pages/useragentstring.php?name=Chrome
+    .. _`Firefox`:
+        https://useragentstring.com/pages/useragentstring.php?name=Firefox
+    .. _`Safari`:
+        https://useragentstring.com/pages/useragentstring.php?name=Safari
+    .. _`Edge`:
+        https://useragentstring.com/pages/useragentstring.php?name=Edge
+    .. _`Internet Explorer`:
+        https://useragentstring.com/pages/useragentstring.php?name=Internet+Explorer
+    .. _`Opera`:
+        https://useragentstring.com/pages/useragentstring.php?name=Opera
 
     **Examples**::
 
         >>> from pyhelpers.ops import load_user_agent_strings
-
         >>> uas = load_user_agent_strings()
-
         >>> list(uas.keys())
         ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
         >>> type(uas['Chrome'])
         list
         >>> uas['Chrome'][0]
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/...
-
         >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
         >>> type(uas_list)
         list
@@ -396,27 +391,25 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
 def get_user_agent_string(fancy=None, **kwargs):
     """
-    Get a random user-agent string of a certain browser.
+    Get a random user-agent string for a specified browser.
 
-    :param fancy: name of a preferred browser, defaults to ``None``;
-        options include ``'Chrome'``, ``'Firefox'``, ``'Safari'``, ``'Edge'``,
-        ``'Internet Explorer'`` and ``'Opera'``;
-        if ``fancy=None``, the function returns a user-agent string of a randomly-selected browser
-        among all the available options
-    :type: fancy: None | str
-    :param kwargs: [optional] parameters of the function :func:`pyhelpers.ops.get_user_agent_strings`
-    :return: a user-agent string of a certain browser
+    :param fancy: Name of the preferred browser; options include ``'Chrome'``, ``'Firefox'``,
+        ``'Safari'``, ``'Edge'``, ``'Internet Explorer'`` and ``'Opera'``.
+        If ``fancy=None`` (default), the function returns a user-agent string
+        from a randomly-selected browser among all available options.
+    :type fancy: None | str
+    :param kwargs: [Optional] additional parameters for the function
+        :func:`~pyhelpers.ops.webutils.get_user_agent_strings`.
+    :return: A user-agent string for the specified browser.
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.ops import get_user_agent_string
-
         >>> # Get a random user-agent string
         >>> uas_0 = get_user_agent_string()
         >>> uas_0
         'Opera/7.01 (Windows 98; U)  [en]'
-
         >>> # Get a random Chrome user-agent string
         >>> uas_1 = get_user_agent_string(fancy='Chrome')
         >>> uas_1
@@ -448,25 +441,27 @@ def get_user_agent_string(fancy=None, **kwargs):
 
 def fake_requests_headers(randomized=True, **kwargs):
     """
-    Make a fake HTTP headers for `requests.get
+    Generate fake HTTP headers for `requests.get
     <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
 
-    :param randomized: whether to use a user-agent string randomly selected
-        from among all available data of several popular browsers, defaults to ``True``;
-        if ``randomized=False``, the function uses a random Chrome user-agent string
+    This function creates HTTP headers suitable for use with `requests.get`_.
+    By default, it includes a randomly selected user-agent string from various popular browsers.
+
+    :param randomized: Whether to use a randomly selected user-agent string from available
+        browser data; defaults to ``True``;
+        if ``randomized=False``, a random Chrome user-agent string is used.
     :type randomized: bool
-    :param kwargs: [optional] parameters of the function :func:`pyhelpers.ops.get_user_agent_string`
-    :return: fake HTTP headers
+    :param kwargs: [Optional] additional parameters for the function
+        :func:`~pyhelpers.ops.webutils.get_user_agent_string`.
+    :return: Fake HTTP headers.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.ops import fake_requests_headers
-
         >>> fake_headers_1 = fake_requests_headers()
         >>> fake_headers_1
         {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.19 (KHTML...
-
         >>> fake_headers_2 = fake_requests_headers(randomized=False)
         >>> fake_headers_2  # using a random Chrome user-agent string
         {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1 (KHTML,...
@@ -492,11 +487,13 @@ def fake_requests_headers(randomized=True, **kwargs):
 
 def _download_file_from_url(response, path_to_file):
     """
-    Download an object from a valid URL (and save it as a file).
+    Download a file from a valid URL (and save it).
 
-    :param response: a server's response to an HTTP request
+    :param response: Server's response to an HTTP request containing the file to download.
     :type response: requests.Response
-    :param path_to_file: a path where the downloaded object is saved as, or a filename
+    :param path_to_file: Path where the downloaded file will be saved;
+        it can be either a path with filename or just a filename,
+        in which case it will be saved in the current working directory.
     :type path_to_file: str | os.PathLike[str]
     """
 
@@ -540,34 +537,35 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                            random_header=True, verbose=False, requests_session_args=None,
                            fake_headers_args=None, **kwargs):
     """
-    Download an object available at a valid URL.
+    Download a file from a valid URL.
 
-    See also [`OPS-DFFU-1`_] and [`OPS-DFFU-2`_].
+    See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_] and
+    [`OPS-DFFU-2 <https://stackoverflow.com/questions/15431044/>`_].
 
-    .. _OPS-DFFU-1: https://stackoverflow.com/questions/37573483/
-    .. _OPS-DFFU-2: https://stackoverflow.com/questions/15431044/
-
-    :param url: valid URL to a web resource
+    :param url: Valid URL pointing to a web resource.
     :type url: str
-    :param path_to_file: a path where the downloaded object is saved as, or a filename
+    :param path_to_file: Path where the downloaded file will be saved;
+        it can be either a full path with filename or just a filename,
+        in which case it will be saved in the current working directory.
     :type path_to_file: str | os.PathLike[str]
-    :param if_exists: given that the specified file already exists, options include
-        ``'replace'`` (default, continuing to download the requested file and replace the existing one
-        at the specified path) and ``'pass'`` (cancelling the download)
+    :param if_exists: Action to take if the specified file already exists;
+        options include ``'replace'`` (default - download and replace the existing file) and
+        ``'pass'`` (cancel the download).
     :type if_exists: str
-    :param max_retries: maximum number of retries, defaults to ``5``
+    :param max_retries: Maximum number of retries in case of download failures; defaults to ``5``.
     :type max_retries: int
-    :param random_header: whether to go for a random agent, defaults to ``True``
+    :param random_header: Whether to use a random user-agent header; defaults to ``True``.
     :type random_header: bool
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print progress and relevant information to the console;
+        defaults to ``False``.
     :type verbose: bool | int
-    :param requests_session_args: [optional] parameters of the function
-        :func:`pyhelpers.ops.init_requests_session`, defaults to ``None``
+    :param requests_session_args: [Optional] additional parameters for initialising
+        the requests session; defaults to ``None``.
     :type requests_session_args: dict | None
-    :param fake_headers_args: [optional] parameters of the function
-        :func:`pyhelpers.ops.fake_requests_headers`, defaults to ``None``
+    :param fake_headers_args: [Optional] additional parameters for generating fake HTTP headers;
+        defaults to ``None``.
     :type fake_headers_args: dict | None
-    :param kwargs: [optional] parameters of `requests.Session.get()`_
+    :param kwargs: [Optional] additional parameters for the method `requests.Session.get()`_.
 
     .. _`requests.Session.get()`:
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
@@ -578,21 +576,16 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> from pyhelpers.dirs import cd
         >>> from PIL import Image
         >>> import os
-
         >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
-
         >>> # Check if "python-logo.png" exists at the specified path
         >>> os.path.exists(path_to_img)
         False
-
         >>> # Download the .png file
         >>> download_file_from_url(logo_url, path_to_img)
-
         >>> # If download is successful, check again:
         >>> os.path.exists(path_to_img)
         True
-
         >>> img = Image.open(path_to_img)
         >>> img.show()  # as illustrated below
 
@@ -609,9 +602,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
     .. note::
 
-        - When ``verbose=True``, the function requires `tqdm`_.
-
-        .. _`tqdm`: https://pypi.org/project/tqdm/
+        - When ``verbose=True``, the function requires `tqdm <https://pypi.org/project/tqdm/>`_.
     """
 
     path_to_dir = os.path.dirname(path_to_file)
@@ -654,42 +645,42 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
 class GitHubFileDownloader:
     """
-    Download files on GitHub from a given repository URL.
+    Download files from GitHub repositories.
+
+    This class facilitates downloading files from a specified GitHub repository URL.
     """
 
     def __init__(self, repo_url, flatten_files=False, output_dir=None):
         """
-        :param repo_url: URL of a GitHub repository to download from;
-            it can be a ``blob`` or tree path
+        :param repo_url: URL of the GitHub repository to download from;
+            it can be a path to a specific *blob* or *tree* location.
         :type repo_url: str
-        :param flatten_files: whether to pull the contents of all subdirectories into the root folder,
-            defaults to ``False``
+        :param flatten_files: Whether to flatten the directory structure by pulling
+            all files into the root folder; defaults to ``False``.
         :type flatten_files: bool
-        :param output_dir: output directory where the downloaded files will be saved,
-            when ``output_dir=None``, it defaults to ``None``
+        :param output_dir: Output directory where downloaded files will be saved;
+            defaults to ``None``, meaning files will be saved in the current directory.
         :type output_dir: str | None
 
-        :ivar str repo_url: URL of a GitHub repository to download from
-        :ivar bool flatten: whether to pull the contents of all subdirectories into the root folder,
-            defaults to ``False``
-        :ivar str | None output_dir: defaults to ``None``
-        :ivar str api_url: URL of a GitHub repository (compatible with GitHub's REST API)
-        :ivar str download_path: pathname for downloading files
-        :ivar int total_files: total number of files under the given directory
+        :ivar str repo_url: URL of the GitHub repository.
+        :ivar bool flatten_files: Whether to flatten the directory structure
+            (i.e. pull the contents of all subdirectories into the root folder);
+            defaults to ``False``.
+        :ivar str | None output_dir: Output directory path; defaults to ``None``.
+        :ivar str api_url: URL of the GitHub repository compatible with GitHub's REST API.
+        :ivar str download_path: Pathname for downloading files.
+        :ivar int total_files: Total number of files under the given directory.
 
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
-
             >>> test_output_dir = "tests/temp"
-
             >>> # Download a single file
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
             >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
             >>> downloader.download()
             Downloaded to: tests/temp/tests/data/dat.csv
             1
-
             >>> # Download a directory
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
             >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
@@ -707,7 +698,6 @@ class GitHubFileDownloader:
             Downloaded to: tests/temp/tests/data/zipped.zip
             Downloaded to: tests/temp/tests/data/zipped/zipped.txt
             12
-
             >>> downloader = GitHubFileDownloader(
             ...     repo_url=test_url, flatten_files=True, output_dir=test_output_dir)
             >>> downloader.download()
@@ -745,21 +735,20 @@ class GitHubFileDownloader:
     @staticmethod
     def create_url(url):
         """
-        From the given ``url``, produce a URL that is compatible with GitHub's REST API.
+        Create a URL compatible with GitHub's REST API from the given URL.
 
-        It can handle ``blob`` or tree paths.
+        Handles *blob* or *tree* paths.
 
-        :param url: URL
+        :param url: Input URL.
         :type url: str
-        :return: URL of a GitHub repository and pathname for downloading file
+        :return: Tuple containing the URL of the GitHub repository and the pathname for downloading
+            a file.
         :rtype: tuple
 
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
-
             >>> test_output_dir = "tests/temp"
-
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
             >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
             >>> test_api_url, test_download_path = downloader.create_url(test_url)
@@ -767,7 +756,6 @@ class GitHubFileDownloader:
             'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
             >>> test_download_path
             'tests/data/dat.csv'
-
             >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
             >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
             >>> test_api_url, test_download_path = downloader.create_url(test_url)
@@ -800,11 +788,11 @@ class GitHubFileDownloader:
 
     def download_single_file(self, file_url, dir_out):
         """
-        Download a single file.
+        Download a single file from the specified ``file_url`` to the ``dir_out`` directory.
 
-        :param file_url: URL of a single file
+        :param file_url: URL of the file to be downloaded.
         :type file_url: str
-        :param dir_out: pathname for saving the file
+        :param dir_out: Directory path where the downloaded file will be saved.
         :type dir_out: str
 
         .. seealso::
@@ -827,11 +815,11 @@ class GitHubFileDownloader:
 
     def download(self, api_url=None):
         """
-        Download a file or a directory for the given ``api_url``.
+        Download files from the specified GitHub ``api_url``.
 
-        :param api_url: defaults to ``None``
+        :param api_url: GitHub API URL for downloading files; defaults to ``None``.
         :type api_url: str | None
-        :return: total number of files under the given directory
+        :return: Total number of files downloaded under the given directory.
         :rtype: int
 
         .. seealso::
