@@ -19,12 +19,19 @@ class _Base:
     A base class for communication with database servers.
     """
 
-    #: str: Default schema name.
-    DEFAULT_SCHEMA = ''
-    #: set: Names of built-in schemas.
-    BUILTIN_SCHEMAS = set()
+    #: Default schema name.
+    DEFAULT_SCHEMA: str = ''
+    #: Names of built-in schemas.
+    BUILTIN_SCHEMAS: set = set()
 
     def __init__(self):
+        """
+        :ivar str database_name: Name of the database; defaults to ``''``.
+        :ivar str address: Address of the server; defaults to ``''``.
+        :ivar str engine: Engine; defaults to ``None``.
+        :ivar set builtin_schema_names: Names of the built-in schemas; defaults to ``{}``.
+        """
+
         self.database_name = ''
         self.address = ''
         self.engine = None
@@ -32,26 +39,24 @@ class _Base:
 
     def _execute(self, query):
         """
-        Check whether an item exists.
+        Execute a database query and check if an item exists.
 
-        :return: whether an item exists
-        :rtype: any
+        :param query: The SQL query to execute.
+        :type query: str or sqlalchemy.TextClause
+        :return: Whether an item exists.
+        :rtype: list
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL
-
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
             >>> testdb.schema_exists('public')
             True
-
             >>> testdb.schema_exists('test_schema')  # (if the schema 'test_schema' does not exist)
             False
-
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
@@ -75,17 +80,16 @@ class _Base:
         """
         Format a database name.
 
-        :param database_name: database name as an input, defaults to ``None``
+        :param database_name: Database name as an input; defaults to ``None``.
         :type database_name: str | None
-        :param fmt: string format of database name, defaults to ``'"{}"'``
+        :param fmt: String format of the database name; defaults to ``'"{}"'``.
         :type fmt: str
-        :return: a database name
+        :return: A formatted database name.
         :rtype: str
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL, MSSQL
-
             >>> postgres = PostgreSQL()
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/postgres ... Successfully.
@@ -93,7 +97,6 @@ class _Base:
             '"postgres"'
             >>> postgres._database_name(database_name='testdb')
             '"testdb"'
-
             >>> mssql = MSSQL()
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> mssql._database_name(fmt='[{}]')
@@ -115,12 +118,12 @@ class _Base:
         """
         Create a database (if it does not exist) when creating an instance.
 
-        :param confirm_db_creation: whether to prompt a confirmation before creating a new database
-            (if the specified database does not exist)
+        :param confirm_db_creation: Whether to prompt a confirmation before creating a new database
+            (if the specified database does not exist).
         :type confirm_db_creation: bool
-        :param verbose: whether to print relevant information in console
+        :param verbose: Whether to print relevant information to the console.
         :type verbose: bool | int
-        :param fmt: string format of database name, defaults to ``'"{}"'``
+        :param fmt: String format of the database name; defaults to ``'"{}"'``.
         :type fmt: str
         """
 
@@ -144,20 +147,49 @@ class _Base:
                 _print_failure_msg(e=e)
 
     def database_exists(self, database_name):
+        """
+        Check if a database exists.
+
+        :param database_name: Name of the database to check.
+        :type database_name: str
+        :return: Whether the database exists.
+        :rtype: bool
+        """
         pass
 
     def connect_database(self, database_name, verbose=False):
+        """
+        Connect to a specified database.
+
+        :param database_name: Name of the database to connect to.
+        :type database_name: str
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        """
         pass
 
     def disconnect_database(self, database_name=None, verbose=False):
+        """
+        Disconnect from a specified database.
+
+        :param database_name: Name of the database to disconnect from;
+            defaults to ``None``.
+        :type database_name: str or None
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool
+        """
         pass
 
     def _create_database(self, database_name, verbose, fmt):
         """
-        Create a database.
+        Create a new database if it does not already exist.
 
-        :param database_name: name of a database
-        :param verbose: whether to print relevant information in console
+        :param database_name: Name of the database to create.
+        :type database_name: str
+        :param verbose: Whether to print relevant information to the console.
+        :type verbose: bool | int
+        :param fmt: String format of the database name.
+        :type fmt: str
         """
 
         if not self.database_exists(database_name=database_name):
@@ -183,11 +215,15 @@ class _Base:
 
     def _drop_database(self, database_name, fmt, confirmation_required, verbose):
         """
-        Drop/delete a database.
+        Drop (delete) a database.
 
-        :param database_name: name of a database
-        :param confirmation_required: whether to prompt a message for confirmation to proceed
-        :param verbose: whether to print relevant information in console
+        :param database_name: Name of the database to drop.
+        :type database_name: str
+        :param confirmation_required: Whether to prompt a message for confirmation before
+            proceeding.
+        :type confirmation_required: bool
+        :param verbose: Whether to print relevant information to the console.
+        :type verbose: bool | int
         """
 
         db_name = self._database_name(database_name, fmt=fmt)
@@ -225,15 +261,14 @@ class _Base:
         """
         Get a schema name.
 
-        :param schema_name: schema name as an input, defaults to ``None``
+        :param schema_name: Schema name as an input; defaults to ``None``.
         :type schema_name: str | list | tuple | None
-        :return: a schema name
+        :return: The schema name.
         :rtype: str
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL, MSSQL
-
             >>> postgres = PostgreSQL()
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/postgres ... Successfully.
@@ -241,7 +276,6 @@ class _Base:
             'public'
             >>> postgres._schema_name(schema_name='test_schema')
             'test_schema'
-
             >>> mssql = MSSQL()
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> mssql._schema_name()
@@ -263,19 +297,18 @@ class _Base:
         """
         Get a formatted table name.
 
-        :param table_name: table name as an input
+        :param table_name: Table name as an input.
         :type table_name: str
-        :param schema_name: schema name as an input
+        :param schema_name: Schema name as an input; defaults to ``None``.
         :type schema_name: str | None
-        :param fmt: string format of full table name, defaults to ``'"{}"."{}"'``
+        :param fmt: String format of the full table name; defaults to ``'"{}"."{}"'``.
         :type fmt: str
-        :return: a formatted table name, which is used in a SQL query statement
+        :return: A formatted table name, which is used in a SQL query statement.
         :rtype: str
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL, MSSQL
-
             >>> postgres = PostgreSQL()
             Password (postgres@localhost:5432): ***
             Connecting postgres:***@localhost:5432/postgres ... Successfully.
@@ -283,7 +316,6 @@ class _Base:
             '"public"."test_table"'
             >>> postgres._table_name(table_name='test_table', schema_name='test_schema')
             '"test_schema"."test_table"'
-
             >>> mssql = MSSQL()
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> mssql._table_name(table_name='test_table')
@@ -304,26 +336,24 @@ class _Base:
 
     def _msg_for_multi_items(self, item_names, desc, fmt='"{}"'):
         """
-        Formulate a printing message for multiple items.
+        Formulate a message for printing multiple items.
 
-        :param item_names: name of one table/schema, or names of several tables/schemas
+        :param item_names: Name of one table/schema, or names of several tables/schemas.
         :type item_names: str | typing.Iterable[str] | None
-        :param desc: for additional description
+        :param desc: Additional description.
         :type desc: str
-        :param fmt: printing format of each item, defaults to ``'"{}"'``
+        :param fmt: Printing format of each item; defaults to ``'"{}"'``.
         :type fmt: str
-        :return: printing message
+        :return: Formatted message for printing.
         :rtype: tuple
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL
-
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
             >>> schema_name = 'points'
             >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_name, desc='schema')
             >>> schemas
@@ -332,7 +362,6 @@ class _Base:
             'schema'
             >>> prt_name
             '"points"'
-
             >>> schema_names = ['points', 'lines', 'polygons']
             >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_names, desc='schema')
             >>> schemas
@@ -366,12 +395,39 @@ class _Base:
         return item_names_, print_plural, print_items
 
     def create_schema(self, schema_name, verbose=False):
+        """
+        Create a new schema.
+
+        :param schema_name: Name of the schema to create.
+        :type schema_name: str
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        """
         pass
 
     def schema_exists(self, schema_name):
+        """
+        Check if a schema exists.
+
+        :param schema_name: Name of the schema to check.
+        :type schema_name: str
+        :return: Whether the schema exists.
+        :rtype: bool
+        """
         pass
 
     def __drop_schema(self, schema_name, query_, verbose):
+        """
+        Drop a schema if it is not a built-in schema.
+
+        :param schema_name: Name of the schema to drop.
+        :type schema_name: str
+        :param query_: SQL query to drop the schema.
+        :type query_: str
+        :param verbose: Whether to print relevant information to the console.
+        :type verbose: bool | int
+        """
+
         if schema_name in self.BUILTIN_SCHEMAS:
             if verbose:
                 print("(Built-in schemas which cannot be deleted.)")
@@ -392,6 +448,22 @@ class _Base:
                 _print_failure_msg(e=e, msg="Failed.")
 
     def _drop_schema(self, schema_names, fmt, query_, confirmation_required=True, verbose=False):
+        """
+        Drop one or more schemas.
+
+        :param schema_names: Name(s) of the schemas to drop.
+        :type schema_names: str | list[str]
+        :param fmt: String format of the schema name.
+        :type fmt: str
+        :param query_: SQL query to drop the schema.
+        :type query_: str
+        :param confirmation_required: Whether to prompt a message for confirmation before
+            proceeding; defaults to ``True``.
+        :type confirmation_required: bool
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        """
+
         schema_names_, print_plural, print_schema = self._msg_for_multi_items(
             item_names=schema_names, desc='schema', fmt=fmt)
 
@@ -432,11 +504,11 @@ class _Base:
         """
         Get names of all tables stored in a schema.
 
-        :param schema_name: name of a schema, defaults to ``None``
+        :param schema_name: Name of a schema.
         :type schema_name: str | list | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :return: table names of the given schema(s) ``schema_name``
+        :return: Table names of the given schema(s).
         :rtype: dict
         """
 
@@ -450,17 +522,46 @@ class _Base:
         for schema in schema_name_:
             if not self.schema_exists(schema_name=schema):
                 if verbose:
-                    schema_ = f"[{schema}]" if self.engine.dialect.name == 'mssql' else f'"{schema}"'
+                    if self.engine.dialect.name == 'mssql':
+                        schema_ = f"[{schema}]"
+                    else:
+                        schema_ = f'"{schema}"'
                     print(f'The schema {schema_} does not exist.')
             table_names[schema] = inspector.get_table_names(schema=schema)
 
         return table_names
 
     def table_exists(self, table_name, schema_name):
+        """
+        Check if a table exists in a specified schema.
+
+        :param table_name: Name of the table to check.
+        :type table_name: str
+        :param schema_name: Name of the schema to check in.
+        :type schema_name: str
+        :return: Whether the table exists.
+        :rtype: bool
+        """
         pass
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
                     verbose=False):
+        """
+        Drop a table from a specified schema.
+
+        :param table_name: Name of the table to drop.
+        :type table_name: str
+        :param query_fmt: SQL query format to drop the table.
+        :type query_fmt: str
+        :param schema_name: Name of the schema containing the table; defaults to ``None``.
+        :type schema_name: str | None
+        :param confirmation_required: Whether to prompt a message for confirmation before
+            proceeding; defaults to ``True``.
+        :type confirmation_required: bool
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool
+        """
+
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
 
         if not self.table_exists(table_name=table_name, schema_name=schema_name):
@@ -491,6 +592,19 @@ class _Base:
                     _print_failure_msg(e)
 
     def drop_table(self, table_name, schema_name, confirmation_required=True, verbose=False):
+        """
+        Drop a table from a specified schema.
+
+        :param table_name: Name of the table to drop.
+        :type table_name: str
+        :param schema_name: Name of the schema containing the table.
+        :type schema_name: str
+        :param confirmation_required: Whether to prompt a message for confirmation before
+            proceeding; defaults to ``True``.
+        :type confirmation_required: bool
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        """
         pass
 
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
@@ -499,39 +613,38 @@ class _Base:
         """
         Import tabular data into a table.
 
-        :param data: tabular data to be dumped into a database
+        :param data: Tabular data to be imported into a database.
         :type data: pandas.DataFrame | pandas.io.parsers.TextFileReader | list | tuple
-        :param table_name: name of a table
+        :param table_name: Name of the table.
         :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
+        :param schema_name: Name of the schema; defaults to the default schema if ``None``.
         :type schema_name: str | None
-        :param if_exists: if the table already exists, to ``'replace'``, ``'append'``
-            or, by default, ``'fail'`` and do nothing but raise a ValueError.
+        :param if_exists: What to do if the table already exists: ``'replace'``, ``'append'`` or
+            ``'fail'`` (default).
         :type if_exists: str
-        :param force_replace: whether to force replacing existing table, defaults to ``False``
+        :param force_replace: Whether to force replacing an existing table; defaults to ``False``.
         :type force_replace: bool
-        :param chunk_size: the number of rows in each batch to be written at a time,
-            defaults to ``None``
+        :param chunk_size: Number of rows in each batch to be written at a time;
+            defaults to ``None``.
         :type chunk_size: int | None
-        :param col_type: data types for columns, defaults to ``None``
+        :param col_type: Data types for columns; defaults to ``None``.
         :type col_type: dict | None
-        :param method: method for SQL insertion clause, defaults to ``'multi'``
+        :param method: Method for SQL insertion clause; defaults to ``'multi'``.
 
-            - ``None``: uses standard SQL ``INSERT`` clause (one per row);
-            - ``'multi'``: pass multiple values in a single ``INSERT`` clause;
-            - callable (e.g. ``PostgreSQL.psql_insert_copy``)
-              with signature ``(pd_table, conn, keys, data_iter)``.
+            - ``None``: Uses standard SQL ``INSERT`` clause (one per row).
+            - ``'multi'``: Passes multiple values in a single ``INSERT`` clause.
+            - Callable: A callable (e.g., ``PostgreSQL.psql_insert_copy``) with the signature
+              ``(pd_table, conn, keys, data_iter)``.
 
         :type method: str | None | typing.Callable
-        :param index: whether to dump the index as a column
+        :param index: Whether to import the index as a column; defaults to ``False``.
         :type index: bool
-        :param confirmation_required: whether to prompt a message for confirmation to proceed,
-            defaults to ``True``
+        :param confirmation_required: Whether to prompt a message for confirmation before
+            proceeding; defaults to ``True``.
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [optional] parameters of `pandas.DataFrame.to_sql`_
+        :param kwargs: [Optional] additional parameters for the method `pandas.DataFrame.to_sql`_.
 
         .. _`pandas.DataFrame.to_sql`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
@@ -606,31 +719,28 @@ class _Base:
         """
         Get information about columns of a table.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table.
         :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.PostgreSQL.DEFAULT_SCHEMA` (i.e. ``'public'``)
+        :param schema_name: Name of the schema; defaults to ``'public'`` if ``schema_name=None``.
         :type schema_name: str | None
-        :param as_dict: whether to return the column information as a dictionary, defaults to ``True``
+        :param as_dict: Whether to return the column information as a dictionary;
+            defaults to ``True``.
         :type as_dict: bool
-        :return: information about all columns of the given table
+        :return: Information about all columns of the specified table.
         :rtype: pandas.DataFrame | dict
 
         **Examples**::
 
             >>> from pyhelpers.dbms import PostgreSQL, MSSQL
-
             >>> testdb = PostgreSQL('localhost', 5432, 'postgres', database_name='testdb')
             Password (postgres@localhost:5432): ***
             Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
-
             >>> # Create a new table named 'test_table'
             >>> tbl_name = 'test_table'
             >>> col_spec = 'col_name_1 INT, col_name_2 TEXT'
             >>> testdb.create_table(table_name=tbl_name, column_specs=col_spec, verbose=True)
             Creating a table "public"."test_table" ... Done.
-
             >>> # Get information about all columns of the table "public"."test_table"
             >>> test_tbl_col_info = testdb.get_column_info(table_name=tbl_name, as_dict=False)
             >>> test_tbl_col_info.head()
@@ -640,7 +750,6 @@ class _Base:
             table_name        test_table  test_table
             column_name       col_name_1  col_name_2
             ordinal_position           1           2
-
             >>> mssql = MSSQL()
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> mssql.get_column_info(table_name='')
@@ -666,15 +775,15 @@ class _Base:
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
-        Validate column names for query statement.
+        Validate column names for a query statement.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table.
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``
+        :param schema_name: Name of the schema; defaults to ``None``.
         :type schema_name: str
-        :param column_names: column name(s) for a dataframe
+        :param column_names: Column name(s) to validate; defaults to ``None``.
         :type column_names: str | list | tuple | None
-        :return: column names for PostgreSQL query statement
+        :return: Validated column names for a PostgreSQL query statement.
         :rtype: str
         """
 
@@ -706,15 +815,31 @@ class _Base:
 
     def read_sql_query(self, sql_query, method, max_size_spooled, delimiter, tempfile_kwargs,
                        stringio_kwargs, **kwargs):
+        """
+        Execute a SQL query and read the result into a DataFrame.
+
+        :param sql_query: SQL query to execute.
+        :type sql_query: str
+        :param method: Method for reading the query result.
+        :type method: str
+        :param max_size_spooled: Maximum size in bytes before spooling to disk.
+        :type max_size_spooled: int
+        :param delimiter: Delimiter to use for reading the query result.
+        :type delimiter: str
+        :param tempfile_kwargs: Additional keyword arguments for ``tempfile``.
+        :type tempfile_kwargs: dict
+        :param stringio_kwargs: Additional keyword arguments for ``StringIO``.
+        :type stringio_kwargs: dict
+        :param kwargs: [Optional] additional arguments passed to the reading method.
+        """
         pass
 
     def _read_sql_query_args(self):
         """
-        Get names of arguments that are exclusive to the method
-        :meth:`~pyhelpers.dbms.postgresql.PostgreSQL.read_sql_query`.
+        Get names of arguments that are exclusive to the ``.read_sql_query()`` method.
 
-        :return: names of arguments exclusive to :py:meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query`
-        :rtype: dict
+        :return: Names of arguments exclusive to ``.read_sql_query()`` method.
+        :rtype: set
         """
 
         rsq_args = map(lambda x: inspect.getfullargspec(x).args, (self.read_sql_query, pd.read_csv))

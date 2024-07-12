@@ -27,28 +27,28 @@ class MSSQL(_Base):
     .. _`Microsoft SQL Server`: https://www.microsoft.com/en-gb/sql-server/
     """
 
-    #: str: Default dialect.
+    #: Default dialect.
     #: The dialect that SQLAlchemy uses to communicate with Microsoft SQL Server; see also
     #: [`DBMS-MS-1 <https://docs.sqlalchemy.org/en/14/dialects/mssql.html>`_].
-    DEFAULT_DIALECT = 'mssql'
-    #: str: Default name of database driver. See also
+    DEFAULT_DIALECT: str = 'mssql'
+    #: Default name of database driver. See also
     #: [`DBMS-MS-2
     #: <https://docs.sqlalchemy.org/dialects/mssql.html#module-sqlalchemy.dialects.mssql.pyodbc>`_].
-    DEFAULT_DRIVER = 'pyodbc'
-    #: str: Default ODBC driver.
-    DEFAULT_ODBC_DRIVER = 'ODBC Driver 17 for SQL Server'
-    #: str: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
-    DEFAULT_HOST = 'localhost'
-    #: str: Default listening port used by Microsoft SQL Server.
-    DEFAULT_PORT = 1433
-    #: str: Default username.
-    DEFAULT_USERNAME = 'sa'
-    #: str: Default database name.
-    DEFAULT_DATABASE = 'master'
-    #: str: Default schema name.
-    DEFAULT_SCHEMA = 'dbo'
-    #: set: Names of built-in schemas of Microsoft SQL Server.
-    BUILTIN_SCHEMAS = {
+    DEFAULT_DRIVER: str = 'pyodbc'
+    #: Default ODBC driver.
+    DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 17 for SQL Server'
+    #: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
+    DEFAULT_HOST: str = 'localhost'
+    #: Default listening port used by Microsoft SQL Server.
+    DEFAULT_PORT: str | int = 1433
+    #: Default username.
+    DEFAULT_USERNAME: str = 'sa'
+    #: Default database name.
+    DEFAULT_DATABASE: str = 'master'
+    #: Default schema name.
+    DEFAULT_SCHEMA: str = 'dbo'
+    #: Names of built-in schemas of Microsoft SQL Server.
+    BUILTIN_SCHEMAS: set = {
         'db_accessadmin',
         'db_backupoperator',
         'db_datareader',
@@ -65,58 +65,56 @@ class MSSQL(_Base):
     }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
-                 confirm_db_creation=False, verbose=True):
+                 confirm_db_creation=False, verbose=False):
         """
-        :param host: name of the server running the SQL Server,
-            e.g. ``'localhost'`` or ``'127.0.0.1'``;
-            when ``host=None`` (default), it is initialized as ``'localhost'``
+        :param host: Name or IP address of the SQL Server, e.g. ``'localhost'`` or ``'127.0.0.1'``;
+            defaults to ``'localhost'`` if not specified.
         :type host: str | None
-        :param port: listening port; when ``port=None`` (default),
-            it is initialized as ``1433`` (default by installation of the SQL Server)
+        :param port: Listening port of the SQL Server;
+            defaults to ``1433`` if not specified (default by installation of the SQL Server).
         :type port: int | None
-        :param username: name of the user or login used to connect; when ``username=None`` (default),
-            the instantiation relies on Windows Authentication
+        :param username: Username for authentication;
+            if not provided, Windows Authentication is used.
         :type username: str | None
-        :param password: user's password; when ``password=None`` (default),
-            it is required to mannually type in the correct password to connect the SQL server
+        :param password: Password for the specified username;
+            required for non-Windows Authentication.
         :type password: str | int | None
-        :param database_name: name of a database; when ``database=None`` (default),
-            it is initialized as ``'master'``
+        :param database_name: Name of the initial database to connect to;
+            defaults to ``'master'`` if not specified.
         :type database_name: str | None
-        :param confirm_db_creation: whether to prompt a confirmation before creating a new database
-            (if the specified database does not exist), defaults to ``False``
+        :param confirm_db_creation: Whether to prompt for confirmation
+            before creating a new database (if the specified database does not exist);
+            defaults to ``False``.
         :type confirm_db_creation: bool
-        :param verbose: whether to print relevant information in console, defaults to ``True``
+        :param verbose: Whether to print connection and operation details to the console;
+            defaults to ``False``.
         :type verbose: bool | int
 
-        :ivar str host: host name/address
-        :ivar str port: listening port used by SQL Server
-        :ivar str username: username
-        :ivar str database_name: name of a database
-        :ivar dict credentials: basic information about the server/database being connected
-        :ivar str | None auth: authentication method (used for establish the connection)
-        :ivar str address: representation of the database address
-        :ivar sqlalchemy.engine.Engine engine: a `SQLAlchemy`_ connectable engine to a SQL Server;
-            see also [`DBMS-MS-3
-            <https://docs.sqlalchemy.org/en/latest/core/connections.html#sqlalchemy.engine.Engine>`_]
+        :ivar str host: Name or IP address of the SQL Server.
+        :ivar str port: Listening port of the SQL Server.
+        :ivar str username: Username used for authentication.
+        :ivar str database_name: Name of the connected database.
+        :ivar dict credentials: Contains basic information about the server and database.
+        :ivar str | None auth: Authentication method used for connection.
+        :ivar str address: String representation of the database connection address.
+        :ivar sqlalchemy.engine.Engine engine: SQLAlchemy engine connected to the SQL Server;
+            see also [`DBMS-MS-3`_].
+
+        .. _`DBMS-MS-3`:
+            https://docs.sqlalchemy.org/en/latest/core/connections.html#sqlalchemy.engine.Engine
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.address
             '<server_name>@localhost:1433/master'
-
-            >>> testdb = MSSQL(database_name='testdb')
+            >>> testdb = MSSQL(database_name='testdb', verbose=True)
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.database_name
             'testdb'
-
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
@@ -151,7 +149,8 @@ class MSSQL(_Base):
         }
 
         if self.DEFAULT_ODBC_DRIVER not in pyodbc_.drivers():
-            self.odbc_driver = [x for x in pyodbc_.drivers() if 'ODBC' in x and 'SQL Server' in x][0]
+            self.odbc_driver = [
+                x for x in pyodbc_.drivers() if 'ODBC' in x and 'SQL Server' in x][0]
         else:
             self.odbc_driver = self.DEFAULT_ODBC_DRIVER
 
@@ -171,8 +170,9 @@ class MSSQL(_Base):
             self.database_name = self.credentials['database'] = copy.copy(database_name)
             if database_name in self.get_database_names():
                 self.engine.url = self.engine.url.set(database=self.database_name)
-            else:  # the database doesn't exist
-                self._create_db(confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[{}]')
+            else:  # The database doesn't exist
+                self._create_db(
+                    confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[{}]')
             reconnect_db = True
 
         self.address = re.split(
@@ -196,27 +196,26 @@ class MSSQL(_Base):
 
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
-        Specify a string used for establishing a connection.
+        Specify the connection string for establishing a connection to a database.
 
-        :param database_name: name of a database,
-            defaults to the name of the currently-connected database when ``database=None``
+        :param database_name: Name of the database to connect to;
+            defaults to the currently-connected database if ``database_name=None``.
         :type database_name: str | None
-        :param auth: authentication method (used for establish the connection),
-            defaults to the current authentication method when ``auth=None``
+        :param auth: Authentication method used for the connection;
+            defaults to the current authentication method if ``auth=None``.
         :type auth: str | None
-        :param password: user's password; when ``password=None`` (default),
-            it is required to mannually type in the correct password to connect the SQL server
+        :param password: User's password;
+            if ``password=None`` (default), manual input of the correct password is required to
+            establish the connection.
         :type password: str | int | None
-        :return: connection string
+        :return: Connection string formatted for establishing a connection.
         :rtype: str
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> conn_str = mssql.specify_conn_str()
             >>> conn_str
             'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};Trusted_...
@@ -243,20 +242,24 @@ class MSSQL(_Base):
 
     def create_engine(self, database_name=None, auth=None, password=None):
         """
-        Create a `SQLAlchemy <https://www.sqlalchemy.org/>`_ connectable engine.
+        Create a SQLAlchemy connectable engine for connecting to a SQL Server database.
 
-        Connect string format: '*mssql+pyodbc://<username>:<password>@<dsn_name>*'
+        This method generates and returns a *SQLAlchemy* engine configured to connect to a
+        SQL Server database using the provided or default database name, authentication method and
+        password. The returned engine can be used to execute SQL queries and interact with the
+        database.
 
-        :param database_name: name of a database,
-            defaults to the name of the currently-connected database when ``database=None``
+        :param database_name: Name of the database to connect to;
+            defaults to the currently-connected database if ``database_name=None``.
         :type database_name: str | None
-        :param auth: authentication method (used for establish the connection),
-            defaults to the current authentication method when ``auth=None``
+        :param auth: Authentication method used to establish the connection;
+            defaults to the current authentication method if ``auth=None``.
         :type auth: str | None
-        :param password: user's password; when ``password=None`` (default),
-            it is required to manually type in the correct password to connect the SQL server
+        :param password: User's password;
+            if ``password=None`` (default), manual input of the correct password is required
+            to establish the connection.
         :type password: str | int | None
-        :return: a SQLAlchemy connectable engine
+        :return: A SQLAlchemy connectable engine.
         :rtype: sqlalchemy.engine.Engine
 
         1. Use `pyodbc <https://pypi.org/project/pyodbc/>`_ (or
@@ -265,7 +268,7 @@ class MSSQL(_Base):
             connect_string = 'driver={...};server=...;database=...;uid=username;pwd=...'
             conn = pyodbc.connect(connect_string)  # conn = pypyodbc.connect(connect_string)
 
-        2. Use `SQLAlchemy`_::
+        2. Use `SQLAlchemy <https://www.sqlalchemy.org/>`_::
 
             conn_string = 'mssql+pyodbc:///?odbc_connect=%s' % quote_plus(connect_string)
             engine = sqlalchemy.create_engine(conn_string)
@@ -274,14 +277,11 @@ class MSSQL(_Base):
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> db_engine = mssql.create_engine()
             >>> db_engine.name
             'mssql'
-
             >>> db_engine.dispose()
         """
 
@@ -298,27 +298,29 @@ class MSSQL(_Base):
     def create_connection(self, database_name=None, mode=None):
         # noinspection PyTypeChecker
         """
-        Create a SQLAlchemy connection.
+        Create a SQLAlchemy connection to a Microsoft SQL Server database.
 
-        :param database_name: name of a database,
-            defaults to the name of the currently-connected database when ``database=None``
+        This method establishes and returns a connection to the specified database using either
+        SQLAlchemy or pyodbc, depending on the specified ``mode``.
+
+        :param database_name: Name of the database to connect to; defaults to the name of the
+            currently-connected database if ``database_name=None``.
         :type database_name: str | None
-        :param mode: when ``mode=None`` (default), the method uses the existing engine;
-            when ``mode='pyodbc'`` (optional), it uses `pyodbc.connect()`_
+        :param mode: Connection mode; defaults to using the existing engine if ``mode=None``.
+            When ``mode='pyodbc'``, it uses `pyodbc.connect()`_.
         :type mode: None | str
-        :return: a SQLAlchemy connection to a Microsoft SQL Server
+        :return: A SQLAlchemy connection or a pyodbc connection to the database.
         :rtype: sqlalchemy.engine.Connection | pyodbc.Connection
 
-        .. _`pyodbc.connect()`: https://github.com/mkleehammer/pyodbc/wiki/The-pyodbc-Module#connect
+        .. _`pyodbc.connect()`:
+            https://github.com/mkleehammer/pyodbc/wiki/The-pyodbc-Module#connect
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
             >>> import sqlalchemy
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> db_conn = mssql.create_connection()
             >>> db_conn.should_close_with_result
             False
@@ -351,21 +353,18 @@ class MSSQL(_Base):
         """
         Create a `pyodbc <https://pypi.org/project/pyodbc/>`_ cursor.
 
-        :param database_name: name of a database,
-            defaults to the name of the currently-connected database when ``database=None``
+        :param database_name: Name of the database to connect to;
+            defaults to the name of the currently-connected database if ``database_name=None``.
         :type database_name: str | None
-        :return: a `pyodbc`_ cursor
+        :return: A `pyodbc <https://pypi.org/project/pyodbc/>`_ cursor.
         :rtype: pyodbc.Cursor
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> db_cur = mssql.create_cursor()
-
             >>> # Get information about all tables in the database [master]
             >>> tables_in_db = db_cur.tables(schema='dbo', tableType='TABLE')
             >>> list(tables_in_db)
@@ -374,7 +373,6 @@ class MSSQL(_Base):
              ('master', 'dbo', 'spt_fallback_dev', 'TABLE', None),
              ('master', 'dbo', 'spt_fallback_usg', 'TABLE', None),
              ('master', 'dbo', 'spt_monitor', 'TABLE', None)]
-
             >>> db_cur.close()
         """
 
@@ -393,23 +391,18 @@ class MSSQL(_Base):
         """
         Get names of all existing databases.
 
-        :param names_only: whether to return only the names of the databases, defaults to ``True``
+        :param names_only: Whether to return only the names of the databases; defaults to ``True``.
         :type names_only: bool
-        :return: names of all existing databases
+        :return: Names of all existing databases.
         :rtype: list | pandas.DataFrame
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_database_names()
-            ['master',
-             'tempdb',
-             'model',
-             'msdb']
+            ['master', 'tempdb', 'model', 'msdb']
         """
 
         with self.engine.connect() as connection:
@@ -428,31 +421,27 @@ class MSSQL(_Base):
         """
         Check whether a database exists.
 
-        :param database_name: name of a database, defaults to ``None``
+        :param database_name: Name of the database to check; defaults to ``None``.
         :type database_name: str | None
-        :return: whether the database exists
+        :return: Whether the database exists.
         :rtype: bool
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> # Check whether the database [testdb] exists now
             >>> testdb.database_name
             'testdb'
             >>> testdb.database_exists(database_name='testdb')
             True
-
             >>> # Delete the database [testdb]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
             Dropping [testdb] ... Done.
-
             >>> # Check again whether the database [testdb] still exists now
             >>> testdb.database_exists(database_name='testdb')
             False
@@ -483,27 +472,23 @@ class MSSQL(_Base):
         """
         Create a database.
 
-        :param database_name: name of a database
+        :param database_name: Name of the database to be created.
         :type database_name: str
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.database_name
             'testdb'
-
             >>> testdb.create_database(database_name='testdb1', verbose=True)
             Creating a database: [testdb1] ... Done.
             >>> testdb.database_name
             'testdb1'
-
             >>> # Delete the database [testdb1]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb1] from <server_name>@localhost:5432
@@ -511,7 +496,6 @@ class MSSQL(_Base):
             Dropping [testdb1] ... Done.
             >>> testdb.database_name
             'master'
-
             >>> # Delete the database [testdb]
             >>> testdb.drop_database(database_name='testdb', verbose=True)
             To drop the database [testdb] from <server_name>@localhost:5432
@@ -527,33 +511,28 @@ class MSSQL(_Base):
         """
         Establish a connection to a database.
 
-        :param database_name: name of a database;
-            when ``database_name=None`` (default), the database name is input manually
+        :param database_name: Name of the database to connect to;
+            if ``database_name=None`` (default), the database name is input manually.
         :type database_name: str | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.connect_database(verbose=True)
             Being connected with <server_name>@localhost:1433/testdb.
-
             >>> testdb.connect_database(database_name='master', verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> testdb.database_name
             'master'
-
             >>> testdb.connect_database(database_name='testdb', verbose=True)
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
             >>> testdb.database_name
             'testdb'
-
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
@@ -598,35 +577,30 @@ class MSSQL(_Base):
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
-        Disconnect a database.
+        Disconnect from a database.
 
-        :param database_name: name of database to disconnect from;
-            if ``database_name=None`` (default), disconnect the current database.
+        :param database_name: Name of the database to disconnect from;
+            if ``database_name=None`` (default), disconnects from the current database.
         :type database_name: str | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.database_name
             'testdb'
-
             >>> testdb.disconnect_database()
             >>> testdb.database_name
             'master'
-
             >>> # Delete the database [testdb]
             >>> testdb.drop_database(database_name='testdb', verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
             Dropping [testdb] ... Done.
-
             >>> testdb.drop_database(database_name='testdb', verbose=True)
             The database [testdb] does not exist.
         """
@@ -669,30 +643,27 @@ class MSSQL(_Base):
         """
         Delete/drop a database.
 
-        :param database_name: database to be disconnected;
-            if ``database_name=None`` (default), drop the database being currently currented
+        :param database_name: Name of the database to be dropped;
+            if ``database_name=None`` (default), drops the currently-connected database.
         :type database_name: str | None
-        :param confirmation_required: whether to prompt a message for confirmation to proceed,
-            defaults to ``True``
+        :param confirmation_required: Whether to prompt a confirmation message before proceeding;
+            defaults to ``True``.
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
             >>> testdb.database_name
             'testdb'
-
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
             Dropping [testdb] ... Done.
-
             >>> testdb.database_exists(database_name='testdb')
             False
             >>> testdb.drop_database(database_name='testdb', verbose=True)
@@ -711,25 +682,21 @@ class MSSQL(_Base):
         """
         Check whether a schema exists.
 
-        :param schema_name: name of a schema in the currently-connected database
+        :param schema_name: Name of the schema to check.
         :type schema_name: str
-        :return: whether the schema exists
+        :return: Whether the schema exists.
         :rtype: bool
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.schema_exists('dbo')
             True
-
             >>> testdb.schema_exists('test_schema')  # (if the schema [test_schema] does not exist)
             False
-
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
@@ -738,9 +705,8 @@ class MSSQL(_Base):
 
         schema_name_ = self._schema_name(schema_name=schema_name)
 
-        query = \
-            f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') " \
-            f"SELECT 1 ELSE SELECT 0"
+        query = (f"IF EXISTS (SELECT name FROM sys.schemas WHERE name='{schema_name_}') "
+                 f"SELECT 1 ELSE SELECT 0")
 
         result = bool(self._execute(query)[0])
 
@@ -750,26 +716,22 @@ class MSSQL(_Base):
         """
         Create a schema.
 
-        :param schema_name: name of a schema in the currently-connected database
+        :param schema_name: Name of the schema to be created.
         :type schema_name: str
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> test_schema_name = 'test_schema'
             >>> testdb.create_schema(schema_name=test_schema_name, verbose=True)
             Creating a schema: [test_schema] ... Done.
-
             >>> testdb.schema_exists(schema_name=test_schema_name)
             True
-
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
@@ -797,37 +759,34 @@ class MSSQL(_Base):
 
     def get_schema_info(self, names_only=True, include_all=False, column_names=None, verbose=False):
         """
-        Get the names of existing schemas.
+        Retrieve information about existing schemas.
 
-        :param names_only: whether to return only the names of the schema names, defaults to ``True``
+        :param names_only: Whether to return only the names of the schemas; defaults to ``True``.
         :type names_only: bool
-        :param include_all: whether to list all the available schemas, defaults to ``False``
+        :param include_all: Whether to include all available schemas; defaults to ``False``.
         :type include_all: bool
-        :param column_names: column names of the returned dataframe if ``names_only=False``;
-            when ``column_names=None``, it defaults to ``['schema_name', 'schema_id', 'role']``
-        :type column_names: None | list
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param column_names: Column names of the returned dataframe if ``names_only=False``;
+            defaults to ``['schema_name', 'schema_id', 'role']`` if ``column_names=None``.
+        :type column_names: list | None
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :return: schema names
+        :return: Names of schemas, a dataframe with schema information,
+            or ``None`` if no information is retrieved.
         :rtype: list | pandas.DataFrame | None
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> testdb.get_schema_info()
             ['dbo']
-
             >>> test_schema_name = 'test_schema'
             >>> testdb.create_schema(schema_name=test_schema_name, verbose=True)
             Creating a schema: [test_schema] ... Done.
             >>> testdb.get_schema_info()
             ['dbo', 'test_schema']
-
             >>> testdb.get_schema_info(names_only=False, include_all=True)
                        schema_name        schema_owner  schema_id
             0       db_accessadmin      db_accessadmin      16385
@@ -844,15 +803,12 @@ class MSSQL(_Base):
             11  INFORMATION_SCHEMA  INFORMATION_SCHEMA          3
             12                 sys                 sys          4
             13         test_schema                 dbo          5
-
             >>> testdb.drop_schema(schema_names='test_schema', verbose=True)
             To drop the schema "test_schema" from <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Dropping "test_schema" ... Done.
-
             >>> testdb.get_schema_info()  # None
             ['dbo']
-
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database [testdb] from <server_name>@localhost:1433
             ? [No]|Yes: yes
@@ -908,30 +864,26 @@ class MSSQL(_Base):
         """
         Delete/drop one or multiple schemas.
 
-        :param schema_names: name of one schema, or names of multiple schemas
+        :param schema_names: Name of a single schema or names of multiple schemas to be dropped.
         :type schema_names: str | typing.Iterable[str]
-        :param confirmation_required: whether to prompt a message for confirmation to proceed,
-            defaults to ``True``
+        :param confirmation_required: Whether to prompt a confirmation message before proceeding;
+            defaults to ``True``.
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console as the function runs,
-            defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> new_schema_names = ['points', 'lines', 'polygons']
             >>> for new_schema in new_schema_names:
             ...     testdb.create_schema(new_schema, verbose=True)
             Creating a schema: [points] ... Done.
             Creating a schema: [lines] ... Done.
             Creating a schema: [polygons] ... Done.
-
             >>> new_schema_names_ = ['test_schema']
             >>> testdb.drop_schema(new_schema_names + new_schema_names_, verbose=True)
             To drop the following schemas from postgres:***@localhost:5432/testdb:
@@ -945,7 +897,6 @@ class MSSQL(_Base):
                 "lines" ... Done.
                 "polygons" ... Done.
                 "test_schema" (does not exist.)
-
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
@@ -992,23 +943,22 @@ class MSSQL(_Base):
 
     def get_table_names(self, schema_name=None, verbose=False):
         """
-        Get names of all tables stored in a schema.
+        Get names of all tables stored in one or multiple schemas.
 
-        :param schema_name: name of a schema, or names a multiple schemas,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of a single schema, or names of multiple schemas;
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``.
         :type schema_name: str | list | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :return: table names of the given schema(s) ``schema_name``
+        :return: Dictionary containing table names grouped by schema(s)
+            specified in ``schema_name``.
         :rtype: dict
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
@@ -1016,7 +966,6 @@ class MSSQL(_Base):
               'spt_fallback_usg',
               'spt_monitor',
               'test_table']}
-
             >>> mssql.get_table_names(schema_name=['dbo', 'sys'])
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
@@ -1032,32 +981,45 @@ class MSSQL(_Base):
         return table_names
 
     def _table_name(self, table_name, schema_name=None, fmt='[{}].[{}]'):
+        """
+        Format a table name optionally including a schema name.
+
+        :param table_name: Name of the table.
+        :type table_name: str
+        :param schema_name: Name of the schema; defaults to ``None``.
+        :type schema_name: str | None
+        :param fmt: Format string for formatting the schema and table names;
+            defaults to ``'[{}].[{}]'``.
+        :type fmt: str
+        :return: Formatted table name.
+        :rtype: str
+        """
+
         table_name_ = super()._table_name(table_name=table_name, schema_name=schema_name, fmt=fmt)
 
         return table_name_
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False):
         """
-        Create a table.
+        Create a table with specified columns.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table to be created.
         :type table_name: str
-        :param column_specs: specifications for each column of the table
+        :param column_specs: Specifications for each column of the table.
         :type column_specs: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+        :param schema_name: Name of the schema where the table will be created;
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> # Create a new table named 'test_table'
             >>> tbl_name = 'test_table'
             >>> col_spec = 'col_name_1 INT, col_name_2 varchar(255)'
@@ -1075,16 +1037,13 @@ class MSSQL(_Base):
             TABLE_NAME        test_table  test_table
             COLUMN_NAME       col_name_1  col_name_2
             ORDINAL_POSITION           1           2
-
             >>> testdb.validate_column_names(table_name=tbl_name)
             '"col_name_1", "col_name_2"'
-
             >>> # Drop the table [dbo].[test_table]
             >>> testdb.drop_table(table_name=tbl_name, verbose=True)
             To drop the table [dbo].[test_table] from <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Dropping [dbo].[test_table] ... Done.
-
             >>> # Delete the database [testdb]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
@@ -1120,31 +1079,28 @@ class MSSQL(_Base):
         """
         Check whether a table exists.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table to check.
         :type table_name: str
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :return: whether the table exists in the currently-connected database
+        :return: Whether the table exists in the currently-connected database.
         :rtype: bool
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.table_exists(table_name='test_table')
             False
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql.table_exists(table_name='MSreplication_options')
             True
         """
@@ -1165,20 +1121,18 @@ class MSSQL(_Base):
 
     def get_file_tables(self, names_only=True):
         """
-        Get information about *FileTables* (if available).
+        Retrieve information about *FileTables* from the database (if available).
 
-        :param names_only: whether to return *FileTables* names only, defaults to ``True``
+        :param names_only: Whether to return only the names of *FileTables*; defaults to ``True``.
         :type names_only: bool
-        :return: information about *FileTables* (if available)
+        :return: Information about *FileTables* (if available).
         :rtype: list | pandas.DataFrame
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_file_tables()
             []
         """
@@ -1197,29 +1151,26 @@ class MSSQL(_Base):
 
     def get_row_count(self, table_name, schema_name=None):
         """
-        Get row count of a table in a database.
+        Get the row count of a table.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table to get row count from.
         :type table_name: str
-        :param schema_name: schema name of the given table, defaults to ``None``
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
         :type schema_name: str | None
-        :return: count of rows in the given table
+        :return: Number of rows in the specified table in the currently-connected database.
         :rtype: int
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql.get_row_count(table_name='MSreplication_options')
             3
         """
@@ -1236,29 +1187,26 @@ class MSSQL(_Base):
 
     def get_column_names(self, table_name, schema_name=None):
         """
-        Get column names of a table.
+        Retrieve column names of a table.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table to retrieve column names from.
         :type table_name: str
-        :param schema_name: defaults to ``None``
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
         :type schema_name: str | None
-        :return: a list of column names
+        :return: List of column names in the specified table in the currently-connected database.
         :rtype: list
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql.get_column_names(table_name='MSreplication_options')
             ['optname',
              'value',
@@ -1282,22 +1230,26 @@ class MSSQL(_Base):
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Get information about columns of a table.
+        Retrieve information about columns of a table.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table to retrieve column information from.
         :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param as_dict: whether to return the column information as a dictionary, defaults to ``True``
+        :param as_dict: Whether to return the column information as a dictionary;
+            defaults to ``True``.
         :type as_dict: bool
-        :return: information about all columns of the given table
+        :return: Information about all columns of the specified table in the currently-connected
+            database.
         :rtype: pandas.DataFrame | dict
 
         .. seealso::
 
             - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
         """
+
         column_info = super().get_column_info(
             table_name=table_name, schema_name=schema_name, as_dict=as_dict)
 
@@ -1305,15 +1257,15 @@ class MSSQL(_Base):
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
-        Validate column names for query statement.
+        Validate column names for use in a SQL query statement.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table.
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``
-        :type schema_name: str
-        :param column_names: column name(s) for a dataframe
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
+        :type schema_name: str | None
+        :param column_names: Column name(s) to validate for a dataframe.
         :type column_names: str | list | tuple | None
-        :return: column names for SQL query statement
+        :return: Validated column names formatted for a SQL query statement.
         :rtype: str
 
         .. seealso::
@@ -1328,35 +1280,34 @@ class MSSQL(_Base):
 
     def _has_dtypes(self, table_name, dtypes, schema_name=None):
         """
-        Check whether a table contains data of a certain type.
+        Check whether a table contains columns of specified data types.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
-        :param dtypes: data type(s), such as ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``
+        :param dtypes: Data type(s) to check for,
+            e.g. ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``.
         :type dtypes: str | list
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :return: whether the table contains any of the given data types, and the names of those tables
+        :return: Whether the table contains any of the specified data types,
+                 and a list of tables that contain those data types.
         :rtype: tuple[bool, list]
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql._has_dtypes(table_name='MSreplication_options', dtypes='varbinary')
             (False, [])
-
             >>> mssql._has_dtypes(table_name='MSreplication_options', dtypes=['varbinary', 'int'])
             (True, ['major_version', 'minor_version', 'revision', 'install_failures'])
         """
@@ -1385,36 +1336,34 @@ class MSSQL(_Base):
 
     def has_dtypes(self, table_name, dtypes, schema_name=None):
         """
-        Check whether a table contains data of a certain data type or data types.
+        Check whether a table contains columns of specified data types.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
-        :param dtypes: data types, such as ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``
-        :type dtypes: str | typing.Sequence[str]
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param dtypes: Data type(s) to check for,
+            e.g. ``'geometry'``, ``'hierarchyid'``, ``'varbinary'``.
+        :type dtypes: str | list
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :return: data type, whether the table has this data type and the corresponding column names
+        :return: Data type, whether the table has this data type and the corresponding column names.
         :rtype: typing.Generator[str, bool, list]
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> res = mssql.has_dtypes(table_name='spt_monitor', dtypes='varbinary')
             >>> list(res)
             [('varbinary', False, [])]
-
             >>> res = mssql.has_dtypes(table_name='spt_monitor', dtypes=['geometry', 'int'])
             >>> list(res)
             [('geometry', False, []),
@@ -1458,33 +1407,32 @@ class MSSQL(_Base):
 
     def _column_names_in_query(self, table_name, column_names=None, schema_name=None, exclude=None):
         """
-        Format column names in a SQL query statement.
+        Format column names for use in a SQL query statement.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
-        :param column_names: a list of column names of the specified table, defaults to ``None``
+        :param column_names: List of column names from the specified table; defaults to ``None``.
         :type column_names: list | None
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param exclude: name(s) of column(s) to be excluded from the specifying the query statement
-        :return: formatted column names in a SQL query statement, and a list of target column names
+        :param exclude: Column name(s) to exclude from the formatted query statement.
+        :type exclude: str | list | None
+        :return: Formatted column names for a SQL query statement and a list of target column names.
         :rtype: tuple[str, list]
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql._column_names_in_query('MSreplication_options', column_names=['optname'])
             ('[dbo].[optname]',
              ['optname',
@@ -1517,26 +1465,25 @@ class MSSQL(_Base):
 
     def get_primary_keys(self, table_name=None, schema_name=None, table_type='TABLE'):
         """
-        Get the primary keys of table(s).
+        Retrieve the primary keys of table(s) from the currently-connected database.
 
-        :param table_name: name of a table in the currently-connected database;
-             when ``table_name=None`` (default), get the primary keys of all existing tables
+        :param table_name: Name of a specific table to retrieve primary keys from;
+            when ``table_name=None`` (default), retrieves primary keys for all tables.
         :type table_name: str | None
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of the schema where the table(s) are located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param table_type: table type, defaults to ``'TABLE'``
+        :param table_type: Type of table to consider; defaults to ``'TABLE'``.
         :type table_type: str
-        :return: a list of primary keys
+        :return: The primary keys for the specified table(s).
         :rtype: list
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_primary_keys()
             {}
         """
@@ -1573,13 +1520,13 @@ class MSSQL(_Base):
 
     def add_primary_key(self, column_name, table_name, schema_name=None):
         """
-        Add a primary key to a table.
+        Add a primary key constraint to a table.
 
-        :param column_name: name of a column to be set as a primary key
+        :param column_name: Name of the column to set as the primary key.
         :type column_name: str
-        :param table_name: name of a table
+        :param table_name: Name of the table where the primary key constraint will be added.
         :type table_name: str
-        :param schema_name: name of a schema, defaults to ``None``
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
         :type schema_name: str | None
         """
 
@@ -1607,17 +1554,18 @@ class MSSQL(_Base):
 
     def varchar_to_geometry_dtype(self, table_name, geom_column_name, srid=None, schema_name=None):
         """
-        Alter a VARCHAR column (of geometry data) to geometry data type.
+        Alter a ``VARCHAR`` column containing geometry data to a geometry data type.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table where the column exists.
         :type table_name: str
-        :param geom_column_name: name of geometry column, defaults to ``None``
-        :type geom_column_name: str | None
-        :param srid: spatial reference identifier (SRID) - a unique identifier associated with
-            a specific coordinate system, tolerance, and resolution, defaults to ``None``
+        :param geom_column_name: Name of the VARCHAR column to convert to geometry data type.
+        :type geom_column_name: str
+        :param srid: Spatial Reference Identifier (SRID) associated with the coordinate system,
+            tolerance and resolution; defaults to ``None``.
         :type srid: int | None
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
         """
 
@@ -1655,55 +1603,60 @@ class MSSQL(_Base):
         See also [`DBMS-MS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_].
 
-        :param data: tabular data to be dumped into a database
+        :param data: Tabular data to be imported into the database.
+                     It can be a dataframe, a ``TextFileReader`` or a list/tuple of tuples.
         :type data: pandas.DataFrame | pandas.io.parsers.TextFileReader | list | tuple
-        :param table_name: name of a table
+        :param table_name: Name of the table where the data will be imported.
         :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param if_exists: if the table already exists, to ``'replace'``, ``'append'``
-            or, by default, ``'fail'`` and do nothing but raise a ValueError.
-        :type if_exists: str
-        :param force_replace: whether to force replacing existing table, defaults to ``False``
-        :type force_replace: bool
-        :param chunk_size: the number of rows in each batch to be written at a time,
-            defaults to ``None``
-        :type chunk_size: int | None
-        :param col_type: data types for columns, defaults to ``None``
-        :type col_type: dict | None
-        :param method: method for SQL insertion clause, defaults to ``'multi'``
+        :param if_exists: Action to take if the table already exists:
 
-            - ``None``: uses standard SQL ``INSERT`` clause (one per row);
-            - ``'multi'``: pass multiple values in a single ``INSERT`` clause.
+            - ``'replace'``: Drop the table before inserting new data.
+            - ``'append'``: Insert new data to the existing table.
+            - ``'fail'``: Raise a ValueError if the table already exists (default).
+
+        :type if_exists: str
+        :param force_replace: Whether to force replace the existing table; defaults to ``False``.
+        :type force_replace: bool
+        :param chunk_size: Number of rows to insert at a time; defaults to ``None`` (all at once).
+        :type chunk_size: int | None
+        :param col_type: Dictionary specifying column data types; defaults to ``None``.
+        :type col_type: dict | None
+        :param method: Method for SQL insertion clause:
+
+            - ``None``: Uses standard SQL ``INSERT`` clause (one per row).
+            - ``'multi'``: Passes multiple values in a single ``INSERT`` clause (default).
 
         :type method: str | None | typing.Callable
-        :param index: whether to dump the index as a column
+        :param index: Whether to include the DataFrame index as a column in the database table.
         :type index: bool
-        :param geom_column_name: name of geometry column, defaults to ``None``
+        :param geom_column_name: Name of the geometry column if importing spatial data;
+            defaults to ``None``.
         :type geom_column_name: str | None
-        :param srid: spatial reference identifier (SRID) - a unique identifier associated with
-            a specific coordinate system, tolerance, and resolution, defaults to ``None``
+        :param srid: Spatial Reference Identifier (SRID) associated with the coordinate system,
+            tolerance and resolution; defaults to ``None``.
         :type srid: int | None
-        :param confirmation_required: whether to prompt a message for confirmation to proceed,
-            defaults to ``True``
+        :param confirmation_required: Whether to prompt a confirmation message before proceeding;
+            defaults to ``True``.
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print detailed information during the import process;
+            defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [optional] parameters of `pandas.DataFrame.to_sql`_
+        :param kwargs: [Optional] additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
-        .. _`pandas.DataFrame.to_sql`:
+        .. _`pandas.DataFrame.to_sql()`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
             >>> from pyhelpers._cache import example_dataframe
-
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> example_df = example_dataframe()
             >>> example_df
                         Longitude   Latitude
@@ -1712,9 +1665,7 @@ class MSSQL(_Base):
             Birmingham  -1.902691  52.479699
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
-
             >>> test_table_name = 'example_df'
-
             >>> testdb.import_data(example_df, table_name=test_table_name, index=True, verbose=2)
             To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
@@ -1737,7 +1688,6 @@ class MSSQL(_Base):
             To drop the table [dbo].[example_df] from <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Dropping [dbo].[example_df] ... Done.
-
             >>> # Drop/delete the database [testdb]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
@@ -1765,6 +1715,16 @@ class MSSQL(_Base):
 
     @staticmethod
     def _dtype_read_fmt(dtype):
+        """
+        Generate SQL format string based on data type.
+
+        :param dtype: Data type identifier, e.g. ``'hierarchyid'``, ``'varbinary'``, ``'geometry'``,
+            or others.
+        :type dtype: str
+        :return: SQL format string for reading data of the specified type.
+        :rtype: str
+        """
+
         if dtype == 'hierarchyid':
             fmt = 'CONVERT(NVARCHAR(max), CONVERT(VARBINARY(max), [{x}], 1), 1) AS [{x}]'
         elif dtype == 'varbinary':
@@ -1773,9 +1733,23 @@ class MSSQL(_Base):
             fmt = '[{x}].STAsText() AS [{x}]'
         else:
             fmt = '[{x}]'
+
         return fmt
 
     def _read_column_names(self, table_name, schema_name, column_names):
+        """
+        Generate formatted column names for a SQL query statement.
+
+        :param table_name: Name of the table in the currently-connected database.
+        :type table_name: str
+        :param schema_name: Name of the schema containing the table.
+        :type schema_name: str
+        :param column_names: Name(s) of the column(s) to be included in the SQL query.
+        :type column_names: str | list
+        :return: Original column names and formatted column names for SQL query.
+        :rtype: tuple[list, str]
+        """
+        
         col_names = [column_names] if isinstance(column_names, str) else column_names.copy()
 
         column_info = self.get_column_info(table_name=table_name, schema_name=schema_name)
@@ -1796,40 +1770,37 @@ class MSSQL(_Base):
         """
         Read data of specific columns of a table.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of a table in the currently-connected database.
         :type table_name: str
-        :param column_names: column name(s) of the specified table
+        :param column_names: Column name(s) of the specified table.
         :type column_names: list | tuple
-        :param dtype: data type, defaults to ``None``;
-            options include ``'hierarchyid'``, ``'varbinary'`` and ``'geometry'``
+        :param dtype: data type; options are ``{'hierarchyid', 'varbinary', 'geometry'}``;
+            defaults to ``None``.
         :type dtype: str | None
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of a schema,
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``.
         :type schema_name: str | None
-        :param chunk_size: number of rows to include in each chunk (if specified),
+        :param chunk_size: Number of rows to include in each chunk (if specified);
             defaults to ``None``
         :type chunk_size: int | None
-        :param kwargs: [optional] parameters of `pandas.read_sql`_
-        :return: data of specific columns of the queried table
+        :param kwargs: [Optional] additional parameters for the function `pandas.read_sql()`_.
+        :return: Data of specific columns of the queried table.
         :rtype: pandas.DataFrame
 
-        .. _`pandas.read_sql`: https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html
+        .. _`pandas.read_sql()`: https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
             >>> from pyhelpers._cache import example_dataframe
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql.read_columns('MSreplication_options', column_names=['optname', 'value'])
                       optname  value
             0   transactional   True
@@ -1862,68 +1833,64 @@ class MSSQL(_Base):
                    chunk_size=None, save_as=None, data_dir=None, save_args=None, verbose=False,
                    **kwargs):
         """
-        Read data from a table.
+        Read data from a specified table.
 
-        :param table_name: name of a table in the currently-connected database
+        :param table_name: Name of the table to read data from in the currently-connected database.
         :type table_name: str
-        :param schema_name: name of a schema,
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``
+        :param schema_name: Name of the schema where the table resides;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``.
         :type schema_name: str | None
-        :param column_names: column name(s), defaults to all columns when ``column_names=None``
+        :param column_names: Names of columns to retrieve data from;
+            defaults to all columns when ``column_names=None``.
         :type column_names: list | tuple | None
-        :param conditions: conditions in a SQL query statement, defaults to ``None``
+        :param conditions: Conditions to apply in the SQL query statement; defaults to ``None``.
         :type conditions: str | None
-        :param chunk_size: number of rows to include in each chunk (if specified),
-            defaults to ``None``
+        :param chunk_size: Number of rows to retrieve in each chunk (if specified);
+            defaults to ``None``.
         :type chunk_size: int | None
-        :param save_as: file extension (if specified) for saving table data locally,
-            defaults to ``None``
+        :param save_as: File extension (if specified) for saving table data locally;
+            defaults to ``None``.
         :type save_as: str | None
-        :param data_dir: directory where the table data is to be saved, defaults to ``None``
+        :param data_dir: Directory path where the table data should be saved; defaults to ``None``.
         :type data_dir: str | None
-        :param save_args: optional parameters of the function :func:`pyhelpers.store.save_data`,
-            defaults to ``None``
+        :param save_args: Optional parameters for the function :func:`pyhelpers.store.save_data`;
+            defaults to ``None``.
         :type save_args: dict | None
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information in the console; defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [optional] parameters of
-            `pandas.read_sql <https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html>`_
-        :return: data of the queried table
+        :param kwargs: [Optional] additional parameters for the function `pandas.read_sql()`_.
+        :return: Data of the queried table from the currently-connected database.
         :rtype: pandas.DataFrame
+
+        .. _`pandas.read_sql()`: https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html
 
         **Examples**::
 
             >>> from pyhelpers.dbms import MSSQL
             >>> from pyhelpers._cache import example_dataframe
-
-            >>> mssql = MSSQL()
+            >>> mssql = MSSQL(verbose=True)
             Connecting <server_name>@localhost:1433/master ... Successfully.
-
             >>> mssql.get_table_names()
             {'dbo': ['MSreplication_options',
               'spt_fallback_db',
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-
             >>> mssql.read_table(table_name='MSreplication_options')
                       optname  value  ...  revision  install_failures
             0   transactional   True  ...         0                 0
             1           merge   True  ...         0                 0
             2  security_model   True  ...         0                 0
             [3 rows x 6 columns]
-
             >>> mssql.read_table(table_name='MSreplication_options', column_names=['optname'])
                       optname
             0   transactional
             1           merge
             2  security_model
-
             >>> # Create a new database for testing
             >>> testdb = MSSQL(database_name='testdb')
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
-
             >>> example_df = example_dataframe()
             >>> example_df
                         Longitude   Latitude
@@ -1932,13 +1899,11 @@ class MSSQL(_Base):
             Birmingham  -1.902691  52.479699
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
-
             >>> test_table_name = 'example_df'
             >>> testdb.import_data(example_df, table_name=test_table_name, index=True, verbose=2)
             To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Importing the data into the table [dbo].[example_df] ... Done.
-
             >>> # Retrieve the imported data
             >>> example_df_ret = testdb.read_table(table_name=test_table_name, index_col='City')
             >>> example_df_ret
@@ -1948,7 +1913,6 @@ class MSSQL(_Base):
             Birmingham  -1.902691  52.479699
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
-
             >>> # Drop/Delete the testing database [testdb]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
@@ -2013,15 +1977,16 @@ class MSSQL(_Base):
         """
         Delete/drop a table.
 
-        :param table_name: name of a table
+        :param table_name: Name of the table to be deleted.
         :type table_name: str
-        :param schema_name: name of a schema; when ``schema_name=None`` (default), it defaults to
-            :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+        :param schema_name: Name of the schema where the table resides;
+            defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+            if ``schema_name=None``.
         :type schema_name: str | None
-        :param confirmation_required: whether to prompt a message for confirmation to proceed,
-            defaults to ``True``
+        :param confirmation_required: Whether to prompt for confirmation before proceeding;
+            defaults to ``True``.
         :type confirmation_required: bool
-        :param verbose: whether to print relevant information in console, defaults to ``False``
+        :param verbose: Whether to print relevant information in the console; defaults to ``False``.
         :type verbose: bool | int
 
         .. seealso::
