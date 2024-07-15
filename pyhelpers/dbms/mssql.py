@@ -1645,7 +1645,7 @@ class MSSQL(_Base):
         :param verbose: Whether to print detailed information during the import process;
             defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [Optional] additional parameters for the method `pandas.DataFrame.to_sql()`_.
+        :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
         .. _`pandas.DataFrame.to_sql()`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
@@ -1783,7 +1783,7 @@ class MSSQL(_Base):
         :param chunk_size: Number of rows to include in each chunk (if specified);
             defaults to ``None``
         :type chunk_size: int | None
-        :param kwargs: [Optional] additional parameters for the function `pandas.read_sql()`_.
+        :param kwargs: [Optional] Additional parameters for the function `pandas.read_sql()`_.
         :return: Data of specific columns of the queried table.
         :rtype: pandas.DataFrame
 
@@ -1858,7 +1858,7 @@ class MSSQL(_Base):
         :type save_args: dict | None
         :param verbose: Whether to print relevant information in the console; defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [Optional] additional parameters for the function `pandas.read_sql()`_.
+        :param kwargs: [Optional] Additional parameters for the function `pandas.read_sql()`_.
         :return: Data of the queried table from the currently-connected database.
         :rtype: pandas.DataFrame
 

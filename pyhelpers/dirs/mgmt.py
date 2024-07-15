@@ -20,7 +20,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] additional parameters for the function `shutil.rmtree`_ or
+    :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
         `os.rmdir`_.
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
@@ -91,7 +91,7 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] additional parameters for the function `shutil.rmtree`_ or
+    :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
         `os.rmdir`_.
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree

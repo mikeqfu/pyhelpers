@@ -263,7 +263,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     :param ret_dist: Whether to return distances between ``pts`` and
         the closest points in ``ref_pts``; defaults to ``False``.
     :type ret_dist: bool
-    :param kwargs: [Optional] additional parameters for `scipy.spatial.cKDTree`_.
+    :param kwargs: [Optional] Additional parameters for the class `scipy.spatial.cKDTree`_.
     :return: Closest points among ``ref_pts`` to each point in ``pts``.
     :rtype: numpy.ndarray | shapely.geometry.MultiPoint
 
@@ -353,7 +353,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     :param as_geom: Whether to return the sorted path as a line geometry object;
         defaults to ``False``.
     :type as_geom: bool
-    :param kwargs: [Optional] additional parameters of the class
+    :param kwargs: [Optional] Additional parameters of the class
         `sklearn.neighbors.NearestNeighbors`_.
     :return: a sequence of sorted points given two-nearest neighbors
     :rtype: numpy.ndarray | shapely.geometry.LineString | tuple
@@ -556,7 +556,7 @@ def get_geometric_midpoint(pt1, pt2, as_geom=False):
 
     .. seealso::
 
-        - Examples for the function :func:`~pyhelpers.geom.spatial.get_geometric_midpoint_calc`.
+        - Examples for the function :func:`~pyhelpers.geom.get_geometric_midpoint_calc`.
     """
 
     pt_x_, pt_y_ = transform_point_type(pt1, pt2, as_geom=True)
@@ -602,7 +602,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
 
     .. seealso::
 
-        - Examples for the function :func:`~pyhelpers.geom.spatial.get_geometric_midpoint`.
+        - Examples for the function :func:`~pyhelpers.geom.get_geometric_midpoint`.
     """
 
     pt_x_, pt_y_ = transform_point_type(pt1, pt2, as_geom=True)
@@ -774,7 +774,7 @@ def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
 
     .. seealso::
 
-        - Examples for the function :func:`~pyhelpers.geom.spatial.get_square_vertices`.
+        - Examples for the function :func:`~pyhelpers.geom.get_square_vertices`.
     """
 
     theta_rad = np.deg2rad(rotation_theta)

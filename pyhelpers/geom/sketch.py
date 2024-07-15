@@ -27,7 +27,7 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
     :type margin: float
     :param precision: Number of decimal places to display in the annotation text; defaults to ``2``.
     :type precision: int
-    :param kwargs: [Optional] additional parameters for annotation customisation.
+    :param kwargs: [Optional] Additional parameters for annotation customisation.
     :return: Updated ``kwargs`` dictionary containing annotation parameters.
     :rtype: dict
     """
@@ -99,7 +99,7 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         :width: 65%
 
         An example of a sketch of a square, created by the function
-        :py:func:`~pyhelpers.geom.sketch_square`.
+        :func:`~pyhelpers.geom.sketch_square`.
 
     .. code-block:: python
 

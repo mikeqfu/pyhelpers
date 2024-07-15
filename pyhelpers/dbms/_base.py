@@ -644,9 +644,9 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [Optional] additional parameters for the method `pandas.DataFrame.to_sql`_.
+        :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
-        .. _`pandas.DataFrame.to_sql`:
+        .. _`pandas.DataFrame.to_sql()`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
         """
 
@@ -830,7 +830,7 @@ class _Base:
         :type tempfile_kwargs: dict
         :param stringio_kwargs: Additional keyword arguments for ``StringIO``.
         :type stringio_kwargs: dict
-        :param kwargs: [Optional] additional arguments passed to the reading method.
+        :param kwargs: [Optional] Additional arguments passed to the reading method.
         """
         pass
 

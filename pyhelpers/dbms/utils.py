@@ -419,7 +419,7 @@ def import_data(db_instance, data, schema_name, table_name, data_name="data", pr
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] additional parameters for the method
+    :param kwargs: [Optional] Additional parameters for the method
         :meth:`PostgreSQL.import_data()<pyhelpers.dbms.PostgreSQL.import_data>` or
         :meth:`MSSQL.import_data()<pyhelpers.dbms.MSSQL.import_data>`.
 
@@ -477,19 +477,12 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
     :type suffix: str
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] additional parameters for the method
+    :param kwargs: [Optional] Additional parameters for the method
         :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`,
         :meth:`PostgreSQL.read_table()<pyhelpers.dbms.PostgreSQL.read_table>` or
         :meth:`MSSQL.read_table()<pyhelpers.dbms.MSSQL.read_table>`.
     :return: Queried data as a dataframe.
     :rtype: pandas.DataFrame | None
-
-    .. _`pyhelpers.dbms.PostgreSQL.read_sql_query`:
-        https://pyhelpers.readthedocs.io/en/latest/_generated/
-        pyhelpers.dbms.PostgreSQL.read_sql_query.html
-    .. _`pyhelpers.dbms.MSSQL.read_table`:
-        https://pyhelpers.readthedocs.io/en/latest/_generated/
-        pyhelpers.dbms.MSSQL.read_table.html
 
     **Examples**::
 

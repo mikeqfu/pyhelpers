@@ -308,6 +308,26 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
+    """
+    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a CSV file.
+
+    :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
+    :type path_to_xlsx: str | os.PathLike
+    :param path_to_csv: The path of the CSV file:
+
+        - When ``path_to_csv=None``, a temporary file is generated;
+        - When ``path_to_csv=""``, the CSV file is generated in the same directory as the source
+          Excel spreadsheet;
+        - Otherwise, it specifies a specific path.
+
+    :type path_to_csv: str | os.PathLike | None
+    :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
+        when ``vbscript=None``, a default script is used.
+    :type vbscript: str | None
+    :return: A tuple containing the path of the VB script and the path of the CSV file.
+    :rtype: tuple[str, str]
+    """
+
     if vbscript is None:
         vbscript_ = str(importlib.resources.files(__package__).joinpath("../data/xlsx2csv.vbs"))
     else:
@@ -326,24 +346,27 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
 
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
-    Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file
-    using VBScript.
+    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    (*.xlsx*/*.xls*) to a CSV file using VBScript.
 
     Reference: https://stackoverflow.com/questions/1858195/.
 
-    :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
+    :param xlsx_pathname: The path of the Excel spreadsheet (in .xlsx format).
     :type xlsx_pathname: str
-    :param csv_pathname: pathname of a CSV format file;
+    :param csv_pathname: The path of the CSV file.
     :type csv_pathname: str | None
-    :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
+    :param sheet_name: The name of the target worksheet in the given
+        `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file;
+        defaults to ``'1'``.
     :type sheet_name: str
-    :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
+    :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
+        defaults to ``None``.
     :type vbscript: str | None
-    :param kwargs: [optional] parameters of the function `subprocess.run`_
-    :return: code for the result of running the VBScript
+    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
+    :return: The result code from running the VBScript.
     :rtype: int
 
-    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
 
     command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname, sheet_name]
@@ -359,12 +382,14 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
-    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>` spreadsheet
-    (.xlsx/.xls) to a CSV file.
+    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    (*.xlsx*/*.xls*) to a CSV file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
-    :param path_to_xlsx: The path of the Excel spreadsheet (in *.xlsx* format).
+    :param path_to_xlsx: The path of the
+        `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+        (in *.xlsx* format).
     :type path_to_xlsx: str | os.PathLike
     :param path_to_csv: The path of the CSV file:
 

@@ -595,7 +595,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :param verbose: Whether to print relevant information in console as the function runs;
         defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] additional parameters for the function `numpy.load()`_.
+    :param kwargs: [Optional] Additional parameters for the function `numpy.load()`_.
     :return: A compressed sparse row.
     :rtype: scipy.sparse.csr.csr_matrix
 
@@ -851,7 +851,7 @@ def cmap_discretisation(cmap, n_colours):
         :width: 60%
 
         An example of discrete colour ramp, created by the function
-        :func:`~pyhelpers.ops.manip.cmap_discretisation`.
+        :func:`~pyhelpers.ops.cmap_discretisation`.
     """
 
     mpl, mpl_colors = map(_check_dependency, ['matplotlib', 'matplotlib.colors'])
@@ -889,22 +889,22 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
           #.WbpP0T6GNQB>`_].
 
     :param cmap: A colormap instance,
-        e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap`_.
+        e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap()`_.
     :type cmap: matplotlib.colors.ListedColormap
     :param n_colours: Number of discrete colours to use in the colour bar.
     :type n_colours: int
     :param labels: Optional list of labels for the colour bar; defaults to ``None``.
     :type labels: list | None
-    :param kwargs: [Optional] additional optional parameters for the funtion
-        `matplotlib.pyplot.colorbar`_.
+    :param kwargs: [Optional] Additional optional parameters for the funtion
+        `matplotlib.pyplot.colorbar()`_.
     :return: A colour bar object.
     :rtype: matplotlib.colorbar.Colorbar
 
     .. _`colormaps`:
         https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap`:
+    .. _`matplotlib.cm.get_cmap()`:
         https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
-    .. _`matplotlib.pyplot.colorbar`:
+    .. _`matplotlib.pyplot.colorbar()`:
         https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
 
     **Examples**::
@@ -932,7 +932,7 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         :width: 23%
 
         An example of colour bar with numerical index,
-        created by the function :func:`~pyhelpers.ops.manip.colour_bar_index`.
+        created by the function :func:`~pyhelpers.ops.colour_bar_index`.
 
     .. code-block:: python
 

@@ -21,7 +21,7 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     :type cwd: str | os.PathLike[str] | bytes | os.PathLike[bytes] | None
     :param back_check: Whether to check if a parent directory exists; defaults to ``False``.
     :type back_check: bool
-    :param kwargs: [Optional] additional parameters (e.g. ``mode=0o777``) for the function
+    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
         `os.makedirs`_.
     :return: Pathname of the directory or file.
     :rtype: str
@@ -75,7 +75,7 @@ def ccd(*subdir, **kwargs):
 
     :param subdir: Name of a directory or file.
     :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
-    :param kwargs: [optional] Parameters for the function :func:`~pyhelpers.dirs.nav.cd`.
+    :param kwargs: [optional] Parameters for the function :func:`~pyhelpers.dirs.cd`.
     :return: Pathname of a directory or file in the altered working directory.
     :rtype: str
 
@@ -136,8 +136,8 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
-    :param kwargs: [Optional] additional parameters for the function :func:`~pyhelpers.dirs.nav.cd`.
-    :return: Pathname of a directory or file under `data_dir`.
+    :param kwargs: [Optional] Additional parameters for the function :func:`~pyhelpers.dirs.cd`.
+    :return: Pathname of a directory or file under ``data_dir``.
     :rtype: str
 
     **Examples**::
@@ -195,9 +195,9 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
-    :param kwargs: [Optional] additional parameters (e.g. ``mode=0o777``) for the function
+    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
         `os.makedirs`_.
-    :return: Pathname of a directory or file under `data_dir` of a package.
+    :return: Pathname of a directory or file under ``data_dir`` of a package.
     :rtype: str
 
     .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs

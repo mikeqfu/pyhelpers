@@ -137,7 +137,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     :param msg: Error message if `path_to_dir` is not a valid full pathname;
         defaults to ``"Invalid input!"``.
     :type msg: str
-    :param kwargs: [Optional] additional parameters for the function :func:`pyhelpers.dirs.nav.cd`.
+    :param kwargs: [Optional] Additional parameters for the function :func:`pyhelpers.dirs.cd`.
     :return: Valid full pathname of a directory.
     :rtype: str
 

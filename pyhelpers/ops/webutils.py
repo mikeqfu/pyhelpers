@@ -140,7 +140,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
     :param request_field: Name of the field/header indicating the original media type of the
         resource; defaults to ``'content-type'``.
     :type request_field: str
-    :param kwargs: [Optional] additional parameters for the function `requests.head()`_.
+    :param kwargs: [Optional] Additional parameters for the function `requests.head()`_.
     :return: ``True`` if the given URL leads to downloadable content, ``False`` otherwise.
     :rtype: bool
 
@@ -182,17 +182,17 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     :param backoff_factor: Backoff factor for exponential backoff in retries; defaults to ``0.1``.
     :type backoff_factor: float
     :param retry_status: HTTP status codes that trigger retries,
-        derived from `urllib3.util.Retry`_;
+        derived from `urllib3.util.Retry()`_;
         defaults to ``[429, 500, 502, 503, 504]`` when ``retry_status='default'``.
-    :param kwargs: [Optional] additional parameters for the class `urllib3.util.Retry`_.
-    :return: A `requests.Session`_ instance configured with the specified retry settings.
+    :param kwargs: [Optional] Additional parameters for the class `urllib3.util.Retry()`_.
+    :return: A `requests.Session()`_ instance configured with the specified retry settings.
     :rtype: requests.Session
 
     .. _`requests`:
         https://docs.python-requests.org/en/latest/
-    .. _`urllib3.util.Retry`:
+    .. _`urllib3.util.Retry()`:
         https://urllib3.readthedocs.io/en/stable/reference/urllib3.util.html#urllib3.util.Retry
-    .. _`requests.Session`:
+    .. _`requests.Session()`:
         https://2.python-requests.org/en/master/api/#request-sessions
 
     **Examples**::
@@ -398,8 +398,8 @@ def get_user_agent_string(fancy=None, **kwargs):
         If ``fancy=None`` (default), the function returns a user-agent string
         from a randomly-selected browser among all available options.
     :type fancy: None | str
-    :param kwargs: [Optional] additional parameters for the function
-        :func:`~pyhelpers.ops.webutils.get_user_agent_strings`.
+    :param kwargs: [Optional] Additional parameters for the function
+        :func:`~pyhelpers.ops.get_user_agent_strings`.
     :return: A user-agent string for the specified browser.
     :rtype: str
 
@@ -451,8 +451,8 @@ def fake_requests_headers(randomized=True, **kwargs):
         browser data; defaults to ``True``;
         if ``randomized=False``, a random Chrome user-agent string is used.
     :type randomized: bool
-    :param kwargs: [Optional] additional parameters for the function
-        :func:`~pyhelpers.ops.webutils.get_user_agent_string`.
+    :param kwargs: [Optional] Additional parameters for the function
+        :func:`~pyhelpers.ops.get_user_agent_string`.
     :return: Fake HTTP headers.
     :rtype: dict
 
@@ -559,13 +559,13 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param verbose: Whether to print progress and relevant information to the console;
         defaults to ``False``.
     :type verbose: bool | int
-    :param requests_session_args: [Optional] additional parameters for initialising
+    :param requests_session_args: [Optional] Additional parameters for initialising
         the requests session; defaults to ``None``.
     :type requests_session_args: dict | None
-    :param fake_headers_args: [Optional] additional parameters for generating fake HTTP headers;
+    :param fake_headers_args: [Optional] Additional parameters for generating fake HTTP headers;
         defaults to ``None``.
     :type fake_headers_args: dict | None
-    :param kwargs: [Optional] additional parameters for the method `requests.Session.get()`_.
+    :param kwargs: [Optional] Additional parameters for the method `requests.Session.get()`_.
 
     .. _`requests.Session.get()`:
         https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get

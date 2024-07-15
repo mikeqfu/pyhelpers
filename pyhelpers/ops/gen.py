@@ -158,7 +158,7 @@ def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash
     :type iterations: int | None
     :param ret_hash: Whether to return the salt and key; defaults to ``True``.
     :type ret_hash: bool
-    :param kwargs: [Optional] additional parameters for the function `hashlib.pbkdf2_hmac()`_.
+    :param kwargs: [Optional] Additional parameters for the function `hashlib.pbkdf2_hmac()`_.
     :return: Hashed password and salt as bytes (returned only if ``ret_hash=True``).
     :rtype: bytes | None
 
@@ -221,7 +221,7 @@ def verify_password(password, salt, key, iterations=None):
 
     .. seealso::
 
-        - Examples of the function :func:`pyhelpers.ops.gen.hash_password`.
+        - Examples of the function :func:`pyhelpers.ops.hash_password`.
     """
 
     pwd = str(password).encode('UTF-8') if not isinstance(password, (bytes, bytearray)) else password

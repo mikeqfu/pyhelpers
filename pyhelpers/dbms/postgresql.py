@@ -1403,7 +1403,7 @@ class PostgreSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
-        :param kwargs: [Optional] additional parameters for the method `pandas.DataFrame.to_sql()`_.
+        :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
         .. _`pandas.DataFrame.to_sql()`:
             https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
@@ -1443,11 +1443,11 @@ class PostgreSQL(_Base):
         :type max_size_spooled: int | float
         :param delimiter: Delimiter used in data; defaults to ``','``.
         :type delimiter: str
-        :param tempfile_kwargs: [Optional] additional parameters for `tempfile.TemporaryFile()`_ or
+        :param tempfile_kwargs: [Optional] Additional parameters for `tempfile.TemporaryFile()`_ or
             `tempfile.SpooledTemporaryFile()`_; defaults to ``None``.
-        :param stringio_kwargs: [Optional] additional parameters for `io.StringIO()`_,
+        :param stringio_kwargs: [Optional] Additional parameters for `io.StringIO()`_,
             e.g. ``initial_value``; defaults to ``None``.
-        :param kwargs: [Optional] additional parameters for the function `pandas.read_csv()`_.
+        :param kwargs: [Optional] Additional parameters for the function `pandas.read_csv()`_.
         :return: Data queried by the statement ``sql_query``.
         :rtype: pandas.DataFrame
 
@@ -1622,7 +1622,7 @@ class PostgreSQL(_Base):
         :param sorted_by: Name(s) of column(s) by which the retrieved data is sorted;
             defaults to ``None``.
         :type sorted_by: str | None
-        :param kwargs: [Optional] additional parameters for the method
+        :param kwargs: [Optional] Additional parameters for the method
             :meth:`~pyhelpers.dbms.PostgreSQL.read_sql_query` or the function `pandas.read_sql()`_.
         :return: Data of the specified table.
         :rtype: pandas.DataFrame

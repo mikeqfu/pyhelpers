@@ -187,7 +187,7 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     :type latitudes: int | float | typing.Iterable
     :param as_array: Whether to return an array; defaults to ``False``.
     :type as_array: bool
-    :param kwargs: [Optional] additional parameters for the function
+    :param kwargs: [Optional] Additional parameters for the function
         `pyproj.Transformer.transform`_.
     :return: Geographic Cartesian coordinates *(Easting, Northing)* or *(X, Y)*.
     :rtype: tuple | numpy.ndarry
@@ -261,7 +261,7 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     :type northings: int | float | typing.Iterable
     :param as_array: Whether to return an array; defaults to ``False``.
     :type as_array: bool
-    :param kwargs: [Optional] additional parameters for the function
+    :param kwargs: [Optional] Additional parameters for the function
         `pyproj.Transformer.transform`_.
     :return: Geographic coordinates *(Longitude, Latitude)*.
     :rtype: tuple | numpy.ndarray
