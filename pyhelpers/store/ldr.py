@@ -2,7 +2,6 @@
 Load data.
 """
 
-import copy
 import csv
 import logging
 import operator
@@ -11,109 +10,13 @@ import sys
 
 import pandas as pd
 
-from .._cache import _check_dependency, _check_rel_pathname, _print_failure_msg
-
-
-def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb="Loading",
-                        print_suffix="", print_end=" ... "):
-    # noinspection PyShadowingNames
-    """
-    Check the status of loading a file from a specified path.
-
-    :param path_to_file: Path where the file is located.
-    :type path_to_file: str | bytes | pathlib.Path
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
-    :param print_prefix: Prefix added to the default printing message; defaults to ``""`.
-    :type print_prefix: str
-    :param state_verb: Action verb indicating *loading* or *reading* a file;
-        defaults to ``"Loading"``.
-    :type state_verb: str
-    :param print_suffix: Suffix added to the default printing message; defaults to ``""`.
-    :type print_suffix: str
-    :param print_end: String passed to ``end`` parameter for ``print()``; defaults to ``" ... "``.
-    :type print_end: str
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _check_loading_path
-        >>> from pyhelpers.dirs import cd
-        >>> path_to_file = cd("test_func.py")
-        >>> _check_loading_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Loading "test_func.py" ... Passed.
-    """
-
-    if verbose:
-        rel_pathname = _check_rel_pathname(path_to_file)
-        print(f'{print_prefix}{state_verb} "{rel_pathname}"{print_suffix}', end=print_end)
-
-
-def _set_index(data, index=None):
-    """
-    Set the index of a dataframe.
-
-    :param data: The dataframe to update.
-    :type data: pandas.DataFrame
-    :param index: Column index or a list of column indices to set as the index;
-        when ``index=None`` (default), the function sets the first column as the index
-        if its column name is an empty string.
-    :type index: int | list | None
-    :return: The dataframe with the updated index.
-    :rtype: pandas.DataFrame
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _set_index
-        >>> from pyhelpers._cache import example_dataframe
-        >>> import numpy as np
-        >>> example_df = example_dataframe()
-        >>> example_df
-                    Longitude   Latitude
-        City
-        London      -0.127647  51.507322
-        Birmingham  -1.902691  52.479699
-        Manchester  -2.245115  53.479489
-        Leeds       -1.543794  53.797418
-        >>> example_df.equals(_set_index(example_df))
-        True
-        >>> example_df_1 = _set_index(example_df, index=0)
-        >>> example_df_1
-                    Latitude
-        Longitude
-        -0.127647  51.507322
-        -1.902691  52.479699
-        -2.245115  53.479489
-        -1.543794  53.797418
-        >>> example_df.iloc[:, 0].to_list() == example_df_1.index.to_list()
-        True
-        >>> example_df_2 = example_df.copy()
-        >>> example_df_2.index.name = ''
-        >>> example_df_2.reset_index(inplace=True)
-        >>> example_df_2 = _set_index(example_df_2, index=None)
-        >>> np.array_equal(example_df_2.values, example_df.values)
-        True
-    """
-
-    data_ = data.copy()
-
-    if index is None:
-        idx_col = data.columns[0]
-        if idx_col == '':
-            data_ = data.set_index(idx_col)
-            data_.index.name = None
-
-    else:
-        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
-        idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
-        data_ = data.set_index(keys=idx_keys)
-
-    return data_
+from ._base import _check_loading_path, _set_index
+from .._cache import _check_dependency, _print_failure_msg
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     """
-    Load data from a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Load data from a `Pickle`_ file.
 
     :param path_to_file: Path where the pickle file is saved.
     :type path_to_file: str | os.PathLike
@@ -174,7 +77,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
 def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
              **kwargs):
     """
-    Load data from a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
+    Load data from a `CSV`_ file.
 
     :param path_to_file: Pathname of the `CSV`_ file.
     :type path_to_file: str | os.PathLike
@@ -272,9 +175,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 
 def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None, **kwargs):
     """
-    Load one or multiple sheets from a
-    `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ or
-    an `OpenDocument <https://en.wikipedia.org/wiki/OpenDocument>`_ format file.
+    Load one or multiple sheets from a `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
     :param path_to_file: Path where the spreadsheet file is saved.
     :type path_to_file: str | os.PathLike
@@ -383,7 +284,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 
 def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwargs):
     """
-    Load data from a `JSON <https://www.json.org/json-en.html>`_ file.
+    Load data from a `JSON`_ file.
 
     :param path_to_file: Path where the JSON file is saved.
     :type path_to_file: str | os.PathLike
@@ -462,7 +363,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwarg
 
 def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     """
-    Load data from a `Joblib <https://pypi.org/project/joblib/>`_ file.
+    Load data from a `Joblib`_ file.
 
     :param path_to_file: Path where the `Joblib`_ file is saved.
     :type path_to_file: str | os.PathLike
@@ -525,7 +426,7 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
 
 def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwargs):
     """
-    Load a dataframe from a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Load a dataframe from a `Feather`_ file.
 
     :param path_to_file: Path where the feather file is saved.
     :type path_to_file: str | os.PathLike

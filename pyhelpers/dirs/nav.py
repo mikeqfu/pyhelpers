@@ -144,28 +144,23 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
 
         >>> from pyhelpers.dirs import cdd, delete_dir
         >>> import os
-
         >>> path_to_dat_dir = cdd()
         >>> # As `mkdir=False`, `path_to_dat_dir` will NOT be created if it doesn't exist
         >>> os.path.relpath(path_to_dat_dir)
         'data'
-
         >>> path_to_dat_dir = cdd(data_dir="test_cdd", mkdir=True)
         >>> # As `mkdir=True`, `path_to_dat_dir` will be created if it doesn't exist
         >>> os.path.relpath(path_to_dat_dir)
         'test_cdd'
-
         >>> # Delete the "test_cdd" folder
         >>> delete_dir(path_to_dat_dir, verbose=True)
         To delete the directory "test_cdd\\"
         ? [No]|Yes: yes
         Deleting "test_cdd\\" ... Done.
-
         >>> # Set `data_dir` to be `"tests"`
         >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
         >>> os.path.relpath(path_to_dat_dir)
         'test_cdd\\data'
-
         >>> # Delete the "test_cdd" folder and the sub-folder "data"
         >>> test_cdd = os.path.dirname(path_to_dat_dir)
         >>> delete_dir(test_cdd, verbose=True)
@@ -173,7 +168,6 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
         Confirmed to delete it
         ? [No]|Yes: yes
         Deleting "test_cdd\\" ... Done.
-
         >>> # # Alternatively,
         >>> # import shutil
         >>> # shutil.rmtree(test_cdd)

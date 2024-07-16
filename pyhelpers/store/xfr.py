@@ -164,7 +164,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 
     exe_name = "7z.exe"
     optional_pathnames = {exe_name, f"C:/Program Files/7-Zip/{exe_name}"}
-    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(exe_name, optional_pathnames, seven_zip_exe)
+    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=seven_zip_exe)
 
     if seven_zip_exists:
         if out_dir is None:
@@ -243,7 +244,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
     exe_name = "pandoc.exe"
     optional_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
-    pandoc_exists, pandoc_exe_ = _check_file_pathname(exe_name, optional_pathnames, target=pandoc_exe)
+    pandoc_exists, pandoc_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=pandoc_exe)
 
     input_path, output_path = path_to_md, path_to_rst
     arg_f, arg_t = 'markdown+smart', 'rst+smart'
@@ -267,7 +269,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     try:
         if engine is None:
             if pandoc_exists:
-                cmd_args = [pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
+                cmd_args = [
+                    pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
                 if reverse:
                     cmd_args += ['-o', abs_output_path]
                 else:
@@ -286,7 +289,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
             else:
                 kwargs.update({'extra_args': ['--wrap=preserve']})
             rslt = py_pandoc.convert_file(
-                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path), **kwargs)
+                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path),
+                **kwargs)
 
             ret_code = 0 if rslt == '' else -2
 
@@ -309,7 +313,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
     """
-    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a CSV file.
+    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
+    `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
 
     :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
     :type path_to_xlsx: str | os.PathLike
@@ -347,16 +352,16 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
     Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
-    (*.xlsx*/*.xls*) to a CSV file using VBScript.
+    (*.xlsx*/*.xls*) to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file
+    using `VBScript <https://en.wikipedia.org/wiki/VBScript>`_.
 
     Reference: https://stackoverflow.com/questions/1858195/.
 
-    :param xlsx_pathname: The path of the Excel spreadsheet (in .xlsx format).
+    :param xlsx_pathname: The path of the `Microsoft Excel`_ spreadsheet (in .xlsx format).
     :type xlsx_pathname: str
     :param csv_pathname: The path of the CSV file.
     :type csv_pathname: str | None
-    :param sheet_name: The name of the target worksheet in the given
-        `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ file;
+    :param sheet_name: The name of the target worksheet in the given `Microsoft Excel`_ file;
         defaults to ``'1'``.
     :type sheet_name: str
     :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
@@ -366,6 +371,8 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
     :return: The result code from running the VBScript.
     :rtype: int
 
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
 
@@ -382,33 +389,30 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
-    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
-    (*.xlsx*/*.xls*) to a CSV file.
+    Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
-    :param path_to_xlsx: The path of the
-        `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
-        (in *.xlsx* format).
+    :param path_to_xlsx: The path of the Microsoft Excel spreadsheet (in *.xlsx* format).
     :type path_to_xlsx: str | os.PathLike
     :param path_to_csv: The path of the CSV file:
 
         - When ``path_to_csv=None`` (default), a temporary file is generated
-          using `tempfile.NamedTemporaryFile`_.
+          using `tempfile.NamedTemporaryFile()`_.
         - When ``path_to_csv=""``, the CSV file is generated in the same directory as the source
-          Excel spreadsheet.
+          Microsoft Excel spreadsheet.
         - Otherwise, it specifies a specific path.
 
     :type path_to_csv: str | os.PathLike | None
     :param engine: The engine used for converting *.xlsx*/*.xls* to .csv:
 
-        - When ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used.
+        - When ``engine=None`` (default), a `VBScript`_ (Visual Basic Script) is used.
         - When ``engine='xlsx2csv'``, the function relies on `xlsx2csv`_.
 
     :type engine: str | None
     :param if_exists: The action to take if the target CSV file exists; defaults to ``'replace'``.
     :type if_exists: str
-    :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
+    :param vbscript: The path of the VBScript used for converting *.xlsx*/*.xls* to *.csv*;
         defaults to ``None``.
     :type vbscript: str | None
     :param sheet_name: The name of the target worksheet in the given Excel file;
@@ -424,11 +428,20 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         an `io.StringIO()`_ buffer when ``engine='xlsx2csv'``.
     :rtype: str | _io.StringIO | None
 
-    .. _`tempfile.NamedTemporaryFile`:
+    .. _`Microsoft Excel`:
+        https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`CSV`:
+        https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`VBScript`:
+        https://en.wikipedia.org/wiki/VBScript
+    .. _`tempfile.NamedTemporaryFile()`:
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
-    .. _`xlsx2csv`: https://github.com/dilshod/xlsx2csv
-    .. _`io.StringIO()`: https://docs.python.org/3/library/io.html#io.StringIO
-    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`xlsx2csv`:
+        https://github.com/dilshod/xlsx2csv
+    .. _`io.StringIO()`:
+        https://docs.python.org/3/library/io.html#io.StringIO
+    .. _`subprocess.run()`:
+        https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 

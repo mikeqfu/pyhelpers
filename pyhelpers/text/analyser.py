@@ -22,21 +22,19 @@ def _vectorize_text(*txt):
 
 def euclidean_distance_between_texts(txt1, txt2):
     """
-    Compute Euclidean distance of two sentences.
+    Compute the Euclidean distance between two sentences.
 
-    :param txt1: any text
+    :param txt1: The first text.
     :type txt1: str
-    :param txt2: any text
+    :param txt2: The second text.
     :type txt2: str
-    :return: Euclidean distance between the input textual data
+    :return: The Euclidean distance between the input texts.
     :rtype: float
 
     **Examples**::
 
         >>> from pyhelpers.text import euclidean_distance_between_texts
-
         >>> txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-
         >>> euclidean_distance = euclidean_distance_between_texts(txt_1, txt_2)
         >>> euclidean_distance
         2.449489742783178
@@ -51,30 +49,28 @@ def euclidean_distance_between_texts(txt1, txt2):
 
 
 def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
+    # noinspection PyShadowingNames
     """
-    Calculate cosine similarity of two sentences.
+    Calculate the cosine similarity between two sentences.
 
-    :param txt1: any text
+    :param txt1: The first text.
     :type txt1: str
-    :param txt2: any text
+    :param txt2: The second text.
     :type txt2: str
-    :param cosine_distance: whether to get cosine distance, which is (1 - cosine similarity),
-        defaults to ``False``
+    :param cosine_distance: Whether to return cosine distance (i.e. 1 - cosine similarity);
+        defaults to ``False``.
     :type cosine_distance: bool
-    :return: cosine similarity (or distance)
+    :return: The cosine similarity (or distance) between the input texts.
     :rtype: float
 
     **Examples**::
 
         >>> from pyhelpers.text import cosine_similarity_between_texts
-
-        >>> txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-
-        >>> cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
+        >>> txt1, txt2 = 'This is an apple.', 'That is a pear.'
+        >>> cos_sim = cosine_similarity_between_texts(txt1, txt2)
         >>> cos_sim
         0.25
-
-        >>> cos_dist = cosine_similarity_between_texts(txt_1, txt_2, cosine_distance=True)
+        >>> cos_dist = cosine_similarity_between_texts(txt1, txt2, cosine_distance=True)
         >>> cos_dist  # 1 - cos_sim
         0.75
     """
@@ -93,32 +89,28 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
 def find_matched_str(x, lookup_list):
     """
-    Find all that are matched with a string from among a sequence of strings.
+    Find all strings in a sequence that match a given string.
 
-    :param x: a string-type variable
+    :param x: The string to match.
     :type x: str
-    :param lookup_list: a sequence of strings for lookup
+    :param lookup_list: A sequence of strings for lookup.
     :type lookup_list: typing.Iterable
-    :return: a generator containing all that are matched with ``x``
+    :return: A generator containing all strings that match ``x``.
     :rtype: typing.Generator | None
 
     **Examples**::
 
         >>> from pyhelpers.text import find_matched_str
-
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
         >>> res = find_matched_str('apple', lookup_lst)
         >>> list(res)
         []
-
         >>> lookup_lst += ['apple']
         >>> lookup_lst
         ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
-
         >>> res = find_matched_str('apple', lookup_lst)
         >>> list(res)
         ['apple']
-
         >>> res = find_matched_str(r'app(le)?', lookup_lst)
         >>> list(res)
         ['app', 'apple']
@@ -132,25 +124,25 @@ def find_matched_str(x, lookup_list):
 
 def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs):
     """
-    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates
+    Find ``n`` strings similar to ``x`` from a sequence of candidates
     by using `difflib <https://docs.python.org/3/library/difflib.html>`_.
 
-    :param x: a string-type variable
+    :param x: The string to match.
     :type x: str
-    :param lookup_list: a sequence of strings for lookup
+    :param lookup_list: A sequence of strings for lookup.
     :type lookup_list: typing.Iterable
-    :param n: number of similar strings to return, defaults to ``1``;
-        when ``n=None``, the function returns a sorted ``lookup_list``
-        (in the descending order of similarity)
+    :param n: The number of similar strings to return; defaults to ``1``;
+        when ``n=None``, the function returns the entire ``lookup_list`` sorted by similarity
+        in descending order.
     :type n: int | None
-    :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
-        defaults to ``True``
+    :param ignore_punctuation: Whether to ignore punctuation in the search for similar texts;
+        defaults to ``True``.
     :type ignore_punctuation: bool
-    :param kwargs: [optional] parameters of `difflib.get_close_matches`_
-    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :param kwargs: [Optional] Additional parameters for the function `difflib.get_close_matches()`.
+    :return: A string or list of strings similar to (or the same as) ``x``.
     :rtype: str | list | None
 
-    .. _`difflib.get_close_matches`:
+    .. _`difflib.get_close_matches()`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
     """
 
@@ -176,27 +168,26 @@ def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs)
 
 def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
     """
-    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates
-    by using `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_.
+    Find ``n`` strings that are similar to ``x`` from a sequence of candidates
+    using `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_.
 
-    :param x: a string-type variable
+    :param x: The string to match.
     :type x: str
-    :param lookup_list: a sequence of strings for lookup
+    :param lookup_list: A sequence of strings for lookup.
     :type lookup_list: typing.Iterable
-    :param n: number of similar strings to return, defaults to ``1``;
-        when ``n=None``, the function returns a sorted ``lookup_list``
-        (in the descending order of similarity)
+    :param n: Number of similar strings to return; defaults to ``1``;
+        when ``n=None``, the function returns the entire ``lookup_list`` sorted by similarity
+        in descending order.
     :type n: int | None
-    :param kwargs: [optional] parameters of `rapidfuzz.fuzz.QRatio`_
-    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :param kwargs: [Optional] Additional parameters for the function `rapidfuzz.fuzz.QRatio()`_.
+    :return: A string or list of strings similar to (or the same as) ``x``.
     :rtype: str | list | None
 
-    .. _`rapidfuzz.fuzz.QRatio`: https://github.com/maxbachmann/RapidFuzz#quick-ratio
+    .. _`rapidfuzz.fuzz.QRatio()`: https://github.com/maxbachmann/RapidFuzz#quick-ratio
 
     **Tests**::
 
         >>> from pyhelpers.text.analyser import _find_str_by_rapidfuzz
-
         >>> lookup_lst = ['Anglia',
         ...               'East Coast',
         ...               'East Midlands',
@@ -207,11 +198,9 @@ def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
         ...               'Wales',
         ...               'Wessex',
         ...               'Western']
-
         >>> y = _find_str_by_rapidfuzz(x='angle', lookup_list=lookup_lst, n=1)
         >>> y
         'Anglia'
-
         >>> y = _find_str_by_rapidfuzz(x='123', lookup_list=lookup_lst, n=1)
         >>> y is None
         True
@@ -237,50 +226,47 @@ def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
 
 def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='difflib', **kwargs):
     """
-    Find ``n`` strings that are similar to ``x`` from among a sequence of candidates.
+    Find ``n`` strings that are similar to ``x`` from a sequence of candidates.
 
-    :param x: a string-type variable
+    :param x: The string to find similar matches for.
     :type x: str
-    :param lookup_list: a sequence of strings for lookup
+    :param lookup_list: A sequence of strings to search for matches.
     :type lookup_list: typing.Iterable
-    :param n: number of similar strings to return, defaults to ``1``;
-        when ``n=None``, the function returns a sorted ``lookup_list``
-        (in the descending order of similarity)
+    :param n: Number of similar strings to return; defaults to ``1``;
+        when ``n=None``, the function returns the entire ``lookup_list`` sorted by similarity
+        in descending order.
     :type n: int | None
-    :param ignore_punctuation: whether to ignore punctuations in the search for similar texts,
-        defaults to ``True``
+    :param ignore_punctuation: Whether to ignore punctuation in the comparison;
+        defaults to ``True``.
     :type ignore_punctuation: bool
-    :param engine: options include ``'difflib'`` (default) and
-        ``'rapidfuzz'`` (or simply ``'fuzz'``)
+    :param engine: Method for finding similarities; options include:
 
-        - if ``engine='difflib'``, the function relies on `difflib.get_close_matches`_
-        - if ``engine='rapidfuzz'`` (or ``engine='fuzz'``), the function relies on
-          `rapidfuzz.fuzz.QRatio`_
+        - ``'difflib'`` (default), which uses `difflib.get_close_matches()`_.
+        - ``'rapidfuzz'`` (or ``'fuzz'``), which uses `rapidfuzz.fuzz.QRatio()`_.
 
     :type engine: str | typing.Callable
-    :param kwargs: [optional] parameters of `difflib.get_close_matches`_ (e.g. ``cutoff=0.6``) or
-        `rapidfuzz.fuzz.QRatio`_, depending on ``engine``
-    :return: a string-type variable that should be similar to (or the same as) ``x``
+    :param kwargs: [Optional] Additional parameters for the chosen engine; for instance,
+        ``cutoff`` for ``'difflib'`` and ``score_cutoff`` for ``'rapidfuzz'``.
+    :return: A string or list of strings similar to ``x``,
+        depending on ``n`` and the ``engine`` used.
     :rtype: str | list | None
 
-    .. _`difflib.get_close_matches`:
+    .. _`difflib.get_close_matches()`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
-    .. _`rapidfuzz.fuzz.QRatio`:
+    .. _`rapidfuzz.fuzz.QRatio()`:
         https://github.com/maxbachmann/RapidFuzz#quick-ratio
 
     .. note::
 
-        - By default, the function uses the built-in module
-          `difflib <https://docs.python.org/3/library/difflib.html>`_; when we set the parameter
-          ``engine='rapidfuzz'`` (or ``engine='fuzz'``), the function then relies on
-          `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_, which is not an essential dependency
-          for installing pyhelpers. We could however use ``pip`` (or ``conda``) to install it first
-          separately.
+        - By default, the function uses the built-in
+          `difflib  <https://docs.python.org/3/library/difflib.html>`_ module.
+        - When ``engine='rapidfuzz'`` (or simply, ``engine='fuzz'``), the function relies on
+          `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_, which is not a dependency of
+          pyhelpers. Install it separately using ``pip`` or ``conda``.
 
     **Examples**::
 
         >>> from pyhelpers.text import find_similar_str
-
         >>> lookup_lst = ['Anglia',
         ...               'East Coast',
         ...               'East Midlands',
@@ -291,21 +277,18 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
         ...               'Wales',
         ...               'Wessex',
         ...               'Western']
-
         >>> y = find_similar_str(x='angle', lookup_list=lookup_lst)
         >>> y
         'Anglia'
         >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, n=2)
         >>> y
         ['Anglia', 'Wales']
-
         >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='fuzz')
         >>> y
         'Anglia'
         >>> y = find_similar_str('angle', lookup_lst, n=2, engine='fuzz')
         >>> y
         ['Anglia', 'Wales']
-
         >>> y = find_similar_str(x='x', lookup_list=lookup_lst)
         >>> y is None
         True
@@ -315,7 +298,6 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
         >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, cutoff=0.25)
         >>> y
         'Wessex'
-
         >>> y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzz')
         >>> y
         'Wessex'

@@ -20,8 +20,8 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from .._cache import _check_dependency, _check_rel_pathname, _format_err_msg, _print_failure_msg, \
-    _USER_AGENT_STRINGS
+from .._cache import (_check_dependency, _check_rel_pathname, _format_err_msg, _print_failure_msg,
+                      _USER_AGENT_STRINGS)
 
 
 def is_network_connected():
@@ -34,7 +34,7 @@ def is_network_connected():
     **Examples**::
 
         >>> from pyhelpers.ops import is_network_connected
-        >>> is_network_connected()  # assuming the machine is currently connected to the Internet
+        >>> is_network_connected()  # Assuming we're currently connected to the Internet
         True
     """
 
@@ -132,6 +132,7 @@ def is_url_connectable(url):
 
 
 def is_downloadable(url, request_field='content-type', **kwargs):
+    # noinspection PyShadowingNames
     """
     Check if a URL leads to a webpage where downloadable content is available.
 
@@ -149,11 +150,11 @@ def is_downloadable(url, request_field='content-type', **kwargs):
     **Examples**::
 
         >>> from pyhelpers.ops import is_downloadable
-        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        >>> is_downloadable(logo_url)
+        >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> is_downloadable(url)
         True
-        >>> google_url = 'https://www.google.co.uk/'
-        >>> is_downloadable(google_url)
+        >>> url = 'https://www.google.co.uk/'
+        >>> is_downloadable(url)
         False
     """
 
@@ -171,6 +172,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 
 def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default', **kwargs):
+    # noinspection PyShadowingNames
     """
     Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session
     with configurable retry behaviour.
@@ -198,8 +200,8 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     **Examples**::
 
         >>> from pyhelpers.ops import init_requests_session
-        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        >>> s = init_requests_session(logo_url)
+        >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> s = init_requests_session(url)
         >>> type(s)
         requests.sessions.Session
     """
@@ -298,7 +300,8 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         user_agent_strings[browser_name] = sorted(list(set(fua_parser.data)))
 
     if dump_dat and all(user_agent_strings.values()):
-        path_to_uas = importlib.resources.files(__package__).joinpath("../data/user-agent-strings.json")
+        path_to_uas = importlib.resources.files(__package__).joinpath(
+            "../data/user-agent-strings.json")
         with path_to_uas.open(mode='w') as f:
             f.write(json.dumps(user_agent_strings, indent=4))
 
@@ -346,12 +349,12 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         >>> type(uas['Chrome'])
         list
         >>> uas['Chrome'][0]
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/...
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)...
         >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
         >>> type(uas_list)
         list
         >>> uas_list[0]  # a random one
-        'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.792.0 Saf...
+        'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.7...
 
     .. note::
 
@@ -413,7 +416,7 @@ def get_user_agent_string(fancy=None, **kwargs):
         >>> # Get a random Chrome user-agent string
         >>> uas_1 = get_user_agent_string(fancy='Chrome')
         >>> uas_1
-        'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.9...
+        'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrom...
 
     .. note::
 
@@ -461,10 +464,10 @@ def fake_requests_headers(randomized=True, **kwargs):
         >>> from pyhelpers.ops import fake_requests_headers
         >>> fake_headers_1 = fake_requests_headers()
         >>> fake_headers_1
-        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.19 (KHTML...
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.1...
         >>> fake_headers_2 = fake_requests_headers(randomized=False)
         >>> fake_headers_2  # using a random Chrome user-agent string
-        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1 (KHTML,...
+        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1...
 
     .. note::
 
@@ -536,6 +539,7 @@ def _download_file_from_url(response, path_to_file):
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
                            random_header=True, verbose=False, requests_session_args=None,
                            fake_headers_args=None, **kwargs):
+    # noinspection PyShadowingNames
     """
     Download a file from a valid URL.
 
@@ -576,13 +580,13 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> from pyhelpers.dirs import cd
         >>> from PIL import Image
         >>> import os
-        >>> logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
         >>> # Check if "python-logo.png" exists at the specified path
         >>> os.path.exists(path_to_img)
         False
         >>> # Download the .png file
-        >>> download_file_from_url(logo_url, path_to_img)
+        >>> download_file_from_url(url, path_to_img)
         >>> # If download is successful, check again:
         >>> os.path.exists(path_to_img)
         True
@@ -614,7 +618,8 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
     if os.path.exists(path_to_file_) and if_exists != 'replace':
         if verbose:
-            print(f"The destination already has a file named \"{os.path.basename(path_to_file_)}\". "
+            print(f"The destination already has a file named "
+                  f"\"{os.path.basename(path_to_file_)}\". "
                   f"The download is cancelled.")
 
     else:
@@ -651,6 +656,7 @@ class GitHubFileDownloader:
     """
 
     def __init__(self, repo_url, flatten_files=False, output_dir=None):
+        # noinspection PyShadowingNames
         """
         :param repo_url: URL of the GitHub repository to download from;
             it can be a path to a specific *blob* or *tree* location.
@@ -674,22 +680,24 @@ class GitHubFileDownloader:
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
-            >>> test_output_dir = "tests/temp"
+            >>> output_dir = "tests/temp"
             >>> # Download a single file
-            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
-            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+            >>> repo_url_ = 'https://github.com/mikeqfu/pyhelpers'
+            >>> repo_url = f'{repo_url_}/blob/master/tests/data/dat.csv'
+            >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
             >>> downloader.download()
             Downloaded to: tests/temp/tests/data/dat.csv
             1
             >>> # Download a directory
-            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
-            >>> downloader = GitHubFileDownloader(repo_url=test_url, output_dir=test_output_dir)
+            >>> repo_url = f"{repo_url_}/blob/master/tests/data"
+            >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
             >>> downloader.download()
             Downloaded to: tests/temp/tests/data/csr_mat.npz
             Downloaded to: tests/temp/tests/data/dat.csv
             Downloaded to: tests/temp/tests/data/dat.feather
             Downloaded to: tests/temp/tests/data/dat.joblib
             Downloaded to: tests/temp/tests/data/dat.json
+            Downloaded to: tests/temp/tests/data/dat.ods
             Downloaded to: tests/temp/tests/data/dat.pickle
             Downloaded to: tests/temp/tests/data/dat.txt
             Downloaded to: tests/temp/tests/data/dat.xlsx
@@ -697,15 +705,16 @@ class GitHubFileDownloader:
             Downloaded to: tests/temp/tests/data/zipped.txt
             Downloaded to: tests/temp/tests/data/zipped.zip
             Downloaded to: tests/temp/tests/data/zipped/zipped.txt
-            12
+            13
             >>> downloader = GitHubFileDownloader(
-            ...     repo_url=test_url, flatten_files=True, output_dir=test_output_dir)
+            ...     repo_url, flatten_files=True, output_dir=output_dir)
             >>> downloader.download()
             Downloaded to: tests/temp/csr_mat.npz
             Downloaded to: tests/temp/dat.csv
             Downloaded to: tests/temp/dat.feather
             Downloaded to: tests/temp/dat.joblib
             Downloaded to: tests/temp/dat.json
+            Downloaded to: tests/temp/dat.ods
             Downloaded to: tests/temp/dat.pickle
             Downloaded to: tests/temp/dat.txt
             Downloaded to: tests/temp/dat.xlsx
@@ -713,7 +722,9 @@ class GitHubFileDownloader:
             Downloaded to: tests/temp/zipped.txt
             Downloaded to: tests/temp/zipped.zip
             Downloaded to: tests/temp/zipped.txt
-            12
+            13
+            >>> import shutil
+            >>> shutil.rmtree(output_dir)
         """
 
         self.dir_out = ''
@@ -734,6 +745,7 @@ class GitHubFileDownloader:
 
     @staticmethod
     def create_url(url):
+        # noinspection PyShadowingNames
         """
         Create a URL compatible with GitHub's REST API from the given URL.
 
@@ -748,20 +760,20 @@ class GitHubFileDownloader:
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
-            >>> test_output_dir = "tests/temp"
-            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
-            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
-            >>> test_api_url, test_download_path = downloader.create_url(test_url)
-            >>> test_api_url
-            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
-            >>> test_download_path
+            >>> output_dir = "tests/temp"
+            >>> url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
+            >>> downloader = GitHubFileDownloader(url, output_dir=output_dir)
+            >>> api_url, download_path = downloader.create_url(url)
+            >>> api_url
+            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?...
+            >>> download_path
             'tests/data/dat.csv'
-            >>> test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
-            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
-            >>> test_api_url, test_download_path = downloader.create_url(test_url)
-            >>> test_api_url
+            >>> url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
+            >>> downloader = GitHubFileDownloader(url, output_dir=output_dir)
+            >>> api_url, download_path = downloader.create_url(url)
+            >>> api_url
             'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
-            >>> test_download_path
+            >>> download_path
             'docs'
         """
 
@@ -837,7 +849,8 @@ class GitHubFileDownloader:
         elif len(self.download_path.split(".")) == 0:
             self.dir_out = os.path.join(self.output_dir, self.download_path)
         else:
-            self.dir_out = os.path.join(self.output_dir, "/".join(self.download_path.split("/")[:-1]))
+            self.dir_out = os.path.join(
+                self.output_dir, "/".join(self.download_path.split("/")[:-1]))
         self.dir_out = re.sub(r"\\|\\\\|//", "/", self.dir_out)
 
         # Make a directory with the name which is taken from the actual repo
@@ -856,7 +869,8 @@ class GitHubFileDownloader:
         # If the data is a file, download it as one.
         if isinstance(data, dict) and data["type"] == "file":
             try:  # Download the file
-                self.download_single_file(data["download_url"], "/".join([self.dir_out, data["name"]]))
+                self.download_single_file(
+                    data["download_url"], "/".join([self.dir_out, data["name"]]))
                 self.total_files += 1
 
                 return self.total_files

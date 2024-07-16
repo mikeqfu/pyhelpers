@@ -465,8 +465,9 @@ def project_point_to_line(point, line, drop_dimension=None):
         >>> ax.set_zticklabels([])
         >>> fig.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # save_figure(fig, "docs/source/_images/geom-project_point_to_line-demo.svg", verbose=1)
-        >>> # save_figure(fig, "docs/source/_images/geom-project_point_to_line-demo.pdf", verbose=1)
+        >>> # path_to_fig_ = "docs/source/_images/geom-project_point_to_line-demo"
+        >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
     .. figure:: ../_images/geom-project_point_to_line-demo.*
         :name: geom-project_point_to_line-demo

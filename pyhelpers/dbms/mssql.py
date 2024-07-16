@@ -35,7 +35,7 @@ class MSSQL(_Base):
     #: [`DBMS-MS-2
     #: <https://docs.sqlalchemy.org/dialects/mssql.html#module-sqlalchemy.dialects.mssql.pyodbc>`_].
     DEFAULT_DRIVER: str = 'pyodbc'
-    #: Default ODBC driver.
+    #: Default `ODBC <https://en.wikipedia.org/wiki/Open_Database_Connectivity>`_ driver.
     DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 17 for SQL Server'
     #: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
     DEFAULT_HOST: str = 'localhost'
@@ -218,17 +218,22 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> conn_str = mssql.specify_conn_str()
             >>> conn_str
-            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};Trusted_...
+            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};...
         """
 
         # mssql+pyodbc://<username>:<password>@<dsnname>
-        db_name = copy.copy(self.database_name) if database_name is None else copy.copy(database_name)
+        if database_name is None:
+            db_name = copy.copy(self.database_name)
+        else:
+            db_name = copy.copy(database_name)
 
-        conn_string = f'DRIVER={{{self.odbc_driver}}};SERVER={{{self.host}}};DATABASE={{{db_name}}};'
+        conn_string = \
+            f'DRIVER={{{self.odbc_driver}}};SERVER={{{self.host}}};DATABASE={{{db_name}}};'
 
         if auth in {None, 'Windows Authentication'}:
-            # The trusted_connection setting indicates whether to use Windows Authentication Mode for
-            # login validation or not. This specifies the user used to establish this connection.
+            # The trusted_connection setting indicates whether to use Windows Authentication Mode
+            # for login validation or not.
+            # This specifies the user used to establish this connection.
             # In Microsoft implementations, this user account is a Windows user account.
             conn_string += 'Trusted_Connection=yes;'
         else:  # e.g. auth = 'SQL Server Authentication'
@@ -285,7 +290,8 @@ class MSSQL(_Base):
             >>> db_engine.dispose()
         """
 
-        conn_string = self.specify_conn_str(database_name=database_name, auth=auth, password=password)
+        conn_string = self.specify_conn_str(
+            database_name=database_name, auth=auth, password=password)
 
         url = sqlalchemy.engine.URL.create(
             drivername=f'{self.DEFAULT_DIALECT}+{self.DEFAULT_DRIVER}',
@@ -757,7 +763,8 @@ class MSSQL(_Base):
         else:
             print(f"The schema {s_name} already exists.")
 
-    def get_schema_info(self, names_only=True, include_all=False, column_names=None, verbose=False):
+    def get_schema_info(self, names_only=True, include_all=False, column_names=None,
+                        verbose=False):
         """
         Retrieve information about existing schemas.
 
@@ -1221,7 +1228,8 @@ class MSSQL(_Base):
         connection = self.engine.raw_connection()
         try:
             cursor = connection.cursor()
-            col_names = [x.column_name for x in cursor.columns(table=table_name, schema=schema_name_)]
+            col_names = [
+                x.column_name for x in cursor.columns(table=table_name, schema=schema_name_)]
             cursor.close()
         finally:
             connection.close()
@@ -1306,9 +1314,9 @@ class MSSQL(_Base):
               'spt_fallback_dev',
               'spt_fallback_usg',
               'spt_monitor']}
-            >>> mssql._has_dtypes(table_name='MSreplication_options', dtypes='varbinary')
+            >>> mssql._has_dtypes('MSreplication_options', dtypes='varbinary')
             (False, [])
-            >>> mssql._has_dtypes(table_name='MSreplication_options', dtypes=['varbinary', 'int'])
+            >>> mssql._has_dtypes('MSreplication_options', dtypes=['varbinary', 'int'])
             (True, ['major_version', 'minor_version', 'revision', 'install_failures'])
         """
 
@@ -1347,7 +1355,8 @@ class MSSQL(_Base):
             defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
             if ``schema_name=None``.
         :type schema_name: str | None
-        :return: Data type, whether the table has this data type and the corresponding column names.
+        :return: Data type, whether the table has this data type and
+            the corresponding column names.
         :rtype: typing.Generator[str, bool, list]
 
         **Examples**::
@@ -1405,7 +1414,8 @@ class MSSQL(_Base):
 
                 yield data_type, has_the_dtypes, col_names
 
-    def _column_names_in_query(self, table_name, column_names=None, schema_name=None, exclude=None):
+    def _column_names_in_query(self, table_name, column_names=None, schema_name=None,
+                               exclude=None):
         """
         Format column names for use in a SQL query statement.
 
@@ -1504,16 +1514,18 @@ class MSSQL(_Base):
             # Close the cursor
             cursor.close()
 
-            # Each element of 'tbl_pks' (as a dict) is in the format of {'table_name': 'primary key'}
+            # Each element of 'tbl_pks' (as a dict) is formatted {'table_name': 'primary key'}
             # noinspection PyTypeChecker
             tbl_names_set = functools.reduce(operator.or_, (set(d.keys()) for d in tbl_pks), set())
             # Find all primary keys for each table
-            tbl_pk_dict = dict((tbl, [d[tbl] for d in tbl_pks if tbl in d]) for tbl in tbl_names_set)
+            tbl_pk_dict = dict(
+                (tbl, [d[tbl] for d in tbl_pks if tbl in d]) for tbl in tbl_names_set)
 
             if table_name:
                 tbl_pk_dict = tbl_pk_dict[table_name]
 
-        except KeyError:  # Most likely that the table (i.e. 'table_name') does not have any primary key
+        except KeyError:
+            # Most likely that the table (i.e. 'table_name') does not have any primary key
             tbl_pk_dict = None
 
         return tbl_pk_dict
@@ -1666,7 +1678,7 @@ class MSSQL(_Base):
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
             >>> test_table_name = 'example_df'
-            >>> testdb.import_data(example_df, table_name=test_table_name, index=True, verbose=2)
+            >>> testdb.import_data(example_df, test_table_name, index=True, verbose=2)
             To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Importing the data into the table [dbo].[example_df] ... Done.
@@ -1706,8 +1718,9 @@ class MSSQL(_Base):
 
             self._import_data(
                 data=dat, table_name=table_name, schema_name=schema_name, if_exists=if_exists,
-                force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
-                index=False, confirmation_required=confirmation_required, verbose=verbose, **kwargs)
+                force_replace=force_replace, chunk_size=chunk_size, col_type=col_type,
+                method=method, index=False, confirmation_required=confirmation_required,
+                verbose=verbose, **kwargs)
 
         self.varchar_to_geometry_dtype(
             table_name=table_name, schema_name=schema_name, geom_column_name=geom_column_name,
@@ -1718,8 +1731,8 @@ class MSSQL(_Base):
         """
         Generate SQL format string based on data type.
 
-        :param dtype: Data type identifier, e.g. ``'hierarchyid'``, ``'varbinary'``, ``'geometry'``,
-            or others.
+        :param dtype: Data type identifier, e.g. ``'hierarchyid'``, ``'varbinary'``,
+            ``'geometry'`` or others.
         :type dtype: str
         :return: SQL format string for reading data of the specified type.
         :rtype: str
@@ -1900,12 +1913,12 @@ class MSSQL(_Base):
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
             >>> test_table_name = 'example_df'
-            >>> testdb.import_data(example_df, table_name=test_table_name, index=True, verbose=2)
+            >>> testdb.import_data(example_df, test_table_name, index=True, verbose=2)
             To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Importing the data into the table [dbo].[example_df] ... Done.
             >>> # Retrieve the imported data
-            >>> example_df_ret = testdb.read_table(table_name=test_table_name, index_col='City')
+            >>> example_df_ret = testdb.read_table(test_table_name, index_col='City')
             >>> example_df_ret
                         Longitude   Latitude
             City

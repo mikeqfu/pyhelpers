@@ -294,13 +294,15 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         array([[-2.2451148, 53.4794892],
                [-2.2451148, 53.4794892],
                [-1.5437941, 53.7974185]])
-        >>> closest_to_each = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
+        >>> closest_to_each = find_closest_points(
+        ...     pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
         >>> closest_to_each.wkt
         'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
         >>> _, idx = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, ret_idx=True)
         >>> idx
         array([2, 2, 3], dtype=int64)
-        >>> _, _, dist = find_closest_points(cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
+        >>> _, _, dist = find_closest_points(
+        ...     cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
         >>> dist
         array([0.75005697, 3.11232712, 1.17847198])
         >>> cities_geoms_1 = LineString(cities)
@@ -317,7 +319,8 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
 
     ckdtree = _check_dependency(name='scipy.spatial')
 
-    pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
+    pts_, ref_pts_ = map(
+        functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
     ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
     n_workers = os.cpu_count() - 1
@@ -417,8 +420,9 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         >>> fig.tight_layout()
         >>> fig.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # save_figure(fig, "docs/source/_images/geom-find_shortest_path-demo.svg", verbose=True)
-        >>> # save_figure(fig, "docs/source/_images/geom-find_shortest_path-demo.pdf", verbose=True)
+        >>> # path_to_fig_ = "docs/source/_images/geom-find_shortest_path-demo"
+        >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
     .. figure:: ../_images/geom-find_shortest_path-demo.*
         :name: geom-find_shortest_path-demo
@@ -440,7 +444,8 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
 
         nx_g = nx.from_scipy_sparse_array(kn_g)
 
-        possible_paths = [list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence))]
+        possible_paths = [
+            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence))]
 
         min_dist, idx = np.inf, 0
 
@@ -667,7 +672,8 @@ def get_rectangle_centroid(rectangle, as_geom=False):
         try:
             rectangle_ = shapely.geometry.Polygon(rectangle)
         except (TypeError, ValueError, AttributeError):
-            rectangle_ = shapely.geometry.MultiPolygon(shapely.geometry.Polygon(x) for x in rectangle)
+            rectangle_ = shapely.geometry.MultiPolygon(
+                shapely.geometry.Polygon(x) for x in rectangle)
             rectangle_ = rectangle_.convex_hull
     else:
         rectangle_ = copy.copy(rectangle)

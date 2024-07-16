@@ -88,8 +88,9 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         >>> sketch_square(c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5))
         >>> plt.show()
         >>> # from pyhelpers.store import save_fig
-        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-1.svg", verbose=True)
-        >>> # save_fig("docs/source/_images/geom-sketch_square-demo-1.pdf", verbose=True)
+        >>> # path_to_fig_ = "docs/source/_images/geom-sketch_square-demo-1"
+        >>> # save_fig(f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_fig(f"{path_to_fig_}.pdf", verbose=True)
 
     The above exmaple is illustrated in :numref:`geom-sketch_square-demo-1`:
 

@@ -262,7 +262,8 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
 
     :param reset: Whether to reset all parameters to their default settings; defaults to ``False``.
     :type reset: bool
-    :param backend: Specify the backend used for rendering and GUI integration; defaults to ``None``.
+    :param backend: Specify the backend used for rendering and GUI integration;
+        defaults to ``None``.
     :type backend: str | None
     :param font_name: Name of the font to be used; defaults to ``'Times New Roman'``.
     :type font_name: str | None
@@ -314,8 +315,9 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
         >>> from pyhelpers.settings import mpl_preferences
         >>> mpl_preferences(fig_style='ggplot')
         >>> example_plot(random_array)
-        >>> # save_fig("docs/source/_images/settings-mpl_preferences-demo-2.svg", verbose=True)
-        >>> # save_fig("docs/source/_images/settings-mpl_preferences-demo-2.pdf", verbose=True)
+        >>> # path_to_fig_ = "docs/source/_images/settings-mpl_preferences-demo-2"
+        >>> # save_fig(f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_fig(f"{path_to_fig_}.pdf", verbose=True)
 
     .. figure:: ../_images/settings-mpl_preferences-demo-2.*
         :name: settings-mpl_preferences-demo-2

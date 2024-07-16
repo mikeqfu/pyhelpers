@@ -1421,6 +1421,7 @@ class PostgreSQL(_Base):
 
     def read_sql_query(self, sql_query, method='tempfile', max_size_spooled=1, delimiter=',',
                        tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
+        # noinspection PyShadowingNames
         """
         Read table data by executing a SQL query (recommended for large tables).
 
@@ -1538,17 +1539,17 @@ class PostgreSQL(_Base):
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
 
-        **Aside**: a brief example of using the parameter ``params`` for `pandas.read_sql
+        **Aside:** a brief example of using the parameter ``params`` for `pandas.read_sql
         <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html>`_
 
         .. code-block:: python
 
-            import datetime
-            import pandas as pd
-            sql_qry = 'SELECT * FROM "table_name" '
-                      'WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
-            params = {'d_start': datetime.datetime.today(), 'd_end': datetime.datetime.today()}
-            data_frame = pd.read_sql(sql=sql_qry, con=testdb.engine, params=params)
+            >>> import datetime
+            >>> import pandas as pd
+            >>> sql_qry = 'SELECT * FROM "table_name" '
+            ...           'WHERE "timestamp_column_name" BETWEEN %(ts_start)s AND %(ts_end)s'
+            >>> params = {'d_start': datetime.datetime.today(), 'd_end': datetime.datetime.today()}
+            >>> data_frame = pd.read_sql(sql=sql_qry, con=testdb.engine, params=params)
         """
 
         valid_methods = {'tempfile', 'stringio', 'spooled'}

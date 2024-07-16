@@ -224,7 +224,10 @@ def verify_password(password, salt, key, iterations=None):
         - Examples of the function :func:`pyhelpers.ops.hash_password`.
     """
 
-    pwd = str(password).encode('UTF-8') if not isinstance(password, (bytes, bytearray)) else password
+    if not isinstance(password, (bytes, bytearray)):
+        pwd = str(password).encode('UTF-8')
+    else:
+        pwd = password
     iterations_ = 100000 if iterations is None else iterations
 
     def _is_hex(x):

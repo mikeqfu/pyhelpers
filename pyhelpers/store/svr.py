@@ -7,111 +7,13 @@ import logging
 import os
 import pathlib
 import pickle
-import platform
 import subprocess
 import sys
 
 import pandas as pd
 
+from ._base import _autofit_column_width, _check_saving_path
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_msg
-
-
-def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
-                       state_prep="to", print_suffix="", print_end=" ... ", ret_info=False):
-    # noinspection PyShadowingNames
-    """
-    Verify a specified file path before saving.
-
-    :param path_to_file: Path where the file will be saved.
-    :type path_to_file: str | pathlib.Path
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
-    :param print_prefix: Text prefixed to the default print message; defaults to ``""``.
-    :type print_prefix: str
-    :param state_verb: Verb indicating the action being performed, e.g. *saving* or *updating*;
-        defaults to ``"Saving"``.
-    :type state_verb: str
-    :param state_prep: Preposition associated with ``state_verb``; defaults to ``"to"``.
-    :type state_prep: str
-    :param print_suffix: Text suffixed to the default print message; defaults to ``""``.
-    :type print_suffix: str
-    :param print_end: String passed to the ``end`` parameter of ``print``; defaults to ``" ... "``.
-    :type print_end: str
-    :param ret_info: Whether to return file path information; defaults to ``False``.
-    :type ret_info: bool
-    :return: A tuple containing the relative path and, if ``ret_info=True``, the filename.
-    :rtype: tuple
-
-    **Tests**::
-
-        >>> from pyhelpers.store import _check_saving_path
-        >>> from pyhelpers.dirs import cd
-        >>> path_to_file = cd()
-        >>> try:
-        ...     _check_saving_path(path_to_file, verbose=True)
-        ... except AssertionError as e:
-        ...     print(e)
-        The input for `path_to_file` may not be a file path.
-        >>> path_to_file = "pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Saving "pyhelpers.pdf" ... Passed.
-        >>> path_to_file = cd("tests\\documents", "pyhelpers.pdf")
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Saving "pyhelpers.pdf" to "tests\\" ... Passed.
-        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\Windows\\" ... Passed.
-        >>> path_to_file = "C:\\pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\" ... Passed.
-    """
-
-    abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    assert not abs_path_to_file.is_dir(), "The input for `path_to_file` may not be a file path."
-
-    filename = pathlib.Path(abs_path_to_file).name if abs_path_to_file.suffix else ""
-
-    try:
-        rel_path = pathlib.Path(os.path.relpath(abs_path_to_file.parent))
-
-        if rel_path == rel_path.parent:
-            rel_path = abs_path_to_file.parent
-        else:  # In case the specified path does not exist
-            os.makedirs(abs_path_to_file.parent, exist_ok=True)
-
-    except ValueError:
-        if verbose == 2:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                f'\n\t"{abs_path_to_file.parent}" is outside the current working directory.')
-
-        rel_path = abs_path_to_file.parent
-
-    if verbose:
-        if os.path.exists(abs_path_to_file):
-            state_verb, state_prep = "Updating", "at"
-
-        slash = "\\" if platform.system() == 'Windows' else "/"
-
-        end = print_end if print_end else "\n"
-
-        if rel_path == rel_path.parent and rel_path.drive == pathlib.Path.cwd().drive:
-            msg_fmt = '{}{} "{}"{}'
-            print(msg_fmt.format(
-                print_prefix, state_verb, filename, print_suffix).replace(
-                ":\\\\", ":\\"), end=end)
-        else:
-            msg_fmt = '{}{} "{}" {} "{}' + slash + '"{}'
-            print(msg_fmt.format(
-                print_prefix, state_verb, filename, state_prep, rel_path, print_suffix).replace(
-                ":\\\\", ":\\"), end=end)
-
-    if ret_info:
-        return rel_path, filename
 
 
 def save_pickle(data, path_to_file, verbose=False, **kwargs):
@@ -169,48 +71,6 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def _autofit_column_width(writer, writer_kwargs, **kwargs):
-    """
-    Automatically adjusts the column widths in an Excel spreadsheet based on the content length.
-
-    This function is specifically designed for *openpyxl* engine when working with *Pandas*
-    `ExcelWriter`_. It iterates through each column of the specified sheet and calculates
-    the maximum length of the content. It then adjusts the column width to accommodate the
-    longest content plus some padding.
-
-    :param writer: ExcelWriter object used to write data into Excel file.
-    :type writer: pandas.ExcelWriter
-    :param writer_kwargs: Keyword arguments passed to the `ExcelWriter`_, including the engine.
-    :type writer_kwargs: dict
-    :param kwargs: [Optional] Additional parameters.
-
-    .. _ExcelWriter:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
-
-    .. note::
-
-        - This function assumes that *openpyxl* engine is used
-          (i.e. ``writer_kwargs['engine'] == 'openpyxl'``).
-        - It modifies the column dimensions directly in the ``pandas.ExcelWriter`` object.
-
-    .. seealso::
-
-        - For more information on *openpyxl*, refer to the official documentation:
-          https://openpyxl.readthedocs.io/en/stable/
-    """
-
-    if 'sheet_name' in kwargs and writer_kwargs['engine'] == 'openpyxl':
-        # Reference: https://stackoverflow.com/questions/39529662/
-        ws = writer.sheets[kwargs['sheet_name']]
-        for column in ws.columns:
-            max_length = 0
-            column_letter = column[0].column_letter
-            for cell in column:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            ws.column_dimensions[column_letter].width = (max_length + 2) * 1.1
-
-
 def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',',
                      autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
     """
@@ -248,13 +108,13 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_
         or `pandas.DataFrame.to_csv()`_.
 
-    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`OpenDocument`: https://en.wikipedia.org/wiki/OpenDocument
     .. _`xlsxwriter`: https://pypi.org/project/XlsxWriter/
     .. _`openpyxl`: https://pypi.org/project/openpyxl/
     .. _`odfpy`: https://pypi.org/project/odfpy/
-    .. _`pandas.ExcelWriter()`: https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html
+    .. _`pandas.ExcelWriter()`:
+        https://pandas.pydata.org/docs/reference/api/pandas.ExcelWriter.html
     .. _`pandas.DataFrame.to_excel()`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_excel.html
     .. _`pandas.DataFrame.to_csv()`:
@@ -328,9 +188,7 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
                       autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
     """
-    Save multiple dataframes to a multi-sheet
-    `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ or
-    `OpenDocument <https://en.wikipedia.org/wiki/OpenDocument>`_ format file.
+    Save multiple dataframes to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
     The file extension can be ``.xlsx`` (or ``.xls``) for `Microsoft Excel`_ files or
     ``.ods`` for `OpenDocument`_ files.
@@ -705,6 +563,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
 
 
 def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
+    # noinspection PyShadowingNames
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
@@ -751,10 +610,10 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     .. code-block:: python
 
         >>> img_dir = cd("tests\\images")
-        >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
-        >>> fig.savefig(svg_file_pathname)  # Save the figure as a .svg file
-        >>> emf_file_pathname = cd(img_dir, "store-save_fig-demo.emf")
-        >>> save_svg_as_emf(svg_file_pathname, emf_file_pathname, verbose=True)
+        >>> path_to_svg = cd(img_dir, "store-save_fig-demo.svg")
+        >>> fig.savefig(path_to_svg)  # Save the figure as a .svg file
+        >>> path_to_emf = cd(img_dir, "store-save_fig-demo.emf")
+        >>> save_svg_as_emf(path_to_svg, path_to_emf, verbose=True)
         Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
         >>> plt.close()
     """
@@ -764,19 +623,13 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
         f"C:\\Program Files\\Inkscape\\{exe_name}",
         f"C:\\Program Files\\Inkscape\\bin\\{exe_name}",
     }
-    inkscape_exists, inkscape_exe_ = _check_file_pathname(exe_name, optional_pathnames, inkscape_exe)
+    inkscape_exists, inkscape_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=inkscape_exe)
 
     abs_svg_path, abs_emf_path = map(pathlib.Path, (path_to_svg, path_to_emf))
     assert abs_svg_path.suffix.lower() == ".svg"
 
     if inkscape_exists:
-        # if verbose:
-        #     if abs_emf_path.exists():
-        #         msg = f"Updating \"{abs_emf_path.name}\" at " \
-        #               f"\"{os.path.relpath(abs_emf_path.parent)}\\\""
-        #     else:
-        #         msg = f"Saving the {abs_svg_path.suffix} file as \"{os.path.relpath(abs_emf_path)}\""
-        #     print(msg, end=" ... ")
         _check_saving_path(abs_emf_path, verbose=verbose)
 
         try:
@@ -803,8 +656,9 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     else:
         if verbose:
             print(
-                "\"Inkscape\" (https://inkscape.org) is required to convert a SVG file to an EMF file;"
-                " however, it is not found on this device.\nInstall it and then try again.")
+                "\"Inkscape\" (https://inkscape.org) is required to "
+                "convert a SVG file to an EMF file; however, it is not found on this device."
+                "\nInstall it and then try again.")
 
 
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
@@ -885,8 +739,9 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
 def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Save a figure object to a file in a supported format.
-    (An alternative to :func:`~pyhelpers.store.save_fig`.)
+    Save a figure object to a file in a supported format (with the figure object specified).
+
+    This function serves an alternative to the :func:`~pyhelpers.store.save_fig` function.
 
     :param data: The figure object to be saved.
     :type data: matplotlib.Figure | seaborn.FacetGrid
@@ -1171,7 +1026,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     .. seealso::
 
-        - Examples for the function :func:`pyhelpers.store.load_data`.
+        - Examples for the function :func:`~pyhelpers.store.load_data`.
     """
 
     path_to_file_ = str(path_to_file).lower()

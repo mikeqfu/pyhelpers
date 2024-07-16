@@ -840,8 +840,9 @@ def cmap_discretisation(cmap, n_colours):
         >>> ax.axis('off')
         >>> fig.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # save_figure(fig, "docs/source/_images/ops-cmap_discretisation-demo.svg", verbose=True)
-        >>> # save_figure(fig, "docs/source/_images/ops-cmap_discretisation-demo.pdf", verbose=True)
+        >>> # path_to_fig_ = "docs/source/_images/ops-cmap_discretisation-demo"
+        >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
     The exmaple is illustrated in :numref:`ops-cmap_discretisation-demo`:
 
@@ -869,7 +870,8 @@ def cmap_discretisation(cmap, n_colours):
 
     for ki, key in enumerate(('red', 'green', 'blue')):
         c_dict[key] = [
-            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)]
+            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki])
+            for x in range(n_colours + 1)]
 
     colour_map = mpl_colors.LinearSegmentedColormap(cmap_.name + '_%d' % n_colours, c_dict, 1024)
 
@@ -921,18 +923,18 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> # ax.axis('off')
         >>> fig1.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # save_figure(fig1, "docs/source/_images/ops-colour_bar_index-demo-1.svg", verbose=True)
-        >>> # save_figure(fig1, "docs/source/_images/ops-colour_bar_index-demo-1.pdf", verbose=True)
+        >>> # path_to_fig1_ = "docs/source/_images/ops-colour_bar_index-demo-1"
+        >>> # save_figure(fig1, f"{path_to_fig1_}.svg", verbose=True)
+        >>> # save_figure(fig1, f"{path_to_fig1_}.pdf", verbose=True)
 
     The above example is illustrated in :numref:`ops-colour_bar_index-demo-1`:
 
     .. figure:: ../_images/ops-colour_bar_index-demo-1.*
         :name: ops-colour_bar_index-demo-1
         :align: center
-        :width: 23%
+        :width: 32%
 
-        An example of colour bar with numerical index,
-        created by the function :func:`~pyhelpers.ops.colour_bar_index`.
+        An example of colour bar with numerical index.
 
     .. code-block:: python
 
@@ -944,18 +946,18 @@ def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
         >>> cbar2.ax.tick_params(labelsize=14)
         >>> # ax.axis('off')
         >>> fig2.show()
-        >>> # save_figure(fig2, "docs/source/_images/ops-colour_bar_index-demo-2.svg", verbose=True)
-        >>> # save_figure(fig2, "docs/source/_images/ops-colour_bar_index-demo-2.pdf", verbose=True)
+        >>> # path_to_fig2_ = "docs/source/_images/ops-colour_bar_index-demo-2"
+        >>> # save_figure(fig2, f"{path_to_fig2_}.svg", verbose=True)
+        >>> # save_figure(fig2, f"{path_to_fig2_}.pdf", verbose=True)
 
     This second example is illustrated in :numref:`ops-colour_bar_index-demo-2`:
 
     .. figure:: ../_images/ops-colour_bar_index-demo-2.*
         :name: ops-colour_bar_index-demo-2
         :align: center
-        :width: 23%
+        :width: 32%
 
-        An example of colour bar with textual index,
-        created by the function :func:`~pyhelpers.ops.manip.colour_bar_index`.
+        An example of colour bar with textual index.
     """
 
     mpl_cm, mpl_plt = map(_check_dependency, ['matplotlib.cm', 'matplotlib.pyplot'])

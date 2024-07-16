@@ -232,6 +232,7 @@ def interquartile_range(num_dat):
 
 
 def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M:%S.%f'):
+    # noinspection PyShadowingNames
     """
     Find the closest date to a given date from a list of dates.
 
@@ -252,8 +253,8 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
 
         >>> from pyhelpers.ops import find_closest_date
         >>> import pandas
-        >>> example_dates = pandas.date_range('2019-01-02', '2019-12-31')
-        >>> example_dates
+        >>> lookup_dates = pandas.date_range('2019-01-02', '2019-12-31')
+        >>> lookup_dates
         DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
                        '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09',
                        '2019-01-10', '2019-01-11',
@@ -262,13 +263,13 @@ def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M
                        '2019-12-26', '2019-12-27', '2019-12-28', '2019-12-29',
                        '2019-12-30', '2019-12-31'],
                       dtype='datetime64[ns]', length=364, freq='D')
-        >>> example_date = '2019-01-01'
-        >>> closest_example_date = find_closest_date(example_date, example_dates)
+        >>> date = '2019-01-01'
+        >>> closest_example_date = find_closest_date(date, lookup_dates)
         >>> closest_example_date
         '2019-01-02 00:00:00.000000'
-        >>> example_date = pandas.to_datetime('2019-01-01')
-        >>> closest_example_date = find_closest_date(example_date, example_dates, as_datetime=True)
-        >>> closest_example_date
+        >>> date = pandas.to_datetime('2019-01-01')
+        >>> closest_date = find_closest_date(date, lookup_dates, as_datetime=True)
+        >>> closest_date
         Timestamp('2019-01-02 00:00:00', freq='D')
     """
 
