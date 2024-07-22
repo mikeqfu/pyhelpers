@@ -1,5 +1,6 @@
 # PyHelpers
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/87a9eedff50147fbb3dbd6ca3f15ce3f)](https://app.codacy.com/gh/mikeqfu/pyhelpers?utm_source=github.com&utm_medium=referral&utm_content=mikeqfu/pyhelpers&utm_campaign=Badge_Grade)
 [![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
 [![Documentation Status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
