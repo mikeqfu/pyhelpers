@@ -7,17 +7,23 @@ PyHelpers Documentation
 .. toctree::
     :maxdepth: 1
     :includehidden:
-    :caption: Documentation
+    :caption: Getting Started
 
     introduction
     installation
-    modules
-    contributors
-    license
+    quick-start
 
 .. toctree::
     :maxdepth: 1
     :includehidden:
-    :caption: Tutorial
+    :caption: Usage & Reference
 
-    quick-start
+    modules
+
+.. toctree::
+    :maxdepth: 1
+    :includehidden:
+    :caption: Additional Info
+
+    contributors
+    license

@@ -30,15 +30,15 @@ extensions = [  # Sphinx extension module names, which can be named 'sphinx.ext.
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
+    'sphinx.ext.githubpages',
     'sphinx.ext.intersphinx',
     'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.todo',
     'sphinx.ext.linkcode',
+    'sphinx.ext.napoleon',
+    # 'sphinx.ext.doctest',
+    'sphinx.ext.todo',
     'sphinx_copybutton',
     'sphinx_toggleprompt',
-    'sphinx.ext.doctest',
-    # 'sphinx.ext.viewcode',
     "IPython.sphinxext.ipython_console_highlighting",
     "IPython.sphinxext.ipython_directive",
 ]
@@ -166,7 +166,48 @@ pygments_style = 'sphinx'  # or 'default'
 html_static_path = ['_static']
 
 # Add custom CSS:
-html_css_files = ['custom.css']
+html_css_files = [
+    'custom.css',
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/fontawesome.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/solid.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/brands.min.css",
+]
+
+html_theme_options = {
+    "navigation_with_keys": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/mikeqfu/pyhelpers",
+            "class": "fa-brands fa-github",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/pyhelpers/",
+            "class": "fa-brands fa-python",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/in/qianfu",
+            "class": "fa-brands fa-linkedin-in",
+        },
+        {
+            "name": "Email",
+            "url": "mailto:q.fu@bham.ac.uk",
+            "class": "fa-regular fa-envelope",
+        },
+        # {
+        #     "name": "Cite",
+        #     "url": "https://zenodo.org/doi/10.5281/zenodo.4017438",
+        #     "class": "fa-solid fa-quote-right",
+        # },
+        # {
+        #     "name": "X",
+        #     "url": "https://x.com/mikeqfu",
+        #     "class": "fa-brands fa-x-twitter fa-solid",
+        # },
+    ],
+}
 
 # Add custom JavaScript:
 html_js_files = ['custom.js']
@@ -264,6 +305,7 @@ latex_maketitle = r'''
     \cleardoublepage
     \makeatletter
     \hypertarget{lofpage}{}
+    \renewcommand*{\addvspace}[1]{}
     \listoffigures
     \bookmark[dest=lofpage]{List of Figures}
     \makeatother
@@ -305,7 +347,7 @@ latex_preamble = r'''
     \renewenvironment{longtable}
                      {\rowcolors{1}{anti-flashwhite}{white}\oldlongtable}
                      {\endoldlongtable}
-    \usepackage[open]{bookmark}
+    \usepackage[open,openlevel=1]{bookmark}
     \bookmarksetup{numbered}
 
     \addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
