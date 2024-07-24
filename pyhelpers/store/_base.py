@@ -1,3 +1,7 @@
+"""
+Basic functions that support the main modules of :mod:`~pyhelpers.dbms`.
+"""
+
 import copy
 import logging
 import os

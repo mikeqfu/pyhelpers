@@ -1762,7 +1762,7 @@ class MSSQL(_Base):
         :return: Original column names and formatted column names for SQL query.
         :rtype: tuple[list, str]
         """
-        
+
         col_names = [column_names] if isinstance(column_names, str) else column_names.copy()
 
         column_info = self.get_column_info(table_name=table_name, schema_name=schema_name)
