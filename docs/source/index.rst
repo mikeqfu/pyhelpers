@@ -18,7 +18,7 @@ PyHelpers
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
 .. |Codacy grade| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
     :alt: Codacy grade (Code quality)
-    :target: https://www.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mikeqfu/pyhelpers&amp;utm_campaign=Badge_Grade
+    :target: https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
 .. |DOI| image:: https://zenodo.org/badge/173177909.svg
     :alt: Zenodo - DOI
     :target: https://zenodo.org/badge/latestdoi/173177909
@@ -36,20 +36,25 @@ With its comprehensive range of practical utilities, PyHelpers enhances producti
 .. toctree::
     :maxdepth: 1
     :includehidden:
-    :caption: Documentation
+    :caption: Getting Started
 
     installation
-    modules
-    contributors
-    license
+    quick-start
 
 .. toctree::
     :maxdepth: 1
     :includehidden:
-    :caption: Tutorial
+    :caption: Usage & Reference
 
-    quick-start
+    modules
 
+.. toctree::
+    :maxdepth: 1
+    :includehidden:
+    :caption: Additional Info
+
+    contributors
+    license
 
 Indices
 =======

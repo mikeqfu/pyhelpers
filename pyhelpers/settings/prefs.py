@@ -9,27 +9,36 @@ from .._cache import _check_dependency
 
 
 def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_asian_text=False,
-                   ignore_future_warning=True):
+                   ignore_future_warning=True, **kwargs):
     """
     Alter parameters of some frequently-used
-    `Pandas options and settings <https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html>`_
-    for displaying `data frame <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html>`_.
+    `Pandas options and settings
+    <https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html>`_
+    for displaying `pandas dataframes
+    <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html>`_.
 
-    :param reset: whether to reset all to default settings, defaults to ``False``
+    This function allows adjusting various display options such as maximum number of columns,
+    maximum number of rows, decimal precision, handling of East Asian text and suppression of
+    future warnings.
+
+    :param reset: Whether to reset all settings to their defaults; defaults to ``False``.
     :type reset: bool | str
-    :param max_columns: maximum number of columns, which corresponds to ``'display.max_columns'`` for
-        `pandas.set_option()`_, defaults to ``100``
+    :param max_columns: Maximum number of columns to display; corresponds to
+        ``'display.max_columns'`` in `pandas.set_option()`_; defaults to ``100``.
     :type max_columns: int
-    :param max_rows: maximum number of rows, which corresponds to ``'display.max_rows'`` for
-        `pandas.set_option()`_, defaults to ``20``
+    :param max_rows: Maximum number of rows to display; corresponds to ``'display.max_rows'`` in
+        `pandas.set_option()`_; defaults to ``20``.
     :type max_rows: int
-    :param precision: number of decimal places, which corresponds to ``'display.precision'`` for
-        `pandas.set_option()`_, defaults to ``4``
+    :param precision: Number of decimal places to display; corresponds to ``'display.precision'``
+        in `pandas.set_option()`_; defaults to ``4``.
     :type precision: int
-    :param east_asian_text: whether to adjust the display for east asian texts, defaults to ``False``
+    :param east_asian_text: Whether to adjust the display for East Asian text;
+        defaults to ``False``.
     :type east_asian_text: bool
-    :param ignore_future_warning: whether to ignore/suppress future warnings, defaults to ``True``
+    :param ignore_future_warning: Whether to ignore or suppress future warnings;
+        defaults to ``True``.
     :type ignore_future_warning: bool
+    :param kwargs: [Optional] Additional parameters for the function `pandas.set_option()`_. 
 
     .. _`pandas.set_option()`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
@@ -38,11 +47,8 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
 
         >>> import numpy as np
         >>> import pandas as pd
-
         >>> np.random.seed(0)
-
         >>> random_array = np.random.rand(100, 100)
-
         >>> data_frame = pd.DataFrame(random_array)
         >>> data_frame
                   0         1         2   ...        97        98        99
@@ -64,9 +70,7 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     .. code-block:: python
 
         >>> from pyhelpers.settings import pd_preferences
-
         >>> pd_preferences(max_columns=6, precision=2)
-
         >>> data_frame
              0    1    2   ...   97   98   99
         0  0.55 0.72 0.60  ... 0.02 0.83 0.00
@@ -87,7 +91,6 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     .. code-block:: python
 
         >>> pd_preferences(reset=True)
-
         >>> data_frame
                   0         1         2   ...        97        98        99
         0   0.548814  0.715189  0.602763  ...  0.020108  0.828940  0.004695
@@ -105,8 +108,8 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
 
     .. note::
 
-        - Default values of all available options can be checked by running
-          `pandas.describe_option()`_ or ``pandas._config.config._registered_options``
+        Default values of all available options can be checked by running
+        `pandas.describe_option()`_ or ``pandas._config.config._registered_options``.
 
         .. _`pandas.describe_option()`:
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html
@@ -128,14 +131,16 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     if east_asian_text:
         options.update({'display.unicode.east_asian_width': True})
 
+    kwargs.update(options)
+
     if reset is False:
-        for key, val in options.items():
+        for key, val in kwargs.items():
             pd_.set_option(key, val)
 
     elif reset is True:
         registered_options = pd_._config.config._registered_options
 
-        for key in options:
+        for key in kwargs:
             pd_.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
@@ -147,24 +152,28 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     Alter some default parameters for displaying
     `NumPy arrays <https://numpy.org/doc/stable/reference/generated/numpy.array.html>`_.
 
-    :param reset: whether to reset to the default print options set by `numpy.set_printoptions()`_,
-        defaults to ``False``
+    This function allows customising the display options for NumPy arrays, including
+    decimal precision, summary at the beginning and end of each dimension, line width for
+    inserting line breaks and optional custom formatting.
+
+    :param reset: Whether to reset to the default print options set by the function
+        `numpy.set_printoptions()`_; defaults to ``False``.
     :type reset: bool
-    :param precision: number of decimal points,
-        which corresponds to ``precision`` of `numpy.set_printoptions()`_, defaults to ``4``
+    :param precision: Number of decimal points to display, corresponding to ``precision`` of
+        the function `numpy.set_printoptions()`_; defaults to ``4``.
     :type precision: int
-    :param line_char: number of characters per line for the purpose of inserting line breaks,
-        which corresponds to ``linewidth`` of `numpy.set_printoptions()`_, defaults to ``120``
+    :param line_char: Number of characters per line for inserting line breaks, corresponding to
+        ``linewidth`` of the function `numpy.set_printoptions()`_; defaults to ``120``.
     :type line_char: int
-    :param head_tail: number of array items in summary at beginning (head) and end (tail)
-        of each dimension, which corresponds to ``edgeitems`` of `numpy.set_printoptions()`_,
-        defaults to ``5``
+    :param head_tail: Number of array items to summarise at the beginning (head) and end (tail)
+        of each dimension, corresponding to ``edgeitems`` of the function
+        `numpy.set_printoptions()`_; defaults to ``5``.
     :type head_tail: int
-    :param formatter: specified format, which corresponds to ``formatter`` of
-        `numpy.set_printoptions()`_, if ``None`` (default), fill the empty decimal places with zeros
-        for the specified ``precision``
+    :param formatter: Custom format specification, corresponding to ``formatter`` of the function
+        `numpy.set_printoptions()`_; if ``formatter=None`` (default), empty decimal places are
+        filled with zeros for the specified ``precision``.
     :type formatter: dict | None
-    :kwargs: [optional] parameters used by `numpy.set_printoptions()`_
+    :param kwargs: [Optional] Additional parameters for the function `numpy.set_printoptions()`_.
 
     .. _`numpy.set_printoptions()`:
         https://numpy.org/doc/stable/reference/generated/numpy.set_printoptions.html
@@ -172,9 +181,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     **Examples**::
 
         >>> import numpy as np
-
         >>> np.random.seed(0)
-
         >>> random_array = np.random.rand(100, 100)
         >>> random_array
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
@@ -190,11 +197,8 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
                 0.1419334 ],
                [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
                 0.81357508]])
-
         >>> from pyhelpers.settings import np_preferences
-
         >>> np_preferences(precision=2)
-
         >>> random_array
         array([[0.55, 0.72, 0.60, 0.54, 0.42, ..., 0.18, 0.59, 0.02, 0.83, 0.00],
                [0.68, 0.27, 0.74, 0.96, 0.25, ..., 0.49, 0.23, 0.25, 0.06, 0.43],
@@ -213,7 +217,6 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     .. code-block:: python
 
         >>> np_preferences(reset=True)
-
         >>> random_array
         array([[0.54881350, 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],
@@ -251,28 +254,33 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
                     legend_spacing=0.7, fig_style=None):
     """
     Alter some `Matplotlib parameters
-    <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_.
+    <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_
+    for plotting.
 
-    :param backend: specify the backend used for rendering and GUI integration, defaults to ``None``
-    :type backend: str | None
-    :param font_name: name of a font to be used, defaults to ``'Times New Roman'``
-    :type font_name: None | str
-    :param font_size: font size, defaults to ``13``
-    :type font_size: int | float
-    :param legend_spacing: spacing between labels in plot legend, defaults to ``0.7``
-    :type legend_spacing: float | int
-    :param fig_style: style of the figure, defaults to ``None``
-    :type fig_style: str | None
-    :param reset: whether to reset to default settings, defaults to ``False``
+    This function allows customising various Matplotlib parameters such as backend, font settings,
+    legend spacing and figure style.
+
+    :param reset: Whether to reset all parameters to their default settings; defaults to ``False``.
     :type reset: bool
+    :param backend: Specify the backend used for rendering and GUI integration;
+        defaults to ``None``.
+    :type backend: str | None
+    :param font_name: Name of the font to be used; defaults to ``'Times New Roman'``.
+    :type font_name: str | None
+    :param font_size: Font size; defaults to ``13``.
+    :type font_size: int | float
+    :param legend_spacing: Spacing between labels in the plot legend; defaults to ``0.7``.
+    :type legend_spacing: float | int
+    :param fig_style: Style of the figure; defaults to ``None``.
+    :type fig_style: str | None
 
     **Examples**::
 
         >>> import numpy as np
+        >>> import matplotlib
+        >>> matplotlib.use('TkAgg')
         >>> import matplotlib.pyplot as plt
-
         >>> np.random.seed(0)
-
         >>> random_array = np.random.rand(1000, 2)
         >>> random_array
         array([[0.5488135 , 0.71518937],
@@ -282,18 +290,17 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
                [0.41443887, 0.79128155],
                [0.72119811, 0.48010781],
                [0.64386404, 0.50177313]])
-
         >>> def example_plot(arr):
         ...     fig = plt.figure(constrained_layout=True)
         ...     ax = fig.add_subplot(aspect='equal', adjustable='box')
-        ...
         ...     ax.scatter(arr[:500, 0], arr[:500, 1], label='Group0')
         ...     ax.scatter(arr[500:, 0], arr[500:, 1], label='Group1')
         ...     ax.legend(frameon=False, bbox_to_anchor=(1.0, 0.95))
-        ...
-        ...     plt.show()
-
+        ...     fig.show()
         >>> example_plot(random_array)
+        >>> # from pyhelpers.store import save_fig
+        >>> # save_fig("docs/source/_images/settings-mpl_preferences-demo-1.svg", verbose=True)
+        >>> # save_fig("docs/source/_images/settings-mpl_preferences-demo-1.pdf", verbose=True)
 
     .. _label: settings-mpl_preferences-demo-1
     .. figure:: ../_images/settings-mpl_preferences-demo-1.*
@@ -306,10 +313,11 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     .. code-block:: python
 
         >>> from pyhelpers.settings import mpl_preferences
-
         >>> mpl_preferences(fig_style='ggplot')
-
         >>> example_plot(random_array)
+        >>> # path_to_fig_ = "docs/source/_images/settings-mpl_preferences-demo-2"
+        >>> # save_fig(f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_fig(f"{path_to_fig_}.pdf", verbose=True)
 
     .. figure:: ../_images/settings-mpl_preferences-demo-2.*
         :name: settings-mpl_preferences-demo-2
@@ -323,7 +331,6 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     .. code-block:: python
 
         >>> mpl_preferences(reset=True)
-
         >>> # The altered parameters are now set to their default values.
         >>> example_plot(random_array)
 

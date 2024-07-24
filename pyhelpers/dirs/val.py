@@ -13,24 +13,24 @@ from .._cache import _check_rel_pathname
 
 def path2linux(path):
     """
-    Convert path to an uniformat (Linux) file path, which is executable in Windows, Linux and macOS.
+    Convert a path to a standardized Linux file path format for cross-platform compatibility.
 
-    - Format the file path to be used for cross-platform compatibility;
-    - Convert OS path to standard Linux path.
+    This function:
 
-    :param path: absolute or relative pathname
-    :type path: str | os.PathLike | bytes
-    :return: standard linux pathname
+        - Formats the file path to ensure compatibility across Windows, Linux and macOS.
+        - Converts an OS-specific path to a standard Linux path.
+
+    :param path: Absolute or relative pathname.
+    :type path: str | bytes | os.PathLike
+    :return: Standard Linux pathname.
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import path2linux
         >>> import pathlib
-
         >>> path2linux("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-
         >>> path2linux(pathlib.Path("tests\\data\\dat.csv"))
         'tests/data/dat.csv'
     """
@@ -44,24 +44,23 @@ def path2linux(path):
 
 def uniform_pathname(pathname):
     """
-    An alternative to the function :func:`~pyhelpers.dirs.path2linux`.
+    Convert a pathname to a standard Linux file path format.
 
-    :param pathname: absolute or relative pathname
+    This function serves as an alternative to :func:`~pyhelpers.dirs.path2linux`.
+
+    :param pathname: Absolute or relative pathname.
     :type pathname: str | pathlib.Path
-    :return: standard linux pathname
+    :return: Standard Linux pathname.
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import uniform_pathname
         >>> import pathlib
-
         >>> uniform_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-
         >>> uniform_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
-
         >>> uniform_pathname(pathlib.Path("tests\\data/dat.csv"))
         'tests/data/dat.csv'
     """
@@ -73,28 +72,26 @@ def uniform_pathname(pathname):
 
 def is_dir(path_to_dir):
     """
-    Check whether a directory-like string is a (valid) directory name.
+    Check whether a string represents a valid directory path.
 
-    See also [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and
-    [`DIRS-IVD-2 <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
+    This function verifies whether the input string is a valid directory path. See also
+    [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and [`DIRS-IVD-2
+    <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
 
-    :param path_to_dir: pathname of a directory
+    :param path_to_dir: Pathname of a directory.
     :type path_to_dir: str | bytes
-    :return: whether the input is a path-like string that describes a directory name
+    :return: ``True`` if the input string is a valid directory path, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.dirs import cd, is_dir
-
         >>> x = "tests"
         >>> is_dir(x)
         False
-
         >>> x = "/tests"
         >>> is_dir(x)
         True
-
         >>> x = cd("tests")
         >>> is_dir(x)
         True
@@ -130,14 +127,18 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     """
     Validate the pathname of a directory.
 
-    :param path_to_dir: pathname of a data directory, defaults to ``None``
-    :type path_to_dir: str | os.PathLike[str] | bytes | os.Path[bytes] | None
-    :param subdir: name of a subdirectory to be examined if ``directory=None``, defaults to ``""``
-    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param msg: error message if ``data_dir`` is not a full pathname, defaults to ``"Invalid input!"``
+    :param path_to_dir: Pathname of a data directory;
+        if ``path_to_dir=None`` (default),
+        it examines ``subdir`` to construct a valid directory path.
+    :type path_to_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes] | None
+    :param subdir: Name of a subdirectory to be examined if ``path_to_dir=None``;
+        defaults to ``""``.
+    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param msg: Error message if `path_to_dir` is not a valid full pathname;
+        defaults to ``"Invalid input!"``.
     :type msg: str
-    :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
-    :return: valid full pathname of a directory
+    :param kwargs: [Optional] Additional parameters for the function :func:`pyhelpers.dirs.cd`.
+    :return: Valid full pathname of a directory.
     :rtype: str
 
     **Examples**::
@@ -145,15 +146,12 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
         >>> from pyhelpers.dirs import validate_dir
         >>> import os
         >>> import pathlib
-
         >>> dat_dir = validate_dir()
         >>> os.path.relpath(dat_dir)
         '.'
-
         >>> dat_dir = validate_dir("tests")
         >>> os.path.relpath(dat_dir)
         'tests'
-
         >>> dat_dir = validate_dir(subdir="data")
         >>> os.path.relpath(dat_dir)
         'data'
@@ -183,29 +181,29 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
 def validate_filename(file_pathname, suffix_num=1):
     """
-    If the filename exist, then create new filename with a suffix such as "(1)", "(2)", and so on.
+    Validate the filename and create a new filename with a suffix if the original exists.
 
-    :param file_pathname: pathname of a file
+    If the file specified by ``file_pathname`` exists, this function generates a new filename
+    by appending a suffix such as ``"(1)"``, ``"(2)"``, etc., to make it unique.
+
+    :param file_pathname: Pathname of a file.
     :type file_pathname: str
-    :param suffix_num: a number as a suffix appended to the filename, defaults to ``1``
+    :param suffix_num: Number to use as a suffix if the filename exists; defaults to ``1``.
     :type suffix_num: int
-    :return: a validated file name
+    :return: Validated file name (with a unique suffix if necessary).
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import validate_filename
         >>> import os
-
         >>> test_file_pathname = "tests/data/test.txt"
-
         >>> # When the file does not exist, return the same file name
         >>> os.path.exists(test_file_pathname)
         False
         >>> file_pathname_0 = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_0)
         'tests\\data\\test.txt'
-
         >>> # Create a file named "test.txt"
         >>> open(test_file_pathname, 'w').close()
         >>> os.path.exists(test_file_pathname)
@@ -214,15 +212,13 @@ def validate_filename(file_pathname, suffix_num=1):
         >>> file_pathname_1 = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_1)
         'tests\\data\\test(1).txt'
-
-        >>> # When "test(1).txt" exists, the function returns a pathname of a file named "test(2).txt"
+        >>> # When "test(1).txt" exists, it returns a pathname of a file named "test(2).txt"
         >>> open(file_pathname_1, 'w').close()
         >>> os.path.exists(file_pathname_1)
         True
         >>> file_pathname_2 = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_2)
         'tests\\data\\test(2).txt'
-
         >>> # Remove the created files
         >>> for x in [file_pathname_0, file_pathname_1]:
         ...     os.remove(x)
@@ -249,25 +245,28 @@ def validate_filename(file_pathname, suffix_num=1):
 
 def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     """
-    Get all files in the folder with the specified file type.
+    Get paths of files in a directory matching the specified file extension.
 
-    :param path_to_dir: a folder path
+    This function retrieves paths of files within the directory specified by ``path_to_dir``.
+    Optionally, it filters files by the exact ``file_ext`` specified.
+    If ``file_ext=None``, it returns paths for all files.
+    If ``incl_subdir=True``, it traverses subdirectories recursively.
+
+    :param path_to_dir: Path to the directory.
     :type path_to_dir: str | os.PathLike
-    :param file_ext: exact file type to specify, if file_type is ``"*"`` or ``"all"``,
-        return all files in the folder; defaults to ``None``
+    :param file_ext: Exact file extension to filter files; defaults to `None`.
     :type file_ext: str | None
-    :param incl_subdir: whether to get files inside the subfolder, defaults to ``False``;
-        when ``incl_subdir=True``, the function traverses all subfolders
+    :param incl_subdir: Whether to include files from subdirectories;
+        when ``incl_subdir=True``, it includes files from all subdirectories recursively;
+        defaults to `False`.
     :type incl_subdir: bool
-    :return: a list of file paths
+    :return: List of file paths matching the criteria.
     :rtype: list
 
     **Examples**::
 
         >>> from pyhelpers.dirs import get_file_pathnames
-
         >>> test_dir_name = "tests/data"
-
         >>> # Get all files in the folder (without sub-folders)
         >>> get_file_pathnames(test_dir_name)
         ['tests/data/csr_mat.npz',
@@ -282,14 +281,11 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
          'tests/data/zipped.7z',
          'tests/data/zipped.txt',
          'tests/data/zipped.zip']
-
         >>> get_file_pathnames(test_dir_name, file_ext=".txt")
         ['tests/data/dat.txt', 'tests/data/zipped.txt']
-
-        >>> # Get absolute pathnames of all files contained in the folder (incl. all sub-folders)
+        >>> # Get absolute pathnames of all files contained in the folder (incl. all subdirectories)
         >>> get_file_pathnames(test_dir_name, file_ext="txt", incl_subdir=True)
         ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
-
     """
 
     if incl_subdir:
@@ -314,27 +310,24 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
 
 def check_files_exist(filenames, path_to_dir):
     """
-    Check if queried files exist in a given directory.
+    Check if specified files exist within a given directory.
 
-    :param filenames: a list of filenames
-    :type filenames: list
-    :param path_to_dir: a list of filenames in the directory
+    :param filenames: Filenames to check for existence.
+    :type filenames: typing.Iterable
+    :param path_to_dir: Path to the directory where files are to be checked.
     :type path_to_dir: str | os.PathLike
-    :return: ``True`` if all the queried files exist, ``False`` otherwise
+    :return: ``True`` if all queried files exist in the directory, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.dirs import check_files_exist
-
         >>> test_dir_name = "tests/data"
-
         >>> # Check if all required files exist in the directory
         >>> check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
         True
-
         >>> # If not all required files exist, print the missing files
-        >>> check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
+        >>> check_files_exist(("dat.csv", "dat.txt", "dat_0.txt"), test_dir_name)
         Error: Required files are not satisfied, missing files are: ['dat_0.txt']
         False
     """

@@ -3,35 +3,38 @@ Textual data (pre)processing.
 """
 
 import collections
+import copy
+import math
 import re
 import string
-
-import numpy as np
 
 from .._cache import _check_dependency, _ENGLISH_NUMERALS
 
 
 def remove_punctuation(x, rm_whitespace=True):
     """
-    Remove punctuation from textual data.
+    Remove punctuation and optionally whitespace from textual data.
 
-    :param x: Textual data.
+    :param x: The input text from which punctuation will be removed.
     :type x: str
-    :param rm_whitespace: Whether to remove whitespace (incl. escape characters);
-        defaults to ``True``.
+    :param rm_whitespace: Whether to remove whitespace characters as well; defaults to ``True``.
     :type rm_whitespace: bool
-    :return: Text without punctuation.
+    :return: The input text without punctuation (and optionally without whitespace).
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.text import remove_punctuation
+        >>> remove_punctuation('Hello, world!')
+        'Hello world'
+        >>> remove_punctuation('   How   are you? ', rm_whitespace=False)
+        'How   are you'
+        >>> remove_punctuation('No-punctuation!')
+        'No punctuation'
         >>> raw_text = 'Hello world!\tThis is a test. :-)'
-        >>> text = remove_punctuation(raw_text)
-        >>> text
+        >>> remove_punctuation(raw_text)
         'Hello world This is a test'
-        >>> text = remove_punctuation(raw_text, rm_whitespace=False)
-        >>> text
+        >>> remove_punctuation(raw_text, rm_whitespace=False)
         'Hello world \tThis is a test'
     """
 
@@ -50,18 +53,22 @@ def remove_punctuation(x, rm_whitespace=True):
 
 def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
     """
-    Get an acronym (in capital letters) of textual data.
+    Generate an acronym (in capital letters) from textual data.
 
-    :param text: Textual data.
+    An acronym is typically formed by taking the initial letters of each word in a phrase
+    and combining them into a single string of uppercase letters.
+
+    :param text: The input text from which to generate the acronym.
     :type text: str
-    :param only_capitals: Whether to include capital letters only; defaults to ``False``.
-    :type only_capitals: bool
-    :param capitals_in_words: Whether to include all captical letters in a single word;
+    :param only_capitals: Whether to include only capital letters in the acronym;
         defaults to ``False``.
+    :type only_capitals: bool
+    :param capitals_in_words: Whether to treat all capital letters within words as part of the
+        acronym; defaults to ``False``.
     :type capitals_in_words: bool
-    :param keep_punctuation: Whether to keep punctuation in ``text``; defaults to ``False``.
+    :param keep_punctuation: Whether to retain punctuation in the input text; defaults to ``False``.
     :type keep_punctuation: bool
-    :return: Acronym of the input ``text``.
+    :return: The acronym generated from the input text.
     :rtype: str
 
     **Examples**::
@@ -108,26 +115,28 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctua
 
 def extract_words1upper(x, join_with=None):
     """
-    Extract words from a string by spliting it at occurrence of an uppercase letter.
+    Extract words from a string by splitting it at occurrences of uppercase letters.
 
-    :param x: Textual data (joined by a number of words each starting with an uppercase letter).
+    This function takes a string and splits it into individual words wherever an uppercase letter
+    is encountered. Optionally, it can join these words back into a single string using a specified
+    delimiter.
+
+    :param x: Input text containing a number of words each starting with an uppercase letter.
     :type x: str
-    :param join_with: Character(s) with which to (re)join the single words; defaults to ``None``.
+    :param join_with: Optional delimiter used to join the extracted words into a single string;
+        defaults to ``None``.
     :type join_with: str | None
-    :return: A list of single words each starting with an uppercase letter,
-        or a single string joined together by them with ``join_with``.
+    :return: If ``join_with=None``, the function returns a list of words extracted from ``x`` where
+        each word starts with an uppercase letter; if ``join_with`` is specified, it returns a
+        single string where these words are joined by ``join_with``.
     :rtype: list | str
 
     **Examples**::
 
         >>> from pyhelpers.text import extract_words1upper
-        >>> x1 = 'Network_Waymarks'
-        >>> x1_ = extract_words1upper(x1)
-        >>> x1_
+        >>> extract_words1upper('Network_Waymarks')
         ['Network', 'Waymarks']
-        >>> x2 = 'NetworkRailRetainingWall'
-        >>> x2_ = extract_words1upper(x2, join_with=' ')
-        >>> x2_
+        >>> extract_words1upper('NetworkRailRetainingWall', join_with=' ')
         'Network Rail Retaining Wall'
     """
 
@@ -144,15 +153,21 @@ def extract_words1upper(x, join_with=None):
 
 def _english_numerals():
     """
-    English numerals.
+    Return a dictionary facilitaing to map textual English numerals to their corresponding
+    numerical representations.
 
-    :return: English numerals
+    :return: Dictionary facilitaing to map textual English numerals to their corresponding
+        numerical representations.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.text.preproc import _english_numerals
-        >>> _english_numerals()
+        >>> eng_num = _english_numerals()
+        >>> list(eng_num.keys())[:5]
+        ['and', 'zero', 'one', 'two', 'three']
+        >>> list(eng_num.values())[:5]
+        [[1, 0], [1, 0], [1, 1], [1, 2], [1, 3]]
     """
 
     metadata = dict()
@@ -237,20 +252,37 @@ def numeral_english_to_arabic(x):
     return result
 
 
-def count_words(raw_txt):
+def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Count the total for each different word.
+    Count the occurrences of each word in the given text.
 
-    :param raw_txt: Textual data.
-    :type raw_txt: str
-    :return: The number of each word in ``raw_docs``.
+    :param text: The input text from which words will be counted.
+    :type text: str
+    :param lowercase: Whether to convert the text to lowercase before counting;
+        defaults to ``False``.
+    :type lowercase: bool
+    :param ignore_punctuation: Whether to exclude punctuation marks from the text;
+        defaults to ``False``.
+    :type ignore_punctuation: bool
+    :param stop_words: List of words to be excluded from the word count;
+
+        - If ``stop_words=None`` (default), no words are excluded.
+        - If ``stop_words=True``, NLTK's built-in stopwords are used.
+
+    :type stop_words: list[str] | bool | None
+    :param kwargs: [Optional] Additional parameters for the function `nltk.word_tokenize()`_.
+    :return: A dictionary where keys are unique words and values are their respective counts.
     :rtype: dict
+
+    .. _`NLTK`: https://www.nltk.org/
+    .. _`nltk.word_tokenize()`: https://www.nltk.org/api/nltk.tokenize.word_tokenize.html
 
     **Examples**::
 
-        >>> from pyhelpers.text import count_words, remove_punctuation
-        >>> raw_text = 'This is an apple. That is a pear. Hello world!'
-        >>> count_words(raw_text)
+        >>> from pyhelpers.text import count_words
+        >>> text = 'This is an apple. That is a pear. Hello world!'
+        >>> count_words(text)
         {'This': 1,
          'is': 2,
          'an': 1,
@@ -262,145 +294,222 @@ def count_words(raw_txt):
          'Hello': 1,
          'world': 1,
          '!': 1}
-        >>> count_words(remove_punctuation(raw_text))
-        {'This': 1,
+        >>> count_words(text, lowercase=True)
+        {'this': 1,
          'is': 2,
          'an': 1,
          'apple': 1,
-         'That': 1,
+         '.': 2,
+         'that': 1,
          'a': 1,
          'pear': 1,
-         'Hello': 1,
+         'hello': 1,
+         'world': 1,
+         '!': 1}
+        >>> count_words(text, lowercase=True, ignore_punctuation=True)
+        {'this': 1,
+         'is': 2,
+         'an': 1,
+         'apple': 1,
+         'that': 1,
+         'a': 1,
+         'pear': 1,
+         'hello': 1,
          'world': 1}
+        >>> count_words(text, lowercase=True, ignore_punctuation=True, stop_words=['is'])
+        {'this': 1,
+         'an': 1,
+         'apple': 1,
+         'that': 1,
+         'a': 1,
+         'pear': 1,
+         'hello': 1,
+         'world': 1}
+        >>> count_words(text, lowercase=True, ignore_punctuation=True, stop_words=True)
+        {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
     """
 
     nltk_ = _check_dependency(name='nltk')
 
-    doc_text = str(raw_txt)
-    tokens = nltk_.word_tokenize(doc_text)
+    doc = str(text).lower() if lowercase else str(text)
+    if ignore_punctuation:
+        doc = remove_punctuation(doc, rm_whitespace=False)
+
+    tokens = nltk_.word_tokenize(doc, **kwargs)
+
+    if stop_words:  # Remove stop words if provided
+        if stop_words is True:
+            language = kwargs['language'] if 'language' in kwargs else 'english'
+            stop_words_ = set(nltk_.corpus.stopwords.words(language))
+        else:
+            stop_words_ = copy.copy(stop_words)
+        tokens = [w for w in tokens if not w.lower() in stop_words_]
 
     word_count_dict = dict(collections.Counter(tokens))
 
     return word_count_dict
 
 
-def calculate_idf(raw_documents, rm_punc=False):
+def calculate_idf(documents, lowercase=True, ignore_punctuation=True, stop_words=None,
+                  smoothing_factor=1, log_base=None, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Calculate inverse document frequency.
+    Calculate Inverse Document Frequency (IDF) for a sequence of textual documents.
 
-    :param raw_documents: A sequence of textual data.
-    :type raw_documents: typing.Iterable | typing.Sequence
-    :param rm_punc: Whether to remove punctuation from the input textual data;
-        defaults to ``False``.
-    :type rm_punc: bool
-    :return: Term frequency (TF) of the input textual data, and inverse document frequency.
+    :param documents: A sequence of textual data.
+    :type documents: typing.Iterable | typing.Sequence
+    :param lowercase: Whether to convert the documents to lowercase before calculating IDF;
+        defaults to ``True``.
+    :type lowercase: bool
+    :param ignore_punctuation: Whether to exclude punctuation marks from the textual data;
+        defaults to ``True``.
+    :type ignore_punctuation: bool
+    :param stop_words: List of words to be excluded from the IDF calculation;
+
+        - If ``stop_words=None`` (default), no words are excluded.
+        - If ``stop_words=True``, NLTK's built-in stopwords are used.
+
+    :type stop_words: list[str] | bool | None
+    :param smoothing_factor: Factor added to the denominator in the IDF formula:
+
+        - For smaller corpora: Use ``smoothing_factor=1`` (default) to prevent IDF values from
+          becoming too extreme (e.g. zero for terms in all documents). This adjustment ensures more
+          stable IDF values reflecting term rarity.
+        - For larger corpora: Use ``smoothing_factor=0`` for standard IDF calculations,
+          which provides a measure of how terms are distributed across documents.
+          This can generally be sufficient and standard practice.
+
+    :type smoothing_factor: int | float
+    :param log_base: The logarithm base in the IDF formula;
+        when ``log_base=None`` (default), use `math.e`_.
+    :type log_base: int
+    :param kwargs: [Optional] Additional parameters for the function `nltk.word_tokenize()`_; 
+        also refer to the function :func:`~pyhelpers.text.count_words`, which calculates
+        term frequencies (TF) for each document.
+
+    :return: Tuple containing:
+
+        - Term frequency (TF) of each document as a list of dictionaries, where each dictionary
+          represents TF for one document.
+        - Inverse document frequency (IDF) as a dictionary, where keys are unique terms across
+          all documents and values are their IDF scores.
+
     :rtype: tuple[list[dict], dict]
+
+    .. _`math.e`: https://docs.python.org/3/library/math.html#math.e
+    .. _`nltk.word_tokenize()`: https://www.nltk.org/api/nltk.tokenize.word_tokenize.html
 
     **Examples**::
 
         >>> from pyhelpers.text import calculate_idf
-        >>> raw_doc = [
+        >>> documents = [
         ...     'This is an apple.',
         ...     'That is a pear.',
         ...     'It is human being.',
         ...     'Hello world!']
-        >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=False)
-        >>> docs_tf_
-        [{'This': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
-         {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
-         {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
-         {'Hello': 1, 'world': 1, '!': 1}]
-        >>> corpus_idf_
-        {'This': 0.6931471805599453,
+        >>> docs_tf, corpus_idf = calculate_idf(documents)
+        >>> docs_tf
+        [{'this': 1, 'is': 1, 'an': 1, 'apple': 1},
+         {'that': 1, 'is': 1, 'a': 1, 'pear': 1},
+         {'it': 1, 'is': 1, 'human': 1, 'being': 1},
+         {'hello': 1, 'world': 1}]
+        >>> corpus_idf
+        {'this': 0.6931471805599453,
+         'is': 0.0,
+         'an': 0.6931471805599453,
+         'apple': 0.6931471805599453,
+         'that': 0.6931471805599453,
+         'a': 0.6931471805599453,
+         'pear': 0.6931471805599453,
+         'it': 0.6931471805599453,
+         'human': 0.6931471805599453,
+         'being': 0.6931471805599453,
+         'hello': 0.6931471805599453,
+         'world': 0.6931471805599453}
+        >>> docs_tf, corpus_idf = calculate_idf(documents, ignore_punctuation=False)
+        >>> docs_tf
+        [{'this': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
+         {'that': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
+         {'it': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
+         {'hello': 1, 'world': 1, '!': 1}]
+        >>> corpus_idf
+        {'this': 0.6931471805599453,
          'is': 0.0,
          'an': 0.6931471805599453,
          'apple': 0.6931471805599453,
          '.': 0.0,
-         'That': 0.6931471805599453,
+         'that': 0.6931471805599453,
          'a': 0.6931471805599453,
          'pear': 0.6931471805599453,
-         'It': 0.6931471805599453,
+         'it': 0.6931471805599453,
          'human': 0.6931471805599453,
          'being': 0.6931471805599453,
-         'Hello': 0.6931471805599453,
+         'hello': 0.6931471805599453,
          'world': 0.6931471805599453,
          '!': 0.6931471805599453}
-        >>> docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=True)
-        >>> docs_tf_
-        [{'This': 1, 'is': 1, 'an': 1, 'apple': 1},
-         {'That': 1, 'is': 1, 'a': 1, 'pear': 1},
-         {'It': 1, 'is': 1, 'human': 1, 'being': 1},
-         {'Hello': 1, 'world': 1}]
-        >>> corpus_idf_
-        {'This': 0.6931471805599453,
-         'is': 0.0,
-         'an': 0.6931471805599453,
-         'apple': 0.6931471805599453,
-         'That': 0.6931471805599453,
-         'a': 0.6931471805599453,
-         'pear': 0.6931471805599453,
-         'It': 0.6931471805599453,
-         'human': 0.6931471805599453,
-         'being': 0.6931471805599453,
-         'Hello': 0.6931471805599453,
-         'world': 0.6931471805599453}
     """
 
-    if rm_punc:
-        raw_docs = [remove_punctuation(x) for x in raw_documents]
-    else:
-        raw_docs = raw_documents
+    docs_tf = [
+        count_words(
+            doc, lowercase=lowercase, ignore_punctuation=ignore_punctuation, stop_words=stop_words,
+            **kwargs)
+        for doc in documents]
 
-    docs_tf = [count_words(x) for x in raw_docs]
-    tokens_in_docs = (x.keys() for x in docs_tf)
-    tokens = [k for keys in tokens_in_docs for k in keys]
+    # Create set of all unique tokens in the corpus
+    all_tokens = [k for keys in (x.keys() for x in docs_tf) for k in keys]
 
-    tokens_counter_dict = dict(collections.Counter(tokens))
-    tokens_idf = np.log(len(raw_docs) / (1 + np.asarray(list(tokens_counter_dict.values()))))
+    # Calculate IDF for each token
+    n_docs = len(documents)
+    log_base = log_base if log_base else math.e
 
-    corpus_idf = dict(zip(tokens_counter_dict.keys(), tokens_idf))
+    corpus_idf = {}
+    for token in all_tokens:
+        token_count = sum(1 for tf in docs_tf if token in tf)
+        corpus_idf[token] = math.log(n_docs / (smoothing_factor + token_count), log_base)
 
     return docs_tf, corpus_idf
 
 
-def calculate_tf_idf(raw_documents, rm_punc=False):
+def calculate_tfidf(documents, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Count term frequency–inverse document frequency.
+    Calculate TF-IDF (Term Frequency-Inverse Document Frequency) for the given textual documents.
 
-    :param raw_documents: A sequence of textual data.
-    :type raw_documents: typing.Iterable | typing.Sequence
-    :param rm_punc: Whether to remove punctuation from the input textual data;
-        defaults to ``False``.
-    :type rm_punc: bool
-    :return: TF-IDF of the input textual data.
+    TF (Term Frequency) measures how frequently a term appears in a document relative to its length.
+    IDF (Inverse Document Frequency) measures how important a term is across the entire corpus of
+    documents.
+
+    :param documents: A sequence of textual data.
+    :type documents: typing.Iterable | typing.Sequence
+    :param kwargs: [Optional] Additional parameters for the function
+        :func:`~pyhelpers.text.calculate_idf`; also refer to :func:`~pyhelpers.text.count_words`.
+    :return: TF-IDF values for the input textual data, represented as a dictionary.
     :rtype: dict
 
     **Examples**::
 
-        >>> from pyhelpers.text import calculate_tf_idf
-        >>> raw_doc = [
+        >>> from pyhelpers.text import calculate_tfidf
+        >>> documents = [
         ...     'This is an apple.',
         ...     'That is a pear.',
         ...     'It is human being.',
         ...     'Hello world!']
-        >>> docs_tf_idf_ = calculate_tf_idf(raw_documents=raw_doc)
-        >>> docs_tf_idf_
-        {'This': 0.6931471805599453,
+        >>> tfidf = calculate_tfidf(documents)
+        >>> tfidf
+        {'this': 0.6931471805599453,
          'is': 0.0,
          'an': 0.6931471805599453,
          'apple': 0.6931471805599453,
-         '.': 0.0,
-         'That': 0.6931471805599453,
+         'that': 0.6931471805599453,
          'a': 0.6931471805599453,
          'pear': 0.6931471805599453,
-         'It': 0.6931471805599453,
+         'it': 0.6931471805599453,
          'human': 0.6931471805599453,
          'being': 0.6931471805599453,
-         'Hello': 0.6931471805599453,
-         'world': 0.6931471805599453,
-         '!': 0.6931471805599453}
-        >>> docs_tf_idf_ = calculate_tf_idf(raw_documents=raw_doc, rm_punc=True)
-        >>> docs_tf_idf_
+         'hello': 0.6931471805599453,
+         'world': 0.6931471805599453}
+        >>> tfidf = calculate_tfidf(documents, lowercase=False)
+        >>> tfidf
         {'This': 0.6931471805599453,
          'is': 0.0,
          'an': 0.6931471805599453,
@@ -415,8 +524,10 @@ def calculate_tf_idf(raw_documents, rm_punc=False):
          'world': 0.6931471805599453}
     """
 
-    docs_tf, corpus_idf = calculate_idf(raw_documents=raw_documents, rm_punc=rm_punc)
+    docs_tf, corpus_idf = calculate_idf(documents=documents, **kwargs)
 
-    docs_tf_idf = {k: v * corpus_idf[k] for x in docs_tf for k, v in x.items() if k in corpus_idf}
+    tfidf = {
+        token: tf * corpus_idf[token] for doc_tf in docs_tf for token, tf in doc_tf.items()
+        if token in corpus_idf}
 
-    return docs_tf_idf
+    return tfidf

@@ -2,39 +2,30 @@
 Installation
 ============
 
+Using ``pip``
+=============
+
+.. note::
+
+    - If you are using a `virtual environment`_, ensure it is activated.
+    - Use the ``--upgrade`` (or ``-U``) option with `pip install`_ to get the latest stable release.
+
 To install the latest release of PyHelpers from `PyPI <https://pypi.org/project/pyhelpers/>`_ via `pip <https://pip.pypa.io/en/stable/cli/pip/>`_:
 
 .. code-block:: console
 
-    $ pip install --upgrade pyhelpers
+    > pip install --upgrade pyhelpers
 
-
-To install the most recent version of PyHelpers hosted on `GitHub <https://github.com/mikeqfu/pyhelpers>`_:
+To install the latest development version of PyHelpers from `GitHub <https://github.com/mikeqfu/pyhelpers>`_:
 
 .. code-block:: console
 
-    $ pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
+    > pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
+Verification
+============
 
-.. note::
-
-    - If using a `virtual environment`_, make sure it is activated.
-    - It is recommended to add `pip install`_ the option ``--upgrade`` (or ``-U``) to ensure that you are getting the latest stable release of the package.
-    - Not all dependencies of PyHelpers are enforced to be installed along with the installation of the package. This is intended to optimise the installation requirements. If a `ModuleNotFoundError`_ or an `ImportError`_ pops out when importing/running a function, first try to install the module(s)/package(s) mentioned in the error message, and then try importing/running the function again.
-    - For Windows users, `pip <https://pip.pypa.io/en/stable/cli/pip/>`_ may possibly fail to install some packages. In such circumstances, try instead to `install their .whl files`_, which can be downloaded from the web page of the `unofficial Windows binaries for Python extension packages`_.
-    - For more general instructions on the installation of Python packages, please refer to the official guide of `Installing Packages`_.
-
-    .. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
-    .. _`pip install`: https://pip.pypa.io/en/stable/cli/pip_install/
-    .. _`ModuleNotFoundError`: https://docs.python.org/3/library/exceptions.html#ModuleNotFoundError
-    .. _`ImportError`: https://docs.python.org/3/library/exceptions.html#ImportError
-    .. _`GDAL`: https://pypi.org/project/GDAL/
-    .. _`install their .whl files`: https://stackoverflow.com/a/27909082/4981844
-    .. _`unofficial Windows binaries for Python extension packages`: https://www.lfd.uci.edu/~gohlke/pythonlibs/
-    .. _`Installing Packages`: https://packaging.python.org/tutorials/installing-packages/
-
-
-To check whether pyhelpers has been correctly installed, try to import the package via an interpreter shell:
+To verify the installation of PyHelpers, try importing the package in an interpreter shell:
 
 .. code-block:: python
     :name: cmd current version
@@ -44,3 +35,19 @@ To check whether pyhelpers has been correctly installed, try to import the packa
 
 .. parsed-literal::
     The latest version is: |version|
+
+
+.. note::
+
+    - Not all dependencies of PyHelpers are installed automatically to optimise installation requirements. If you encounter a `ModuleNotFoundError`_ or an `ImportError`_, install the missing package(s) as indicated in the error message.
+    - When using the package, Windows users might face issues with `pip`_ failing to install some packages. In such cases, try `installing the wheel (.whl) files`_ instead. Refer to `Christoph Gohlke's homepage`_ for essential and downloadable wheel files.
+    - For more general instructions on installing Python packages, refer to the `Installing Packages`_ guide.
+
+.. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
+.. _`pip install`: https://pip.pypa.io/en/stable/cli/pip_install/
+.. _`ModuleNotFoundError`: https://docs.python.org/3/library/exceptions.html#ModuleNotFoundError
+.. _`ImportError`: https://docs.python.org/3/library/exceptions.html#ImportError
+.. _`pip`: https://pip.pypa.io/en/stable/cli/pip/
+.. _`installing the wheel (.whl) files`: https://stackoverflow.com/a/27909082/4981844
+.. _`Christoph Gohlke's homepage`: https://www.cgohlke.com/
+.. _`Installing Packages`: https://packaging.python.org/tutorials/installing-packages/

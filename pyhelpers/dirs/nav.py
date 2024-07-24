@@ -13,16 +13,17 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     """
     Get the full pathname of a directory (or file).
 
-    :param subdir: name of a directory or names of directories (and/or a filename)
-    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param mkdir: whether to create a directory, defaults to ``False``
+    :param subdir: Name of a directory or directories (and/or a filename).
+    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param mkdir: Whether to create the directory; defaults to ``False``.
     :type mkdir: bool
-    :param cwd: current working directory, defaults to ``None``
-    :type cwd: str | os.PathLike[str] | bytes | os.Path[bytes] | None
-    :param back_check: whether to check if a parent directory exists, defaults to ``False``
+    :param cwd: Current working directory; defaults to ``None``.
+    :type cwd: str | os.PathLike[str] | bytes | os.PathLike[bytes] | None
+    :param back_check: Whether to check if a parent directory exists; defaults to ``False``.
     :type back_check: bool
-    :param kwargs: [optional] parameters (e.g. ``mode=0o777``) of `os.makedirs`_
-    :return: full pathname of a directory or that of a file
+    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
+        `os.makedirs`_.
+    :return: Pathname of the directory or file.
     :rtype: str
 
     .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
@@ -32,16 +33,13 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
         >>> from pyhelpers.dirs import cd
         >>> import os
         >>> import pathlib
-
         >>> current_wd = cd()  # Current working directory
         >>> os.path.relpath(current_wd)
         '.'
-
         >>> # The directory will be created if it does not exist
         >>> path_to_tests_dir = cd("tests")
         >>> os.path.relpath(path_to_tests_dir)
         'tests'
-
         >>> path_to_tests_dir = cd(pathlib.Path("tests"))
         >>> os.path.relpath(path_to_tests_dir)
         'tests'
@@ -73,37 +71,32 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
 
 def ccd(*subdir, **kwargs):
     """
-    Get the full pathname of a directory (or file), given an altered working directory.
+    Get the full pathname of a directory (or file) in an altered working directory.
 
-    :param subdir: name of a directory
-    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param kwargs: [optional] parameters of the function :func:`~pyhelpers.dirs.cd`
-    :return: full pathname of a directory or that of a file (in an altered working directory)
+    :param subdir: Name of a directory or file.
+    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param kwargs: [optional] Parameters for the function :func:`~pyhelpers.dirs.cd`.
+    :return: Pathname of a directory or file in the altered working directory.
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import ccd
         >>> import os
-
         >>> init_cwd = os.getcwd()
         >>> os.path.relpath(init_cwd)
         '.'
-
         >>> # Change the current working directory to "/new_cwd"
         >>> new_cwd = "tests/new_cwd"
         >>> os.makedirs(new_cwd, exist_ok=True)
         >>> os.chdir(new_cwd)
-
         >>> # Get the full path to a folder named "tests"
         >>> path_to_tests = ccd("tests")
         >>> os.path.relpath(path_to_tests)
         'tests'
-
         >>> path_to_tests_ = ccd("test1", "test2")
         >>> path_to_tests_ == os.path.join(os.getcwd(), "test1", "test2")
         True
-
         >>> os.chdir(init_cwd)
         >>> os.rmdir(new_cwd)
     """
@@ -134,44 +127,40 @@ def ccd(*subdir, **kwargs):
 
 def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
-    Get the full pathname of a directory (or file) under ``data_dir``.
+    Get the full pathname of a directory (or file) under `data_dir`.
 
-    :param subdir: name of directory or names of directories (and/or a filename)
-    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param data_dir: name of a directory where data is (or will be) stored, defaults to ``"data"``
-    :type data_dir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param mkdir: whether to create a directory, defaults to ``False``
+    :param subdir: Name of a directory or directories (and/or a filename).
+    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param data_dir: Name of the directory where data is (or will be) stored;
+        defaults to ``"data"``.
+    :type data_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
-    :param kwargs: [optional] parameters of the function :func:`pyhelpers.dirs.cd`
-    :return path: full pathname of a directory (or a file) under ``data_dir``
+    :param kwargs: [Optional] Additional parameters for the function :func:`~pyhelpers.dirs.cd`.
+    :return: Pathname of a directory or file under ``data_dir``.
     :rtype: str
 
     **Examples**::
 
         >>> from pyhelpers.dirs import cdd, delete_dir
         >>> import os
-
         >>> path_to_dat_dir = cdd()
         >>> # As `mkdir=False`, `path_to_dat_dir` will NOT be created if it doesn't exist
         >>> os.path.relpath(path_to_dat_dir)
         'data'
-
         >>> path_to_dat_dir = cdd(data_dir="test_cdd", mkdir=True)
         >>> # As `mkdir=True`, `path_to_dat_dir` will be created if it doesn't exist
         >>> os.path.relpath(path_to_dat_dir)
         'test_cdd'
-
         >>> # Delete the "test_cdd" folder
         >>> delete_dir(path_to_dat_dir, verbose=True)
         To delete the directory "test_cdd\\"
         ? [No]|Yes: yes
         Deleting "test_cdd\\" ... Done.
-
         >>> # Set `data_dir` to be `"tests"`
         >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
         >>> os.path.relpath(path_to_dat_dir)
         'test_cdd\\data'
-
         >>> # Delete the "test_cdd" folder and the sub-folder "data"
         >>> test_cdd = os.path.dirname(path_to_dat_dir)
         >>> delete_dir(test_cdd, verbose=True)
@@ -179,7 +168,6 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
         Confirmed to delete it
         ? [No]|Yes: yes
         Deleting "test_cdd\\" ... Done.
-
         >>> # # Alternatively,
         >>> # import shutil
         >>> # shutil.rmtree(test_cdd)
@@ -193,16 +181,17 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
 
 def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     """
-    Get the full pathname of a directory (or file) under ``data_dir`` of a package.
+    Get the full pathname of a directory (or file) under `data_dir` of a package.
 
-    :param subdir: name of directory or names of directories (and/or a filename)
-    :type subdir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param data_dir: name of a directory to store data, defaults to ``"data"``
-    :type data_dir: str | os.PathLike[str] | bytes | os.Path[bytes]
-    :param mkdir: whether to create a directory, defaults to ``False``
+    :param subdir: Name of a directory or directories (and/or a filename).
+    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param data_dir: Name of the directory to store data; defaults to ``"data"``.
+    :type data_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
-    :param kwargs: [optional] parameters (e.g. ``mode=0o777``) of `os.makedirs`_
-    :return: full pathname of a directory or that of a file under ``data_dir`` of a package
+    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
+        `os.makedirs`_.
+    :return: Pathname of a directory or file under ``data_dir`` of a package.
     :rtype: str
 
     .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
@@ -211,9 +200,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
 
         >>> from pyhelpers.dirs import cd_data
         >>> import os
-
         >>> path_to_dat_dir = cd_data("tests", mkdir=False)
-
         >>> os.path.relpath(path_to_dat_dir)
         'pyhelpers\\data\\tests'
     """
@@ -238,31 +225,31 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
 
 def find_executable(name, options=None, target=None):
     """
-    Get pathname of an executable file for a specified application.
+    Get the pathname of an executable file for a specified application.
 
-    :param name: name or filename of the application that is to be called
+    :param name: Name or filename of the application that is to be called.
     :type name: str
-    :param options: possible pathnames or directories, defaults to ``None``
+    :param options: Possible pathnames or directories to search for the executable;
+        defaults to ``None``.
     :type options: list | set | None
-    :param target: specific pathname (that may be known already), defaults to ``None``
+    :param target: Specific pathname of the executable file (if already known);
+        defaults to ``None``.
     :type target: str | None
-    :return: whether the specified executable file exists and its pathname
+    :return: Whether the specified executable file exists (i.e. a boolean indicating existence),
+        together with its pathname.
     :rtype: tuple[bool, str]
 
     **Examples**::
 
         >>> from pyhelpers.dirs import find_executable
         >>> import os
-
         >>> python_exe = "python.exe"
         >>> possible_paths = ["C:\\Program Files\\Python39", "C:\\Python39\\python.exe"]
-
         >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
         >>> python_exe_exists
         True
         >>> os.path.relpath(path_to_python_exe)
         'venv\\Scripts\\python.exe'
-
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
         >>> test_exe_exists, path_to_test_exe = find_executable(text_exe, possible_paths)
         >>> test_exe_exists
