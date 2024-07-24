@@ -15,7 +15,8 @@ import subprocess
 import tempfile
 import zipfile
 
-from .._cache import _check_dependency, _check_file_pathname, _check_rel_pathname, _print_failure_msg
+from .._cache import (_check_dependency, _check_file_pathname, _check_rel_pathname,
+                      _print_failure_msg)
 
 
 # ==================================================================================================
@@ -24,34 +25,32 @@ from .._cache import _check_dependency, _check_file_pathname, _check_rel_pathnam
 
 def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     """
-    Extract data from a `zipped (compressed)
-    <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_ file.
+    Extract data from a `Zip
+    <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
+    (compressed) file.
 
-    :param path_to_zip_file: path where a Zip file is saved
+    :param path_to_zip_file: The path where the Zip file is saved.
     :type path_to_zip_file: str | os.PathLike
-    :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
+    :param out_dir: The directory where the extracted data will be saved; defaults to ``None``.
     :type out_dir: str | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `zipfile.ZipFile.extractall`_
+    :param kwargs: [Optional] Additional parameters for the method `zipfile.ZipFile.extractall()`_.
 
-    .. _`zipfile.ZipFile.extractall`:
+    .. _`zipfile.ZipFile.extractall()`:
         https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.extractall
 
     **Examples**::
 
         >>> from pyhelpers.store import unzip
         >>> from pyhelpers.dirs import cd, delete_dir
-
         >>> zip_file_path = cd("tests\\data", "zipped.zip")
-
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
         Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.
         >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-
         >>> output_dir = cd("tests\\data\\zipped_alt")
         >>> unzip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
         Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped_alt\\" ... Done.
@@ -59,7 +58,6 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-
         >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
         >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
         To delete the following directories:
@@ -95,31 +93,29 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
 def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
               **kwargs):
     """
-    Extract data from a compressed file by using `7-Zip <https://www.7-zip.org/>`_.
+    Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
-    :param path_to_zip_file: path where a compressed file is saved
+    :param path_to_zip_file: The path where the compressed file is saved.
     :type path_to_zip_file: str | os.PathLike
-    :param out_dir: path to a directory where the extracted data is saved, defaults to ``None``
+    :param out_dir: The directory where the extracted data will be saved; defaults to ``None``.
     :type out_dir: str | None
-    :param mode: defaults to ``'aoa'``
+    :param mode: The extraction mode; defaults to ``'aoa'``.
     :type mode: str
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param seven_zip_exe: absolute path to '7z.exe', defaults to ``None``;
-        when ``seven_zip_exe=None``, use the default installation path, e.g. (on Windows)
-        "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*"
+    :param seven_zip_exe: The path to the executable "*7z.exe*";
+        If ``seven_zip_exe=None`` (default), the default installation path will be used, e.g.
+        "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" (on Windows).
     :type seven_zip_exe: str | None
-    :param kwargs: [optional] parameters of `subprocess.run`_
+    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
 
-    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dirs import cd, delete_dir
-
         >>> zip_file_pathname = cd("tests\\data", "zipped.zip")
-
         >>> seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
         7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
 
@@ -143,24 +139,19 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-
         >>> output_dir = cd("tests\\data\\zipped_alt")
         >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir, verbose=False)
-
         >>> out_file_pathname = cd("tests\\data\\zipped_alt", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-
         >>> # Extract a .7z file
         >>> zip_file_path = cd("tests\\data", "zipped.7z")
         >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir)
-
         >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-
         >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
         >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
         To delete the following directories:
@@ -173,7 +164,8 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 
     exe_name = "7z.exe"
     optional_pathnames = {exe_name, f"C:/Program Files/7-Zip/{exe_name}"}
-    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(exe_name, optional_pathnames, seven_zip_exe)
+    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=seven_zip_exe)
 
     if seven_zip_exists:
         if out_dir is None:
@@ -208,53 +200,52 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
                     verbose=False, **kwargs):
     """
-    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ file (.md)
-    to a `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
+    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
+    `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
     (.rst) file.
 
-    This function relies on
-    `Pandoc <https://pandoc.org/>`_ or `pypandoc <https://github.com/bebraw/pypandoc>`_.
+    This function relies on `Pandoc <https://pandoc.org/>`_ or
+    `pypandoc <https://github.com/bebraw/pypandoc>`_, given the specified ``engine``.
 
-    :param path_to_md: path where a markdown file is saved
+    :param path_to_md: The path where the Markdown file is saved.
     :type path_to_md: str | os.PathLike
-    :param path_to_rst: path where a reStructuredText file is saved
+    :param path_to_rst: The path where the reStructuredText file will be saved.
     :type path_to_rst: str | os.PathLike
-    :param reverse: whether to convert a .rst file to a .md file, defaults to ``False``
+    :param reverse: Specifies whether to convert an .rst file to a .md file; defaults to ``False``.
     :type reverse: bool
-    :param engine: engine/module used for performing the conversion, defaults to ``None``;
-        an alternative option is ``'pypandoc'``
+    :param engine: The engine/module used for performing the conversion;
+        if ``engine=None`` (default), the function utilises `Pandoc <https://pandoc.org/>`_,
+        ``'pypandoc'`` otherwise.
     :type engine: None | str
-    :param pandoc_exe: absolute path to the executable "pandoc.exe", defaults to ``None``;
-        when ``pandoc_exe=None``, use the default installation path, e.g. (on Windows)
-        "*C:\\\\Program Files\\\\Pandoc\\\\pandoc.exe*"
+    :param pandoc_exe: The path to the executable "*pandoc.exe*";
+        If ``pandoc_exe=None`` (default), the default installation path will be used, e.g.
+        "*C:\\\\Program Files\\\\Pandoc\\\\pandoc.exe*" (on Windows).
     :type pandoc_exe: str | None
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `subprocess.run`_ (when ``engine=None``) or
-        `pypandoc.convert_file`_ (when ``engine='pypandoc'``)
+    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_
+        (if ``engine=None``) or `pypandoc.convert_file()`_ (if ``engine='pypandoc'``).
 
-    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
-    .. _`pypandoc.convert_file`: https://github.com/NicklasTegner/pypandoc#usage
+    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`pypandoc.convert_file()`: https://github.com/NicklasTegner/pypandoc#usage
 
     **Examples**::
 
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
-
         >>> dat_dir = cd("tests\\documents")
         >>> path_to_md_file = cd(dat_dir, "readme.md")
         >>> path_to_rst_file = cd(dat_dir, "readme.rst")
-
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
         Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
-
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
         Updating "readme.rst" at "tests\\documents\\" ... Done.
     """
 
     exe_name = "pandoc.exe"
     optional_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
-    pandoc_exists, pandoc_exe_ = _check_file_pathname(exe_name, optional_pathnames, target=pandoc_exe)
+    pandoc_exists, pandoc_exe_ = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=pandoc_exe)
 
     input_path, output_path = path_to_md, path_to_rst
     arg_f, arg_t = 'markdown+smart', 'rst+smart'
@@ -278,7 +269,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     try:
         if engine is None:
             if pandoc_exists:
-                cmd_args = [pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
+                cmd_args = [
+                    pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
                 if reverse:
                     cmd_args += ['-o', abs_output_path]
                 else:
@@ -297,7 +289,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
             else:
                 kwargs.update({'extra_args': ['--wrap=preserve']})
             rslt = py_pandoc.convert_file(
-                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path), **kwargs)
+                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path),
+                **kwargs)
 
             ret_code = 0 if rslt == '' else -2
 
@@ -319,6 +312,27 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
+    """
+    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
+    `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
+
+    :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
+    :type path_to_xlsx: str | os.PathLike
+    :param path_to_csv: The path of the CSV file:
+
+        - When ``path_to_csv=None``, a temporary file is generated;
+        - When ``path_to_csv=""``, the CSV file is generated in the same directory as the source
+          Excel spreadsheet;
+        - Otherwise, it specifies a specific path.
+
+    :type path_to_csv: str | os.PathLike | None
+    :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
+        when ``vbscript=None``, a default script is used.
+    :type vbscript: str | None
+    :return: A tuple containing the path of the VB script and the path of the CSV file.
+    :rtype: tuple[str, str]
+    """
+
     if vbscript is None:
         vbscript_ = str(importlib.resources.files(__package__).joinpath("../data/xlsx2csv.vbs"))
     else:
@@ -337,24 +351,29 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
 
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
-    Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file
-    using VBScript.
+    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    (*.xlsx*/*.xls*) to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file
+    using `VBScript <https://en.wikipedia.org/wiki/VBScript>`_.
 
     Reference: https://stackoverflow.com/questions/1858195/.
 
-    :param xlsx_pathname: pathname of an Excel spreadsheet (in the format of .xlsx)
+    :param xlsx_pathname: The path of the `Microsoft Excel`_ spreadsheet (in .xlsx format).
     :type xlsx_pathname: str
-    :param csv_pathname: pathname of a CSV format file;
+    :param csv_pathname: The path of the CSV file.
     :type csv_pathname: str | None
-    :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
+    :param sheet_name: The name of the target worksheet in the given `Microsoft Excel`_ file;
+        defaults to ``'1'``.
     :type sheet_name: str
-    :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
+    :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
+        defaults to ``None``.
     :type vbscript: str | None
-    :param kwargs: [optional] parameters of the function `subprocess.run`_
-    :return: code for the result of running the VBScript
+    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
+    :return: The result code from running the VBScript.
     :rtype: int
 
-    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
 
     command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname, sheet_name]
@@ -370,52 +389,66 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, **kwargs):
     """
-    Convert Microsoft Excel spreadsheet (in the format .xlsx/.xls) to a CSV file.
+    Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
-    :param path_to_xlsx: pathname of an Excel spreadsheet (in the format of .xlsx)
+    :param path_to_xlsx: The path of the Microsoft Excel spreadsheet (in *.xlsx* format).
     :type path_to_xlsx: str | os.PathLike
-    :param path_to_csv: pathname of a CSV format file;
-        when ``csv_pathname=None`` (default),
-        the target CSV file is generated as a `tempfile.NamedTemporaryFile`_;
-        when ``csv_pathname=""``,
-        the target CSV file is generated at the same directory where the source Excel spreadsheet is;
-        otherwise, it could also be a specific pathname
+    :param path_to_csv: The path of the CSV file:
+
+        - When ``path_to_csv=None`` (default), a temporary file is generated
+          using `tempfile.NamedTemporaryFile()`_.
+        - When ``path_to_csv=""``, the CSV file is generated in the same directory as the source
+          Microsoft Excel spreadsheet.
+        - Otherwise, it specifies a specific path.
+
     :type path_to_csv: str | os.PathLike | None
-    :param engine: engine used for converting .xlsx/.xls to .csv;
-        when ``engine=None`` (default), a Microsoft VBScript (Visual Basic Script) is used;
-        when ``engine='xlsx2csv'``, the function would rely on `xlsx2csv`_
+    :param engine: The engine used for converting *.xlsx*/*.xls* to .csv:
+
+        - When ``engine=None`` (default), a `VBScript`_ (Visual Basic Script) is used.
+        - When ``engine='xlsx2csv'``, the function relies on `xlsx2csv`_.
+
     :type engine: str | None
-    :param if_exists: how to proceed if the target ``csv_pathname`` exists, defaults to ``'replace'``
+    :param if_exists: The action to take if the target CSV file exists; defaults to ``'replace'``.
     :type if_exists: str
-    :param vbscript: pathname of a VB script used for converting .xlsx/.xls to .csv, defaults to ``None``
+    :param vbscript: The path of the VBScript used for converting *.xlsx*/*.xls* to *.csv*;
+        defaults to ``None``.
     :type vbscript: str | None
-    :param sheet_name: name of the target worksheet in the given Excel file, defaults to ``'1'``
+    :param sheet_name: The name of the target worksheet in the given Excel file;
+        defaults to ``'1'``.
     :type sheet_name: str
-    :param ret_null: whether to return something depending on the specified ``engine``,
-        defaults to ``False``
-    :param verbose: whether to print relevant information in console, defaults to ``False``
+    :param ret_null: Whether to return a value depending on the specified ``engine``;
+        defaults to ``False``.
+    :type ret_null: bool
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of the function `subprocess.run`_
-    :return: the pathname of the generated CSV file or None, when ``engine=None``;
-        `io.StringIO`_ buffer, when ``engine='xlsx2csv'``
+    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
+    :return: The path of the generated CSV file or ``None`` when ``engine=None``;
+        an `io.StringIO()`_ buffer when ``engine='xlsx2csv'``.
     :rtype: str | _io.StringIO | None
 
-    .. _`tempfile.NamedTemporaryFile`:
+    .. _`Microsoft Excel`:
+        https://en.wikipedia.org/wiki/Microsoft_Excel
+    .. _`CSV`:
+        https://en.wikipedia.org/wiki/Comma-separated_values
+    .. _`VBScript`:
+        https://en.wikipedia.org/wiki/VBScript
+    .. _`tempfile.NamedTemporaryFile()`:
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
-    .. _`xlsx2csv`: https://github.com/dilshod/xlsx2csv
-    .. _`io.StringIO`: https://docs.python.org/3/library/io.html#io.StringIO
-    .. _`subprocess.run`: https://docs.python.org/3/library/subprocess.html#subprocess.run
+    .. _`xlsx2csv`:
+        https://github.com/dilshod/xlsx2csv
+    .. _`io.StringIO()`:
+        https://docs.python.org/3/library/io.html#io.StringIO
+    .. _`subprocess.run()`:
+        https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
         >>> from pyhelpers.store import xlsx_to_csv, load_csv
         >>> from pyhelpers.dirs import cd
         >>> import os
-
         >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")
-
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
         Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
@@ -428,7 +461,6 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Birmingham  -1.9026911  52.4796992
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
-
         >>> # Set `engine='xlsx2csv'`
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
         Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
@@ -441,10 +473,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
-
         >>> data.astype('float16').equals(data_.astype('float16'))
         True
-
         >>> # Remove the temporary CSV file
         >>> os.remove(path_to_temp_csv)
     """
@@ -481,7 +511,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         buffer = io.StringIO()
         try:
             xlsx2csv.Xlsx2csv(
-                xlsxfile=path_to_xlsx, sheet_name=sheet_name, outputencoding="utf-8").convert(buffer)
+                xlsxfile=path_to_xlsx, sheet_name=sheet_name, outputencoding="utf-8").convert(
+                buffer)
             buffer.seek(0)
 
             if verbose:

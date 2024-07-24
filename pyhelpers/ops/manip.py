@@ -13,25 +13,25 @@ import pandas as pd
 from .._cache import _check_dependency, _check_rel_pathname, _print_failure_msg
 
 
+# ==================================================================================================
 # Iterable
+# ==================================================================================================
 
 def loop_in_pairs(iterable):
     """
-    Get every pair (current, next).
+    Generate pairs of consecutive elements from the given iterable.
 
-    :param iterable: iterable object
+    :param iterable: Iterable object from which to generate pairs.
     :type iterable: typing.Iterable
-    :return: a `zip <https://docs.python.org/3.9/library/functions.html#zip>`_-type variable
+    :return: Zip object containing pairs of consecutive elements.
     :rtype: zip
 
     **Examples**::
 
         >>> from pyhelpers.ops import loop_in_pairs
-
         >>> res = loop_in_pairs(iterable=[1])
         >>> list(res)
         []
-
         >>> res = loop_in_pairs(iterable=range(0, 10))
         >>> list(res)
         [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]
@@ -45,25 +45,23 @@ def loop_in_pairs(iterable):
 
 def split_list_by_size(lst, sub_len):
     """
-    Split a list into (evenly sized) sub-lists.
+    Split a list into evenly sized sub-lists.
 
     See also [`OPS-SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
 
-    :param lst: a list of any
+    :param lst: List to be split.
     :type lst: list
-    :param sub_len: length of a sub-list
+    :param sub_len: Length of each sub-list.
     :type sub_len: int
-    :return: a sequence of ``sub_len``-sized sub-lists from ``lst``
+    :return: A generator yielding sub-lists of length ``sub_len`` from ``lst``.
     :rtype: typing.Generator[list]
 
     **Examples**::
 
         >>> from pyhelpers.ops import split_list_by_size
-
         >>> lst_ = list(range(0, 10))
         >>> lst_
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
         >>> lists = split_list_by_size(lst_, sub_len=3)
         >>> list(lists)
         [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
@@ -75,25 +73,23 @@ def split_list_by_size(lst, sub_len):
 
 def split_list(lst, num_of_sub):
     """
-    Split a list into a number of equally-sized sub-lists.
+    Split a list into a specified number of equally-sized sub-lists.
 
     See also [`OPS-SL-1 <https://stackoverflow.com/questions/312443/>`_].
 
-    :param lst: a list of any
+    :param lst: List to be split.
     :type lst: list
-    :param num_of_sub: number of sub-lists
+    :param num_of_sub: Number of sub-lists to create.
     :type num_of_sub: int
-    :return: a total of ``num_of_sub`` sub-lists from ``lst``
+    :return: A generator yielding a total of ``num_of_sub`` sub-lists from ``lst``.
     :rtype: typing.Generator[list]
 
     **Examples**::
 
         >>> from pyhelpers.ops import split_list
-
         >>> lst_ = list(range(0, 10))
         >>> lst_
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
         >>> lists = split_list(lst_, num_of_sub=3)
         >>> list(lists)
         [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
@@ -106,37 +102,33 @@ def split_list(lst, num_of_sub):
 
 def split_iterable(iterable, chunk_size):
     """
-    Split a list into (evenly sized) chunks.
+    Split an iterable into evenly sized chunks.
 
     See also [`OPS-SI-1 <https://stackoverflow.com/questions/24527006/>`_].
 
-    :param iterable: iterable object
+    :param iterable: Iterable object to be split.
     :type iterable: typing.Iterable
-    :param chunk_size: length of a chunk
+    :param chunk_size: Size of each chunk.
     :type chunk_size: int
-    :return: a sequence of equally-sized chunks from ``iterable``
+    :return: A generator yielding chunks of size ``chunk_size`` from ``iterable``.
     :rtype: typing.Generator[typing.Iterable]
 
     **Examples**::
 
         >>> from pyhelpers.ops import split_iterable
         >>> import pandas
-
         >>> iterable_1 = list(range(0, 10))
         >>> iterable_1
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-
         >>> iterable_1_ = split_iterable(iterable_1, chunk_size=3)
         >>> type(iterable_1_)
         generator
-
         >>> for dat in iterable_1_:
         ...     print(list(dat))
         [0, 1, 2]
         [3, 4, 5]
         [6, 7, 8]
         [9]
-
         >>> iterable_2 = pandas.Series(range(0, 20))
         >>> iterable_2
         0      0
@@ -160,9 +152,7 @@ def split_iterable(iterable, chunk_size):
         18    18
         19    19
         dtype: int64
-
         >>> iterable_2_ = split_iterable(iterable_2, chunk_size=5)
-
         >>> for dat in iterable_2_:
         ...     print(list(dat))
         [0, 1, 2, 3, 4]
@@ -178,24 +168,22 @@ def split_iterable(iterable, chunk_size):
 
 def update_dict(dictionary, updates, inplace=False):
     """
-    Update a (nested) dictionary or similar mapping.
+    Update a (nested) dictionary with another dictionary.
 
     See also [`OPS-UD-1 <https://stackoverflow.com/questions/3232943/>`_].
 
-    :param dictionary: a (nested) dictionary that needs to be updated
+    :param dictionary: The (nested) dictionary to be updated.
     :type dictionary: dict
-    :param updates: a dictionary with new data
+    :param updates: The dictionary containing updates.
     :type updates: dict
-    :param inplace: whether to replace the original ``dictionary`` with the updated one,
-        defaults to ``False``
+    :param inplace: Whether to update the original ``dictionary`` in place; defaults to ``False``.
     :type inplace: bool
-    :return: an updated dictionary
+    :return: The updated dictionary.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.ops import update_dict
-
         >>> source_dict = {'key_1': 1}
         >>> update_data = {'key_2': 2}
         >>> upd_dict = update_dict(source_dict, updates=update_data)
@@ -206,25 +194,21 @@ def update_dict(dictionary, updates, inplace=False):
         >>> update_dict(source_dict, updates=update_data, inplace=True)
         >>> source_dict
         {'key_1': 1, 'key_2': 2}
-
         >>> source_dict = {'key': 'val_old'}
         >>> update_data = {'key': 'val_new'}
         >>> upd_dict = update_dict(source_dict, updates=update_data)
         >>> upd_dict
         {'key': 'val_new'}
-
         >>> source_dict = {'key': {'k1': 'v1_old', 'k2': 'v2'}}
         >>> update_data = {'key': {'k1': 'v1_new'}}
         >>> upd_dict = update_dict(source_dict, updates=update_data)
         >>> upd_dict
         {'key': {'k1': 'v1_new', 'k2': 'v2'}}
-
         >>> source_dict = {'key': {'k1': {}, 'k2': 'v2'}}
         >>> update_data = {'key': {'k1': 'v1'}}
         >>> upd_dict = update_dict(source_dict, updates=update_data)
         >>> upd_dict
         {'key': {'k1': 'v1', 'k2': 'v2'}}
-
         >>> source_dict = {'key': {'k1': 'v1', 'k2': 'v2'}}
         >>> update_data = {'key': {'k1': {}}}
         >>> upd_dict = update_dict(source_dict, updates=update_data)
@@ -256,37 +240,32 @@ def update_dict(dictionary, updates, inplace=False):
 
 def update_dict_keys(dictionary, replacements=None):
     """
-    Update keys in a (nested) dictionary.
+    Update keys in a (nested) dictionary based on a given replacements dictionary.
 
     See also
     [`OPS-UDK-1 <https://stackoverflow.com/questions/4406501/>`_] and
     [`OPS-UDK-2 <https://stackoverflow.com/questions/38491318/>`_].
 
-    :param dictionary: a (nested) dictionary in which certain keys are to be updated
+    :param dictionary: The (nested) dictionary in which certain keys are to be updated.
     :type dictionary: dict
-    :param replacements: a dictionary in the form of ``{<current_key>: <new_key>}``,
-        describing which keys are to be updated, defaults to ``None``
+    :param replacements: A dictionary in the form of ``{<current_key>: <new_key>}``
+        describing which keys are to be updated; defaults to ``None``.
     :type replacements: dict | None
-    :return: an updated dictionary
+    :return: The dictionary with updated keys.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.ops import update_dict_keys
-
         >>> source_dict = {'a': 1, 'b': 2, 'c': 3}
-
         >>> upd_dict = update_dict_keys(source_dict, replacements=None)
         >>> upd_dict  # remain unchanged
         {'a': 1, 'b': 2, 'c': 3}
-
         >>> repl_keys = {'a': 'd', 'c': 'e'}
         >>> upd_dict = update_dict_keys(source_dict, replacements=repl_keys)
         >>> upd_dict
         {'d': 1, 'b': 2, 'e': 3}
-
         >>> source_dict = {'a': 1, 'b': 2, 'c': {'d': 3, 'e': {'f': 4, 'g': 5}}}
-
         >>> repl_keys = {'d': 3, 'f': 4}
         >>> upd_dict = update_dict_keys(source_dict, replacements=repl_keys)
         >>> upd_dict
@@ -319,41 +298,38 @@ def update_dict_keys(dictionary, replacements=None):
 
 def get_dict_values(key, dictionary):
     """
-    Get all values in a (nested) dictionary for a given key.
+    Retrieve all values in a (nested) dictionary for a given key.
 
     See also
     [`OPS-GDV-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
     [`OPS-GDV-2 <https://stackoverflow.com/questions/9807634/>`_].
 
-    :param key: any that can be the key of a dictionary
+    :param key: The key to search for in the dictionary.
     :type key: any
-    :param dictionary: a (nested) dictionary
+    :param dictionary: The (nested) dictionary to search within.
     :type dictionary: dict
-    :return: all values of the ``key`` within the given ``target_dict``
+    :return: A generator yielding all values associated with the given ``key``
+        within the ``dictionary``.
     :rtype: typing.Generator[typing.Iterable]
 
     **Examples**::
 
         >>> from pyhelpers.ops import get_dict_values
-
         >>> key_ = 'key'
         >>> target_dict_ = {'key': 'val'}
         >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['val']]
-
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': 'v2'}}
         >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['v1']]
-
         >>> key_ = 'k1'
         >>> target_dict_ = {'key': {'k1': ['v1', 'v1_1']}}
         >>> val = get_dict_values(key_, target_dict_)
         >>> list(val)
         [['v1', 'v1_1']]
-
         >>> key_ = 'k2'
         >>> target_dict_ = {'key': {'k1': 'v1', 'k2': ['v2', 'v2_1']}}
         >>> val = get_dict_values(key_, target_dict_)
@@ -380,19 +356,15 @@ def remove_dict_keys(dictionary, *keys):
     """
     Remove multiple keys from a dictionary.
 
-    :param dictionary: a dictionary
+    :param dictionary: The dictionary from which keys should be removed.
     :type dictionary: dict
-    :param keys: (a sequence of) any that can be the key of a dictionary
-    :type keys: any
+    :param keys: The keys to be removed from the dictionary.
 
     **Examples**::
 
         >>> from pyhelpers.ops import remove_dict_keys
-
         >>> target_dict_ = {'k1': 'v1', 'k2': 'v2', 'k3': 'v3', 'k4': 'v4', 'k5': 'v5'}
-
         >>> remove_dict_keys(target_dict_, 'k1', 'k3', 'k4')
-
         >>> target_dict_
         {'k2': 'v2', 'k5': 'v5'}
     """
@@ -405,26 +377,25 @@ def remove_dict_keys(dictionary, *keys):
 
 def compare_dicts(dict1, dict2):
     """
-    Compare the difference between two dictionaries.
+    Compare the differences between two dictionaries.
 
     See also [`OPS-CD-1 <https://stackoverflow.com/questions/23177439>`_].
 
-    :param dict1: a dictionary
+    :param dict1: The first dictionary for comparison.
     :type dict1: dict
-    :param dict2: another dictionary
+    :param dict2: The second dictionary for comparison.
     :type dict2: dict
-    :return: in comparison to ``dict1``, the main difference on ``dict2``, including:
-        modified items, keys that are the same, keys where values remain unchanged, new keys and
-        keys that are removed
-    :rtype: typing.Tuple[dict, list]
+    :return: A tuple containing the main differences between ``dict1`` and ``dict2``:
+        modified items, common keys with different values,
+        unchanged keys (same value in both dictionaries), new keys added in ``dict2`` and
+        keys removed from ``dict1``.
+    :rtype: tuple
 
     **Examples**::
 
         >>> from pyhelpers.ops import compare_dicts
-
         >>> d1 = {'a': 1, 'b': 2, 'c': 3}
         >>> d2 = {'b': 2, 'c': 4, 'd': [5, 6]}
-
         >>> items_modified, k_shared, k_unchanged, k_new, k_removed = compare_dicts(d1, d2)
         >>> items_modified
         {'c': [3, 4]}
@@ -452,30 +423,26 @@ def compare_dicts(dict1, dict2):
 
 def merge_dicts(*dicts):
     """
-    Merge multiple dictionaries.
+    Merge multiple dictionaries into a single dictionary.
 
-    :param dicts: (one or) multiple dictionaries
+    :param dicts: One or multiple dictionaries to merge.
     :type dicts: dict
-    :return: a single dictionary containing all elements of the input
+    :return: A dictionary containing all elements from the input dictionaries.
     :rtype: dict
 
     **Examples**::
 
         >>> from pyhelpers.ops import merge_dicts
-
         >>> dict_a = {'a': 1}
         >>> dict_b = {'b': 2}
         >>> dict_c = {'c': 3}
-
         >>> merged_dict = merge_dicts(dict_a, dict_b, dict_c)
         >>> merged_dict
         {'a': 1, 'b': 2, 'c': 3}
-
         >>> dict_c_ = {'c': 4}
         >>> merged_dict = merge_dicts(merged_dict, dict_c_)
         >>> merged_dict
         {'a': 1, 'b': 2, 'c': [3, 4]}
-
         >>> dict_1 = merged_dict
         >>> dict_2 = {'b': 2, 'c': 4, 'd': [5, 6]}
         >>> merged_dict = merge_dicts(dict_1, dict_2)
@@ -500,24 +467,26 @@ def merge_dicts(*dicts):
     return new_dict
 
 
+# ==================================================================================================
 # Tabular data
+# ==================================================================================================
 
 def detect_nan_for_str_column(data_frame, column_names=None):
     """
-    Detect if a str type column contains ``NaN`` when reading csv files.
+    Detect if a column with string type contains ``NaN`` values for a given dataframe.
 
-    :param data_frame: a data frame to be examined
+    :param data_frame: A dataframe to be examined.
     :type data_frame: pandas.DataFrame
-    :param column_names: a sequence of column names, if ``None`` (default), all columns
-    :type column_names: None | collections.abc.Iterable
-    :return: position index of the column that contains ``NaN``
-    :rtype: typing.Generator[typing.Iterable]
+    :param column_names: A sequence of column names to check;
+        if ``column_names=None`` (default), all columns are checked.
+    :type column_names: collections.abc.Iterable | None
+    :return: Generator yielding position index of columns that contain ``NaN``.
+    :rtype: typing.Generator
 
     **Examples**::
 
         >>> from pyhelpers.ops import detect_nan_for_str_column
         >>> from pyhelpers._cache import example_dataframe
-
         >>> dat = example_dataframe()
         >>> dat
                     Easting  Northing
@@ -526,7 +495,6 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         Birmingham   406689    286822
         Manchester   383819    398052
         Leeds        582044    152953
-
         >>> dat.loc['Leeds', 'Latitude'] = None
         >>> dat
                     Easting  Northing
@@ -535,7 +503,6 @@ def detect_nan_for_str_column(data_frame, column_names=None):
         Birmingham   406689  286822.0
         Manchester   383819  398052.0
         Leeds        582044       NaN
-
         >>> nan_col_pos = detect_nan_for_str_column(data_frame=dat, column_names=None)
         >>> list(nan_col_pos)
         [1]
@@ -552,17 +519,28 @@ def detect_nan_for_str_column(data_frame, column_names=None):
 
 def create_rotation_matrix(theta):
     """
-    Create a rotation matrix (counterclockwise).
+    Create a 2D rotation matrix for counterclockwise rotation.
 
-    :param theta: rotation angle (in radian)
-    :type theta: int | float
-    :return: a rotation matrix of shape (2, 2)
+    :param theta: Rotation angle in radians.
+    :type theta: float | int
+    :return: Rotation matrix of shape (2, 2).
     :rtype: numpy.ndarray
+
+    .. note::
+
+        - The rotation matrix is defined as:
+
+            .. code-block:: python
+
+                [[cos(theta), -sin(theta)],
+                 [sin(theta), cos(theta)]]
+
+        - For counterclockwise rotation, the matrix rotates points in the positive direction
+          (i.e. the positive x-axis rotates towards the positive y-axis).
 
     **Examples**::
 
         >>> from pyhelpers.ops import create_rotation_matrix
-
         >>> rot_mat = create_rotation_matrix(theta=30)
         >>> rot_mat
         array([[-0.98803162,  0.15425145],
@@ -578,23 +556,21 @@ def create_rotation_matrix(theta):
 
 def dict_to_dataframe(input_dict, k='key', v='value'):
     """
-    Convert a dictionary to a data frame.
+    Convert a dictionary to a dataframe.
 
-    :param input_dict: a dictionary to be converted to a data frame
+    :param input_dict: Dictionary to be converted to a dataframe.
     :type input_dict: dict
-    :param k: column name for keys
+    :param k: Column name for keys; defaults to ``'key'``.
     :type k: str
-    :param v: column name for values
+    :param v: Column name for values; defaults to ``'value'``.
     :type v: str
-    :return: a data frame converted from the ``input_dict``
+    :return: Dataframe converted from the input dictionary.
     :rtype: pandas.DataFrame
 
     **Examples**::
 
         >>> from pyhelpers.ops import dict_to_dataframe
-
         >>> test_dict = {'a': 1, 'b': 2}
-
         >>> dat = dict_to_dataframe(input_dict=test_dict)
         >>> dat
           key  value
@@ -614,42 +590,36 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     """
     Load in a compressed sparse row (CSR) or compressed row storage (CRS).
 
-    :param path_to_csr: path where a CSR file (e.g. with a file extension ".npz") is saved
+    :param path_to_csr: Path to the CSR file (e.g. with extension ".npz").
     :type path_to_csr: str | os.PathLike
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
+    :param verbose: Whether to print relevant information in console as the function runs;
+        defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `numpy.load`_
-    :return: a compressed sparse row
+    :param kwargs: [Optional] Additional parameters for the function `numpy.load()`_.
+    :return: A compressed sparse row.
     :rtype: scipy.sparse.csr.csr_matrix
 
-    .. _`numpy.load`: https://numpy.org/doc/stable/reference/generated/numpy.load
+    .. _`numpy.load()`: https://numpy.org/doc/stable/reference/generated/numpy.load
 
     **Examples**::
 
         >>> from pyhelpers.ops import parse_csr_matrix
         >>> from pyhelpers.dirs import cd
         >>> from scipy.sparse import csr_matrix, save_npz
-
         >>> data_ = [1, 2, 3, 4, 5, 6]
         >>> indices_ = [0, 2, 2, 0, 1, 2]
         >>> indptr_ = [0, 2, 3, 6]
-
         >>> csr_m = csr_matrix((data_, indices_, indptr_), shape=(3, 3))
         >>> csr_m
         <3x3 sparse matrix of type '<class 'numpy.int32'>'
             with 6 stored elements in Compressed Sparse Row format>
-
         >>> path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
         >>> save_npz(path_to_csr_npz, csr_m)
-
         >>> parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
         Loading "\\tests\\data\\csr_mat.npz" ... Done.
-
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
         >>> (parsed_csr_mat != csr_m).count_nonzero() == 0
         True
-
         >>> (parsed_csr_mat != csr_m).nnz == 0
         True
     """
@@ -682,29 +652,28 @@ def swap_cols(array, c1, c2, as_list=False):
     """
     Swap positions of two columns in an array.
 
-    :param array: an array
+    :param array: An array.
     :type array: numpy.ndarray
-    :param c1: index of a column
+    :param c1: Index of the first (i.e. the ``c1``-th) column to swap.
     :type c1: int
-    :param c2: index of another column
+    :param c2: Index of the second (i.e. the ``c2``-th) column to swap.
     :type c2: int
-    :param as_list: whether to return a list
+    :param as_list: Whether to return a list instead of an array; defaults to ``False``.
     :type as_list: bool
-    :return: a new array/list in which the positions of the c1-th and c2-th columns are swapped
+    :return: A new array or list
+        where the positions of the ``c1``-th and ``c2``-th columns are swapped.
     :rtype: numpy.ndarray | list
 
     **Examples**::
 
         >>> from pyhelpers.ops import swap_cols
         >>> from pyhelpers._cache import example_dataframe
-
         >>> example_arr = example_dataframe(osgb36=True).to_numpy(dtype=int)
         >>> example_arr
         array([[530039, 180371],
                [406705, 286868],
                [383830, 398113],
                [430147, 433553]])
-
         >>> # Swap the 0th and 1st columns
         >>> new_arr = swap_cols(example_arr, c1=0, c2=1)
         >>> new_arr
@@ -712,7 +681,6 @@ def swap_cols(array, c1, c2, as_list=False):
                [286868, 406705],
                [398113, 383830],
                [433553, 430147]])
-
         >>> new_list = swap_cols(example_arr, c1=0, c2=1, as_list=True)
         >>> new_list
         [[180371, 530039], [286868, 406705], [398113, 383830], [433553, 430147]]
@@ -731,29 +699,28 @@ def swap_rows(array, r1, r2, as_list=False):
     """
     Swap positions of two rows in an array.
 
-    :param array: an array
+    :param array: An array.
     :type array: numpy.ndarray
-    :param r1: index of a row
+    :param r1: Index of the first (i.e. the ``r1``-th) row to swap.
     :type r1: int
-    :param r2: index of another row
+    :param r2: Index of the second (i.e. the ``r2``-th) row to swap.
     :type r2: int
-    :param as_list: whether to return a list
+    :param as_list: Whether to return a list instead of an array; defaults to ``False``.
     :type as_list: bool
-    :return: a new array/list in which the positions of the r1-th and r2-th rows are swapped
+    :return: A new array or list
+        where the positions of the ``r1``-th and ``r2``-th rows are swapped.
     :rtype: numpy.ndarray | list
 
     **Examples**::
 
         >>> from pyhelpers.ops import swap_rows
         >>> from pyhelpers._cache import example_dataframe
-
         >>> example_arr = example_dataframe(osgb36=True).to_numpy(dtype=int)
         >>> example_arr
         array([[406705, 286868],
                [530039, 180371],
                [383830, 398113],
                [430147, 433553]])
-
         >>> # Swap the 0th and 1st rows
         >>> new_arr = swap_rows(example_arr, r1=0, r2=1)
         >>> new_arr
@@ -761,7 +728,6 @@ def swap_rows(array, r1, r2, as_list=False):
                [530039, 180371],
                [383830, 398113],
                [430147, 433553]])
-
         >>> new_list = swap_rows(example_arr, r1=0, r2=1, as_list=True)
         >>> new_list
         [[406705, 286868], [530039, 180371], [383830, 398113], [430147, 433553]]
@@ -778,37 +744,34 @@ def swap_rows(array, r1, r2, as_list=False):
 
 def np_shift(array, step, fill_value=np.nan):
     """
-    Shift an array by desired number of rows.
+    Shift an array by a desired number of rows.
 
-    See also [`OPS-NS-1 <https://stackoverflow.com/questions/30399534/>`_]
+    See also [`OPS-NS-1 <https://stackoverflow.com/questions/30399534/>`_].
 
-    :param array: an array of numbers
+    :param array: An array of numbers.
     :type array: numpy.ndarray
-    :param step: number of rows to shift
+    :param step: Number of rows to shift. Positive value shifts downwards; negative shifts upwards.
     :type step: int
-    :param fill_value: values to fill missing rows due to the shift, defaults to ``NaN``
+    :param fill_value: Value to fill missing rows due to the shift; defaults to ``NaN``.
     :type fill_value: float | int
-    :return: shifted array
+    :return: Shifted array.
     :rtype: numpy.ndarray
 
     **Examples**::
 
         >>> from pyhelpers.ops import np_shift
         >>> from pyhelpers._cache import example_dataframe
-
         >>> arr = example_dataframe(osgb36=True).to_numpy()
         >>> arr
         array([[530039.5588445, 180371.6801655],
                [406705.8870136, 286868.1666422],
                [383830.0390357, 398113.0558309],
                [430147.4473539, 433553.3271173]])
-
         >>> np_shift(arr, step=-1)
         array([[406705.8870136, 286868.1666422],
                [383830.0390357, 398113.0558309],
                [430147.4473539, 433553.3271173],
                [           nan,            nan]])
-
         >>> np_shift(arr, step=1, fill_value=0)
         array([[     0,      0],
                [530039, 180371],
@@ -832,7 +795,9 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
+# ==================================================================================================
 # Graph plotting
+# ==================================================================================================
 
 def cmap_discretisation(cmap, n_colours):
     # noinspection PyShadowingNames
@@ -842,15 +807,16 @@ def cmap_discretisation(cmap, n_colours):
     See also [`OPS-CD-1
     <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance,
-        e.g. built-in `colormaps`_ that is available via `matplotlib.colormaps.get_cmap`_
+    :param cmap: A colormap instance, e.g. built-in `colormaps`_ available via
+        `matplotlib.colormaps.get_cmap`_.
     :type cmap: matplotlib.colors.ListedColormap | matplotlib.colors.LinearSegmentedColormap | str
-    :param n_colours: number of colours
+    :param n_colours: Number of colours to discretise the colormap.
     :type n_colours: int
-    :return: a discrete colormap from (the continuous) ``cmap``
+    :return: A discrete colormap derived from the continuous ``cmap``.
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
-    .. _`colormaps`: https://matplotlib.org/stable/tutorials/colors/colormaps.html
+    .. _`colormaps`:
+        https://matplotlib.org/stable/tutorials/colors/colormaps.html
     .. _`matplotlib.colormaps.get_cmap`:
         https://matplotlib.org/stable/api/cm_api.html#matplotlib.cm.ColormapRegistry.get_cmap
 
@@ -858,27 +824,25 @@ def cmap_discretisation(cmap, n_colours):
 
         >>> from pyhelpers.ops import cmap_discretisation
         >>> from pyhelpers.settings import mpl_preferences
-
-        >>> mpl_preferences(backend='TkAgg', font_name='Times New Roman')
-
+        >>> mpl_preferences(backend='TkAgg')
         >>> import matplotlib
         >>> import matplotlib.pyplot as plt
         >>> import numpy as np
-
         >>> cm_accent = cmap_discretisation(cmap=matplotlib.colormaps['Accent'], n_colours=5)
         >>> cm_accent.name
         'Accent_5'
         >>> cm_accent = cmap_discretisation(cmap='Accent', n_colours=5)
         >>> cm_accent.name
         'Accent_5'
-
         >>> fig = plt.figure(figsize=(10, 2), constrained_layout=True)
         >>> ax = fig.add_subplot()
-
         >>> ax.imshow(np.resize(range(100), (5, 100)), cmap=cm_accent, interpolation='nearest')
-
-        >>> plt.axis('off')
-        >>> plt.show()
+        >>> ax.axis('off')
+        >>> fig.show()
+        >>> # from pyhelpers.store import save_figure
+        >>> # path_to_fig_ = "docs/source/_images/ops-cmap_discretisation-demo"
+        >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
+        >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
     The exmaple is illustrated in :numref:`ops-cmap_discretisation-demo`:
 
@@ -889,10 +853,6 @@ def cmap_discretisation(cmap, n_colours):
 
         An example of discrete colour ramp, created by the function
         :func:`~pyhelpers.ops.cmap_discretisation`.
-
-    .. code-block:: python
-
-        >>> plt.close()
     """
 
     mpl, mpl_colors = map(_check_dependency, ['matplotlib', 'matplotlib.colors'])
@@ -910,7 +870,8 @@ def cmap_discretisation(cmap, n_colours):
 
     for ki, key in enumerate(('red', 'green', 'blue')):
         c_dict[key] = [
-            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki]) for x in range(n_colours + 1)]
+            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki])
+            for x in range(n_colours + 1)]
 
     colour_map = mpl_colors.LinearSegmentedColormap(cmap_.name + '_%d' % n_colours, c_dict, 1024)
 
@@ -919,87 +880,84 @@ def cmap_discretisation(cmap, n_colours):
 
 def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     """
-    Create a colour bar.
+    Create a colour bar with correctly aligned labels.
 
-    To stop making off-by-one errors. Takes a standard colour ramp, and discretizes it,
-    then draws a colour bar with correctly aligned labels.
+    .. note::
 
-    See also [`OPS-CBI-1
-    <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+        - To avoid off-by-one errors, this function takes a standard colour ramp,
+          discretizes it, and then draws a colour bar with labels aligned correctly.
+        - See also [`OPS-CBI-1
+          <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html
+          #.WbpP0T6GNQB>`_].
 
-    :param cmap: a colormap instance,
-        e.g. built-in `colormaps`_ that is accessible via `matplotlib.cm.get_cmap`_
+    :param cmap: A colormap instance,
+        e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap()`_.
     :type cmap: matplotlib.colors.ListedColormap
-    :param n_colours: number of colours
+    :param n_colours: Number of discrete colours to use in the colour bar.
     :type n_colours: int
-    :param labels: a list of labels for the colour bar, defaults to ``None``
+    :param labels: Optional list of labels for the colour bar; defaults to ``None``.
     :type labels: list | None
-    :param kwargs: [optional] parameters of `matplotlib.pyplot.colorbar`_
-    :return: a colour bar object
+    :param kwargs: [Optional] Additional optional parameters for the funtion
+        `matplotlib.pyplot.colorbar()`_.
+    :return: A colour bar object.
     :rtype: matplotlib.colorbar.Colorbar
 
-    .. _`colormaps`: https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap`: https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
-    .. _`matplotlib.pyplot.colorbar`: https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
+    .. _`colormaps`:
+        https://matplotlib.org/tutorials/colors/colormaps.html
+    .. _`matplotlib.cm.get_cmap()`:
+        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
+    .. _`matplotlib.pyplot.colorbar()`:
+        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
 
     **Examples**::
 
         >>> from pyhelpers.ops import colour_bar_index
         >>> from pyhelpers.settings import mpl_preferences
-
-        >>> mpl_preferences(backend='TkAgg', font_name='Times New Roman')
-
-        >>> import matplotlib
+        >>> mpl_preferences(backend='TkAgg')
         >>> import matplotlib.pyplot as plt
-
-        >>> fig = plt.figure(figsize=(2, 6), constrained_layout=True)
-        >>> ax = fig.add_subplot()
-
-        >>> cbar = colour_bar_index(cmap=matplotlib.colormaps['Accent'], n_colours=5)
-
-        >>> ax.tick_params(axis='both', which='major', labelsize=14)
-        >>> cbar.ax.tick_params(labelsize=14)
-
+        >>> fig1 = plt.figure(figsize=(2, 6), constrained_layout=True)
+        >>> ax1 = fig1.add_subplot()
+        >>> cbar1 = colour_bar_index(cmap=plt.colormaps['Accent'], n_colours=5)
+        >>> ax1.tick_params(axis='both', which='major', labelsize=14)
+        >>> cbar1.ax.tick_params(labelsize=14)
         >>> # ax.axis('off')
-        >>> plt.show()
+        >>> fig1.show()
+        >>> # from pyhelpers.store import save_figure
+        >>> # path_to_fig1_ = "docs/source/_images/ops-colour_bar_index-demo-1"
+        >>> # save_figure(fig1, f"{path_to_fig1_}.svg", verbose=True)
+        >>> # save_figure(fig1, f"{path_to_fig1_}.pdf", verbose=True)
 
     The above example is illustrated in :numref:`ops-colour_bar_index-demo-1`:
 
     .. figure:: ../_images/ops-colour_bar_index-demo-1.*
         :name: ops-colour_bar_index-demo-1
         :align: center
-        :width: 23%
+        :width: 32%
 
-        An example of colour bar with numerical index,
-        created by the function :func:`~pyhelpers.ops.colour_bar_index`.
+        An example of colour bar with numerical index.
 
     .. code-block:: python
 
-        >>> fig = plt.figure(figsize=(2, 6), constrained_layout=True)
-        >>> ax = fig.add_subplot()
-
+        >>> fig2 = plt.figure(figsize=(2, 6), constrained_layout=True)
+        >>> ax2 = fig2.add_subplot()
         >>> labels_ = list('abcde')
-        >>> cbar = colour_bar_index(matplotlib.colormaps['Accent'], n_colours=5, labels=labels_)
-
-        >>> ax.tick_params(axis='both', which='major', labelsize=14)
-        >>> cbar.ax.tick_params(labelsize=14)
-
+        >>> cbar2 = colour_bar_index(cmap=plt.colormaps['Accent'], n_colours=5, labels=labels_)
+        >>> ax2.tick_params(axis='both', which='major', labelsize=14)
+        >>> cbar2.ax.tick_params(labelsize=14)
         >>> # ax.axis('off')
-        >>> plt.show()
+        >>> fig2.show()
+        >>> # path_to_fig2_ = "docs/source/_images/ops-colour_bar_index-demo-2"
+        >>> # save_figure(fig2, f"{path_to_fig2_}.svg", verbose=True)
+        >>> # save_figure(fig2, f"{path_to_fig2_}.pdf", verbose=True)
 
     This second example is illustrated in :numref:`ops-colour_bar_index-demo-2`:
 
     .. figure:: ../_images/ops-colour_bar_index-demo-2.*
         :name: ops-colour_bar_index-demo-2
         :align: center
-        :width: 23%
+        :width: 32%
 
-        An example of colour bar with textual index,
-        created by the function :func:`~pyhelpers.ops.colour_bar_index`.
-
-    .. code-block:: python
-
-        >>> plt.close(fig='all')
+        An example of colour bar with textual index.
     """
 
     mpl_cm, mpl_plt = map(_check_dependency, ['matplotlib.cm', 'matplotlib.pyplot'])

@@ -9,23 +9,19 @@ import shutil
 from .._cache import _check_rel_pathname, _confirmed, _print_failure_msg
 
 
-# ==================================================================================================
-# Directory/file control
-# ==================================================================================================
-
 def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
     """
     Delete a directory.
 
-    :param path_to_dir: pathname of a directory
+    :param path_to_dir: Pathname of the directory.
     :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes]
-    :param confirmation_required: whether to prompt a message for confirmation to proceed,
-        defaults to ``True``
+    :param confirmation_required: Whether to prompt for confirmation before proceeding;
+        defaults to ``True``.
     :type confirmation_required: bool
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `shutil.rmtree`_ or `os.rmdir`_
+    :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
+        `os.rmdir`_.
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
     .. _`os.rmdir`: https://docs.python.org/3/library/os.html#os.rmdir
@@ -35,10 +31,8 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers.dirs.mgmt import _delete_dir
         >>> import os
-
         >>> dir_path = cd("test_dir", mkdir=True)
         >>> rel_dir_path = os.path.relpath(dir_path)
-
         >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
         The directory "test_dir\\" exists? True
         >>> _delete_dir(dir_path, verbose=True)
@@ -47,10 +41,8 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
         Deleting "test_dir\\" ... Done.
         >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
         The directory "test_dir\\" exists? False
-
         >>> dir_path = cd("test_dir", "folder", mkdir=True)
         >>> rel_dir_path = os.path.relpath(dir_path)
-
         >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
         The directory "test_dir\\folder\\" exists? True
         >>> _delete_dir(cd("test_dir"), verbose=True)
@@ -92,15 +84,15 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
     """
     Delete a directory or directories.
 
-    :param path_to_dir: pathname (or pathnames) of a directory (or directories)
+    :param path_to_dir: Pathname(s) of the directory (or directories).
     :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes] | collections.abc.Sequence
-    :param confirmation_required: whether to prompt a message for confirmation to proceed,
-        defaults to ``True``
+    :param confirmation_required: Whether to prompt for confirmation before proceeding;
+        defaults to ``True``.
     :type confirmation_required: bool
-    :param verbose: whether to print relevant information in console as the function runs,
-        defaults to ``False``
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [optional] parameters of `shutil.rmtree`_ or `os.rmdir`_
+    :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
+        `os.rmdir`_.
 
     .. _`shutil.rmtree`: https://docs.python.org/3/library/shutil.html#shutil.rmtree
     .. _`os.rmdir`: https://docs.python.org/3/library/os.html#os.rmdir
@@ -109,7 +101,6 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
         >>> from pyhelpers.dirs import cd, delete_dir
         >>> import os
-
         >>> test_dirs = []
         >>> for x in range(3):
         ...     test_dirs.append(cd("tests", f"test_dir{x}", mkdir=True))
@@ -117,7 +108,6 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         ...         cd("tests", f"test_dir{x}", "a_folder", mkdir=True)
         ...     elif x == 1:
         ...         open(cd("tests", f"test_dir{x}", "file"), 'w').close()
-
         >>> delete_dir(path_to_dir=test_dirs, verbose=True)
         To delete the following directories:
             "tests\\test_dir0\\" (Not empty)

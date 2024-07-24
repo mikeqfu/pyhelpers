@@ -5,43 +5,36 @@ Configurations.
 from .._cache import _check_dependency
 
 
-# ==================================================================================================
-# Configurations
-# ==================================================================================================
-
 def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
     Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_
     of `GDAL/OGR <https://gdal.org>`_ drivers.
 
-    :param reset: whether to reset to default settings, defaults to ``False``
+    :param reset: Whether to reset to default settings; defaults to ``False``.
     :type reset: bool
-    :param max_tmpfile_size: maximum size of the temporary file, defaults to ``None``
+    :param max_tmpfile_size: Maximum size of the temporary file; defaults to ``None``.
     :type max_tmpfile_size: int | None
-    :param interleaved_reading: whether to enable interleaved reading, defaults to ``True``
+    :param interleaved_reading: Whether to enable interleaved reading; defaults to ``True``.
     :type interleaved_reading: bool
-    :param custom_indexing: whether to enable custom indexing, defaults to ``False``
+    :param custom_indexing: Whether to enable custom indexing; defaults to ``False``.
     :type custom_indexing: bool
-    :param compress_nodes: whether to compress nodes in temporary DB. defaults to ``True``
+    :param compress_nodes: Whether to compress nodes in temporary database; defaults to ``True``.
     :type compress_nodes: bool
 
     **Examples**::
 
         >>> from pyhelpers.settings import gdal_configurations
-
         >>> gdal_configurations()
 
     .. note::
 
-        This can be useful when using `GDAL`_ to parse a large PBF file.
-        For example, ``gdal_configurations()`` is applied by default when importing the package
-        `pydriosm`_, which can be used to work with `OpenStreetMap`_ data of `PBF format`_.
-
-        .. _GDAL: https://pypi.org/project/GDAL/
-        .. _pydriosm: https://pypi.org/project/pydriosm/
-        .. _OpenStreetMap: https://www.openstreetmap.org/
-        .. _PBF format: https://wiki.openstreetmap.org/wiki/PBF_Format
+        These configurations are particularly useful when working with
+        `GDAL <https://pypi.org/project/GDAL/>`_ to process large
+        `PBF <https://wiki.openstreetmap.org/wiki/PBF_Format>`_ files.
+        For instance, these settings are applied by default in the
+        `pydriosm <https://pypi.org/project/pydriosm/>`_ package for handling
+        `OpenStreetMap <https://www.openstreetmap.org/>`_ data in PBF format.
 
     .. seealso::
 

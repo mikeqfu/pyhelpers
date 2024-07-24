@@ -15,13 +15,13 @@ Textual data (pre)processing
     :toctree: _generated/
     :template: function.rst
 
-    get_acronym
     remove_punctuation
+    get_acronym
     extract_words1upper
     numeral_english_to_arabic
     count_words
     calculate_idf
-    calculate_tf_idf
+    calculate_tfidf
 
 Textual data analysis
 ---------------------

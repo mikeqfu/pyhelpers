@@ -8,7 +8,4 @@ Communication with databases.
 from .mssql import MSSQL
 from .postgresql import PostgreSQL
 
-__all__ = [
-    'PostgreSQL',
-    'MSSQL',
-]
+__all__ = ['MSSQL', 'PostgreSQL']
