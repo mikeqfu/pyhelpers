@@ -39,8 +39,8 @@ extensions = [  # Sphinx extension module names, which can be named 'sphinx.ext.
     'sphinx.ext.todo',
     'sphinx_copybutton',
     'sphinx_toggleprompt',
-    "IPython.sphinxext.ipython_console_highlighting",
-    "IPython.sphinxext.ipython_directive",
+    # "IPython.sphinxext.ipython_console_highlighting",
+    # "IPython.sphinxext.ipython_directive",
 ]
 
 
