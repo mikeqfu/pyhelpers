@@ -10,19 +10,22 @@
 
     h1 {
         font-size: 1.65em;
-        /*color: #405D72;*/
         color: var(--color-toc-item-text--active);
     }
 
     .content-icon-container {
-        align-items: baseline;
+        align-items: center;
+    }
+
+    .content-icon-container .edit-this-page svg,
+    .content-icon-container .view-this-page svg {
+        display: none;
     }
 
     h2 {
         font-size: 1.35em;
         margin-bottom: 0.75em;
         margin-top: 1.65em;
-        /*color: #405D72;*/
         color: var(--color-toc-item-text--active);
     }
 
@@ -68,7 +71,6 @@
     .toc-tree a.reference {
         font-size: medium;
         color: #405D72;
-        /*color: var(--color-toc-item-text);*/
     }
 
     .toctree-wrapper.compound .caption,
@@ -86,10 +88,6 @@
         font-size: 1.3rem;
         font-weight: bold;
     }
-
-    /*.sidebar-container, .toc-drawer {*/
-    /*    width: fit-content;*/
-    /*}*/
 
     .sidebar-tree li {
         font-size: initial;
@@ -172,7 +170,6 @@
         font-weight: 700;
         margin-top: 0;
         margin-bottom: -1.0em;
-        /*color: navy;*/
         font-size: var(--font-size--normal);
     }
 
@@ -184,12 +181,7 @@
         text-transform: uppercase;
         font-size: var(--font-size--normal);
         font-weight: 700;
-        /*color: navy;*/
     }
-
-    /*.field-list dt {*/
-    /*    color: navy;*/
-    /*}*/
 
     .field-list dt,
     .option-list dt,
@@ -257,31 +249,10 @@
         width: 44.5rem;
     }
 
-    /*code.literal {*/
-    /*    color: #404040 !important;*/
-    /*    background-color: #fbfbfb !important;*/
-    /*}*/
-
-    /*.copybtn {*/
-    /*    position: absolute;*/
-    /*    right: 10px;*/
-    /*    bottom: 10px;*/
-    /*    background-color: #f3f3f3;*/
-    /*    border: 1px solid #ddd;*/
-    /*    border-radius: 5px;*/
-    /*    padding: 5px;*/
-    /*    cursor: pointer;*/
-    /*    z-index: 10;*/
-    /*}*/
-
     .highlight button.copybtn {
         height: 0.45em;
         right: 0.15em;
     }
-
-    /*.highlight {*/
-    /*    position: relative;*/
-    /*}*/
 
     sub {
         vertical-align: super;
