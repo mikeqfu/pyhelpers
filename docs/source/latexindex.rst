@@ -25,5 +25,5 @@ PyHelpers Documentation
     :includehidden:
     :caption: Additional Info
 
-    contributors
     license
+    contributors

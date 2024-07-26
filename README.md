@@ -7,31 +7,33 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
-PyHelpers is a lightweight, open-source Python package designed as a versatile toolkit for simplifying data (pre)processing tasks. It offers a comprehensive range of practical utilities to facilitate common data manipulation operations. These utilities encompass the ability to read and write file-like objects, efficiently handle various data types such as geographical and textual data, and establish streamlined communication with relational databases like PostgreSQL and Microsoft SQL Server.
+PyHelpers is an open-source Python package designed to streamline data (pre-)processing and manipulation tasks. It accommodates a wide range of functions and classes grounded in practical applications, making common data operations more accessible and efficient. This toolkit is particularly useful for Python learners, researchers and data scientists seeking to enhance their workflows.
+
+The package supports handling various data types, such as geographical and textual data, allowing for flexibility for diverse data processing needs. It also simplifies data input and output operations by offering functionalities for managing many different file-like objects. In addition, PyHelpers facilitates communication with relational databases, such as PostgreSQL and Microsoft SQL Server. This capability greatly smooths data integration with database systems through efficient data storage and retrieval.
+
+With its comprehensive suite of practical tools, PyHelpers simplifies complex data processing tasks and boosts productivity. It is ready to serve as an essential resource for effective data manipulation, management and analysis for anyone working with data in Python.
 
 ## Installation
 
-To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) via [pip](https://pip.pypa.io/en/stable/cli/pip/):
+To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
 
 ```bash
 pip install --upgrade pyhelpers
 ```
 
-*Also refer to [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html) for more information.* 
+*For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html).* 
 
-## Quick start
+## Quick Start
 
-For a concise guide on how to utilise PyHelpers, we recommend checking out the [Quick-start Tutorial](https://pyhelpers.readthedocs.io/en/latest/quick-start.html), which features multiple illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). These examples effectively demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining your work processes.
+For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). 
+
+These examples briefly demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining work processes.
 
 ## Documentation
 
-The complete PyHelpers documentation: [[HTML](https://pyhelpers.readthedocs.io/en/latest/)\] \[[PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/)]. 
+The complete PyHelpers Documentation is available in [HTML](https://pyhelpers.readthedocs.io/en/latest/) and [PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/) formats. 
 
-It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and provides a wealth of detailed examples.
-
-## License
-
-PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and includes detailed examples.
 
 ## Cite as
 
@@ -49,7 +51,11 @@ Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' 
 }
 ```
 
-*Please also refer to the export options from [Zenodo](https://zenodo.org/search?page=1&size=20&q=conceptrecid:%224017438%22&sort=-version&all_versions=True) to reference the specific version of PyHelpers as appropriate.*
+*Please refer to [Zenodo](https://zenodo.org/search?q=conceptrecid%3A%224017438%22&f=allversions%3Atrue&l=list&p=1&s=10&sort=version) for specific version references of PyHelpers.*
+
+## License
+
+PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
 
 ## Contributors
 

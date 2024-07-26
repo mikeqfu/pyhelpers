@@ -26,12 +26,11 @@ PyHelpers
 | **Author**: Qian Fu
 | **Email**: q.fu@bham.ac.uk
 
-PyHelpers is a lightweight, open-source Python package designed to streamline data (pre)processing tasks. This toolkit provides a wide array of utilities that simplify common data manipulation operations, making it a useful tool for Python learners, researchers, and data scientists.
+PyHelpers is an open-source Python package designed to streamline data (pre-)processing and manipulation tasks. It accommodates a wide range of functions and classes grounded in practical applications, making common data operations more accessible and efficient. This toolkit is particularly useful for Python learners, researchers and data scientists seeking to enhance their workflows.
 
-The package includes functionalities for reading and writing file-like objects, enabling smooth data input and output operations. PyHelpers also supports manipulation of various data types, including geographical and textual data, ensuring flexibility and adaptability for diverse data processing needs. In addition, PyHelpers facilitates streamlined communication with relational databases such as PostgreSQL and Microsoft SQL Server. This capability enables smooth integration with database systems, allowing for efficient data retrieval and storage.
+The package supports handling various data types, such as geographical and textual data, allowing for flexibility for diverse data processing needs. It also simplifies data input and output operations by offering functionalities for managing many different file-like objects. In addition, PyHelpers facilitates communication with relational databases, such as PostgreSQL and Microsoft SQL Server. This capability greatly smooths data integration with database systems through efficient data storage and retrieval.
 
-With its comprehensive range of practical utilities, PyHelpers enhances productivity and simplifies complex data processing workflows, making it an invaluable resource for effective data management and manipulation.
-
+With its comprehensive suite of practical tools, PyHelpers simplifies complex data processing tasks and boosts productivity. It is ready to serve as an essential resource for effective data manipulation, management and analysis for anyone working with data in Python.
 
 .. toctree::
     :maxdepth: 1
@@ -53,8 +52,8 @@ With its comprehensive range of practical utilities, PyHelpers enhances producti
     :includehidden:
     :caption: Additional Info
 
-    contributors
     license
+    contributors
 
 Indices
 =======
