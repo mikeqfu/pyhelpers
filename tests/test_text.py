@@ -1,7 +1,8 @@
 """Test the module :mod:`~pyhelpers.text`."""
 
-import pytest
 import functools
+
+import pytest
 
 from pyhelpers.text import *
 
@@ -79,52 +80,119 @@ def test_numeral_english_to_arabic():
         numeral_english_to_arabic('Two hundred and fivety')  # Two hundred and fifty
 
 
-def test_count_words():
-    raw_text = 'This is an apple. That is a pear. Hello world!'
+@pytest.mark.parametrize('lowercase', [False, True])
+@pytest.mark.parametrize('ignore_punctuation', [False, True])
+@pytest.mark.parametrize('stop_words', [None, True, ['a', 'an', 'is']])
+def test_count_words(lowercase, ignore_punctuation, stop_words):
+    text = 'This is an apple. That is a pear. Hello world!'
 
-    assert count_words(raw_text) == {
-        'This': 1,
-        'is': 2,
-        'an': 1,
-        'apple': 1,
-        '.': 2,
-        'That': 1,
-        'a': 1,
-        'pear': 1,
-        'Hello': 1,
-        'world': 1,
-        '!': 1,
-    }
+    word_count_dict = count_words(
+        text, lowercase=lowercase, ignore_punctuation=ignore_punctuation, stop_words=stop_words)
 
-    assert count_words(remove_punctuation(raw_text)) == {
-        'This': 1,
-        'is': 2,
-        'an': 1,
-        'apple': 1,
-        'That': 1,
-        'a': 1,
-        'pear': 1,
-        'Hello': 1,
-        'world': 1,
-    }
+    if stop_words is None:
+        if lowercase is False and ignore_punctuation is False:
+            assert word_count_dict == {
+                'This': 1, 'is': 2, 'an': 1, 'apple': 1, '.': 2, 'That': 1, 'a': 1, 'pear': 1,
+                'Hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is False:
+            assert word_count_dict == {
+                'this': 1, 'is': 2, 'an': 1, 'apple': 1, '.': 2, 'that': 1, 'a': 1, 'pear': 1,
+                'hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is True:
+            assert word_count_dict == {
+                'this': 1, 'is': 2, 'an': 1, 'apple': 1, 'that': 1, 'a': 1, 'pear': 1,
+                'hello': 1, 'world': 1}
+        else:
+            assert word_count_dict == {
+                'This': 1, 'is': 2, 'an': 1, 'apple': 1, 'That': 1, 'a': 1, 'pear': 1,
+                'Hello': 1, 'world': 1}
+
+    elif stop_words is True:
+        if lowercase is False and ignore_punctuation is False:
+            assert word_count_dict == {
+                'apple': 1, '.': 2, 'pear': 1, 'Hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is False:
+            assert word_count_dict == {
+                'apple': 1, '.': 2, 'pear': 1, 'hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is True:
+            assert word_count_dict == {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
+        else:
+            assert word_count_dict == {'apple': 1, 'pear': 1, 'Hello': 1, 'world': 1}
+
+    else:
+        if lowercase is False and ignore_punctuation is False:
+            assert word_count_dict == {
+                'This': 1, 'apple': 1, '.': 2, 'That': 1, 'pear': 1, 'Hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is False:
+            assert word_count_dict == {
+                'this': 1, 'apple': 1, '.': 2, 'that': 1, 'pear': 1, 'hello': 1, 'world': 1, '!': 1}
+        elif lowercase is True and ignore_punctuation is True:
+            assert word_count_dict == {
+                'this': 1, 'apple': 1, 'that': 1, 'pear': 1, 'hello': 1, 'world': 1}
+        else:
+            assert word_count_dict == {
+                'This': 1, 'apple': 1, 'That': 1, 'pear': 1, 'Hello': 1, 'world': 1}
 
 
-@pytest.mark.parametrize('rm_punc', [False, True])
-def test_calculate_idf(rm_punc):
-    raw_doc = [
+@pytest.mark.parametrize('lowercase', [True, False])
+@pytest.mark.parametrize('ignore_punctuation', [True, False])
+def test_calculate_idf(lowercase, ignore_punctuation):
+    documents = [
         'This is an apple.',
         'That is a pear.',
         'It is human being.',
         'Hello world!']
-    docs_tf_, corpus_idf_ = calculate_idf(raw_doc, rm_punc=rm_punc)
 
-    if not rm_punc:
-        assert docs_tf_ == [
+    docs_tf, corpus_idf = calculate_idf(
+        documents, lowercase=lowercase, ignore_punctuation=ignore_punctuation)
+
+    if lowercase and ignore_punctuation:
+        assert docs_tf == [
+            {'this': 1, 'is': 1, 'an': 1, 'apple': 1},
+            {'that': 1, 'is': 1, 'a': 1, 'pear': 1},
+            {'it': 1, 'is': 1, 'human': 1, 'being': 1},
+            {'hello': 1, 'world': 1}]
+        assert corpus_idf == {
+            'this': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            'that': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'it': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'hello': 0.6931471805599453,
+            'world': 0.6931471805599453}
+
+    elif not lowercase and ignore_punctuation:
+        assert docs_tf == [
+            {'This': 1, 'is': 1, 'an': 1, 'apple': 1},
+            {'That': 1, 'is': 1, 'a': 1, 'pear': 1},
+            {'It': 1, 'is': 1, 'human': 1, 'being': 1},
+            {'Hello': 1, 'world': 1}]
+        assert corpus_idf == {
+            'This': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            'That': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'It': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'Hello': 0.6931471805599453,
+            'world': 0.6931471805599453}
+
+    elif not lowercase and not ignore_punctuation:
+        assert docs_tf == [
             {'This': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
             {'That': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
             {'It': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
             {'Hello': 1, 'world': 1, '!': 1}]
-        assert corpus_idf_ == {
+        assert corpus_idf == {
             'This': 0.6931471805599453,
             'is': 0.0,
             'an': 0.6931471805599453,
@@ -141,12 +209,53 @@ def test_calculate_idf(rm_punc):
             '!': 0.6931471805599453}
 
     else:
-        assert docs_tf_ == [
-            {'This': 1, 'is': 1, 'an': 1, 'apple': 1},
-            {'That': 1, 'is': 1, 'a': 1, 'pear': 1},
-            {'It': 1, 'is': 1, 'human': 1, 'being': 1},
-            {'Hello': 1, 'world': 1}]
-        assert corpus_idf_ == {
+        assert docs_tf == [
+            {'this': 1, 'is': 1, 'an': 1, 'apple': 1, '.': 1},
+            {'that': 1, 'is': 1, 'a': 1, 'pear': 1, '.': 1},
+            {'it': 1, 'is': 1, 'human': 1, 'being': 1, '.': 1},
+            {'hello': 1, 'world': 1, '!': 1}]
+        assert corpus_idf == {
+            'this': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            '.': 0.0,
+            'that': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'it': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'hello': 0.6931471805599453,
+            'world': 0.6931471805599453,
+            '!': 0.6931471805599453}
+
+
+@pytest.mark.parametrize('lowercase', [True, False])
+def test_calculate_tfidf(lowercase):
+    documents = [
+        'This is an apple.',
+        'That is a pear.',
+        'It is human being.',
+        'Hello world!']
+
+    tfidf = calculate_tfidf(documents, lowercase=lowercase, ignore_punctuation=True)
+    if lowercase:
+        assert tfidf == {
+            'this': 0.6931471805599453,
+            'is': 0.0,
+            'an': 0.6931471805599453,
+            'apple': 0.6931471805599453,
+            'that': 0.6931471805599453,
+            'a': 0.6931471805599453,
+            'pear': 0.6931471805599453,
+            'it': 0.6931471805599453,
+            'human': 0.6931471805599453,
+            'being': 0.6931471805599453,
+            'hello': 0.6931471805599453,
+            'world': 0.6931471805599453}
+    else:
+        assert tfidf == {
             'This': 0.6931471805599453,
             'is': 0.0,
             'an': 0.6931471805599453,
@@ -159,46 +268,6 @@ def test_calculate_idf(rm_punc):
             'being': 0.6931471805599453,
             'Hello': 0.6931471805599453,
             'world': 0.6931471805599453}
-
-
-def test_calculate_tf_idf():
-    raw_doc = [
-        'This is an apple.',
-        'That is a pear.',
-        'It is human being.',
-        'Hello world!']
-
-    docs_tf_idf_ = calculate_tf_idf(raw_documents=raw_doc)
-    assert docs_tf_idf_ == {
-        'This': 0.6931471805599453,
-        'is': 0.0,
-        'an': 0.6931471805599453,
-        'apple': 0.6931471805599453,
-        '.': 0.0,
-        'That': 0.6931471805599453,
-        'a': 0.6931471805599453,
-        'pear': 0.6931471805599453,
-        'It': 0.6931471805599453,
-        'human': 0.6931471805599453,
-        'being': 0.6931471805599453,
-        'Hello': 0.6931471805599453,
-        'world': 0.6931471805599453,
-        '!': 0.6931471805599453}
-
-    docs_tf_idf_ = calculate_tf_idf(raw_documents=raw_doc, rm_punc=True)
-    assert docs_tf_idf_ == {
-        'This': 0.6931471805599453,
-        'is': 0.0,
-        'an': 0.6931471805599453,
-        'apple': 0.6931471805599453,
-        'That': 0.6931471805599453,
-        'a': 0.6931471805599453,
-        'pear': 0.6931471805599453,
-        'It': 0.6931471805599453,
-        'human': 0.6931471805599453,
-        'being': 0.6931471805599453,
-        'Hello': 0.6931471805599453,
-        'world': 0.6931471805599453}
 
 
 def test_euclidean_distance_between_texts():

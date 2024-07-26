@@ -188,19 +188,19 @@ def test_save_svg_as_emf(capfd):
     # svg_pathname = cd("tests\\images", "store-save_fig-demo.svg")
     # emf_pathname = cd("tests\\images", "store-save_fig-demo.emf")
     pathname_ = tempfile.NamedTemporaryFile()
-    svg_pathname, emf_pathname = map(lambda file_ext: pathname_.name + file_ext, [".svg", ".emf"])
+    path_to_svg, path_to_emf = map(lambda file_ext: pathname_.name + file_ext, [".svg", ".emf"])
 
-    plt.savefig(svg_pathname)  # Save the figure as a .svg file
+    plt.savefig(path_to_svg)  # Save the figure as a .svg file
 
-    save_svg_as_emf(path_to_svg=svg_pathname, path_to_emf=emf_pathname, verbose=True)
+    save_svg_as_emf(path_to_svg=path_to_svg, path_to_emf=path_to_emf, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Saving "{os.path.basename(emf_pathname)}"' in out and "Done." in out
+    assert f'Saving "{os.path.basename(path_to_emf)}"' in out and "Done." in out
 
     plt.close()
 
     os.remove(pathname_.name)
-    os.remove(svg_pathname)
-    os.remove(emf_pathname)
+    os.remove(path_to_svg)
+    os.remove(path_to_emf)
 
 
 def test_save_fig_and_figure(capfd):
