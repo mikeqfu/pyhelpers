@@ -1,6 +1,6 @@
 {
     "Project": "PyHelpers",
-    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks.",
+    "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks",
     "Package": "pyhelpers",
     "Author": "Qian Fu",
     "Affiliation": "School of Engineering, University of Birmingham",

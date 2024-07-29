@@ -313,7 +313,7 @@ latex_maketitle = r'''
     \clearpage
     \pagenumbering{arabic}
     ''' % (project,
-           __desc__.rstrip('.'),
+           __desc__,
            __version__,
            __author__,
            affil_dept,
