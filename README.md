@@ -18,10 +18,10 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
 
 ```bash
-pip install --upgrade pyhelpers
+$ pip install --upgrade pyhelpers
 ```
 
-*For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html).* 
+For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html). 
 
 ## Quick Start
 
@@ -37,20 +37,21 @@ It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and i
 
 ## Cite as
 
-Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438)
+Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438).
 
 ```bibtex
-@software{Fu_PyHelpers_4017438,
-  author    = {Fu, Qian},
-  title     = {{PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks}},
-  year      = 2020,
-  publisher = {Zenodo},
-  doi       = {10.5281/zenodo.4017438},
-  url       = {https://github.com/mikeqfu/pyhelpers}
+@software{Fu_PyHelpers_An_open-source_2020, 
+    author = {Fu, Qian},
+    title = {{PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks}},
+    year = 2020,
+    publisher = {Zenodo},
+    doi = {10.5281/zenodo.4017438},
+    license = {MIT},
+    url = {https://github.com/mikeqfu/pyhelpers}
 }
 ```
 
-*Please refer to [Zenodo](https://zenodo.org/search?q=conceptrecid%3A%224017438%22&f=allversions%3Atrue&l=list&p=1&s=10&sort=version) for specific version references of PyHelpers.*
+For specific version references of PyHelpers, please refer to [Zenodo](https://zenodo.org/search?q=conceptrecid%3A%224017438%22&f=allversions%3Atrue&l=list&p=1&s=10&sort=version).
 
 ## License
 
