@@ -7,7 +7,7 @@ with open(file="pyhelpers/data/metadata", mode='r') as metadata_file:
 
 __pkgname__ = metadata['Package']
 __version__ = metadata['Version']
-__homepage__ = f"https://github.com/mikeqfu/{__pkgname__}"
+__homepage__ = f'https://github.com/mikeqfu/{__pkgname__}'
 
 setuptools.setup(
     name=__pkgname__,
