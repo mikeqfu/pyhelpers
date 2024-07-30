@@ -2,6 +2,21 @@
 
 <br/>
 
+#### **[2.0.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.0.0)**
+
+(*30 July 2024*)
+
+##### **Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/1.5.2...2.0.0) since [1.5.2](https://pypi.org/project/pyhelpers/1.5.2/):**
+
+- **Major Release:** Version 2.0.0 features significant improvements to code and docstrings.
+  - *Code enhancements*: Optimised performance and refactored core modules for better readability and maintainability.
+  - *Bug fixes*: Resolved issues identified in practical use.
+- **License Update:** This new release is re-licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE), providing more clarity, flexibility and usability.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.0.0 documentation](https://pyhelpers.readthedocs.io/en/2.0.0/).**
+
+<br/>
+
 #### **[1.5.2](https://github.com/mikeqfu/pyhelpers/releases/tag/1.5.2)**
 
 (*13 September 2023*)
