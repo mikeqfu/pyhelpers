@@ -18,10 +18,10 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
 
 ```bash
-pip install --upgrade pyhelpers
+$ pip install --upgrade pyhelpers
 ```
 
-*For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html).* 
+For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html). 
 
 ## Quick Start
 
@@ -37,42 +37,22 @@ It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and i
 
 ## Cite as
 
-Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438)
+Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438).
 
 ```bibtex
-@software{Fu_PyHelpers_4017438,
-  author    = {Fu, Qian},
-  title     = {{PyHelpers: An open-source toolkit for facilitating
-                Python users' data manipulation tasks}},
-  year      = 2020,
-  publisher = {Zenodo},
-  doi       = {10.5281/zenodo.4017438},
-  url       = {https://doi.org/10.5281/zenodo.4017438}
+@software{Fu_PyHelpers_An_open-source_2020, 
+    author = {Fu, Qian},
+    title = {{PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks}},
+    year = 2020,
+    publisher = {Zenodo},
+    doi = {10.5281/zenodo.4017438},
+    license = {MIT},
+    url = {https://github.com/mikeqfu/pyhelpers}
 }
 ```
 
-*Please refer to [Zenodo](https://zenodo.org/search?q=conceptrecid%3A%224017438%22&f=allversions%3Atrue&l=list&p=1&s=10&sort=version) for specific version references of PyHelpers.*
+For specific version references of PyHelpers, please refer to [Zenodo](https://zenodo.org/search?q=conceptrecid%3A%224017438%22&f=allversions%3Atrue&l=list&p=1&s=10&sort=version).
 
 ## License
 
 PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
-
-## Contributors
-
-<!--suppress HtmlDeprecatedAttribute -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center">
-        <a href="https://github.com/mikeqfu" target="_blank"><img src="https://avatars.githubusercontent.com/u/1729711?v=4?s=100" width="100px;" alt="Qian Fu"/><br><sub><b>Qian Fu</b></sub></a><br>
-        <a href="https://github.com/mikeqfu/pyhelpers" target="_blank" title="Seeding">🌱</a>
-        <a href="https://github.com/mikeqfu/pyhelpers/commits?author=mikeqfu" target="_blank" title="Code">💻</a>
-        <a href="https://github.com/mikeqfu/pyhelpers/tree/master/tests" target="_blank" title="Tests">🧪</a>
-        <a href="https://pyhelpers.readthedocs.io/en/latest/" target="_blank" title="Documentation">📖</a>
-      </td>
-      <td align="center">
-        <a href="https://github.com/xyluo25" target="_blank"><img src="https://avatars.githubusercontent.com/u/36498464?v=4?s=100" width="100px;" alt="Xiangyong Luo"/><br><sub><b>Xiangyong Luo</b></sub></a><br>
-        <a href="https://github.com/mikeqfu/pyhelpers/commits?author=xyluo25" target="_blank" title="Code">💻</a>
-      </td>
-  </tbody>
-</table>
