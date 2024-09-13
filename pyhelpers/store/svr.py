@@ -71,8 +71,9 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
         _print_failure_msg(e=e, msg="Failed.")
 
 
-def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=',',
-                     autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
+def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engine=None,
+                     delimiter=',', autofit_column_width=True, writer_kwargs=None, verbose=False,
+                     **kwargs):
     """
     Save data to a spreadsheet file format
     (e.g. `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
@@ -87,6 +88,8 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
     :type data: pandas.DataFrame
     :param path_to_file: File path where the spreadsheet will be saved.
     :type path_to_file: str | os.PathLike[str] | None
+    :param sheet_name: Name of the sheet where the data will be saved; defaults to ``"Sheet1"``.
+    :type sheet_name: str
     :param index: Whether to include the dataframe index as a column; defaults to ``False``.
     :type index: bool
     :param engine: Engine to use for saving:
@@ -172,7 +175,7 @@ def save_spreadsheet(data, path_to_file, index=False, engine=None, delimiter=','
                 writer_kwargs.update({'engine': engine})
 
             with pd.ExcelWriter(**writer_kwargs) as writer:
-                kwargs.update({'excel_writer': writer, 'index': index})
+                kwargs.update({'excel_writer': writer, 'index': index, 'sheet_name': sheet_name})
                 data.to_excel(**kwargs)
 
                 if autofit_column_width:

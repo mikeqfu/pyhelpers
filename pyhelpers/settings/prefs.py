@@ -8,8 +8,8 @@ import os
 from .._cache import _check_dependency
 
 
-def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_asian_text=False,
-                   ignore_future_warning=True, **kwargs):
+def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, precision=4,
+                   east_asian_text=False, ignore_future_warning=True, **kwargs):
     """
     Alter parameters of some frequently-used
     `Pandas options and settings
@@ -26,8 +26,11 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     :param max_columns: Maximum number of columns to display; corresponds to
         ``'display.max_columns'`` in `pandas.set_option()`_; defaults to ``100``.
     :type max_columns: int
+    :param min_rows: Minimum number of rows to display; corresponds to ``'display.min_rows'`` in
+        `pandas.set_option()`_; defaults to ``10``.
+    :type min_rows: int
     :param max_rows: Maximum number of rows to display; corresponds to ``'display.max_rows'`` in
-        `pandas.set_option()`_; defaults to ``20``.
+        `pandas.set_option()`_; defaults to ``40``.
     :type max_rows: int
     :param precision: Number of decimal places to display; corresponds to ``'display.precision'``
         in `pandas.set_option()`_; defaults to ``4``.
@@ -120,6 +123,7 @@ def pd_preferences(reset=False, max_columns=100, max_rows=20, precision=4, east_
     options = {
         'display.max_columns': max_columns,  # 0
         'display.max_rows': max_rows,  # 60
+        'display.min_rows': min_rows,  # 10
         'display.precision': precision,  # 6
         'display.width': 1000,  # 80
         'display.float_format': lambda x: '%.{}f'.format(precision) % x,  # None
