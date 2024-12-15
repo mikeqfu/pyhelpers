@@ -2,8 +2,11 @@
 Load data.
 """
 
+import bz2
 import csv
+import gzip
 import logging
+import lzma
 import operator
 import pickle
 import sys
@@ -14,7 +17,7 @@ from ._base import _check_loading_path, _set_index
 from .._cache import _check_dependency, _print_failure_msg
 
 
-def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
+def load_pickle(path_to_file, verbose=False, raise_error=False, prt_kwargs=None, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
@@ -22,6 +25,9 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param prt_kwargs: [Optional] Additional parameters for
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -57,21 +63,36 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
-        try:
-            with open(file=path_to_file, mode='rb') as pickle_in:
-                pickle_data = pickle.load(pickle_in, **kwargs)
-        except Exception as e:
-            pickle_data = pd.read_pickle(path_to_file)
-            if verbose:
-                _print_failure_msg(e)
+        path_to_file_ = str(path_to_file).lower()
+
+        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
+            with gzip.open(path_to_file, mode='rb') as f:
+                data = pickle.load(f, **kwargs)
+        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
+            with lzma.open(path_to_file, mode='rb') as f:
+                data = pickle.load(f, **kwargs)
+        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
+            with bz2.BZ2File(path_to_file, mode='rb') as f:
+                data = pickle.load(f, **kwargs)
+        else:
+            with open(file=path_to_file, mode='rb') as f:
+                data = pickle.load(f, **kwargs)
 
         if verbose:
             print("Done.")
 
-        return pickle_data
+        return data
+
+    except ModuleNotFoundError:
+        data = pd.read_pickle(path_to_file)
+
+        if verbose:
+            print("Done.")
+
+        return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
 
 def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
@@ -151,23 +172,23 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 
         if header is not None:
             col_names = operator.itemgetter(
-                *[header] if isinstance(header, int) else header)(csv_rows)
+                *[header] if isinstance(header, int) else header)(csv_rows)  # noqa
             dat = [x for x in csv_rows if (x not in col_names and x != col_names)]
-            csv_data = pd.DataFrame(data=dat, columns=list(col_names))
+            data = pd.DataFrame(data=dat, columns=list(col_names))
         else:
-            csv_data = pd.DataFrame(csv_rows)
+            data = pd.DataFrame(csv_rows)
 
-        csv_data = _set_index(csv_data, index=index)
+        data = _set_index(data, index=index)
 
         if verbose:
             print("Done.")
 
-        return csv_data
+        return data
 
     except TypeError:
-        csv_data = pd.read_csv(path_to_file, index_col=index, **kwargs)
+        data = pd.read_csv(path_to_file, index_col=index, **kwargs)
 
-        return csv_data
+        return data
 
     except Exception as e:
         _print_failure_msg(e=e, msg="Failed.")
@@ -259,7 +280,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
-        workbook_dat = []
+        data = []
 
         for sheet_name in sheet_names:
             if verbose:
@@ -272,14 +293,12 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
                 sheet_dat = None
                 _print_failure_msg(e=e, msg="Failed.")
 
-            workbook_dat.append(sheet_dat)
+            data.append(sheet_dat)
 
     if as_dict:
-        workbook_data = dict(zip(sheet_names, workbook_dat))
-    else:
-        workbook_data = workbook_dat
+        data = dict(zip(sheet_names, data))
 
-    return workbook_data
+    return data
 
 
 def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwargs):
@@ -346,16 +365,16 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwarg
     try:
         if engine == 'orjson':
             with open(path_to_file, mode='rb') as json_in:
-                json_data = mod.loads(json_in.read(), **kwargs)
+                data = mod.loads(json_in.read(), **kwargs)
 
         else:
             with open(path_to_file, mode='r') as json_in:
-                json_data = mod.load(json_in, **kwargs)
+                data = mod.load(json_in, **kwargs)
 
         if verbose:
             print("Done.")
 
-        return json_data
+        return data
 
     except Exception as e:
         _print_failure_msg(e=e, msg="Failed.")
@@ -413,12 +432,12 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
-        joblib_data = joblib_.load(filename=path_to_file, **kwargs)
+        data = joblib_.load(filename=path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
 
-        return joblib_data
+        return data
 
     except Exception as e:
         _print_failure_msg(e=e, msg="Failed.")
@@ -477,9 +496,9 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwa
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
-        feather_data = pd.read_feather(path_to_file, **kwargs)
+        data = pd.read_feather(path_to_file, **kwargs)
 
-        feather_data = _set_index(feather_data, index=index)
+        data = _set_index(data, index=index)
 
         # if isinstance(feather_data, pd.DataFrame):
         #     col_0 = feather_data.columns[0]
@@ -496,7 +515,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwa
         if verbose:
             print("Done.")
 
-        return feather_data
+        return data
 
     except Exception as e:
         _print_failure_msg(e=e, msg="Failed.")
@@ -602,7 +621,10 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, **kwargs):
 
     kwargs.update({'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs})
 
-    if path_to_file_.endswith((".pkl", ".pickle")):
+    if path_to_file_.endswith(
+            (".pkl", ".pickle",
+             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
+             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
         data = load_pickle(**kwargs)
 
     elif path_to_file_.endswith((".csv", ".txt")):
