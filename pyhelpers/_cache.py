@@ -285,7 +285,7 @@ def _format_err_msg(e=None, msg=""):
     return err_msg
 
 
-def _print_failure_msg(e, msg="Failed.", verbose=True):
+def _print_failure_msg(e, msg="Failed.", verbose=True, raise_error=False):
     # noinspection PyShadowingNames
     """
     Print an error message associated with the occurrence of an ``Exception``.
@@ -299,6 +299,9 @@ def _print_failure_msg(e, msg="Failed.", verbose=True):
     :type msg: str
     :param verbose: Whether to print additional information to the console; defaults to ``True``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
 
     **Tests**::
 
@@ -314,6 +317,9 @@ def _print_failure_msg(e, msg="Failed.", verbose=True):
 
     if verbose:
         print(err_msg)
+
+    if raise_error:
+        raise e
 
 
 def example_dataframe(osgb36=False):
