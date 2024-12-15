@@ -47,10 +47,11 @@ def _test_save(func, dat, file_ext, capfd):
     os.remove(pathname_.name)
 
 
-def test_save_pickle(capfd):
+@pytest.mark.parametrize('ext', [".pickle", ".gz", ".xz", ".bz2"])
+def test_save_pickle(ext, capfd):
     # pickle_pathname = importlib.resources.files(__package__).joinpath("data\\dat.pickle")
     pathname_ = tempfile.NamedTemporaryFile()
-    pathname = pathname_.name + ".xlsx"
+    pathname = pathname_.name + ext
     filename = os.path.basename(pathname)
 
     dat = 1
@@ -67,9 +68,9 @@ def test_save_pickle(capfd):
     os.remove(pathname_.name)
 
 
-@pytest.mark.parametrize('ext', [".csv", ".xlsx", ".xls", ".pickle", ".ods", ".odt"])
+@pytest.mark.parametrize('ext', [".csv", ".xlsx", ".xls", ".pkl", ".ods", ".odt"])
 @pytest.mark.parametrize('engine', [None, 'xlwt', 'openpyxl'])
-def test_save_spreadsheet(capfd, ext, engine):
+def test_save_spreadsheet(ext, engine, capfd):
     dat = example_dataframe()
 
     pathname_ = tempfile.NamedTemporaryFile()
@@ -77,7 +78,7 @@ def test_save_spreadsheet(capfd, ext, engine):
     pathname = pathname_.name + ext
     filename = os.path.basename(pathname)
 
-    if ext == ".pickle":
+    if ext in {".pickle", ".pkl"}:
         with pytest.raises(AssertionError, match=r"File extension must be"):
             save_spreadsheet(dat, pathname, engine=engine, verbose=True)
     else:
@@ -160,7 +161,7 @@ def test_save_joblib(capfd):
 
 
 @pytest.mark.parametrize('index', [False, True])
-def test_save_feather(capfd, index):
+def test_save_feather(index, capfd):
     feather_dat = example_dataframe()
 
     # feather_pathname = importlib.resources.files(__package__).joinpath("data\\dat.feather")
@@ -356,49 +357,52 @@ def test_load_spreadsheets(capfd):
 
 
 def test_load_data(capfd, caplog):
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.pickle")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        dat = load_data(path_to_file=dat_pathname, verbose=True)
-        out, _ = capfd.readouterr()
-        assert 'Loading ' in out and 'data\\dat.pickle" ... Done.\n' in out
-        assert dat.equals(example_dataframe())
-        _ = load_data(path_to_file=dat_pathname, verbose=True, test_arg=True)
-        out, _ = capfd.readouterr()
-        assert "'test_arg' is an invalid keyword argument for load()" in out
+    for ext in {".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2"}:
+        path_to_file = importlib.resources.files(__package__).joinpath(
+            os.path.join("data", f"dat{ext}"))
+        with importlib.resources.as_file(path_to_file) as f:
+            dat = load_data(path_to_file=f, verbose=True)
+            out, _ = capfd.readouterr()
+            assert 'Loading ' in out and f'data\\dat{ext}" ... Done.\n' in out
+            assert dat.equals(example_dataframe())
+            _ = load_data(path_to_file=f, verbose=True, test_arg=True)
+            out, _ = capfd.readouterr()
+            assert "'test_arg'" in out and "load()" in out and (
+                    "invalid keyword argument" in out or "unexpected keyword argument" in out)
 
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.csv")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+    path_to_file = importlib.resources.files(__package__).joinpath("data\\dat.csv")
+    with importlib.resources.as_file(path_to_file) as f:
+        dat = load_data(path_to_file=f, index=0, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.csv" ... Done.\n' in out
         assert dat.astype(float).equals(example_dataframe())
 
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.xlsx")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+    path_to_file = importlib.resources.files(__package__).joinpath("data\\dat.xlsx")
+    with importlib.resources.as_file(path_to_file) as f:
+        dat = load_data(path_to_file=f, index=0, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.xlsx" ... ' in out and "Done." in out
         assert isinstance(dat, dict)
         assert dat['TestSheet1'].set_index('City').equals(example_dataframe())
 
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.json")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
+    path_to_file = importlib.resources.files(__package__).joinpath("data\\dat.json")
+    with importlib.resources.as_file(path_to_file) as f:
         for engine in {'ujson', 'orjson', 'rapidjson', None}:
-            dat = load_data(path_to_file=dat_pathname, engine=engine, verbose=True)
+            dat = load_data(path_to_file=f, engine=engine, verbose=True)
             out, _ = capfd.readouterr()
             assert 'Loading ' in out and 'data\\dat.json" ... Done.\n' in out
         assert list(dat.keys()) == example_dataframe().index.to_list()
 
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.feather")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+    path_to_file = importlib.resources.files(__package__).joinpath("data\\dat.feather")
+    with importlib.resources.as_file(path_to_file) as f:
+        dat = load_data(path_to_file=f, index=0, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.feather" ... Done.\n' in out
         assert dat.equals(example_dataframe())
 
-    dat_pathname_ = importlib.resources.files(__package__).joinpath("data\\dat.joblib")
-    with importlib.resources.as_file(dat_pathname_) as dat_pathname:
-        dat = load_data(path_to_file=dat_pathname, verbose=True)
+    path_to_file = importlib.resources.files(__package__).joinpath("data\\dat.joblib")
+    with importlib.resources.as_file(path_to_file) as f:
+        dat = load_data(path_to_file=f, verbose=True)
         out, _ = capfd.readouterr()
         assert 'Loading ' in out and 'data\\dat.joblib" ... Done.\n' in out
         np.random.seed(0)
@@ -437,11 +441,11 @@ def test_markdown_to_rst(capfd):
         importlib.resources.files(__package__).joinpath,
         ["documents\\readme.md", "documents\\readme.rst"])
 
-    markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
+    markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)  # noqa
     out, _ = capfd.readouterr()
     assert 'Updating "readme.rst" at' in out and 'documents\\" ... Done.\n'
 
-    markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
+    markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)  # noqa
     out, _ = capfd.readouterr()
     assert 'Updating "readme.rst" at' in out and 'documents\\" ... Done.\n'
 
