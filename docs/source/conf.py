@@ -38,6 +38,7 @@ extensions = [  # Sphinx extension module names, which can be named 'sphinx.ext.
     # 'sphinx.ext.doctest',
     'sphinx.ext.todo',
     'sphinx_copybutton',
+    'sphinx_new_tab_link',
     'sphinx_toggleprompt',
     # "IPython.sphinxext.ipython_console_highlighting",
     # "IPython.sphinxext.ipython_directive",
@@ -53,7 +54,6 @@ def linkcode_resolve(domain, info):
 
     import inspect
     import warnings
-
     import pyhelpers
 
     if domain != 'py' or not info['module']:
@@ -249,7 +249,7 @@ latex_engine = 'pdflatex'
 latex_documents = [
     ('latexindex',  # source start file
      f'{__pkgname__}.tex',  # target name
-     f'{__project__} - Technical Documentation',  # title
+     f'{__project__} Documentation',  # title
      __author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]
      1  # toctree only

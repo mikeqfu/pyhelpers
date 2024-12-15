@@ -13,7 +13,7 @@ PyHelpers
 .. |Documentation| image:: https://readthedocs.org/projects/pyhelpers/badge/?version=latest
     :alt: Documentation status
     :target: https://pyhelpers.readthedocs.io/en/latest/?badge=latest
-.. |License| image:: https://img.shields.io/pypi/l/pyhelpers
+.. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers
     :alt: License
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
 .. |Codacy grade| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
