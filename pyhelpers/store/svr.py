@@ -2,8 +2,11 @@
 Save data.
 """
 
+import bz2
 import copy
+import gzip
 import logging
+import lzma
 import os
 import pathlib
 import pickle
@@ -16,9 +19,9 @@ from ._base import _autofit_column_width, _check_saving_path
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_msg
 
 
-def save_pickle(data, path_to_file, verbose=False, **kwargs):
+def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
-    Save data to a `Pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Save data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
     :param data: Data to be saved, compatible with the built-in `pickle.dump()`_ function.
     :type data: typing.Any
@@ -26,6 +29,9 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for `pickle.dump()`_.
 
     .. _`Pickle`: https://docs.python.org/3/library/pickle.html
@@ -52,28 +58,48 @@ def save_pickle(data, path_to_file, verbose=False, **kwargs):
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
         Updating "dat.pickle" at "tests\\data\\" ... Done.
 
+    .. tip::
+
+        - The file path is validated before saving. Ensure the directory exists and is writable.
+        - Supported compression formats: ``.gz`` (gzip), ``.xz`` (LZMA compression) and
+          ``.bz2`` (bzip2).
+        - Other extensions are saved as uncompressed files.
+        - Compression format is determined by the file extension. Ensure the extension matches
+          the desired format.
+
     .. seealso::
 
         - Examples for the function :func:`~pyhelpers.store.load_pickle`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        pickle_out = open(path_to_file, mode='wb')
-        pickle.dump(data, pickle_out, **kwargs)
-        pickle_out.close()
+        path_to_file_ = str(path_to_file).lower()
+
+        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
+            with gzip.open(path_to_file, mode='wb') as pickle_out:
+                pickle.dump(data, pickle_out, **kwargs)  # noqa
+        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
+            with lzma.open(path_to_file, mode='wb') as pickle_out:
+                pickle.dump(data, pickle_out, **kwargs)  # noqa
+        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
+            with bz2.BZ2File(path_to_file, mode='wb') as pickle_out:
+                pickle.dump(data, pickle_out, **kwargs)  # noqa
+        else:
+            with open(path_to_file, mode='wb') as pickle_out:
+                pickle.dump(data, pickle_out, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engine=None,
-                     delimiter=',', autofit_column_width=True, writer_kwargs=None, verbose=False,
-                     **kwargs):
+                     delimiter=',', autofit_column_width=True, writer_kwargs=None,
+                     verbose=False, raise_error=False, **kwargs):
     """
     Save data to a spreadsheet file format
     (e.g. `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
@@ -106,6 +132,9 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
     :type autofit_column_width: bool
     :param writer_kwargs: [Optional] Additional parameters for the class `pandas.ExcelWriter()`_.
     :type writer_kwargs: dict | None
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_
@@ -185,11 +214,12 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
-                      autofit_column_width=True, writer_kwargs=None, verbose=False, **kwargs):
+                      autofit_column_width=True, writer_kwargs=None, verbose=False,
+                      raise_error=False, **kwargs):
     """
     Save multiple dataframes to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
@@ -215,6 +245,9 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
     :type autofit_column_width: bool
     :param writer_kwargs: [Optional] Additional parameters for the class `pandas.ExcelWriter()`_.
     :type writer_kwargs: dict | None
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_.
@@ -333,10 +366,12 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                 cur_sheet_names = list(writer.sheets.keys())
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_msg(
+                    e=e, msg=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
+                    raise_error=raise_error)
 
 
-def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
+def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
@@ -357,6 +392,9 @@ def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
     :type engine: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for one of the following functions:
 
         - `json.dump()`_ (if ``engine=None``)
@@ -415,7 +453,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
 
     if engine is not None:
         valid_engines = {'ujson', 'orjson', 'rapidjson'}
-        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
+        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}."
         mod = _check_dependency(name=engine)
     else:
         mod = sys.modules.get('json')
@@ -435,10 +473,10 @@ def save_json(data, path_to_file, engine=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
 
-def save_joblib(data, path_to_file, verbose=False, **kwargs):
+def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
     Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
@@ -446,6 +484,9 @@ def save_joblib(data, path_to_file, verbose=False, **kwargs):
     :type data: typing.Any
     :param path_to_file: The file path where the Joblib file will be saved.
     :type path_to_file: str | os.PathLike
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param kwargs: [Optional] Additional parameters for the `joblib.dump()`_ function.
@@ -504,10 +545,10 @@ def save_joblib(data, path_to_file, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
 
-def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
+def save_feather(data, path_to_file, index=False, verbose=False, raise_error=False, **kwargs):
     """
     Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
@@ -517,6 +558,9 @@ def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
     :type path_to_file: str | os.PathLike
     :param index: Whether to include the index as a column; defaults to ``False``.
     :type index: bool
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_feather()`_.
@@ -562,10 +606,11 @@ def save_feather(data, path_to_file, index=False, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
 
-def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, **kwargs):
+def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False,
+                    **kwargs):
     # noinspection PyShadowingNames
     """
     Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -575,13 +620,16 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
     :type path_to_svg: str
     :param path_to_emf: The path where the EMF file will be saved.
     :type path_to_emf: str
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
     :param inkscape_exe: The path to the executable "*inkscape.exe*";
         if ``inkscape_exe=None`` (default), the default installation path will be used, e.g.
         (on Windows) "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*" or
         "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*".
     :type inkscape_exe: str | None
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
 
     .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
@@ -654,7 +702,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
                     print("Failed.", end=" ")
 
         except Exception as e:
-            print(e)
+            _print_failure_msg(e, msg="", verbose=verbose, raise_error=raise_error)
 
     else:
         if verbose:
@@ -664,7 +712,8 @@ def save_svg_as_emf(path_to_svg, path_to_emf, verbose=False, inkscape_exe=None, 
                 "\nInstall it and then try again.")
 
 
-def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwargs):
+def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
+             **kwargs):
     """
     Save a figure object to a file in a supported format.
 
@@ -680,6 +729,9 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
     :type verbose: bool | int
     :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
     :type conv_svg_to_emf: bool
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
@@ -732,14 +784,17 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, **kwa
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
     file_ext = pathlib.Path(path_to_file).suffix
     if file_ext == ".svg" and conv_svg_to_emf:
-        save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
+        save_svg_as_emf(
+            path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose,
+            raise_error=raise_error)
 
 
-def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, **kwargs):
+def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_error=False,
+                **kwargs):
     # noinspection PyShadowingNames
     """
     Save a figure object to a file in a supported format (with the figure object specified).
@@ -754,6 +809,9 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, **kwar
     :type verbose: bool | int
     :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
     :type conv_svg_to_emf: bool
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
@@ -808,20 +866,22 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, **kwar
         if verbose:
             print("Done.")
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
     if conv_svg_to_emf:
         file_ext = pathlib.Path(path_to_file).suffix
         if file_ext != ".svg":
-            kwargs.update({'conv_svg_to_emf': False})
+            kwargs.update({'conv_svg_to_emf': False, 'raise_error': raise_error})
             save_figure(data, path_to_file.replace(file_ext, ".svg"), **kwargs)
 
-        save_svg_as_emf(path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose)
+        save_svg_as_emf(
+            path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose,
+            raise_error=raise_error)
 
 
 def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zoom=1.0,
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
-                     verbose=False, **kwargs):
+                     verbose=False, raise_error=False, **kwargs):
     """
     Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
@@ -848,6 +908,9 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     :type wkhtmltopdf_path: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `pdfkit.from_url()`_.
 
     .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
@@ -937,14 +1000,15 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                         print("Done.")
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
 
         else:
             print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
                   "however, it is not found on this device.\nInstall it and then try again.")
 
 
-def save_data(data, path_to_file, err_warning=True, confirmation_required=True, **kwargs):
+def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,
+              **kwargs):
     """
     Save data to a file in a specific format.
 
@@ -963,6 +1027,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     :param confirmation_required: Whether user confirmation is required to proceed;
         defaults to ``True``.
     :type confirmation_required: bool
+    :param raise_error: Whether to raise an error if it occurs.
+        If ``raise_error=False`` (default), the error will be handled silently.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for one of the following functions:
         :func:`~pyhelpers.store.save_pickle`,
         :func:`~pyhelpers.store.save_spreadsheet`,
@@ -1034,9 +1101,12 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     path_to_file_ = str(path_to_file).lower()
 
-    kwargs.update({'data': data, 'path_to_file': path_to_file})
+    kwargs.update({'data': data, 'path_to_file': path_to_file, 'raise_error': raise_error})
 
-    if path_to_file_.endswith((".pkl", ".pickle")):
+    if path_to_file_.endswith(
+            (".pkl", ".pickle",
+             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
+             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
         save_pickle(**kwargs)
 
     elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
