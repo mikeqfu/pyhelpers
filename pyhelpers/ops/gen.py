@@ -8,6 +8,7 @@ import hashlib
 import inspect
 import os
 import re
+import subprocess
 
 import pandas as pd
 
@@ -280,3 +281,28 @@ def func_running_time(func):
         return res
 
     return inner
+
+
+def get_git_branch():
+    """
+    Get the current Git branch name.
+
+    :return: The name of the currently checked-out Git branch.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_git_branch
+        >>> get_git_branch()
+        'master'
+    """
+
+    try:  # Run the git command to get the current branch name
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode('utf-8')
+
+    except subprocess.CalledProcessError:
+        branch = None
+        print("Not in a Git repository")
+
+    return branch
