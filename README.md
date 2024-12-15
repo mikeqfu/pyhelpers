@@ -3,7 +3,8 @@
 [![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
 [![Documentation Status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/pypi/l/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
+[![License](https://img.shields.io/pypi/l/pyhelpers?color=green)
+](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
@@ -15,7 +16,7 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 
 ## Installation
 
-To install the latest release of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
+To install the latest version of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
 
 ```bash
 $ pip install --upgrade pyhelpers
@@ -40,7 +41,7 @@ It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and i
 Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks. Zenodo. [doi:10.5281/zenodo.4017438](https://doi.org/10.5281/zenodo.4017438).
 
 ```bibtex
-@software{Fu_PyHelpers_An_open-source_2020, 
+@software{Fu_PyHelpers_2020, 
     author = {Fu, Qian},
     title = {{PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks}},
     year = 2020,
@@ -55,4 +56,4 @@ For specific version references of PyHelpers, please refer to [Zenodo](https://z
 
 ## License
 
-PyHelpers (since v2.0.0) is licensed under [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+PyHelpers (since v2.0.0) is licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
