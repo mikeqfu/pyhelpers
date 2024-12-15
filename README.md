@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
 [![Documentation Status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/pypi/l/pyhelpers?color=green)
+[![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)
 ](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
