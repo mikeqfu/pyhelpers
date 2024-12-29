@@ -13,11 +13,11 @@ import sys
 
 import pandas as pd
 
-from ._base import _check_loading_path, _set_index
-from .._cache import _check_dependency, _print_failure_msg
+from ._utils import _check_loading_path, _set_index
+from .._cache import _check_dependency, _print_failure_message
 
 
-def load_pickle(path_to_file, verbose=False, raise_error=False, prt_kwargs=None, **kwargs):
+def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
     Load data from a `Pickle`_ file.
 
@@ -25,12 +25,12 @@ def load_pickle(path_to_file, verbose=False, raise_error=False, prt_kwargs=None,
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise an error if it occurs.
-        If ``raise_error=False`` (default), the error will be handled silently.
-    :type raise_error: bool
     :param prt_kwargs: [Optional] Additional parameters for
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `pickle.load()`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
@@ -92,11 +92,11 @@ def load_pickle(path_to_file, verbose=False, raise_error=False, prt_kwargs=None,
         return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.", raise_error=raise_error)
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
-             **kwargs):
+             raise_error=False, **kwargs):
     """
     Load data from a `CSV`_ file.
 
@@ -114,6 +114,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for `csv.reader()`_ or `pandas.read_csv()`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: pandas.DataFrame | None
@@ -191,10 +194,11 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None, **kwargs):
+def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None, raise_error=False,
+                      **kwargs):
     """
     Load one or multiple sheets from a `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
@@ -204,6 +208,9 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     :type as_dict: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -291,7 +298,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
                     print("Done.")
             except Exception as e:
                 sheet_dat = None
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
             data.append(sheet_dat)
 
@@ -301,7 +309,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     return data
 
 
-def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwargs):
+def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
+              **kwargs):
     """
     Load data from a `JSON`_ file.
 
@@ -317,6 +326,9 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwarg
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for `json.load()`_ (if ``engine=None``),
         `orjson.loads()`_ (if ``engine='orjson'``), `ujson.load()`_ (if ``engine='ujson'``) or
         `rapidjson.load()`_ (if ``engine='rapidjson'``).
@@ -377,10 +389,10 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, **kwarg
         return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
+def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
     Load data from a `Joblib`_ file.
 
@@ -391,6 +403,9 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
     :param prt_kwargs: [Optional] addtional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] addtional parameters for the function `joblib.load()`_.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
@@ -440,10 +455,11 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, **kwargs):
         return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwargs):
+def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise_error=False,
+                 **kwargs):
     """
     Load a dataframe from a `Feather`_ file.
 
@@ -457,6 +473,9 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwa
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `pandas.read_feather()`_:
 
         - ``columns``: Sequence of column names to read. If ``None``, all columns are read.
@@ -518,10 +537,10 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, **kwa
         return data
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_data(path_to_file, err_warning=True, prt_kwargs=None, **kwargs):
+def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False, **kwargs):
     """
     Load data from a file.
 
@@ -534,6 +553,9 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, **kwargs):
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for one of the following functions:
         :func:`~pyhelpers.store.ldr.load_pickle`,
         :func:`~pyhelpers.store.ldr.load_csv`,
@@ -619,7 +641,8 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, **kwargs):
 
     path_to_file_ = str(path_to_file).lower()
 
-    kwargs.update({'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs})
+    kwargs.update(
+        {'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs, 'raise_error': raise_error})
 
     if path_to_file_.endswith(
             (".pkl", ".pickle",

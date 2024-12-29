@@ -7,6 +7,7 @@ import html.parser
 import importlib.resources
 import json
 import os
+import pathlib
 import random
 import re
 import secrets
@@ -20,8 +21,8 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from .._cache import (_check_dependency, _check_rel_pathname, _format_err_msg, _print_failure_msg,
-                      _USER_AGENT_STRINGS)
+from .._cache import _check_dependency, _check_relative_pathname, _format_error_message, \
+    _print_failure_message, _USER_AGENT_STRINGS
 
 
 def is_network_connected():
@@ -262,7 +263,7 @@ class _FakeUserAgentParser(html.parser.HTMLParser):
             self.data.append(data.strip())
 
 
-def _user_agent_strings(browser_names=None, dump_dat=True):
+def _user_agent_strings(browser_names=None, dump_dat=False):
     """
     Retrieve user-agent strings for popular web browsers.
 
@@ -270,7 +271,7 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         defaults to a predefined list of popular browsers if not provided.
     :type browser_names: list | None
     :param dump_dat: Whether to dump additional data alongside the user-agent strings;
-        defaults to ``True``.
+        defaults to ``False``.
     :type dump_dat: bool
     :return: Dictionary containing user-agent strings for the specified browsers.
     :rtype: dict
@@ -278,6 +279,7 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
     **Examples**::
 
         >>> from pyhelpers.ops.webutils import _user_agent_strings
+        >>> # uas = _user_agent_strings(dump_dat=True)
         >>> uas = _user_agent_strings()
         >>> list(uas.keys())
         ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
@@ -300,15 +302,17 @@ def _user_agent_strings(browser_names=None, dump_dat=True):
         user_agent_strings[browser_name] = sorted(list(set(fua_parser.data)))
 
     if dump_dat and all(user_agent_strings.values()):
-        path_to_uas = importlib.resources.files(__package__).joinpath(
-            "../data/user-agent-strings.json")
+        # path_to_uas = importlib.resources.files(__package__).joinpath(
+        #     "../data/user-agent-strings.json")
+        path_to_uas = pathlib.Path(__file__).parent.parent / "data" / "user-agent-strings.json"
         with path_to_uas.open(mode='w') as f:
             f.write(json.dumps(user_agent_strings, indent=4))
 
     return user_agent_strings
 
 
-def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
+def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False,
+                            raise_error=False):
     """
     Load user-agent strings for popular web browsers.
 
@@ -324,6 +328,9 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
     :type update: bool
     :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :return: Dictionary or list of user-agent strings, depending on the `flattened` parameter.
     :rtype: dict | list
 
@@ -378,7 +385,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
                 print("Done.")
 
         except Exception as e:
-            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
             user_agent_strings = load_user_agent_strings(update=False, verbose=False)
 
     if shuffled:
@@ -511,7 +518,7 @@ def _download_file_from_url(response, path_to_file):
     total_iter = file_size // chunk_size
 
     pg_args = {
-        'desc': f'"{_check_rel_pathname(path_to_file)}"',
+        'desc': f'"{_check_relative_pathname(path_to_file)}"',
         'total': total_iter,
         'unit': 'B',
         'unit_scale': True,
@@ -633,16 +640,14 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
         # Streaming, so we can iterate over the response
         with session.get(url=url, stream=True, headers=fake_headers, **kwargs) as response:
-
-            if not os.path.exists(path_to_dir):
-                os.makedirs(path_to_dir)
+            os.makedirs(path_to_dir, exist_ok=True)  # Ensure the directory exists
 
             if verbose:
                 _download_file_from_url(response=response, path_to_file=path_to_file_)
 
             else:
-                with open(file=path_to_file_, mode='wb') as f:
-                    shutil.copyfileobj(fsrc=response.raw, fdst=f)
+                with open(file=path_to_file_, mode='wb') as f:  # Open the file in binary write mode
+                    shutil.copyfileobj(fsrc=response.raw, fdst=f)  # type: ignore
 
                 if os.stat(path=path_to_file_).st_size == 0:
                     print("ERROR! Something went wrong! Check if the URL is downloadable.")
@@ -876,7 +881,7 @@ class GitHubFileDownloader:
                 return self.total_files
 
             except KeyboardInterrupt as e:
-                print(f"Error: Got interrupted for {_format_err_msg(e)}")
+                print(f"Error: Got interrupted for {_format_error_message(e)}")
 
         # If the data is a directory, download all files in it
         for file in data:

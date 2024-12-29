@@ -15,15 +15,15 @@ import subprocess
 import tempfile
 import zipfile
 
-from .._cache import (_check_dependency, _check_file_pathname, _check_rel_pathname,
-                      _print_failure_msg)
+from .._cache import _check_dependency, _check_file_pathname, _check_relative_pathname, \
+    _print_failure_message
 
 
 # ==================================================================================================
 # Uncompress data
 # ==================================================================================================
 
-def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
+def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kwargs):
     """
     Extract data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
@@ -35,6 +35,8 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     :type out_dir: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
     :param kwargs: [Optional] Additional parameters for the method `zipfile.ZipFile.extractall()`_.
 
     .. _`zipfile.ZipFile.extractall()`:
@@ -87,7 +89,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
@@ -258,7 +260,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
     if verbose:
         rel_input_path, rel_output_path = map(
-            lambda x: pathlib.Path(_check_rel_pathname(x)), (abs_input_path, abs_output_path))
+            lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
 
         if not os.path.exists(abs_output_path):
             msg = f"Converting \"{rel_input_path}\" to \"{rel_output_path}\""
@@ -387,7 +389,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
 
 
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
-                sheet_name='1', ret_null=False, verbose=False, **kwargs):
+                sheet_name='1', ret_null=False, verbose=False, raise_error=False, **kwargs):
     """
     Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
@@ -423,6 +425,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     :type ret_null: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
     :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
     :return: The path of the generated CSV file or ``None`` when ``engine=None``;
         an `io.StringIO()`_ buffer when ``engine='xlsx2csv'``.
@@ -480,7 +484,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     """
 
     if verbose:
-        rel_path = _check_rel_pathname(path_to_xlsx)
+        rel_path = _check_relative_pathname(path_to_xlsx)
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if engine is None:
@@ -521,5 +525,5 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
             return buffer
 
         except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
             buffer.close()

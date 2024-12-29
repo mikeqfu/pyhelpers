@@ -6,9 +6,8 @@ import copy
 import logging
 import os
 import pathlib
-import platform
 
-from .._cache import _check_rel_pathname
+from .._cache import _add_slashes, _check_relative_pathname
 
 
 def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
@@ -48,20 +47,16 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         ...     print(e)
         The input for `path_to_file` may not be a file path.
         >>> path_to_file = "pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
+        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
-        >>> path_to_file = cd("tests\\documents", "pyhelpers.pdf")
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Saving "pyhelpers.pdf" to "tests\\" ... Passed.
+        >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
+        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
+        Saving "pyhelpers.pdf" to ".\\tests\\documents\\" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
+        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" to "C:\\Windows\\" ... Passed.
         >>> path_to_file = "C:\\pyhelpers.pdf"
-        >>> _check_saving_path(path_to_file, verbose=True)
-        >>> print("Passed.")
+        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" to "C:\\" ... Passed.
     """
 
@@ -71,10 +66,12 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     filename = pathlib.Path(abs_path_to_file).name if abs_path_to_file.suffix else ""
 
     try:
-        rel_path = pathlib.Path(os.path.relpath(abs_path_to_file.parent))
+        rel_dir_path = pathlib.Path(os.path.relpath(abs_path_to_file.parent))
 
-        if rel_path == rel_path.parent:
-            rel_path = abs_path_to_file.parent
+        if rel_dir_path.is_relative_to("."):
+            pass
+        elif rel_dir_path == rel_dir_path.parent:
+            rel_dir_path = abs_path_to_file.parent
         else:  # In case the specified path does not exist
             os.makedirs(abs_path_to_file.parent, exist_ok=True)
 
@@ -84,29 +81,25 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
             logging.warning(
                 f'\n\t"{abs_path_to_file.parent}" is outside the current working directory.')
 
-        rel_path = abs_path_to_file.parent
+        rel_dir_path = abs_path_to_file.parent
 
     if verbose:
         if os.path.exists(abs_path_to_file):
             state_verb, state_prep = "Updating", "at"
 
-        slash = "\\" if platform.system() == 'Windows' else "/"
-
         end = print_end if print_end else "\n"
 
-        if rel_path == rel_path.parent and rel_path.drive == pathlib.Path.cwd().drive:
-            msg_fmt = '{}{} "{}"{}'
-            print(msg_fmt.format(
-                print_prefix, state_verb, filename, print_suffix).replace(
-                ":\\\\", ":\\"), end=end)
+        if (rel_dir_path == rel_dir_path.parent and
+                rel_dir_path.absolute().drive == pathlib.Path.cwd().drive):
+            msg = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
+            print(msg, end=end)
         else:
-            msg_fmt = '{}{} "{}" {} "{}' + slash + '"{}'
-            print(msg_fmt.format(
-                print_prefix, state_verb, filename, state_prep, rel_path, print_suffix).replace(
-                ":\\\\", ":\\"), end=end)
+            msg = (f'{print_prefix}{state_verb} "{filename}" '
+                   f'{state_prep} {_add_slashes(rel_dir_path)}{print_suffix}')
+            print(msg, end=end)
 
     if ret_info:
-        return rel_path, filename
+        return rel_dir_path, filename
 
 
 def _autofit_column_width(writer, writer_kwargs, **kwargs):
@@ -176,14 +169,17 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         >>> from pyhelpers.store import _check_loading_path
         >>> from pyhelpers.dirs import cd
         >>> path_to_file = cd("test_func.py")
-        >>> _check_loading_path(path_to_file, verbose=True)
-        >>> print("Passed.")
-        Loading "test_func.py" ... Passed.
+        >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
+        Loading ".\\test_func.py" ... Passed.
+        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
+        >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
+        Loading "C:\\Windows\\pyhelpers.pdf" ... Passed.
     """
 
     if verbose:
-        rel_pathname = _check_rel_pathname(path_to_file)
-        print(f'{print_prefix}{state_verb} "{rel_pathname}"{print_suffix}', end=print_end)
+        rel_pathname = _check_relative_pathname(path_to_file)
+        prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_pathname)}{print_suffix}'
+        print(prt_msg, end=print_end)
 
 
 def _set_index(data, index=None):
