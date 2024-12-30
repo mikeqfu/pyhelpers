@@ -77,7 +77,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
 
     if not all(isinstance(x, shapely.geometry.Point) for x in (pt1, pt2)):
         try:
-            pt1_, pt2_ = map(lambda x: shapely.geometry.Point(x), (pt1, pt2))
+            pt1_, pt2_ = shapely.geometry.Point(pt1), shapely.geometry.Point(pt2)
         except Exception as e:
             print(e)
             return None
