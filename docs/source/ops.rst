@@ -29,6 +29,7 @@ Basic computation / conversion
     :toctree: _generated/
     :template: function.rst
 
+    get_utc_tai_offset
     gps_time_to_utc
     parse_size
     get_number_of_chunks
