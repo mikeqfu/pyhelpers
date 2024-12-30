@@ -13,13 +13,13 @@ import sys
 
 import pandas as pd
 
-from ._utils import _check_loading_path, _set_index
+from .utils import _check_loading_path, _set_index
 from .._cache import _check_dependency, _print_failure_message
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
-    Load data from a `Pickle`_ file.
+    Loads data from a `Pickle`_ file.
 
     :param path_to_file: Path where the pickle file is saved.
     :type path_to_file: str | os.PathLike
@@ -98,7 +98,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
              raise_error=False, **kwargs):
     """
-    Load data from a `CSV`_ file.
+    Loads data from a `CSV`_ file.
 
     :param path_to_file: Pathname of the `CSV`_ file.
     :type path_to_file: str | os.PathLike
@@ -200,7 +200,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None, raise_error=False,
                       **kwargs):
     """
-    Load one or multiple sheets from a `Microsoft Excel`_ or an `OpenDocument`_ format file.
+    Loads one or multiple sheets from a `Microsoft Excel`_ or an `OpenDocument`_ format file.
 
     :param path_to_file: Path where the spreadsheet file is saved.
     :type path_to_file: str | os.PathLike
@@ -312,7 +312,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
-    Load data from a `JSON`_ file.
+    Loads data from a `JSON`_ file.
 
     :param path_to_file: Path where the JSON file is saved.
     :type path_to_file: str | os.PathLike
@@ -394,7 +394,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
 
 def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
-    Load data from a `Joblib`_ file.
+    Loads data from a `Joblib`_ file.
 
     :param path_to_file: Path where the `Joblib`_ file is saved.
     :type path_to_file: str | os.PathLike
@@ -461,7 +461,7 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
-    Load a dataframe from a `Feather`_ file.
+    Loads a dataframe from a `Feather`_ file.
 
     :param path_to_file: Path where the feather file is saved.
     :type path_to_file: str | os.PathLike
@@ -542,7 +542,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
 
 def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False, **kwargs):
     """
-    Load data from a file.
+    Loads data from a file.
 
     :param path_to_file: Pathname of the file; supported formats include
         `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_.

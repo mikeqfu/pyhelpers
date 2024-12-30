@@ -25,7 +25,7 @@ from .._cache import _check_dependency, _check_file_pathname, _check_relative_pa
 
 def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kwargs):
     """
-    Extract data from a `Zip
+    Unzips data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
     (compressed) file.
 
@@ -95,7 +95,7 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
 def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
               **kwargs):
     """
-    Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
+    Extracts data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
     :param path_to_zip_file: The path where the compressed file is saved.
     :type path_to_zip_file: str | os.PathLike
@@ -202,7 +202,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
                     verbose=False, **kwargs):
     """
-    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
+    Converts a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
     `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
     (.rst) file.
 
@@ -315,7 +315,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
     """
-    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
+    Prepares paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
     `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
 
     :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
@@ -353,7 +353,7 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
 
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
     """
-    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    Converts a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
     (*.xlsx*/*.xls*) to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file
     using `VBScript <https://en.wikipedia.org/wiki/VBScript>`_.
 
@@ -391,7 +391,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, raise_error=False, **kwargs):
     """
-    Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
+    Converts a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 

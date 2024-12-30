@@ -14,7 +14,7 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
                        state_prep="to", print_suffix="", print_end=" ... ", ret_info=False):
     # noinspection PyShadowingNames
     """
-    Verify a specified file path before saving.
+    Verifies a specified file path before saving.
 
     :param path_to_file: Path where the file will be saved.
     :type path_to_file: str | pathlib.Path
@@ -104,7 +104,7 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
 
 def _autofit_column_width(writer, writer_kwargs, **kwargs):
     """
-    Automatically adjusts the column widths in an Excel spreadsheet based on the content length.
+    Adjusts the column widths in an Excel spreadsheet based on the content length.
 
     This function is specifically designed for *openpyxl* engine when working with *Pandas*
     `ExcelWriter`_. It iterates through each column of the specified sheet and calculates
@@ -148,7 +148,7 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
                         print_suffix="", print_end=" ... "):
     # noinspection PyShadowingNames
     """
-    Check the status of loading a file from a specified path.
+    Checks the status of loading a file from a specified path.
 
     :param path_to_file: Path where the file is located.
     :type path_to_file: str | bytes | pathlib.Path
@@ -184,7 +184,7 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
 
 def _set_index(data, index=None):
     """
-    Set the index of a dataframe.
+    Sets the index of a dataframe.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame

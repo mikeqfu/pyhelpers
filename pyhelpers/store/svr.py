@@ -15,13 +15,13 @@ import sys
 
 import pandas as pd
 
-from ._utils import _autofit_column_width, _check_saving_path
+from .utils import _autofit_column_width, _check_saving_path
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_message
 
 
 def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
-    Save data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Saves data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
     :param data: Data to be saved, compatible with the built-in `pickle.dump()`_ function.
     :type data: typing.Any
@@ -101,7 +101,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
                      delimiter=',', autofit_column_width=True, writer_kwargs=None,
                      verbose=False, raise_error=False, **kwargs):
     """
-    Save data to a spreadsheet file format
+    Saves data to a spreadsheet file format
     (e.g. `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
     `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ or
     `OpenDocument <https://en.wikipedia.org/wiki/OpenDocument>`_).
@@ -221,7 +221,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                       autofit_column_width=True, writer_kwargs=None, verbose=False,
                       raise_error=False, **kwargs):
     """
-    Save multiple dataframes to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
+    Saves multiple dataframes to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
 
     The file extension can be ``.xlsx`` (or ``.xls``) for `Microsoft Excel`_ files or
     ``.ods`` for `OpenDocument`_ files.
@@ -373,7 +373,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
 
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
-    Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
+    Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
     :param data: Data to be serialised and
         saved as a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -478,7 +478,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
 
 def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
-    Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
+    Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
     :param data: The data to be serialised and saved using `joblib.dump()`_.
     :type data: typing.Any
@@ -550,7 +550,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
 
 def save_feather(data, path_to_file, index=False, verbose=False, raise_error=False, **kwargs):
     """
-    Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Saves a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
     :param data: The dataframe to be saved as a Feather-formatted file.
     :type data: pandas.DataFrame
@@ -613,7 +613,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
                     **kwargs):
     # noinspection PyShadowingNames
     """
-    Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
+    Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
 
     :param path_to_svg: The path where the SVG file is located.
@@ -715,7 +715,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
              **kwargs):
     """
-    Save a figure object to a file in a supported format.
+    Saves a figure object to a file in a supported format.
 
     This function utilises the `matplotlib.pyplot.savefig()`_ function and
     optionally `Inkscape`_ for SVG to EMF conversion.
@@ -797,7 +797,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
                 **kwargs):
     # noinspection PyShadowingNames
     """
-    Save a figure object to a file in a supported format (with the figure object specified).
+    Saves a figure object to a file in a supported format (with the figure object specified).
 
     This function serves an alternative to the :func:`~pyhelpers.store.save_fig` function.
 
@@ -883,7 +883,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
                      verbose=False, raise_error=False, **kwargs):
     """
-    Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
+    Saves a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
     :param data: The URL of a web page or the pathname of an HTML file.
@@ -1011,7 +1011,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
 def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,
               **kwargs):
     """
-    Save data to a file in a specific format.
+    Saves data to a file in a specific format.
 
     :param data: The data to be saved, which can be:
 
