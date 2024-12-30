@@ -886,30 +886,9 @@ class PostgreSQL(_Base):
             Dropping "testdb" ... Done.
         """
 
-        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
-
-        if self.table_exists(table_name=table_name, schema_name=schema_name):
-            if verbose:
-                print(f"The table {table_name_} already exists.")
-
-        else:
-            if not self.schema_exists(schema_name):
-                self.create_schema(schema_name=schema_name, verbose=False)
-
-            try:
-                if verbose:
-                    print(f"Creating a table: {table_name_} ... ", end="")
-
-                with self.engine.connect() as connection:
-                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
-                    connection.execute(query)
-
-                if verbose:
-                    print("Done.")
-
-            except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        super()._create_table(
+            table_name=table_name, column_specs=column_specs, schema_name=schema_name,
+            verbose=verbose, raise_error=raise_error)
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
