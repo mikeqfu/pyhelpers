@@ -159,7 +159,7 @@ class _Base:
         :return: Whether the database exists.
         :rtype: bool
         """
-        pass
+        return None
 
     def connect_database(self, database_name, verbose=False):
         """
@@ -170,7 +170,7 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
@@ -182,7 +182,7 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool
         """
-        pass
+        return None
 
     def _create_database(self, database_name, verbose, fmt):
         """
@@ -412,7 +412,7 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def schema_exists(self, schema_name):
         """
@@ -423,7 +423,7 @@ class _Base:
         :return: Whether the schema exists.
         :rtype: bool
         """
-        pass
+        return None
 
     def __drop_schema(self, schema_name, query_, verbose=False, raise_error=False):
         """
@@ -561,7 +561,34 @@ class _Base:
         :return: Whether the table exists.
         :rtype: bool
         """
-        pass
+        return None
+
+    def _create_table(self, table_name, column_specs, schema_name=None, verbose=False,
+                      raise_error=False):
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+        if self.table_exists(table_name=table_name, schema_name=schema_name):
+            if verbose:
+                print(f"The table {table_name_} already exists.")
+
+        else:
+            if not self.schema_exists(schema_name):
+                self.create_schema(schema_name=schema_name, verbose=False)
+
+            try:
+                if verbose:
+                    print(f"Creating a table: {table_name_} ... ", end="")
+
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
+                    connection.execute(query)
+
+                if verbose:
+                    print("Done.")
+
+            except Exception as e:
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
                     verbose=False, raise_error=False):
@@ -628,7 +655,7 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
                      force_replace=False, chunk_size=None, col_type=None, method='multi',
@@ -855,7 +882,7 @@ class _Base:
         :type stringio_kwargs: dict
         :param kwargs: [Optional] Additional arguments passed to the reading method.
         """
-        pass
+        return None
 
     def _read_sql_query_args(self):
         """
