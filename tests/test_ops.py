@@ -19,10 +19,14 @@ from pyhelpers.ops import *
 # comp - Basic computation / converter.
 # ==================================================================================================
 
-def test_gps_time_to_utc():
-    utc_dt = gps_time_to_utc(gps_time=1271398985.7822514)
+@pytest.mark.parametrize('as_datetime', [True, False])
+def test_gps_time_to_utc(as_datetime):
+    utc_dt = gps_time_to_utc(gps_time=1271398985.7822514, as_datetime=as_datetime)
 
-    assert utc_dt == datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
+    if as_datetime:
+        assert utc_dt == datetime.datetime(2020, 4, 20, 6, 22, 47, 782251)
+    else:
+        assert utc_dt == '2020-04-20T06:22:47.782251'
 
 
 def test_parse_size():

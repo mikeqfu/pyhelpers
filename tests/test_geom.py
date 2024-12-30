@@ -1,4 +1,6 @@
-"""Test the module :mod:`~pyhelpers.geom`."""
+"""
+Test the module :mod:`~pyhelpers.geom`.
+"""
 
 import functools
 
@@ -26,7 +28,7 @@ def test_transform_geom_point_type():
     geom_points = list(transform_point_type(pt1, pt2, as_geom=False))
     assert np.array_equal(geom_points, ref_rslt_2)
 
-    pt1, pt2 = map(shapely.geometry.Point, (pt1, pt2))
+    pt1, pt2 = map(lambda x: shapely.geometry.Point(x), (pt1, pt2))
 
     geom_points = [x.wkt for x in transform_point_type(pt1, pt2)]
     assert geom_points == ref_rslt_1
@@ -157,7 +159,8 @@ def test_calc_distance_on_unit_sphere():
     arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, precision=4)
     assert arc_len_in_miles == 101.1043
 
-    leeds, manchester = map(shapely.geometry.Point, example_df.loc[['Leeds', 'Manchester']].values)
+    leeds, manchester = map(
+        lambda x: shapely.geometry.Point(x), example_df.loc[['Leeds', 'Manchester']].values)
     arc_len_in_miles = calc_distance_on_unit_sphere(leeds, manchester)
     assert arc_len_in_miles == 36.175811917161276
 
@@ -168,13 +171,12 @@ def test_calc_distance_on_unit_sphere():
 
 def test_calc_hypotenuse_distance():
     from pyhelpers.geom import calc_hypotenuse_distance
-    from shapely.geometry import Point
 
     pt_1, pt_2 = (1.5429, 52.6347), (1.4909, 52.6271)
     hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
     assert hypot_distance == 0.05255244999046248
 
-    pt_1_, pt_2_ = map(Point, (pt_1, pt_2))
+    pt_1_, pt_2_ = map(lambda x: shapely.geometry.Point(x), (pt_1, pt_2))
     assert pt_1_.wkt == 'POINT (1.5429 52.6347)'
     assert pt_2_.wkt == 'POINT (1.4909 52.6271)'
     hypot_distance = calc_hypotenuse_distance(pt_1_, pt_2_)
