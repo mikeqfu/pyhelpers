@@ -19,7 +19,8 @@ def test__check_saving_path(capfd):
     from pyhelpers.store import _check_saving_path
 
     file_path = os.getcwd()
-    with pytest.raises(AssertionError, match="The input for `path_to_file` may not be a file path."):
+    with pytest.raises(
+            AssertionError, match="The input for `path_to_file` may not be a file path."):
         _check_saving_path(file_path, verbose=True)
 
     file_path = "pyhelpers.pdf"
@@ -134,7 +135,8 @@ def test_save_json(capfd):
         out, _ = capfd.readouterr()
         if engine == 'orjson':
             assert all(
-                x in out for x in [f'Updating "{filename}"', "Failed.", "unexpected keyword argument"])
+                x in out for x in
+                [f'Updating "{filename}"', "Failed.", "unexpected keyword argument"])
         else:
             assert f'Updating "{filename}"' in out and "Done." in out
 
@@ -318,7 +320,7 @@ def test__check_loading_path(capfd):
     file_path = "documents\\pyhelpers.pdf"
     _check_loading_path(file_path, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Loading "{file_path}"' in out
+    assert f'Loading ".\\{file_path}"' in out
 
 
 def test__set_index():

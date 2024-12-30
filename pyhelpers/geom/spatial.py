@@ -77,7 +77,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
 
     if not all(isinstance(x, shapely.geometry.Point) for x in (pt1, pt2)):
         try:
-            pt1_, pt2_ = map(shapely.geometry.Point, (pt1, pt2))
+            pt1_, pt2_ = shapely.geometry.Point(pt1), shapely.geometry.Point(pt2)
         except Exception as e:
             print(e)
             return None
@@ -135,7 +135,7 @@ def calc_hypotenuse_distance(pt1, pt2):
         >>> hypot_distance = calc_hypotenuse_distance(pt_1, pt_2)
         >>> hypot_distance
         0.05255244999046248
-        >>> pt_1_, pt_2_ = map(Point, (pt_1, pt_2))
+        >>> pt_1_, pt_2_ = map(lambda p: Point(p), (pt_1, pt_2))
         >>> pt_1_.wkt
         'POINT (1.5429 52.6347)'
         >>> pt_2_.wkt

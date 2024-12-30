@@ -17,7 +17,7 @@ import sqlalchemy.dialects
 import sqlalchemy.exc
 
 from ._base import _Base
-from .._cache import _check_dependency, _confirmed, _print_failure_msg
+from .._cache import _check_dependency, _confirmed, _print_failure_message
 
 
 class MSSQL(_Base):
@@ -65,7 +65,7 @@ class MSSQL(_Base):
     }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
-                 confirm_db_creation=False, verbose=False):
+                 confirm_db_creation=False, verbose=False, raise_error=False):
         """
         :param host: Name or IP address of the SQL Server, e.g. ``'localhost'`` or ``'127.0.0.1'``;
             defaults to ``'localhost'`` if not specified.
@@ -89,6 +89,9 @@ class MSSQL(_Base):
         :param verbose: Whether to print connection and operation details to the console;
             defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         :ivar str host: Name or IP address of the SQL Server.
         :ivar str port: Listening port of the SQL Server.
@@ -172,7 +175,8 @@ class MSSQL(_Base):
                 self.engine.url = self.engine.url.set(database=self.database_name)
             else:  # The database doesn't exist
                 self._create_db(
-                    confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='[{}]')
+                    confirm_db_creation=confirm_db_creation, fmt='[{}]', verbose=verbose,
+                    raise_error=raise_error)
             reconnect_db = True
 
         self.address = re.split(
@@ -192,7 +196,7 @@ class MSSQL(_Base):
                 print("Successfully.")
 
         except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
@@ -513,7 +517,7 @@ class MSSQL(_Base):
 
         self._create_database(database_name=database_name, verbose=verbose, fmt='[{}]')
 
-    def connect_database(self, database_name=None, verbose=False):
+    def connect_database(self, database_name=None, verbose=False, raise_error=False):
         """
         Establish a connection to a database.
 
@@ -522,6 +526,9 @@ class MSSQL(_Base):
         :type database_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -575,13 +582,14 @@ class MSSQL(_Base):
                 self.database_name = self.credentials['database']
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
                 print(f"Being connected with {self.address}.")
 
-    def disconnect_database(self, database_name=None, verbose=False):
+    def disconnect_database(self, database_name=None, verbose=False, raise_error=False):
         """
         Disconnect from a database.
 
@@ -590,6 +598,9 @@ class MSSQL(_Base):
         :type database_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -615,7 +626,7 @@ class MSSQL(_Base):
 
         if db_name != self.DEFAULT_DATABASE:
             if verbose:
-                print(f'Disconnecting the database "{db_name}" ... ', end="")
+                print(f'Disconnecting the database [{db_name}] ... ', end="")
 
             try:
                 # with self.engine.connect() as connection:
@@ -639,13 +650,15 @@ class MSSQL(_Base):
                 self.connect_database(database_name=self.DEFAULT_DATABASE)
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
                 print(f"Being connected with {self.address}.")
 
-    def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
+    def drop_database(self, database_name=None, confirmation_required=True, verbose=False,
+                      raise_error=False):
         """
         Delete/drop a database.
 
@@ -657,6 +670,9 @@ class MSSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -680,7 +696,7 @@ class MSSQL(_Base):
 
         self._drop_database(
             database_name=database_name, fmt='[{}]', confirmation_required=confirmation_required,
-            verbose=verbose)
+            verbose=verbose, raise_error=raise_error)
 
     # == Schema ====================================================================================
 
@@ -718,7 +734,7 @@ class MSSQL(_Base):
 
         return result
 
-    def create_schema(self, schema_name, verbose=False):
+    def create_schema(self, schema_name, verbose=False, raise_error=False):
         """
         Create a schema.
 
@@ -726,6 +742,9 @@ class MSSQL(_Base):
         :type schema_name: str
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -758,7 +777,8 @@ class MSSQL(_Base):
                 if verbose:
                     print("Done.")
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             print(f"The schema {s_name} already exists.")
@@ -1006,7 +1026,8 @@ class MSSQL(_Base):
 
         return table_name_
 
-    def create_table(self, table_name, column_specs, schema_name=None, verbose=False):
+    def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
+                     raise_error=False):
         """
         Create a table with specified columns.
 
@@ -1020,6 +1041,9 @@ class MSSQL(_Base):
         :type schema_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -1080,7 +1104,8 @@ class MSSQL(_Base):
                     print("Done.")
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def table_exists(self, table_name, schema_name=None):
         """
@@ -1986,7 +2011,8 @@ class MSSQL(_Base):
 
         return data
 
-    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
+    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
+                   raise_error=False):
         """
         Delete/drop a table.
 
@@ -2001,6 +2027,9 @@ class MSSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information in the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         .. seealso::
 
@@ -2032,4 +2061,5 @@ class MSSQL(_Base):
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_msg(e=e, msg="Failed.")
+                    _print_failure_message(
+                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)

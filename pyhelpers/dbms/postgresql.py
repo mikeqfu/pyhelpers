@@ -14,7 +14,7 @@ import sqlalchemy.dialects
 
 from ._base import _Base
 from .utils import make_database_address
-from .._cache import _check_dependency, _confirmed, _print_failure_msg
+from .._cache import _check_dependency, _confirmed, _print_failure_message
 
 
 class PostgreSQL(_Base):
@@ -46,7 +46,7 @@ class PostgreSQL(_Base):
     }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
-                 confirm_db_creation=False, verbose=False):
+                 confirm_db_creation=False, verbose=False, raise_error=False):
         """
         :param host: Host name/address of a PostgreSQL server,
             e.g. ``'localhost'`` or ``'127.0.0.1'``.
@@ -70,6 +70,9 @@ class PostgreSQL(_Base):
         :type confirm_db_creation: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         :ivar str host: Host name/address.
         :ivar int port: Listening port used by PostgreSQL.
@@ -163,7 +166,8 @@ class PostgreSQL(_Base):
                 self.engine.url = self.engine.url.set(database=self.database_name)
             else:  # the database doesn't exist
                 self._create_db(
-                    confirm_db_creation=confirm_db_creation, verbose=verbose, fmt='"{}"')
+                    confirm_db_creation=confirm_db_creation, fmt='"{}"', verbose=verbose,
+                    raise_error=raise_error)
             reconnect_db = True
 
         # make_database_address(self.host, self.port, self.username, self.database_name)
@@ -185,7 +189,7 @@ class PostgreSQL(_Base):
                 print("Successfully.")
 
         except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     # == Database ==================================================================================
 
@@ -307,7 +311,7 @@ class PostgreSQL(_Base):
 
         self._create_database(database_name=database_name, verbose=verbose, fmt='"{}"')
 
-    def connect_database(self, database_name=None, verbose=False):
+    def connect_database(self, database_name=None, verbose=False, raise_error=False):
         """
         Establish a connection to a database.
 
@@ -316,6 +320,9 @@ class PostgreSQL(_Base):
         :type database_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -367,7 +374,8 @@ class PostgreSQL(_Base):
                 self.database_name = self.credentials['database']
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
@@ -413,9 +421,10 @@ class PostgreSQL(_Base):
 
         return db_size
 
-    def disconnect_database(self, database_name=None, verbose=False):
+    def disconnect_database(self, database_name=None, verbose=False, raise_error=False):
         """
         Disconnect from a database.
+
 
         See also [`DBMS-PS-DD-1 <https://stackoverflow.com/questions/17449420/>`_].
 
@@ -424,6 +433,9 @@ class PostgreSQL(_Base):
         :type database_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -467,7 +479,7 @@ class PostgreSQL(_Base):
                 print("Done.")
 
         except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def disconnect_all_others(self):
         """
@@ -574,7 +586,7 @@ class PostgreSQL(_Base):
 
         return result
 
-    def create_schema(self, schema_name, verbose=False):
+    def create_schema(self, schema_name, verbose=False, raise_error=False):
         """
         Create a schema.
 
@@ -582,6 +594,9 @@ class PostgreSQL(_Base):
         :type schema_name: str
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -614,7 +629,8 @@ class PostgreSQL(_Base):
                 if verbose:
                     print("Done.")
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             print("The schema \"{}\" already exists.".format(schema_name))
@@ -808,7 +824,8 @@ class PostgreSQL(_Base):
 
         return result
 
-    def create_table(self, table_name, column_specs, schema_name=None, verbose=False):
+    def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
+                     raise_error=False):
         """
         Create a table.
 
@@ -822,6 +839,9 @@ class PostgreSQL(_Base):
         :type schema_name: str | None
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         .. _dbms-postgresql-create_table-example:
 
@@ -888,7 +908,8 @@ class PostgreSQL(_Base):
                     print("Done.")
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
@@ -998,7 +1019,7 @@ class PostgreSQL(_Base):
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         :return: Table names of the specified schema(s) ``schema_name``.
-        :rtype: list
+        :rtype: dict
 
         **Examples**::
 
@@ -1034,7 +1055,7 @@ class PostgreSQL(_Base):
         return table_names
 
     def alter_table_schema(self, table_name, schema_name, new_schema_name,
-                           confirmation_required=True, verbose=False):
+                           confirmation_required=True, verbose=False, raise_error=False):
         """
         Move a table from one schema to another within the currently-connected database.
 
@@ -1049,6 +1070,9 @@ class PostgreSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         **Examples**::
 
@@ -1111,7 +1135,8 @@ class PostgreSQL(_Base):
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_msg(e=e, msg="Failed.")
+                    _print_failure_message(
+                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             print(f'The table "{schema_name}"."{table_name}" does not exist.')
@@ -1655,7 +1680,8 @@ class PostgreSQL(_Base):
 
         return data
 
-    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
+    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
+                   raise_error=False):
         """
         Delete/drop a specified table.
 
@@ -1670,6 +1696,9 @@ class PostgreSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
 
         .. seealso::
 
@@ -1678,4 +1707,4 @@ class PostgreSQL(_Base):
 
         self._drop_table(
             table_name, query_fmt='DROP TABLE {} CASCADE;', schema_name=schema_name,
-            confirmation_required=confirmation_required, verbose=verbose)
+            confirmation_required=confirmation_required, verbose=verbose, raise_error=raise_error)

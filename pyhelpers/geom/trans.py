@@ -53,7 +53,7 @@ def transform_point_type(*pts, as_geom=True):
         ...     print(x)
         [-0.1276474 51.5073219]
         [-1.9026911 52.4796992]
-        >>> pt1, pt2 = map(Point, (pt1, pt2))
+        >>> pt1, pt2 = map(lambda p: Point(p), (pt1, pt2))
         >>> geom_points = transform_point_type(pt1, pt2)
         >>> for x in geom_points:
         ...     print(x)

@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .._cache import _check_dependency, _check_rel_pathname, _print_failure_msg
+from .._cache import _check_dependency, _check_relative_pathname, _print_failure_message
 
 
 # ==================================================================================================
@@ -586,7 +586,7 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
     return data_frame
 
 
-def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
+def parse_csr_matrix(path_to_csr, verbose=False, raise_error=False, **kwargs):
     """
     Load in a compressed sparse row (CSR) or compressed row storage (CRS).
 
@@ -595,6 +595,9 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     :param verbose: Whether to print relevant information in console as the function runs;
         defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `numpy.load()`_.
     :return: A compressed sparse row.
     :rtype: scipy.sparse.csr.csr_matrix
@@ -627,7 +630,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
     scipy_sparse = _check_dependency(name='scipy.sparse')
 
     if verbose:
-        rel_path_to_csr = _check_rel_pathname(path_to_csr)
+        rel_path_to_csr = _check_relative_pathname(path_to_csr)
         print(f'Loading "\\{rel_path_to_csr}"', end=" ... ")
 
     try:
@@ -645,7 +648,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, **kwargs):
         return csr_mat
 
     except Exception as e:
-        _print_failure_msg(e, msg="Failed.", verbose=verbose)
+        _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def swap_cols(array, c1, c2, as_list=False):

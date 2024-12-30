@@ -1,21 +1,34 @@
-"""Test the module ``_cache.py``"""
+"""
+Test the module ``_cache.py``
+"""
 
 import os
 
 import pytest
 
 
+def test__confirmed(monkeypatch, capfd):
+    from pyhelpers._cache import _confirmed
+
+    monkeypatch.setattr('builtins.input', lambda _: 'yes')
+    if _confirmed(prompt="Testing if the function works?", resp=True):
+        print("Passed.")
+
+    out, _ = capfd.readouterr()
+    assert "Passed." in out
+
+
 def test__check_dependency():
     from pyhelpers._cache import _check_dependency
 
-    psycopg2_ = _check_dependency(name='psycopg2')
-    assert psycopg2_.__name__ == 'psycopg2'
+    psycopg2 = _check_dependency(name='psycopg2')
+    assert psycopg2.__name__ == 'psycopg2'
 
     sqlalchemy_dialects = _check_dependency(name='dialects', package='sqlalchemy')
     assert sqlalchemy_dialects.__name__ == 'sqlalchemy.dialects'
 
-    gdal_ = _check_dependency(name='gdal', package='osgeo')
-    assert gdal_.__name__ == 'osgeo.gdal'
+    gdal = _check_dependency(name='gdal', package='osgeo')
+    assert gdal.__name__ == 'osgeo.gdal'
 
     err_msg = ("Missing optional dependency 'unknown_package'. "
                "Use pip or conda to install it, e.g. 'pip install unknown_package'.")
@@ -23,20 +36,20 @@ def test__check_dependency():
         _ = _check_dependency(name='unknown_package')
 
 
-def test__check_rel_pathname():
-    from pyhelpers._cache import _check_rel_pathname
+def test__check_relative_pathname():
+    from pyhelpers._cache import _check_relative_pathname
 
     pathname = ""
-    rel_pathname = _check_rel_pathname(pathname=pathname)
-    assert rel_pathname == pathname
+    rel_path = _check_relative_pathname(pathname=pathname)
+    assert rel_path == pathname
 
     pathname = os.path.curdir
-    rel_pathname = _check_rel_pathname(os.path.curdir)
-    assert rel_pathname == pathname
+    rel_path = _check_relative_pathname(os.path.curdir)
+    assert rel_path == pathname
 
     pathname = "C:\\Windows"
-    rel_pathname = _check_rel_pathname("C:\\Windows")
-    assert rel_pathname == pathname
+    rel_path = _check_relative_pathname("C:\\Windows")
+    assert rel_path == pathname
 
 
 def test__check_file_pathname():
@@ -61,23 +74,23 @@ def test__check_file_pathname():
     assert os.path.relpath(path_to_test_exe) == 'pyhelpers.exe'
 
 
-def test__format_err_msg():
-    from pyhelpers._cache import _format_err_msg
+def test__format_error_message():
+    from pyhelpers._cache import _format_error_message
 
-    res = _format_err_msg(None)
+    res = _format_error_message(None)
     assert res == ''
 
-    res = _format_err_msg("test")
+    res = _format_error_message("test")
     assert res == 'test.'
 
-    res = _format_err_msg("test", msg="Failed.")
+    res = _format_error_message("test", prefix="Failed.")
     assert res == 'Failed. test.'
 
 
-def test__print_failure_msg(capfd):
-    from pyhelpers._cache import _print_failure_msg
+def test__print_failure_message(capfd):
+    from pyhelpers._cache import _print_failure_message
 
-    _print_failure_msg('test', msg="Failed.")
+    _print_failure_message('test', prefix="Failed.")
     out, _ = capfd.readouterr()
     assert out == 'Failed. test.\n'
 
