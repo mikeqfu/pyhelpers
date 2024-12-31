@@ -8,7 +8,7 @@ from .._cache import _check_dependency
 def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=True,
                         custom_indexing=False, compress_nodes=True):
     """
-    Alter some default `configuration options <https://gdal.org/user/configoptions.html>`_
+    Alters some default `configuration options <https://gdal.org/user/configoptions.html>`_
     of `GDAL/OGR <https://gdal.org>`_ drivers.
 
     :param reset: Whether to reset to default settings; defaults to ``False``.

@@ -17,7 +17,7 @@ from .._cache import _confirmed
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
     """
-    Prompt user for confirmation to proceed.
+    Prompts user for confirmation to proceed.
 
     See also [`OPS-C-1 <https://code.activestate.com/recipes/541096/>`_].
 
@@ -45,7 +45,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
 def get_obj_attr(obj, col_names=None, as_dataframe=False):
     """
-    Retrieve main attributes of an object.
+    Retrieves main attributes of an object.
 
     :param obj: Object from which to retrieve attributes, e.g. an instance of a class.
     :type obj: object
@@ -106,7 +106,7 @@ def get_obj_attr(obj, col_names=None, as_dataframe=False):
 
 def eval_dtype(str_val):
     """
-    Convert a string representation to its intrinsic data type.
+    Converts a string representation to its intrinsic data type.
 
     :param str_val: String representation of a value.
     :type str_val: str
@@ -136,7 +136,7 @@ def eval_dtype(str_val):
 
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
     """
-    Hash a password using `hashlib.pbkdf2_hmac
+    Hashes a password using `hashlib.pbkdf2_hmac
     <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_
     (PBKDF2 algorithm with HMAC-SHA256).
 
@@ -204,7 +204,7 @@ def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash
 
 def verify_password(password, salt, key, iterations=None):
     """
-    Verify if a password matches the provided salt and key.
+    Verifies if a password matches the provided salt and key.
 
     :param password: Password to be verified.
     :type password: str | int | float | bytes
@@ -285,7 +285,7 @@ def func_running_time(func):
 
 def get_git_branch():
     """
-    Get the current Git branch name.
+    Gets the current Git branch name.
 
     :return: The name of the currently checked-out Git branch.
     :rtype: str

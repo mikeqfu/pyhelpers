@@ -12,7 +12,7 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
                    east_asian_text=False, ignore_future_warning=True, **kwargs):
     # noinspection PyShadowingNames
     """
-    Alter parameters of some frequently-used
+    Alters parameters of some frequently-used
     `Pandas options and settings
     <https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html>`_
     for displaying `pandas dataframes
@@ -155,7 +155,7 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
 def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatter=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Alter some default parameters for displaying
+    Alters some default parameters for displaying
     `NumPy arrays <https://numpy.org/doc/stable/reference/generated/numpy.array.html>`_.
 
     This function allows customising the display options for NumPy arrays, including
@@ -259,7 +259,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
 def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font_size=13,
                     legend_spacing=0.7, fig_style=None):
     """
-    Alter some `Matplotlib parameters
+    Alters some `Matplotlib parameters
     <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_
     for plotting.
 

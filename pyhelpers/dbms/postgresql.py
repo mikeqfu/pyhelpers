@@ -195,7 +195,7 @@ class PostgreSQL(_Base):
 
     def get_database_names(self, names_only=True):
         """
-        Retrieve the names of all existing databases.
+        Retrieves the names of all existing databases.
 
         :param names_only: Whether to return only the names of the databases; defaults to ``True``.
         :type names_only: bool
@@ -230,7 +230,7 @@ class PostgreSQL(_Base):
 
     def database_exists(self, database_name=None):
         """
-        Check if a specified database exists.
+        Checks if a specified database exists.
 
         :param database_name: Name of the database to check; defaults to ``None``.
         :type database_name: str | None
@@ -273,7 +273,7 @@ class PostgreSQL(_Base):
 
     def create_database(self, database_name, verbose=False):
         """
-        Create a database.
+        Creates a database.
 
         :param database_name: Name of the database to be created.
         :type database_name: str
@@ -313,7 +313,7 @@ class PostgreSQL(_Base):
 
     def connect_database(self, database_name=None, verbose=False, raise_error=False):
         """
-        Establish a connection to a database.
+        Establishes a connection to a database.
 
         :param database_name: Name of the database.
             If ``database_name=None`` (default), the database name must be input manually.
@@ -383,7 +383,7 @@ class PostgreSQL(_Base):
 
     def get_database_size(self, database_name=None):
         """
-        Retrieve the size of a database.
+        Retrieves the size of a database.
 
         :param database_name: Name of the database.
             If ``database_name=None`` (default), it retrieves the size of the currently-connected
@@ -423,7 +423,7 @@ class PostgreSQL(_Base):
 
     def disconnect_database(self, database_name=None, verbose=False, raise_error=False):
         """
-        Disconnect from a database.
+        Disconnects from a database.
 
 
         See also [`DBMS-PS-DD-1 <https://stackoverflow.com/questions/17449420/>`_].
@@ -483,7 +483,7 @@ class PostgreSQL(_Base):
 
     def disconnect_all_others(self):
         """
-        Terminate connections to all databases except the currently-connected one.
+        Terminates connections to all databases except the currently-connected one.
 
         **Examples**::
 
@@ -512,7 +512,7 @@ class PostgreSQL(_Base):
 
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False):
         """
-        Delete/drop a database.
+        Deletes/drops a database.
 
         :param database_name: Name of the database to be dropped.
             If ``database_name=None`` (default), drop the currently connected database.
@@ -551,7 +551,7 @@ class PostgreSQL(_Base):
 
     def schema_exists(self, schema_name):
         """
-        Check if a schema exists.
+        Checks if a schema exists.
 
         :param schema_name: Name of the schema to check.
         :type schema_name: str
@@ -588,7 +588,7 @@ class PostgreSQL(_Base):
 
     def create_schema(self, schema_name, verbose=False, raise_error=False):
         """
-        Create a schema.
+        Creates a schema.
 
         :param schema_name: Name of the schema to be created.
         :type schema_name: str
@@ -637,7 +637,7 @@ class PostgreSQL(_Base):
 
     def get_schema_info(self, names_only=True, include_all=False, column_names=None, verbose=False):
         """
-        Retrieve information about existing schemas.
+        Retrieves information about existing schemas.
 
         :param names_only: Whether to return only the names of the schemas; defaults to ``True``.
         :type names_only: bool
@@ -727,7 +727,7 @@ class PostgreSQL(_Base):
 
     def drop_schema(self, schema_names, confirmation_required=True, verbose=False):
         """
-        Delete/drop one or multiple schemas.
+        Deletes/drops one or multiple schemas.
 
         :param schema_names: Name of one schema or names of multiple schemas to be dropped.
         :type schema_names: str | typing.Iterable[str]
@@ -777,7 +777,7 @@ class PostgreSQL(_Base):
 
     def table_exists(self, table_name, schema_name=None):
         """
-        Check if a table exists.
+        Checks if a table exists.
 
         :param table_name: Name of the table to check.
         :type table_name: str
@@ -827,7 +827,7 @@ class PostgreSQL(_Base):
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
                      raise_error=False):
         """
-        Create a table.
+        Creates a table.
 
         :param table_name: Name of the table to be created.
         :type table_name: str
@@ -892,7 +892,7 @@ class PostgreSQL(_Base):
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Retrieve information about columns of a table.
+        Retrieves information about columns of a table.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -918,7 +918,7 @@ class PostgreSQL(_Base):
 
     def get_column_dtype(self, table_name, column_names=None, schema_name=None):
         """
-        Retrieve information about data types of all or specific columns of a table.
+        Retrieves information about data types of all or specific columns of a table.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -966,7 +966,7 @@ class PostgreSQL(_Base):
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
-        Validate column names for a query statement.
+        Validates column names for a query statement.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -989,7 +989,7 @@ class PostgreSQL(_Base):
 
     def get_table_names(self, schema_name=None, verbose=False):
         """
-        Retrieve the names of all tables in a schema.
+        Retrieves the names of all tables in a schema.
 
         :param schema_name: Name of the schema;
             if ``schema_name=None`` (default),
@@ -1036,7 +1036,7 @@ class PostgreSQL(_Base):
     def alter_table_schema(self, table_name, schema_name, new_schema_name,
                            confirmation_required=True, verbose=False, raise_error=False):
         """
-        Move a table from one schema to another within the currently-connected database.
+        Moves a table from one schema to another within the currently-connected database.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -1122,7 +1122,7 @@ class PostgreSQL(_Base):
 
     def add_primary_keys(self, primary_keys, table_name, schema_name=None):
         """
-        Add a primary key or multiple primary keys to a table.
+        Adds a primary key or multiple primary keys to a table.
 
         :param primary_keys: (List of) primary key(s) to be added.
         :type primary_keys: str | list | None
@@ -1156,7 +1156,7 @@ class PostgreSQL(_Base):
 
     def get_primary_keys(self, table_name, schema_name=None, names_only=True):
         """
-        Retrieve the primary keys of a table.
+        Retrieves the primary keys of a table.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -1241,7 +1241,7 @@ class PostgreSQL(_Base):
 
     def null_text_to_empty_string(self, table_name, column_names=None, schema_name=None):
         """
-        Convert null values (in text columns) to empty strings.
+        Converts null values (in text columns) to empty strings.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -1367,7 +1367,7 @@ class PostgreSQL(_Base):
                     chunk_size=None, col_type=None, method='multi', index=False,
                     confirmation_required=True, verbose=False, **kwargs):
         """
-        Import tabular data into a table.
+        Imports tabular data into a table.
 
         See also [`DBMS-PS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_]
@@ -1427,7 +1427,7 @@ class PostgreSQL(_Base):
                        tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
         # noinspection PyShadowingNames
         """
-        Read table data by executing a SQL query (recommended for large tables).
+        Reads table data by executing a SQL query (recommended for large tables).
 
         See also
         [`DBMS-PS-RSQ-1 <https://towardsdatascience.com/f31cd7f707ab>`_],
@@ -1610,7 +1610,7 @@ class PostgreSQL(_Base):
     def read_table(self, table_name, schema_name=None, conditions=None, chunk_size=None,
                    sorted_by=None, **kwargs):
         """
-        Read data from a specified table.
+        Reads data from a specified table.
 
         See also [`DBMS-PS-RT-1 <https://stackoverflow.com/questions/24408557/>`_].
 
@@ -1662,7 +1662,7 @@ class PostgreSQL(_Base):
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
                    raise_error=False):
         """
-        Delete/drop a specified table.
+        Deletes/drops a specified table.
 
         :param table_name: Name of the table to be deleted.
         :type table_name: str

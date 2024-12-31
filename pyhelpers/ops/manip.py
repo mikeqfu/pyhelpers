@@ -19,7 +19,7 @@ from .._cache import _check_dependency, _check_relative_pathname, _print_failure
 
 def loop_in_pairs(iterable):
     """
-    Generate pairs of consecutive elements from the given iterable.
+    Generates pairs of consecutive elements from the given iterable.
 
     :param iterable: Iterable object from which to generate pairs.
     :type iterable: typing.Iterable
@@ -45,7 +45,7 @@ def loop_in_pairs(iterable):
 
 def split_list_by_size(lst, sub_len):
     """
-    Split a list into evenly sized sub-lists.
+    Splits a list into evenly sized sub-lists.
 
     See also [`OPS-SLBS-1 <https://stackoverflow.com/questions/312443/>`_].
 
@@ -73,7 +73,7 @@ def split_list_by_size(lst, sub_len):
 
 def split_list(lst, num_of_sub):
     """
-    Split a list into a specified number of equally-sized sub-lists.
+    Splits a list into a specified number of equally-sized sub-lists.
 
     See also [`OPS-SL-1 <https://stackoverflow.com/questions/312443/>`_].
 
@@ -102,7 +102,7 @@ def split_list(lst, num_of_sub):
 
 def split_iterable(iterable, chunk_size):
     """
-    Split an iterable into evenly sized chunks.
+    Splits an iterable into evenly sized chunks.
 
     See also [`OPS-SI-1 <https://stackoverflow.com/questions/24527006/>`_].
 
@@ -168,7 +168,7 @@ def split_iterable(iterable, chunk_size):
 
 def update_dict(dictionary, updates, inplace=False):
     """
-    Update a (nested) dictionary with another dictionary.
+    Updates a (nested) dictionary with another dictionary.
 
     See also [`OPS-UD-1 <https://stackoverflow.com/questions/3232943/>`_].
 
@@ -240,7 +240,7 @@ def update_dict(dictionary, updates, inplace=False):
 
 def update_dict_keys(dictionary, replacements=None):
     """
-    Update keys in a (nested) dictionary based on a given replacements dictionary.
+    Updates keys in a (nested) dictionary based on a given replacements dictionary.
 
     See also
     [`OPS-UDK-1 <https://stackoverflow.com/questions/4406501/>`_] and
@@ -298,7 +298,7 @@ def update_dict_keys(dictionary, replacements=None):
 
 def get_dict_values(key, dictionary):
     """
-    Retrieve all values in a (nested) dictionary for a given key.
+    Retrieves all values in a (nested) dictionary for a given key.
 
     See also
     [`OPS-GDV-1 <https://gist.github.com/douglasmiranda/5127251>`_] and
@@ -354,7 +354,7 @@ def get_dict_values(key, dictionary):
 
 def remove_dict_keys(dictionary, *keys):
     """
-    Remove multiple keys from a dictionary.
+    Removes multiple keys from a dictionary.
 
     :param dictionary: The dictionary from which keys should be removed.
     :type dictionary: dict
@@ -377,7 +377,7 @@ def remove_dict_keys(dictionary, *keys):
 
 def compare_dicts(dict1, dict2):
     """
-    Compare the differences between two dictionaries.
+    Compares the differences between two dictionaries.
 
     See also [`OPS-CD-1 <https://stackoverflow.com/questions/23177439>`_].
 
@@ -423,7 +423,7 @@ def compare_dicts(dict1, dict2):
 
 def merge_dicts(*dicts):
     """
-    Merge multiple dictionaries into a single dictionary.
+    Merges multiple dictionaries into a single dictionary.
 
     :param dicts: One or multiple dictionaries to merge.
     :type dicts: dict
@@ -473,7 +473,7 @@ def merge_dicts(*dicts):
 
 def detect_nan_for_str_column(data_frame, column_names=None):
     """
-    Detect if a column with string type contains ``NaN`` values for a given dataframe.
+    Detects if a column with string type contains ``NaN`` values for a given dataframe.
 
     :param data_frame: A dataframe to be examined.
     :type data_frame: pandas.DataFrame
@@ -519,7 +519,7 @@ def detect_nan_for_str_column(data_frame, column_names=None):
 
 def create_rotation_matrix(theta):
     """
-    Create a 2D rotation matrix for counterclockwise rotation.
+    Creates a 2D rotation matrix for counterclockwise rotation.
 
     :param theta: Rotation angle in radians.
     :type theta: float | int
@@ -556,7 +556,7 @@ def create_rotation_matrix(theta):
 
 def dict_to_dataframe(input_dict, k='key', v='value'):
     """
-    Convert a dictionary to a dataframe.
+    Converts a dictionary to a dataframe.
 
     :param input_dict: Dictionary to be converted to a dataframe.
     :type input_dict: dict
@@ -588,7 +588,7 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
 
 def parse_csr_matrix(path_to_csr, verbose=False, raise_error=False, **kwargs):
     """
-    Load in a compressed sparse row (CSR) or compressed row storage (CRS).
+    Loads in a compressed sparse row (CSR) or compressed row storage (CRS).
 
     :param path_to_csr: Path to the CSR file (e.g. with extension ".npz").
     :type path_to_csr: str | os.PathLike
@@ -653,7 +653,7 @@ def parse_csr_matrix(path_to_csr, verbose=False, raise_error=False, **kwargs):
 
 def swap_cols(array, c1, c2, as_list=False):
     """
-    Swap positions of two columns in an array.
+    Swaps positions of two columns in an array.
 
     :param array: An array.
     :type array: numpy.ndarray
@@ -700,7 +700,7 @@ def swap_cols(array, c1, c2, as_list=False):
 
 def swap_rows(array, r1, r2, as_list=False):
     """
-    Swap positions of two rows in an array.
+    Swaps positions of two rows in an array.
 
     :param array: An array.
     :type array: numpy.ndarray
@@ -747,7 +747,7 @@ def swap_rows(array, r1, r2, as_list=False):
 
 def np_shift(array, step, fill_value=np.nan):
     """
-    Shift an array by a desired number of rows.
+    Shifts an array by a desired number of rows.
 
     See also [`OPS-NS-1 <https://stackoverflow.com/questions/30399534/>`_].
 
@@ -805,7 +805,7 @@ def np_shift(array, step, fill_value=np.nan):
 def cmap_discretisation(cmap, n_colours):
     # noinspection PyShadowingNames
     """
-    Create a discrete colour ramp.
+    Creates a discrete colour ramp.
 
     See also [`OPS-CD-1
     <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
@@ -883,7 +883,7 @@ def cmap_discretisation(cmap, n_colours):
 
 def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
     """
-    Create a colour bar with correctly aligned labels.
+    Creates a colour bar with correctly aligned labels.
 
     .. note::
 

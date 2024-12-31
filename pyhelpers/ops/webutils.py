@@ -27,7 +27,7 @@ from .._cache import _check_dependency, _check_relative_pathname, _format_error_
 
 def is_network_connected():
     """
-    Check whether the current machine is connected to the Internet.
+    Checks whether the current machine is connected to the Internet.
 
     :return: ``True`` if the Internet connection is currently working, ``False`` otherwise.
     :rtype: bool
@@ -52,7 +52,7 @@ def is_network_connected():
 
 def is_url(url, partially=False):
     """
-    Check if ``url`` is a valid URL.
+    Checks if ``url`` is a valid URL.
 
     See also [`OPS-IU-1 <https://stackoverflow.com/questions/7160737/>`_].
 
@@ -102,7 +102,7 @@ def is_url(url, partially=False):
 
 def is_url_connectable(url):
     """
-    Check if the current machine can connect to the given URL.
+    Checks if the current machine can connect to the given URL.
 
     :param url: A valid URL.
     :type url: str
@@ -135,7 +135,7 @@ def is_url_connectable(url):
 def is_downloadable(url, request_field='content-type', **kwargs):
     # noinspection PyShadowingNames
     """
-    Check if a URL leads to a webpage where downloadable content is available.
+    Checks if a URL leads to a webpage where downloadable content is available.
 
     :param url: A valid URL.
     :type url: str
@@ -175,7 +175,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default', **kwargs):
     # noinspection PyShadowingNames
     """
-    Instantiate a `requests <https://docs.python-requests.org/en/latest/>`_ session
+    Instantiates a `requests <https://docs.python-requests.org/en/latest/>`_ session
     with configurable retry behaviour.
 
     :param url: A valid URL to establish the session.
@@ -265,7 +265,7 @@ class _FakeUserAgentParser(html.parser.HTMLParser):
 
 def _user_agent_strings(browser_names=None, dump_dat=False):
     """
-    Retrieve user-agent strings for popular web browsers.
+    Retrieves user-agent strings for popular web browsers.
 
     :param browser_names: Browser names to retrieve user-agent strings for;
         defaults to a predefined list of popular browsers if not provided.
@@ -314,7 +314,7 @@ def _user_agent_strings(browser_names=None, dump_dat=False):
 def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False,
                             raise_error=False):
     """
-    Load user-agent strings for popular web browsers.
+    Loads user-agent strings for popular web browsers.
 
     This function retrieves a partially comprehensive list of user-agent strings for
     `Chrome`_, `Firefox`_, `Safari`_, `Edge`_, `Internet Explorer`_, and `Opera`_.
@@ -401,7 +401,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
 def get_user_agent_string(fancy=None, **kwargs):
     """
-    Get a random user-agent string for a specified browser.
+    Gets a random user-agent string for a specified browser.
 
     :param fancy: Name of the preferred browser; options include ``'Chrome'``, ``'Firefox'``,
         ``'Safari'``, ``'Edge'``, ``'Internet Explorer'`` and ``'Opera'``.
@@ -451,10 +451,10 @@ def get_user_agent_string(fancy=None, **kwargs):
 
 def fake_requests_headers(randomized=True, **kwargs):
     """
-    Generate fake HTTP headers for `requests.get
-    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
+    Generates fake HTTP headers.
 
-    This function creates HTTP headers suitable for use with `requests.get`_.
+    This function creates HTTP headers suitable for use with `requests.get
+    <https://requests.readthedocs.io/en/master/user/advanced/#request-and-response-objects>`_.
     By default, it includes a randomly selected user-agent string from various popular browsers.
 
     :param randomized: Whether to use a randomly selected user-agent string from available
@@ -497,7 +497,7 @@ def fake_requests_headers(randomized=True, **kwargs):
 
 def _download_file_from_url(response, path_to_file):
     """
-    Download a file from a valid URL (and save it).
+    Downloads a file from a valid URL (and saves it).
 
     :param response: Server's response to an HTTP request containing the file to download.
     :type response: requests.Response
@@ -548,7 +548,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                            fake_headers_args=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Download a file from a valid URL.
+    Downloads a file from a valid URL.
 
     See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_] and
     [`OPS-DFFU-2 <https://stackoverflow.com/questions/15431044/>`_].
@@ -655,7 +655,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
 class GitHubFileDownloader:
     """
-    Download files from GitHub repositories.
+    Downloads files from GitHub repositories.
 
     This class facilitates downloading files from a specified GitHub repository URL.
     """
@@ -752,7 +752,7 @@ class GitHubFileDownloader:
     def create_url(url):
         # noinspection PyShadowingNames
         """
-        Create a URL compatible with GitHub's REST API from the given URL.
+        Creates a URL compatible with GitHub's REST API from the given URL.
 
         Handles *blob* or *tree* paths.
 
@@ -805,7 +805,7 @@ class GitHubFileDownloader:
 
     def download_single_file(self, file_url, dir_out):
         """
-        Download a single file from the specified ``file_url`` to the ``dir_out`` directory.
+        Downloads a single file from the specified ``file_url`` to the ``dir_out`` directory.
 
         :param file_url: URL of the file to be downloaded.
         :type file_url: str
@@ -832,7 +832,7 @@ class GitHubFileDownloader:
 
     def download(self, api_url=None):
         """
-        Download files from the specified GitHub ``api_url``.
+        Downloads files from the specified GitHub ``api_url``.
 
         :param api_url: GitHub API URL for downloading files; defaults to ``None``.
         :type api_url: str | None

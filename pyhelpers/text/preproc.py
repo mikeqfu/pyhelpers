@@ -13,7 +13,7 @@ from .._cache import _check_dependency, _ENGLISH_NUMERALS
 
 def remove_punctuation(x, rm_whitespace=True):
     """
-    Remove punctuation and optionally whitespace from textual data.
+    Removes punctuation from textual data.
 
     :param x: The input text from which punctuation will be removed.
     :type x: str
@@ -53,7 +53,7 @@ def remove_punctuation(x, rm_whitespace=True):
 
 def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
     """
-    Generate an acronym (in capital letters) from textual data.
+    Generates an acronym (in capital letters) from textual data.
 
     An acronym is typically formed by taking the initial letters of each word in a phrase
     and combining them into a single string of uppercase letters.
@@ -115,7 +115,7 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctua
 
 def extract_words1upper(x, join_with=None):
     """
-    Extract words from a string by splitting it at occurrences of uppercase letters.
+    Extracts words from a string by splitting it at occurrences of uppercase letters.
 
     This function takes a string and splits it into individual words wherever an uppercase letter
     is encountered. Optionally, it can join these words back into a single string using a specified
@@ -153,7 +153,7 @@ def extract_words1upper(x, join_with=None):
 
 def _english_numerals():
     """
-    Return a dictionary facilitaing to map textual English numerals to their corresponding
+    Returns a dictionary facilitaing to map textual English numerals to their corresponding
     numerical representations.
 
     :return: Dictionary facilitaing to map textual English numerals to their corresponding
@@ -204,7 +204,7 @@ def _english_numerals():
 
 def numeral_english_to_arabic(x):
     """
-    Convert a number written in English words into its equivalent numerical value represented in
+    Converts a number written in English words into its equivalent numerical value represented in
     Arabic numerals.
 
     :param x: A number expressed in the English language.
@@ -255,7 +255,7 @@ def numeral_english_to_arabic(x):
 def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Count the occurrences of each word in the given text.
+    Counts the occurrences of each word in the given text.
 
     :param text: The input text from which words will be counted.
     :type text: str
@@ -354,7 +354,7 @@ def calculate_idf(documents, lowercase=True, ignore_punctuation=True, stop_words
                   smoothing_factor=1, log_base=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Calculate Inverse Document Frequency (IDF) for a sequence of textual documents.
+    Calculates Inverse Document Frequency (IDF) for a sequence of textual documents.
 
     :param documents: A sequence of textual data.
     :type documents: typing.Iterable | typing.Sequence
@@ -473,7 +473,7 @@ def calculate_idf(documents, lowercase=True, ignore_punctuation=True, stop_words
 def calculate_tfidf(documents, **kwargs):
     # noinspection PyShadowingNames
     """
-    Calculate TF-IDF (Term Frequency-Inverse Document Frequency) for the given textual documents.
+    Calculates TF-IDF (Term Frequency-Inverse Document Frequency) for the given textual documents.
 
     TF (Term Frequency) measures how frequently a term appears in a document relative to its length.
     IDF (Inverse Document Frequency) measures how important a term is across the entire corpus of
