@@ -195,16 +195,13 @@ def _add_slashes(pathname):
     # Add a leading slash if necessary
     if not path.startswith((os.path.sep, ".")) and not os.path.isabs(path):
         # For Windows, add './' or '.\' depending on the system separator
-        if os.name == 'nt':  # Windows
-            path = f".{os.sep}{path}"
-        else:  # Linux/Unix
-            path = f".{os.sep}{path}"
+        path = f".{os.path.sep}{path}"
 
     has_trailing_sep = path.endswith(os.path.sep)
     is_file_like = os.path.splitext(path)[1] != ''
 
     if not has_trailing_sep and not is_file_like:  # Add a trailing slash
-        path = path + os.sep
+        path = path + os.path.sep
 
     return f'"{path}"'
 

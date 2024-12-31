@@ -174,14 +174,11 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
             out_dir = os.path.splitext(path_to_zip_file)[0]
 
         try:
-            # subprocess.run(
-            #     '"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe_, path_to_zip_file, out_dir, mode),
-            #     **kwargs)
             command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + out_dir, '-' + mode]
             if not verbose:
                 command_args += ['-bso0', '-bsp0']
 
-            rslt = subprocess.run(command_args, **kwargs)
+            rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
 
             if verbose:
                 print("\nDone." if rslt.returncode == 0 else "\nFailed.")
@@ -277,7 +274,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
                     cmd_args += ['-o', abs_output_path]
                 else:
                     cmd_args += ['-s', '-o', abs_output_path]
-                rslt = subprocess.run(cmd_args, **kwargs)
+                rslt = subprocess.run(cmd_args, **kwargs)  # noqa: B603
                 ret_code = rslt.returncode
 
             else:
@@ -382,7 +379,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
     if platform.system() == 'Linux':
         command_args = ["wine"] + command_args
 
-    rslt = subprocess.run(command_args, **kwargs)
+    rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
     ret_code = rslt.returncode
 
     return ret_code

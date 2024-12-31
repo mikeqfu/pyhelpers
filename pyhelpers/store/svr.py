@@ -687,12 +687,12 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
             abs_emf_path.parent.mkdir(exist_ok=True)
 
             command_args = [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf]
-            rslt = subprocess.run(command_args, **kwargs)
+            rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
             ret_code = rslt.returncode
 
             if ret_code != 0:
                 command_args = [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf]
-                rslt = subprocess.run(command_args, **kwargs)
+                rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
                 ret_code = rslt.returncode
 
             if verbose:

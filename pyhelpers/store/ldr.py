@@ -21,6 +21,8 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
     """
     Loads data from a `Pickle`_ file.
 
+    The function is intended for use with trusted data sources only.
+
     :param path_to_file: Path where the pickle file is saved.
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
@@ -40,7 +42,9 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
     .. note::
 
-        Example data can be referred to the function :func:`~pyhelpers.store.save_pickle`.
+        - Ensure that ``path_to_file`` comes from a trusted source to avoid deserialisation
+          vulnerabilities.
+        - Example data can be referred to the function :func:`~pyhelpers.store.svr.save_pickle`.
 
     **Examples**::
 
@@ -67,16 +71,16 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
         if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
             with gzip.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)
+                data = pickle.load(f, **kwargs)  # noqa: B301
         elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
             with lzma.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)
+                data = pickle.load(f, **kwargs)  # noqa: B301
         elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
             with bz2.BZ2File(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)
+                data = pickle.load(f, **kwargs)  # noqa: B301
         else:
             with open(file=path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)
+                data = pickle.load(f, **kwargs)  # noqa: B301
 
         if verbose:
             print("Done.")

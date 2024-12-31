@@ -298,8 +298,12 @@ def get_git_branch():
     """
 
     try:  # Run the git command to get the current branch name
-        branch = subprocess.check_output(
-            ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode('utf-8')
+        branch = subprocess.run(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            check=True,
+            text=True,
+            capture_output=True
+        ).stdout.strip()  # noqa: B404
 
     except subprocess.CalledProcessError:
         branch = None

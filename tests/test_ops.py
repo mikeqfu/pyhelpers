@@ -523,14 +523,16 @@ class TestGitHubFileDownloader:
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         test_api_url, test_download_path = downloader.create_url(test_url)
-        assert test_api_url == \
-               'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
+        assert (test_api_url ==
+                'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/'
+                'dat.csv?ref=master')
         assert test_download_path == 'tests/data/dat.csv'
 
         test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
         gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         test_api_url, test_download_path = gd.create_url(test_url)
-        assert test_api_url == 'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
+        assert (test_api_url ==
+                'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main')
         assert test_download_path == 'docs'
 
         shutil.rmtree(test_output_dir)
@@ -543,14 +545,14 @@ class TestGitHubFileDownloader:
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert "tests/data/dat.csv" in out
+        assert os.path.join("tests", "data", "dat.csv") in out
         assert downloader.total_files == 1
 
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert "tests/data/zipped/zipped.txt" in out
+        assert os.path.join("tests", "data", "zipped", "zipped.txt") in out
         assert downloader.total_files == 13
 
         downloader = GitHubFileDownloader(test_url, flatten_files=True, output_dir=test_output_dir)
