@@ -22,7 +22,7 @@ def _vectorize_text(*txt):
 
 def euclidean_distance_between_texts(txt1, txt2):
     """
-    Compute the Euclidean distance between two sentences.
+    Computes the Euclidean distance between two sentences.
 
     :param txt1: The first text.
     :type txt1: str
@@ -51,7 +51,7 @@ def euclidean_distance_between_texts(txt1, txt2):
 def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     # noinspection PyShadowingNames
     """
-    Calculate the cosine similarity between two sentences.
+    Calculates the cosine similarity between two sentences.
 
     :param txt1: The first text.
     :type txt1: str
@@ -89,7 +89,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
 def find_matched_str(x, lookup_list):
     """
-    Find all strings in a sequence that match a given string.
+    Finds all strings (in a sequence) that match a given string.
 
     :param x: The string to match.
     :type x: str
@@ -124,7 +124,7 @@ def find_matched_str(x, lookup_list):
 
 def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs):
     """
-    Find ``n`` strings similar to ``x`` from a sequence of candidates
+    Finds ``n`` strings similar to ``x`` from a sequence of candidates
     by using `difflib <https://docs.python.org/3/library/difflib.html>`_.
 
     :param x: The string to match.
@@ -168,7 +168,7 @@ def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs)
 
 def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
     """
-    Find ``n`` strings that are similar to ``x`` from a sequence of candidates
+    Finds ``n`` strings that are similar to ``x`` from a sequence of candidates
     using `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_.
 
     :param x: The string to match.
@@ -226,7 +226,7 @@ def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
 
 def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='difflib', **kwargs):
     """
-    Find ``n`` strings that are similar to ``x`` from a sequence of candidates.
+    Finds ``n`` strings that are similar to ``x`` from a sequence of candidates.
 
     :param x: The string to find similar matches for.
     :type x: str

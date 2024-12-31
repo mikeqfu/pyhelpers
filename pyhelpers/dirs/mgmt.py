@@ -12,7 +12,7 @@ from .._cache import _add_slashes, _check_relative_pathname, _confirmed, _print_
 def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
                 **kwargs):
     """
-    Delete a directory.
+    Deletes a directory.
 
     :param path_to_dir: Pathname of the directory.
     :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes]
@@ -90,7 +90,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
 def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
                **kwargs):
     """
-    Delete a directory or directories.
+    Deletes a directory or directories.
 
     :param path_to_dir: Pathname(s) of the directory (or directories).
     :type path_to_dir: str | bytes | os.PathLike | collections.abc.Sequence

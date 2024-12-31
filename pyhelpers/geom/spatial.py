@@ -19,7 +19,7 @@ from .._cache import _check_dependency
 
 def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
     """
-    Calculate the distance between two points on a unit sphere.
+    Calculates the distance between two points on a unit sphere.
 
     This function computes the spherical distance between two points ``pt1`` and ``pt2``.
     The distance can be returned in either miles (``'mile'``) or kilometers (``'km'``) based on
@@ -110,7 +110,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
 
 def calc_hypotenuse_distance(pt1, pt2):
     """
-    Calculate the hypotenuse distance between two points.
+    Calculates the hypotenuse distance between two points.
 
     See also [`GEOM-CHD-1 <https://numpy.org/doc/stable/reference/generated/numpy.hypot.html>`_].
 
@@ -156,7 +156,7 @@ def calc_hypotenuse_distance(pt1, pt2):
 
 def find_closest_point(pt, ref_pts, as_geom=True):
     """
-    Find the closest point in a sequence of reference points to a given point.
+    Finds the closest point in a sequence of reference points to a given point.
 
     This function calculates and returns the point closest to ``pt`` from a sequence
     of reference points ``ref_pts``. The closest point can be returned either as a
@@ -235,7 +235,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
 def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False,
                         ret_dist=False, **kwargs):
     """
-    Find the closest points from a list of reference points to a set of query points.
+    Finds the closest points from a list of reference points to a set of query points.
 
     This function computes the closest points from a list of reference points ``ref_pts``
     to a set of query points ``pts``. Various options are available for customisation,
@@ -347,7 +347,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
 
 def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs):
     """
-    Find the shortest path through a sequence of points.
+    Finds the shortest path through a sequence of points.
 
     :param points_sequence: Sequence of points
     :type points_sequence: numpy.ndarray | list | typing.Iterable
@@ -474,7 +474,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
-    Get the midpoint between two points (applicable for vectorised computation).
+    Gets the midpoint between two points (applicable for vectorised computation).
 
     :param x1: Longitude(s) or easting(s) of a point (an array of points).
     :type x1: float | int | typing.Iterable | numpy.ndarray
@@ -535,7 +535,7 @@ def get_midpoint(x1, y1, x2, y2, as_geom=False):
 
 def get_geometric_midpoint(pt1, pt2, as_geom=False):
     """
-    Get the midpoint between two points.
+    Gets the midpoint between two points.
 
     :param pt1: One point.
     :type pt1: shapely.geometry.Point | list | tuple | numpy.ndarray
@@ -576,7 +576,7 @@ def get_geometric_midpoint(pt1, pt2, as_geom=False):
 
 def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
     """
-    Get the midpoint between two points by pure calculation.
+    Gets the midpoint between two points by pure calculation.
 
     See also
     [`GEOM-GGMC-1 <https://code.activestate.com/recipes/577713/>`_]
@@ -631,7 +631,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
 
 def get_rectangle_centroid(rectangle, as_geom=False):
     """
-    Get coordinates of the centroid of a rectangle.
+    Gets coordinates of the centroid of a rectangle.
 
     :param rectangle: Variable/object representing a rectangle.
     :type rectangle: list | tuple | numpy.ndarray | shapely.geometry.Polygon |
@@ -688,7 +688,7 @@ def get_rectangle_centroid(rectangle, as_geom=False):
 
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    Get the four vertices of a square given its centre and side length.
+    Gets the four vertices of a square given its centre and side length.
 
     See also [`GEOM-GSV-1 <https://stackoverflow.com/questions/22361324/>`_].
 
@@ -743,7 +743,7 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
 
 def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    Get the four vertices of a square given its centre and side length (by elementary calculation).
+    Gets the four vertices of a square given its centre and side length (by elementary calculation).
 
     See also [`GEOM-GSVC-1 <https://math.stackexchange.com/questions/1490115>`_].
 

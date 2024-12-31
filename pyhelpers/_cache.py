@@ -372,7 +372,7 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
 
 def example_dataframe(osgb36=False):
     """
-    Creates an example dataframe.
+    Returns an example dataframe.
 
     This functions creates and returns a pandas DataFrame with geographical coordinates either in
     OSGB36 National Grid format (default) or in longitude and latitude format.

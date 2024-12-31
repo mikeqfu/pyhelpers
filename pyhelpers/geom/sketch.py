@@ -10,7 +10,7 @@ from .._cache import _check_dependency
 
 def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs):
     """
-    Generate annotation parameters for annotating a point on a square plot.
+    Generates annotation parameters for annotating a point on a square plot.
 
     This function constructs annotation parameters for annotating a point ``(x, y)``
     on a square plot. The annotation text format is defined by the precision parameter,
@@ -49,7 +49,7 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
 def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False, annot_font_size=12,
                   fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
     """
-    Sketch a square on a plot given its centre coordinates, side length and rotation angle.
+    Sketches a square on a plot given its centre coordinates, side length and rotation angle.
 
     This function plots a square with its centre at coordinates ``(ctr_x, ctr_y)``,
     side length ``side_length``, and rotated by `rotation_theta` degrees (anticlockwise).
