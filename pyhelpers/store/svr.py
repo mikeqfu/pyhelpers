@@ -9,8 +9,8 @@ import logging
 import lzma
 import os
 import pathlib
-import pickle
-import subprocess
+import pickle  # nosec
+import subprocess  # nosec
 import sys
 
 import pandas as pd
@@ -609,8 +609,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False,
-                    **kwargs):
+def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False):
     # noinspection PyShadowingNames
     """
     Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -630,9 +629,6 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
-
-    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
@@ -683,33 +679,36 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     if inkscape_exists:
         _check_saving_path(abs_emf_path, verbose=verbose)
 
+        ret_code = 1
+
         try:
             abs_emf_path.parent.mkdir(exist_ok=True)
 
-            command_args = [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf]
-            rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
-            ret_code = rslt.returncode
+            result = subprocess.run(
+                [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf],
+                check=True,
+            )  # nosec
+            ret_code = result.returncode
 
-            if ret_code != 0:
-                command_args = [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf]
-                rslt = subprocess.run(command_args, **kwargs)  # noqa: B603
-                ret_code = rslt.returncode
-
-            if verbose:
-                if ret_code == 0:
-                    print("Done.")
-                else:
-                    print("Failed.", end=" ")
+        except subprocess.CalledProcessError:
+            result = subprocess.run(
+                [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],
+                check=True,
+            )  # nosec
+            ret_code = result.returncode
 
         except Exception as e:
-            _print_failure_message(e, prefix="", verbose=verbose, raise_error=raise_error)
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+        if verbose and ret_code == 0:
+            print("Done.")
 
     else:
         if verbose:
             print(
-                "\"Inkscape\" (https://inkscape.org) is required to "
-                "convert a SVG file to an EMF file; however, it is not found on this device."
-                "\nInstall it and then try again.")
+                '"Inkscape" (https://inkscape.org) is required to '
+                'convert a SVG file to an EMF file; however, it is not found on this device.'
+                '\nInstall it and then try again.')
 
 
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
@@ -983,7 +982,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
             kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
 
-            from pyhelpers.ops import is_url
+            from pyhelpers.ops.webutils import is_url
 
             try:
                 if is_url(data):
@@ -1004,8 +1003,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                     e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
-            print("\"wkhtmltopdf\" (https://wkhtmltopdf.org/) is required to run this function; "
-                  "however, it is not found on this device.\nInstall it and then try again.")
+            print('"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function; '
+                  'however, it is not found on this device.\nInstall it and then try again.')
 
 
 def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,

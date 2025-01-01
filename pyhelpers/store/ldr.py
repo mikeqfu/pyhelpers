@@ -8,7 +8,7 @@ import gzip
 import logging
 import lzma
 import operator
-import pickle
+import pickle  # nosec
 import sys
 
 import pandas as pd
@@ -71,16 +71,16 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
         if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
             with gzip.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # noqa: B301
+                data = pickle.load(f, **kwargs)  # nosec
         elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
             with lzma.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # noqa: B301
+                data = pickle.load(f, **kwargs)  # nosec
         elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
             with bz2.BZ2File(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # noqa: B301
+                data = pickle.load(f, **kwargs)  # nosec
         else:
             with open(file=path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # noqa: B301
+                data = pickle.load(f, **kwargs)  # nosec
 
         if verbose:
             print("Done.")
@@ -88,7 +88,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         return data
 
     except ModuleNotFoundError:
-        data = pd.read_pickle(path_to_file)
+        data = pd.read_pickle(path_to_file)  # nosec
 
         if verbose:
             print("Done.")

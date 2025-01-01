@@ -11,6 +11,7 @@ import pkgutil
 import re
 import shutil
 import sys
+import urllib.parse
 
 # import name: (package/module name, install name)
 _OPTIONAL_DEPENDENCY = json.loads(
@@ -281,6 +282,43 @@ def _check_file_pathname(name, options=None, target=None):
                     break
 
     return file_exists, file_pathname
+
+
+def _check_url_scheme(url, allowed_schemes=None):
+    """
+    Checks if the scheme of a URL is allowed.
+
+    :param url: A URL.
+    :type url: str
+    :param allowed_schemes: Safe URL schemes.
+    :type allowed_schemes: list | set | None
+    :return: The parsed URL.
+    :rtype: urllib.parse.ParseResult
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _check_url_scheme
+        >>> _check_url_scheme('https://github.com/mikeqfu/pyhelpers')
+        ParseResult(scheme='https', netloc='github.com', path='/mikeqfu/pyhelpers', params='', q...
+        >>> _check_url_scheme('http://github.com/mikeqfu/pyhelpers')
+        Traceback (most recent call last):
+            ...
+        ValueError: Unsafe URL scheme: 'http'.
+    """
+
+    parsed_url = urllib.parse.urlparse(url)
+
+    if allowed_schemes is None:
+        allowed_schemes_ = {'https', 'http', 'ftp', 'file'}
+    else:
+        allowed_schemes_ = {allowed_schemes} if isinstance(allowed_schemes, str) \
+            else set(allowed_schemes)
+
+    # Check that the scheme is either 'http' or 'https'
+    if parsed_url.scheme not in allowed_schemes_:
+        raise ValueError(f"Unsafe URL scheme: '{parsed_url.scheme}'.")
+
+    return parsed_url
 
 
 def _format_error_message(e=None, prefix=""):

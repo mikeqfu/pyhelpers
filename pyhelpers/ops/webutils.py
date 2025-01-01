@@ -22,7 +22,7 @@ import requests
 import requests.adapters
 import urllib3.util
 
-from .._cache import _add_slashes, _check_dependency, _check_relative_pathname, \
+from .._cache import _add_slashes, _check_dependency, _check_relative_pathname, _check_url_scheme, \
     _format_error_message, _print_failure_message, _USER_AGENT_STRINGS
 
 
@@ -806,9 +806,9 @@ class GitHubFileDownloader:
         return api_url, download_path
 
     @classmethod
-    def validate_url(cls, url):
+    def check_url(cls, url):
         """
-        Checks if the scheme is either 'http' or 'https'.
+        Checks if the scheme of the provided ``url`` is valid.
 
         :param url: The target URL.
         :type url: str
@@ -819,17 +819,11 @@ class GitHubFileDownloader:
               :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
         """
 
-        parsed_url = urllib.parse.urlparse(url)
-
-        # Check that the scheme is either 'http' or 'https'
-        if parsed_url.scheme not in ['http', 'https']:
-            raise ValueError(
-                f"Unsupported URL scheme: "
-                f"{parsed_url.scheme}. Only 'http' and 'https' are allowed.")
+        parsed_url = _check_url_scheme(url, allowed_schemes=['https'])
 
         if 'github' not in parsed_url.netloc.lower():
             raise ValueError(
-                f"Incorrect network location for GitHub repositories: {parsed_url.netloc}.")
+                f"Incorrect network location for GitHub repositories: '{parsed_url.netloc}'.")
 
     def download_single_file(self, file_url, dir_out):
         """
@@ -846,10 +840,10 @@ class GitHubFileDownloader:
               :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
         """
 
-        self.validate_url(file_url)
+        self.check_url(file_url)
 
         # Download the file
-        _, _ = urllib.request.urlretrieve(file_url, dir_out)
+        _, _ = urllib.request.urlretrieve(file_url, dir_out)  # nosec
 
         if self.flatten:
             dir_out_ = os.path.basename(dir_out)
@@ -879,7 +873,7 @@ class GitHubFileDownloader:
         # Update `api_url` if it is not specified
         api_url_local = self.api_url if api_url is None else api_url
 
-        self.validate_url(api_url_local)
+        self.check_url(api_url_local)
 
         # Update output directory if flatten is not specified
         if self.flatten:
@@ -895,7 +889,7 @@ class GitHubFileDownloader:
 
         # Get response from GutHub response
         try:
-            response, _ = urllib.request.urlretrieve(api_url_local)
+            response, _ = urllib.request.urlretrieve(api_url_local)  # nosec
 
             with open(response, "r") as f:  # Download files according to the response
                 data = json.load(f)

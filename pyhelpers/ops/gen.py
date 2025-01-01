@@ -8,7 +8,7 @@ import hashlib
 import inspect
 import os
 import re
-import subprocess
+import subprocess  # nosec
 
 import pandas as pd
 
@@ -298,12 +298,13 @@ def get_git_branch():
     """
 
     try:  # Run the git command to get the current branch name
-        branch = subprocess.run(
+        result = subprocess.run(
             ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
             check=True,
             text=True,
             capture_output=True
-        ).stdout.strip()  # noqa: B404
+        )  # nosec
+        branch = result.stdout.strip()
 
     except subprocess.CalledProcessError:
         branch = None
