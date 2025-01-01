@@ -1,0 +1,32 @@
+name: Deploy GitHub Pages (Develop Test)
+
+on:
+  push:
+    branches:
+      - develop
+      - deploy-gh-pages
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build documentation
+      run: |
+        cd docs
+        make html
+
+    - name: Upload pages artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: docs/build/html
+
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v2
