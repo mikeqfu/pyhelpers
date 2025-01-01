@@ -1,4 +1,6 @@
-"""Cached functions and constants."""
+"""
+Cached functions and constants.
+"""
 
 import copy
 import importlib
@@ -9,6 +11,7 @@ import pkgutil
 import re
 import shutil
 import sys
+import urllib.parse
 
 # import name: (package/module name, install name)
 _OPTIONAL_DEPENDENCY = json.loads(
@@ -17,7 +20,7 @@ _OPTIONAL_DEPENDENCY = json.loads(
 
 def _confirmed(prompt=None, confirmation_required=True, resp=False):
     """
-    Prompt the user for confirmation to proceed.
+    Prompts the user for confirmation to proceed.
 
     This function prompts the user with a Yes/No message specified by ``prompt``.
     If ``confirmation_required=True``, the user must confirm to proceed.
@@ -70,7 +73,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
 
 def _check_dependency(name, package=None):
     """
-    Import an optional dependency package/module.
+    Imports an optional dependency package/module.
 
     Attempts to import the module specified by ``name`` as an optional dependency.
     If ``package`` is provided, attempts to import ``name`` from within ``package``.
@@ -100,6 +103,7 @@ def _check_dependency(name, package=None):
     """
 
     import_name = name.replace('-', '_')
+
     if package is None:
         if '.' in import_name:
             pkg_name, _ = import_name.split('.', 1)
@@ -107,16 +111,12 @@ def _check_dependency(name, package=None):
             pkg_name = None
     else:
         pkg_name = package.replace('-', '_')
-        import_name = '.' + import_name
+        import_name = f'{pkg_name}.{import_name}'
 
     if import_name in sys.modules:  # The optional dependency has already been imported
         return sys.modules.get(import_name)
 
-    # elif (package_spec := importlib.util.find_spec(import_name)) is not None:
     elif importlib.util.find_spec(name=import_name, package=pkg_name) is not None:
-        # import_package = importlib.util.module_from_spec(package_spec)
-        # sys.modules[import_name] = import_package
-        # package_spec.loader.exec_module(import_package)
         return importlib.import_module(name=import_name, package=pkg_name)
 
     else:
@@ -132,31 +132,31 @@ def _check_dependency(name, package=None):
             f"Use pip or conda to install it, e.g. 'pip install {install_name}'.")
 
 
-def _check_rel_pathname(pathname):
+def _check_relative_pathname(pathname):
     """
-    Check if the pathname is relative to the current working directory.
+    Checks if the pathname is relative to the current working directory.
 
-    This function returns a relative pathname of the input `pathname` to the current working
+    This function returns a relative pathname of the input ``pathname`` to the current working
     directory if ``pathname`` is within the current working directory;
     otherwise, it returns a copy of the input.
 
     :param pathname: Pathname (of a file or directory).
     :type pathname: str | bytes | pathlib.Path
-    :return: A relative pathname of ``pathname`` to the current working directory
-        if it is within the current working directory; otherwise, a copy of ``pathname``.
+    :return: A location relative to the current working directory
+        if ``pathname`` is within the current working directory; otherwise, a copy of ``pathname``.
     :rtype: str
 
     **Tests**::
 
-        >>> from pyhelpers._cache import _check_rel_pathname
+        >>> from pyhelpers._cache import _check_relative_pathname
         >>> from pyhelpers.dirs import cd
-        >>> _check_rel_pathname(".")
+        >>> _check_relative_pathname(".")
         '.'
-        >>> _check_rel_pathname(cd())
+        >>> _check_relative_pathname(cd())
         '.'
-        >>> _check_rel_pathname("C:\\Program Files")
+        >>> _check_relative_pathname("C:\\Program Files")
         'C:\\Program Files'
-        >>> _check_rel_pathname(pathname="C:/Windows")
+        >>> _check_relative_pathname(pathname="C:/Windows")
         'C:/Windows'
     """
 
@@ -171,9 +171,45 @@ def _check_rel_pathname(pathname):
     return rel_path
 
 
+def _add_slashes(pathname):
+    """
+    Adds leading and/or trailing slashes to a given pathname for formatting or display purposes.
+
+    :param pathname: The pathname of a file or directory.
+    :type pathname: str | os.PathLike
+    :return: A formatted pathname with added slashes.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _add_slashes
+        >>> _add_slashes("pyhelpers\\data")
+        '".\\pyhelpers\\data\\"'
+        >>> _add_slashes("pyhelpers\\data\\pyhelpers.dat")
+        '".\\pyhelpers\\data\\pyhelpers.dat"'
+        >>> _add_slashes("C:\\Windows")
+        '"C:\\Windows\\"'
+    """
+
+    path = os.path.normpath(pathname)  # Normalise path separators for consistency
+
+    # Add a leading slash if necessary
+    if not path.startswith((os.path.sep, ".")) and not os.path.isabs(path):
+        # For Windows, add './' or '.\' depending on the system separator
+        path = f".{os.path.sep}{path}"
+
+    has_trailing_sep = path.endswith(os.path.sep)
+    is_file_like = os.path.splitext(path)[1] != ''
+
+    if not has_trailing_sep and not is_file_like:  # Add a trailing slash
+        path = path + os.path.sep
+
+    return f'"{path}"'
+
+
 def _check_file_pathname(name, options=None, target=None):
     """
-    Check the pathname of a specified file given its name or filename.
+    Checks the pathname of a specified file given its name or filename.
 
     This function determines whether the specified executable file exists and returns its pathname.
 
@@ -230,12 +266,12 @@ def _check_file_pathname(name, options=None, target=None):
 
         else:
             file_exists = False
-            alt_pathnames = {shutil.which(file_pathname)}
+            alt_pathnames = [shutil.which(file_pathname)]
 
             if options is not None:
-                alt_pathnames.update(set(options))
+                alt_pathnames = list(options) + alt_pathnames
 
-            for x in {x_ for x_ in alt_pathnames if x_}:
+            for x in [x_ for x_ in alt_pathnames if x_]:
                 if os.path.isdir(x):
                     file_pathname_ = os.path.join(x, file_pathname)
                 else:
@@ -248,77 +284,130 @@ def _check_file_pathname(name, options=None, target=None):
     return file_exists, file_pathname
 
 
-def _format_err_msg(e=None, msg=""):
+def _check_url_scheme(url, allowed_schemes=None):
     """
-    Format an error message.
+    Checks if the scheme of a URL is allowed.
 
-    This function formats an error message by combining ``msg`` and ``e`` (if provided).
-    If ``e`` is provided and is a string, it appends it to ``msg``.
+    :param url: A URL.
+    :type url: str
+    :param allowed_schemes: Safe URL schemes.
+    :type allowed_schemes: list | set | None
+    :return: The parsed URL.
+    :rtype: urllib.parse.ParseResult
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _check_url_scheme
+        >>> _check_url_scheme('https://github.com/mikeqfu/pyhelpers')
+        ParseResult(scheme='https', netloc='github.com', path='/mikeqfu/pyhelpers', params='', q...
+        >>> _check_url_scheme('http://github.com/mikeqfu/pyhelpers')
+        Traceback (most recent call last):
+            ...
+        ValueError: Unsafe URL scheme: 'http'.
+    """
+
+    parsed_url = urllib.parse.urlparse(url)
+
+    if allowed_schemes is None:
+        allowed_schemes_ = {'https', 'http', 'ftp', 'file'}
+    else:
+        allowed_schemes_ = {allowed_schemes} if isinstance(allowed_schemes, str) \
+            else set(allowed_schemes)
+
+    # Check that the scheme is either 'http' or 'https'
+    if parsed_url.scheme not in allowed_schemes_:
+        raise ValueError(f"Unsafe URL scheme: '{parsed_url.scheme}'.")
+
+    return parsed_url
+
+
+def _format_error_message(e=None, prefix=""):
+    """
+    Formats an error message.
+
+    This function formats an error message by combining ``message`` and ``e`` (if provided).
+    If ``e`` is provided and is a string, it appends ``e`` to ``message``.
     If ``e`` is an ``Exception`` or its subclass, it includes the exception's message
     in the final output.
 
-    :param e: Exception or any of its subclasses; defaults to ``None``.
+    :param e: An error message, exception, or any subclass of ``Exception``; defaults to ``None``.
     :type e: Exception | BaseException | str | None
-    :param msg: Default error message; defaults to ``""``.
-    :type msg: str
-    :return: Formatted error message.
+    :param prefix: The base text to prepend to ``e``; defaults to ``""``.
+    :type prefix: str
+    :return: A formatted error message.
     :rtype: str
 
     **Tests**::
 
-        >>> from pyhelpers._cache import _format_err_msg
-        >>> _format_err_msg("test")
+        >>> from pyhelpers._cache import _format_error_message
+        >>> _format_error_message("test")
         'test.'
-        >>> _format_err_msg("test", msg="Failed.")
+        >>> _format_error_message("test", prefix="Failed.")
         'Failed. test.'
     """
 
     if e:
         e_ = f"{e}".strip()
-        err_msg = e_ + "." if not e_.endswith((".", "!", "?")) else e_
+        error_message = e_ + "." if not e_.endswith((".", "!", "?")) else e_
     else:
-        err_msg = ""
+        error_message = ""
 
-    if msg:
-        err_msg = msg + " " + err_msg
+    if prefix:
+        error_message = prefix + " " + error_message
 
-    return err_msg
+    return error_message
 
 
-def _print_failure_msg(e, msg="Failed.", verbose=True):
+def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
     # noinspection PyShadowingNames
     """
-    Print an error message associated with the occurrence of an ``Exception``.
+    Prints an error message associated with the occurrence of an ``Exception``.
 
     Prints the error message ``msg`` along with details of ``e`` (if provided).
     If ``verbose=True``, additional relevant information is printed to the console.
 
-    :param e: ``Exception`` or any of its subclasses; defaults to ``None``.
+    :param e: ``Exception`` or any of its subclasses, indicating the error message;
+        defaults to ``None``.
     :type e: Exception | BaseException | str | None
-    :param msg: Default error message to print; defaults to ``"Failed."``.
-    :type msg: str
+    :param prefix: A text string to prepend to the details of ``e``; defaults to ``"Error:"``.
+    :type prefix: str
     :param verbose: Whether to print additional information to the console; defaults to ``True``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :return: None
+    :rtype: None
 
     **Tests**::
 
-        >>> from pyhelpers._cache import _print_failure_msg
+        >>> from pyhelpers._cache import _print_failure_message
         >>> try:
         ...     result = 1 / 0  # This will raise a ZeroDivisionError
         ... except ZeroDivisionError as e:
-        ...     _print_failure_msg(e, msg="Error:")
+        ...     _print_failure_message(e, prefix="Error:")
         Error: division by zero.
+        >>> try:
+        ...     result = 1 / 0  # This will raise a ZeroDivisionError
+        ... except ZeroDivisionError as e:
+        ...     _print_failure_message(e, prefix="Error:", raise_error=True, verbose=False)
+        Traceback (most recent call last):
+            ...
+        ZeroDivisionError: division by zero
     """
 
-    err_msg = _format_err_msg(e=e, msg=msg)
+    error_message = _format_error_message(e=e, prefix=prefix)
 
     if verbose:
-        print(err_msg)
+        print(error_message)
+
+    if raise_error:
+        raise e
 
 
 def example_dataframe(osgb36=False):
     """
-    Create an example dataframe.
+    Returns an example dataframe.
 
     This functions creates and returns a pandas DataFrame with geographical coordinates either in
     OSGB36 National Grid format (default) or in longitude and latitude format.
@@ -347,7 +436,7 @@ def example_dataframe(osgb36=False):
         Leeds       -1.543794  53.797418
     """
 
-    pd_ = _check_dependency(name='pandas')
+    pd = _check_dependency(name='pandas')
 
     if osgb36:
         _columns = ['Easting', 'Northing']
@@ -368,7 +457,7 @@ def example_dataframe(osgb36=False):
 
     _index = ['London', 'Birmingham', 'Manchester', 'Leeds']
 
-    _example_dataframe = pd_.DataFrame(data=_example_df, index=_index, columns=_columns)
+    _example_dataframe = pd.DataFrame(data=_example_df, index=_index, columns=_columns)
 
     _example_dataframe.index.name = 'City'
 

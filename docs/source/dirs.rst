@@ -16,7 +16,6 @@ Directory navigation
     :template: function.rst
 
     cd
-    ccd
     cdd
     cd_data
     find_executable

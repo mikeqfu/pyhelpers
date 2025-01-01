@@ -8,12 +8,12 @@ import pathlib
 import re
 
 from .nav import cd
-from .._cache import _check_rel_pathname
+from .._cache import _check_relative_pathname
 
 
 def path2linux(path):
     """
-    Convert a path to a standardized Linux file path format for cross-platform compatibility.
+    Converts a path to a standardized Linux file path format for cross-platform compatibility.
 
     This function:
 
@@ -44,7 +44,7 @@ def path2linux(path):
 
 def uniform_pathname(pathname):
     """
-    Convert a pathname to a standard Linux file path format.
+    Converts a pathname to a standard Linux file path format.
 
     This function serves as an alternative to :func:`~pyhelpers.dirs.path2linux`.
 
@@ -65,14 +65,14 @@ def uniform_pathname(pathname):
         'tests/data/dat.csv'
     """
 
-    pathname_ = re.sub(r"\\|\\\\|//", "/", str(pathname))
+    pathname_ = re.sub(r"[\\/]+", "/", str(pathname))
 
     return pathname_
 
 
 def is_dir(path_to_dir):
     """
-    Check whether a string represents a valid directory path.
+    Checks whether a string represents a valid directory path.
 
     This function verifies whether the input string is a valid directory path. See also
     [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and [`DIRS-IVD-2
@@ -125,15 +125,15 @@ def is_dir(path_to_dir):
 
 def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     """
-    Validate the pathname of a directory.
+    Validates the pathname of a directory.
 
     :param path_to_dir: Pathname of a data directory;
         if ``path_to_dir=None`` (default),
         it examines ``subdir`` to construct a valid directory path.
-    :type path_to_dir: str | os.PathLike[str] | bytes | os.PathLike[bytes] | None
+    :type path_to_dir: str | os.PathLike | bytes | None
     :param subdir: Name of a subdirectory to be examined if ``path_to_dir=None``;
         defaults to ``""``.
-    :type subdir: str | os.PathLike[str] | bytes | os.PathLike[bytes]
+    :type subdir: str | os.PathLike | bytes
     :param msg: Error message if `path_to_dir` is not a valid full pathname;
         defaults to ``"Invalid input!"``.
     :type msg: str
@@ -171,7 +171,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
         else:
             assert os.path.isabs(path_to_dir_), msg
-            data_dir_ = _check_rel_pathname(path_to_dir_.lstrip('.\\.'))
+            data_dir_ = _check_relative_pathname(path_to_dir_.lstrip('.\\.'))
 
     else:
         data_dir_ = cd(subdir, **kwargs) if subdir else cd()
@@ -181,7 +181,7 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
 def validate_filename(file_pathname, suffix_num=1):
     """
-    Validate the filename and create a new filename with a suffix if the original exists.
+    Validates the filename and create a new filename with a suffix if the original exists.
 
     If the file specified by ``file_pathname`` exists, this function generates a new filename
     by appending a suffix such as ``"(1)"``, ``"(2)"``, etc., to make it unique.
@@ -245,7 +245,7 @@ def validate_filename(file_pathname, suffix_num=1):
 
 def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
     """
-    Get paths of files in a directory matching the specified file extension.
+    Gets paths of files in a directory matching the specified file extension.
 
     This function retrieves paths of files within the directory specified by ``path_to_dir``.
     Optionally, it filters files by the exact ``file_ext`` specified.
@@ -308,14 +308,16 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
         if file.endswith(file_ext)]
 
 
-def check_files_exist(filenames, path_to_dir):
+def check_files_exist(filenames, path_to_dir, verbose=False):
     """
-    Check if specified files exist within a given directory.
+    Checks if specified files exist within a given directory.
 
     :param filenames: Filenames to check for existence.
     :type filenames: typing.Iterable
     :param path_to_dir: Path to the directory where files are to be checked.
     :type path_to_dir: str | os.PathLike
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
     :return: ``True`` if all queried files exist in the directory, ``False`` otherwise.
     :rtype: bool
 
@@ -345,10 +347,13 @@ def check_files_exist(filenames, path_to_dir):
 
     if all(mask):
         rslt = True
+
     else:
-        err_prt_dat = [required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]
-        err_msg = f"Error: Required files are not satisfied, missing files are: {err_prt_dat}"
-        print(err_msg)
+        err_prt_dat = [
+            required_files_short[i] for i in range(len(required_files_short)) if not mask[i]]
+
+        if verbose:
+            print(f"Error: Required files are not satisfied, missing files are: {err_prt_dat}")
         rslt = False
 
     return rslt

@@ -1,6 +1,9 @@
-"""Test the module :mod:`~pyhelpers.dirs`."""
+"""
+Test the module :mod:`~pyhelpers.dirs`.
+"""
 
 import importlib.resources
+import os.path
 import tempfile
 
 import pytest
@@ -34,29 +37,27 @@ def test_cd(capfd, cwd):
 
     os.rmdir(tmp_dir)
 
-
-def test_ccd():
     init_cwd = cd()
-    assert ccd() == init_cwd
 
     # Change the current working directory
-    new_cwd = "tests/new_cwd"
+    new_cwd = ".\\tests\\new_cwd\\"
     os.makedirs(new_cwd, exist_ok=True)
     os.chdir(new_cwd)
 
-    path_to_tests = ccd("tests")
-    assert os.path.relpath(path_to_tests) == 'tests'
+    path_to_tests = cd("test1")
+    assert os.path.relpath(path_to_tests) == "test1"
 
     # Change again the current working directory
     new_cwd_ = tempfile.TemporaryDirectory()
     os.chdir(new_cwd_.name)
+
     shutil.rmtree(os.path.dirname(path_to_tests))
 
     # Get the full path to a folder named "tests"
-    path_to_tests = ccd("tests")
+    path_to_tests = cd("tests")
     assert os.path.relpath(path_to_tests) == 'tests'
 
-    path_to_tests_ = ccd("test1", "test2")
+    path_to_tests_ = cd("test1", "test2")
     assert path_to_tests_ == os.path.join(os.getcwd(), "test1", "test2")
 
     os.chdir(init_cwd)
@@ -97,7 +98,7 @@ def test_cd_data(subdir, mkdir):
 
 def test_find_executable():
     python_exe = "python.exe"
-    possible_paths = ["C:/Program Files/Python39", "C:/Python39/python.exe"]
+    possible_paths = ["C:/Program Files/Python310", "C:/Python310/python.exe"]
 
     python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
     assert python_exe_exists
@@ -201,8 +202,8 @@ def test_check_files_exist(capfd):
     test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
     with importlib.resources.as_file(test_dir_name_) as test_dir_name:
         assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
-        rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name)
-        out, err = capfd.readouterr()
+        rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name, verbose=True)
+        out, _ = capfd.readouterr()
         assert rslt is False
         assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 

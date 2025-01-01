@@ -19,10 +19,14 @@ from pyhelpers.ops import *
 # comp - Basic computation / converter.
 # ==================================================================================================
 
-def test_gps_time_to_utc():
-    utc_dt = gps_time_to_utc(gps_time=1271398985.7822514)
+@pytest.mark.parametrize('as_datetime', [True, False])
+def test_gps_time_to_utc(as_datetime):
+    utc_dt = gps_time_to_utc(gps_time=1271398985.7822514, as_datetime=as_datetime)
 
-    assert utc_dt == datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
+    if as_datetime:
+        assert utc_dt == datetime.datetime(2020, 4, 20, 6, 22, 47, 782251)
+    else:
+        assert utc_dt == '2020-04-20T06:22:47.782251'
 
 
 def test_parse_size():
@@ -519,14 +523,16 @@ class TestGitHubFileDownloader:
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv"
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         test_api_url, test_download_path = downloader.create_url(test_url)
-        assert test_api_url == \
-               'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=master'
+        assert (test_api_url ==
+                'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/'
+                'dat.csv?ref=master')
         assert test_download_path == 'tests/data/dat.csv'
 
         test_url = "https://github.com/xyluo25/openNetwork/blob/main/docs"
         gd = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         test_api_url, test_download_path = gd.create_url(test_url)
-        assert test_api_url == 'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
+        assert (test_api_url ==
+                'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main')
         assert test_download_path == 'docs'
 
         shutil.rmtree(test_output_dir)
@@ -539,14 +545,14 @@ class TestGitHubFileDownloader:
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert "tests/data/dat.csv" in out
+        assert os.path.join("tests", "data", "dat.csv") in out
         assert downloader.total_files == 1
 
         test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert "tests/data/zipped/zipped.txt" in out
+        assert os.path.join("tests", "data", "zipped", "zipped.txt") in out
         assert downloader.total_files == 13
 
         downloader = GitHubFileDownloader(test_url, flatten_files=True, output_dir=test_output_dir)

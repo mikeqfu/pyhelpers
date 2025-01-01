@@ -11,21 +11,21 @@ import io
 import os
 import pathlib
 import platform
-import subprocess
+import subprocess  # nosec
 import tempfile
 import zipfile
 
-from .._cache import (_check_dependency, _check_file_pathname, _check_rel_pathname,
-                      _print_failure_msg)
+from .._cache import _add_slashes, _check_dependency, _check_file_pathname, \
+    _check_relative_pathname, _print_failure_message
 
 
 # ==================================================================================================
 # Uncompress data
 # ==================================================================================================
 
-def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
+def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kwargs):
     """
-    Extract data from a `Zip
+    Unzips data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
     (compressed) file.
 
@@ -35,6 +35,8 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
     :type out_dir: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
     :param kwargs: [Optional] Additional parameters for the method `zipfile.ZipFile.extractall()`_.
 
     .. _`zipfile.ZipFile.extractall()`:
@@ -87,13 +89,13 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, **kwargs):
             print("Done.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_zip_exe=None,
-              **kwargs):
+def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_error=False,
+              seven_zip_exe=None):
     """
-    Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
+    Extracts data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
     :param path_to_zip_file: The path where the compressed file is saved.
     :type path_to_zip_file: str | os.PathLike
@@ -103,13 +105,13 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
     :type mode: str
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param seven_zip_exe: The path to the executable "*7z.exe*";
         If ``seven_zip_exe=None`` (default), the default installation path will be used, e.g.
         "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" (on Windows).
     :type seven_zip_exe: str | None
-    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
-
-    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
@@ -152,14 +154,11 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
-        >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
-        To delete the following directories:
-            "tests\\data\\zipped\\" (Not empty)
-            "tests\\data\\zipped_alt\\" (Not empty)
+        >>> # Delete the directory: ".\\tests\\data\\zipped_alt\\"
+        >>> delete_dir(output_dir, verbose=True)
+        To delete the directory ".\\tests\\data\\zipped_alt\\" (Not empty)
         ? [No]|Yes: yes
-        Deleting "tests\\data\\zipped\\" ... Done.
-        Deleting "tests\\data\\zipped_alt\\" ... Done.
+        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
     """
 
     exe_name = "7z.exe"
@@ -172,19 +171,17 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
             out_dir = os.path.splitext(path_to_zip_file)[0]
 
         try:
-            # subprocess.run(
-            #     '"{}" x "{}" -o"{}" -{}'.format(seven_zip_exe_, path_to_zip_file, out_dir, mode),
-            #     **kwargs)
             command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + out_dir, '-' + mode]
             if not verbose:
                 command_args += ['-bso0', '-bsp0']
 
-            rslt = subprocess.run(command_args, **kwargs)
+            rslt = subprocess.run(command_args, check=True)  # nosec
 
             if verbose:
                 print("\nDone." if rslt.returncode == 0 else "\nFailed.")
 
         except Exception as e:
+            _print_failure_message(e, prefix="Error:", verbose=verbose, raise_error=raise_error)
             if verbose:
                 print("An error occurred: {}.".format(e))
 
@@ -198,9 +195,9 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, seven_z
 # ==================================================================================================
 
 def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
-                    verbose=False, **kwargs):
+                    verbose=False, raise_error=False, **kwargs):
     """
-    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
+    Converts a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
     `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
     (.rst) file.
 
@@ -223,10 +220,12 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     :type pandoc_exe: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_
-        (if ``engine=None``) or `pypandoc.convert_file()`_ (if ``engine='pypandoc'``).
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for the function `pypandoc.convert_file()`_
+        (if ``engine='pypandoc'``).
 
-    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     .. _`pypandoc.convert_file()`: https://github.com/NicklasTegner/pypandoc#usage
 
     **Examples**::
@@ -239,7 +238,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
         Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-        Updating "readme.rst" at "tests\\documents\\" ... Done.
+        Updating "readme.rst" at ".\\tests\\documents\" ... Done.
     """
 
     exe_name = "pandoc.exe"
@@ -258,12 +257,12 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
     if verbose:
         rel_input_path, rel_output_path = map(
-            lambda x: pathlib.Path(_check_rel_pathname(x)), (abs_input_path, abs_output_path))
+            lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
 
         if not os.path.exists(abs_output_path):
-            msg = f"Converting \"{rel_input_path}\" to \"{rel_output_path}\""
+            msg = f'Converting "{rel_input_path}" to {_add_slashes(rel_output_path)}'
         else:
-            msg = f"Updating \"{rel_output_path.name}\" at \"{rel_output_path.parent}\\\""
+            msg = f'Updating "{rel_output_path.name}" at {_add_slashes(rel_output_path.parent)}'
         print(msg, end=" ... ")
 
     try:
@@ -275,7 +274,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
                     cmd_args += ['-o', abs_output_path]
                 else:
                     cmd_args += ['-s', '-o', abs_output_path]
-                rslt = subprocess.run(cmd_args, **kwargs)
+
+                rslt = subprocess.run(cmd_args, check=True)  # nosec
                 ret_code = rslt.returncode
 
             else:
@@ -308,12 +308,12 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
                 print("Failed.")
 
     except Exception as e:
-        print("An error occurred: {}".format(e))
+        _print_failure_message(e=e, prefix="Error:", verbose=verbose, raise_error=raise_error)
 
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
     """
-    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
+    Prepares paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
     `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
 
     :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
@@ -349,9 +349,9 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
     return vbscript_, csv_pathname
 
 
-def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **kwargs):
+def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None):
     """
-    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    Converts a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
     (*.xlsx*/*.xls*) to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file
     using `VBScript <https://en.wikipedia.org/wiki/VBScript>`_.
 
@@ -367,29 +367,27 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None, **k
     :param vbscript: The path of the VB script used for converting *.xlsx*/*.xls* to *.csv*;
         defaults to ``None``.
     :type vbscript: str | None
-    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
     :return: The result code from running the VBScript.
     :rtype: int
 
     .. _`Microsoft Excel`: https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`CSV`: https://en.wikipedia.org/wiki/Comma-separated_values
-    .. _`subprocess.run()`: https://docs.python.org/3/library/subprocess.html#subprocess.run
     """
 
     command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname, sheet_name]
     if platform.system() == 'Linux':
         command_args = ["wine"] + command_args
 
-    rslt = subprocess.run(command_args, **kwargs)
+    rslt = subprocess.run(command_args, check=True)  # nosec
     ret_code = rslt.returncode
 
     return ret_code
 
 
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
-                sheet_name='1', ret_null=False, verbose=False, **kwargs):
+                sheet_name='1', ret_null=False, verbose=False, raise_error=False):
     """
-    Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
+    Converts a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
@@ -423,7 +421,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     :type ret_null: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] Additional parameters for the function `subprocess.run()`_.
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
     :return: The path of the generated CSV file or ``None`` when ``engine=None``;
         an `io.StringIO()`_ buffer when ``engine='xlsx2csv'``.
     :rtype: str | _io.StringIO | None
@@ -440,8 +439,6 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         https://github.com/dilshod/xlsx2csv
     .. _`io.StringIO()`:
         https://docs.python.org/3/library/io.html#io.StringIO
-    .. _`subprocess.run()`:
-        https://docs.python.org/3/library/subprocess.html#subprocess.run
 
     **Examples**::
 
@@ -480,7 +477,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     """
 
     if verbose:
-        rel_path = _check_rel_pathname(path_to_xlsx)
+        rel_path = _check_relative_pathname(path_to_xlsx)
         print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
 
     if engine is None:
@@ -497,7 +494,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
 
         ret_code = _xlsx_to_csv(
             xlsx_pathname=path_to_xlsx, csv_pathname=csv_pathname, sheet_name=sheet_name,
-            vbscript=vbscript_, **kwargs)
+            vbscript=vbscript_)
 
         if verbose:
             print("Done." if ret_code == 0 else "Failed.")
@@ -521,5 +518,5 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
             return buffer
 
         except Exception as e:
-            _print_failure_msg(e=e, msg="Failed.")
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
             buffer.close()

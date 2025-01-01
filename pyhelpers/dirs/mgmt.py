@@ -6,12 +6,13 @@ import collections.abc
 import os
 import shutil
 
-from .._cache import _check_rel_pathname, _confirmed, _print_failure_msg
+from .._cache import _add_slashes, _check_relative_pathname, _confirmed, _print_failure_message
 
 
-def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
+def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
+                **kwargs):
     """
-    Delete a directory.
+    Deletes a directory.
 
     :param path_to_dir: Pathname of the directory.
     :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes]
@@ -20,6 +21,9 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
         `os.rmdir`_.
 
@@ -28,47 +32,50 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
 
     **Tests**::
 
-        >>> from pyhelpers.dirs import cd
         >>> from pyhelpers.dirs.mgmt import _delete_dir
+        >>> from pyhelpers._cache import _add_slashes
+        >>> from pyhelpers.dirs import cd
         >>> import os
-        >>> dir_path = cd("test_dir", mkdir=True)
-        >>> rel_dir_path = os.path.relpath(dir_path)
-        >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
-        The directory "test_dir\\" exists? True
+        >>> dir_path = cd("tests", "test_dir", mkdir=True)
+        >>> rel_dir_path = _add_slashes(os.path.relpath(dir_path))
+        >>> print(f'The directory {rel_dir_path} exists? {os.path.exists(dir_path)}')
+        The directory ".\\tests\\test_dir\\" exists? True
         >>> _delete_dir(dir_path, verbose=True)
-        To delete the directory "test_dir\\"
+        To delete the directory ".\\tests\\test_dir\\"
         ? [No]|Yes: yes
-        Deleting "test_dir\\" ... Done.
-        >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
-        The directory "test_dir\\" exists? False
-        >>> dir_path = cd("test_dir", "folder", mkdir=True)
-        >>> rel_dir_path = os.path.relpath(dir_path)
-        >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
-        The directory "test_dir\\folder\\" exists? True
-        >>> _delete_dir(cd("test_dir"), verbose=True)
-        The directory "test_dir\\" is not empty.
+        Deleting ".\\tests\\test_dir\\" ... Done.
+        >>> print(f'The directory {rel_dir_path} exists? {os.path.exists(dir_path)}')
+        The directory ".\\tests\\test_dir\\" exists? False
+        >>> dir_path = cd("tests", "test_dir", "folder", mkdir=True)
+        >>> rel_dir_path = _add_slashes(os.path.relpath(dir_path))
+        >>> print(f'The directory {rel_dir_path} exists? {os.path.exists(dir_path)}')
+        The directory ".\\tests\\test_dir\\folder\\" exists? True
+        >>> _delete_dir(cd("tests", "test_dir"), verbose=True)
+        The directory ".\\tests\\test_dir\\" is not empty.
         Confirmed to delete it
         ? [No]|Yes: yes
-        Deleting "test_dir\\" ... Done.
-        >>> print('The directory "{}\\" exists? {}'.format(rel_dir_path, os.path.exists(dir_path)))
-        The directory "test_dir\\folder\\" exists? False
+        Deleting ".\\tests\\test_dir\\" ... Done.
+        >>> print(f'The directory {rel_dir_path} exists? {os.path.exists(dir_path)}')
+        The directory ".\\tests\\test_dir\\folder\\" exists? False
     """
 
-    dir_pathname = _check_rel_pathname(path_to_dir)
+    rel_path_to_dir = _check_relative_pathname(path_to_dir)
 
     try:
-        if os.listdir(dir_pathname):
-            cfm_msg = f"The directory \"{dir_pathname}\\\" is not empty.\nConfirmed to delete it\n?"
+        path_to_dir_ = _add_slashes(rel_path_to_dir)
+
+        if os.listdir(rel_path_to_dir):
+            cfm_msg = f"The directory {path_to_dir_} is not empty.\nConfirmed to delete it\n?"
             func = shutil.rmtree
         else:
-            cfm_msg = f"To delete the directory \"{dir_pathname}\\\"\n?"
+            cfm_msg = f"To delete the directory {path_to_dir_}\n?"
             func = os.rmdir
 
         if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
             if verbose:
-                print(f"Deleting \"{path_to_dir}\\\"", end=" ... ")
+                print(f"Deleting {path_to_dir_}", end=" ... ")
 
-            func(dir_pathname, **kwargs)
+            func(rel_path_to_dir, **kwargs)
 
         if verbose:
             if not os.path.exists(path_to_dir):
@@ -77,20 +84,24 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs
                 print("Cancelled.")
 
     except Exception as e:
-        _print_failure_msg(e=e, msg="Failed.")
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs):
+def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
+               **kwargs):
     """
-    Delete a directory or directories.
+    Deletes a directory or directories.
 
     :param path_to_dir: Pathname(s) of the directory (or directories).
-    :type path_to_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes] | collections.abc.Sequence
+    :type path_to_dir: str | bytes | os.PathLike | collections.abc.Sequence
     :param confirmation_required: Whether to prompt for confirmation before proceeding;
         defaults to ``True``.
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
         `os.rmdir`_.
 
@@ -110,22 +121,22 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
         ...         open(cd("tests", f"test_dir{x}", "file"), 'w').close()
         >>> delete_dir(path_to_dir=test_dirs, verbose=True)
         To delete the following directories:
-            "tests\\test_dir0\\" (Not empty)
-            "tests\\test_dir1\\" (Not empty)
-            "tests\\test_dir2\\"
+            ".\\tests\\test_dir0\\" (Not empty)
+            ".\\tests\\test_dir1\\" (Not empty)
+            ".\\tests\\test_dir2\\"
         ? [No]|Yes: yes
-        Deleting "tests\\test_dir0\\" ... Done.
-        Deleting "tests\\test_dir1\\" ... Done.
-        Deleting "tests\\test_dir2\\" ... Done.
+        Deleting ".\\tests\\test_dir0\\" ... Done.
+        Deleting ".\\tests\\test_dir1\\" ... Done.
+        Deleting ".\\tests\\test_dir2\\" ... Done.
     """
 
     if (isinstance(path_to_dir, collections.abc.Sequence) and
             not isinstance(path_to_dir, (str, bytes))):
-        dir_pathnames = [_check_rel_pathname(p) for p in path_to_dir]
+        dir_pathnames = [_check_relative_pathname(p) for p in path_to_dir]
     else:
-        dir_pathnames = [_check_rel_pathname(path_to_dir)]
+        dir_pathnames = [_check_relative_pathname(path_to_dir)]
 
-    pn = ["\"" + p + ("\\\" (Not empty)" if os.listdir(p) else "\\\"") for p in dir_pathnames]
+    pn = [_add_slashes(p) + (" (Not empty)" if os.listdir(p) else "") for p in dir_pathnames]
     if len(pn) == 1:
         cfm_msg = f"To delete the directory {pn[0]}\n?"
     else:
@@ -134,4 +145,6 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, **kwargs)
 
     if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
         for dir_pathname in dir_pathnames:
-            _delete_dir(dir_pathname, confirmation_required=False, verbose=verbose, **kwargs)
+            _delete_dir(
+                dir_pathname, confirmation_required=False, verbose=verbose, raise_error=raise_error,
+                **kwargs)

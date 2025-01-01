@@ -10,8 +10,9 @@ from .._cache import _check_dependency
 
 def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, precision=4,
                    east_asian_text=False, ignore_future_warning=True, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Alter parameters of some frequently-used
+    Alters parameters of some frequently-used
     `Pandas options and settings
     <https://pandas.pydata.org/pandas-docs/stable/user_guide/options.html>`_
     for displaying `pandas dataframes
@@ -118,7 +119,7 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html
     """
 
-    pd_ = _check_dependency(name='pandas')
+    pd = _check_dependency(name='pandas')
 
     options = {
         'display.max_columns': max_columns,  # 0
@@ -139,21 +140,22 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
 
     if reset is False:
         for key, val in kwargs.items():
-            pd_.set_option(key, val)
+            pd.set_option(key, val)
 
     elif reset is True:
-        registered_options = pd_._config.config._registered_options
+        registered_options = pd._config.config._registered_options
 
         for key in kwargs:
-            pd_.set_option(key, registered_options[key].defval)
+            pd.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
-        pd_.reset_option('all', silent=ignore_future_warning)
+        pd.reset_option('all', silent=ignore_future_warning)
 
 
 def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatter=None, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Alter some default parameters for displaying
+    Alters some default parameters for displaying
     `NumPy arrays <https://numpy.org/doc/stable/reference/generated/numpy.array.html>`_.
 
     This function allows customising the display options for NumPy arrays, including
@@ -237,27 +239,27 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
                 0.81357508]])
     """
 
-    np_ = _check_dependency(name='numpy')
+    np = _check_dependency(name='numpy')
 
     if reset is False:
         if formatter is None:
             formatter = dict(float=lambda x: "%.{}f".format(precision) % x)
 
-        np_.set_printoptions(
+        np.set_printoptions(
             precision=precision, linewidth=line_char, edgeitems=head_tail, formatter=formatter,
             **kwargs)
 
     elif reset is True:
         # true default linewidth = 75
-        np_.set_printoptions(
-            precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np_.nan,
-            infstr=np_.inf, formatter=None, sign='-', floatmode='maxprec_equal', legacy=False)
+        np.set_printoptions(
+            precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np.nan,
+            infstr=np.inf, formatter=None, sign='-', floatmode='maxprec_equal', legacy=False)
 
 
 def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font_size=13,
                     legend_spacing=0.7, fig_style=None):
     """
-    Alter some `Matplotlib parameters
+    Alters some `Matplotlib parameters
     <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_
     for plotting.
 

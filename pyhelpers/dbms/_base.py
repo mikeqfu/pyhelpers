@@ -11,7 +11,7 @@ import typing
 import pandas as pd
 import sqlalchemy
 
-from .._cache import _check_dependency, _confirmed, _print_failure_msg
+from .._cache import _check_dependency, _confirmed, _print_failure_message
 
 
 class _Base:
@@ -39,7 +39,7 @@ class _Base:
 
     def _execute(self, query):
         """
-        Execute a database query and check if an item exists.
+        Executes a database query and check if an item exists.
 
         :param query: The SQL query to execute.
         :type query: str or sqlalchemy.TextClause
@@ -78,7 +78,7 @@ class _Base:
 
     def _database_name(self, database_name=None, fmt='"{}"'):
         """
-        Format a database name.
+        Formats a database name.
 
         :param database_name: Database name as an input; defaults to ``None``.
         :type database_name: str | None
@@ -114,17 +114,20 @@ class _Base:
 
         return database_name_
 
-    def _create_db(self, confirm_db_creation, verbose, fmt='"{}"'):
+    def _create_db(self, confirm_db_creation, fmt='"{}"', verbose=False, raise_error=False):
         """
-        Create a database (if it does not exist) when creating an instance.
+        Creates a database (if it does not exist) when creating an instance.
 
         :param confirm_db_creation: Whether to prompt a confirmation before creating a new database
             (if the specified database does not exist).
         :type confirm_db_creation: bool
-        :param verbose: Whether to print relevant information to the console.
-        :type verbose: bool | int
         :param fmt: String format of the database name; defaults to ``'"{}"'``.
         :type fmt: str
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
 
         db_name = self._database_name(database_name=self.database_name, fmt=fmt)
@@ -144,33 +147,34 @@ class _Base:
                     print("Done.")
 
             except Exception as e:
-                _print_failure_msg(e=e)
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def database_exists(self, database_name):
         """
-        Check if a database exists.
+        Checks if a database exists.
 
         :param database_name: Name of the database to check.
         :type database_name: str
         :return: Whether the database exists.
         :rtype: bool
         """
-        pass
+        return None
 
     def connect_database(self, database_name, verbose=False):
         """
-        Connect to a specified database.
+        Connects to a specified database.
 
         :param database_name: Name of the database to connect to.
         :type database_name: str
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def disconnect_database(self, database_name=None, verbose=False):
         """
-        Disconnect from a specified database.
+        Disconnects from a specified database.
 
         :param database_name: Name of the database to disconnect from;
             defaults to ``None``.
@@ -178,11 +182,11 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool
         """
-        pass
+        return None
 
     def _create_database(self, database_name, verbose, fmt):
         """
-        Create a new database if it does not already exist.
+        Creates a new database if it does not already exist.
 
         :param database_name: Name of the database to create.
         :type database_name: str
@@ -213,9 +217,10 @@ class _Base:
 
         self.connect_database(database_name=database_name, verbose=False)
 
-    def _drop_database(self, database_name, fmt, confirmation_required, verbose):
+    def _drop_database(self, database_name, fmt, confirmation_required, verbose=False,
+                       raise_error=False):
         """
-        Drop (delete) a database.
+        Drops (deletes) a database.
 
         :param database_name: Name of the database to drop.
         :type database_name: str
@@ -224,6 +229,9 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
 
         db_name = self._database_name(database_name, fmt=fmt)
@@ -255,11 +263,12 @@ class _Base:
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_msg(e=e)
+                    _print_failure_message(
+                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _schema_name(self, schema_name=None):
         """
-        Get a schema name.
+        Gets a schema name.
 
         :param schema_name: Schema name as an input; defaults to ``None``.
         :type schema_name: str | list | tuple | None
@@ -295,7 +304,7 @@ class _Base:
 
     def _table_name(self, table_name, schema_name=None, fmt='"{}"."{}"'):
         """
-        Get a formatted table name.
+        Gets a formatted table name.
 
         :param table_name: Table name as an input.
         :type table_name: str
@@ -336,7 +345,7 @@ class _Base:
 
     def _msg_for_multi_items(self, item_names, desc, fmt='"{}"'):
         """
-        Formulate a message for printing multiple items.
+        Formulates a message for printing multiple items.
 
         :param item_names: Name of one table/schema, or names of several tables/schemas.
         :type item_names: str | typing.Iterable[str] | None
@@ -396,36 +405,39 @@ class _Base:
 
     def create_schema(self, schema_name, verbose=False):
         """
-        Create a new schema.
+        Creates a new schema.
 
         :param schema_name: Name of the schema to create.
         :type schema_name: str
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def schema_exists(self, schema_name):
         """
-        Check if a schema exists.
+        Checks if a schema exists.
 
         :param schema_name: Name of the schema to check.
         :type schema_name: str
         :return: Whether the schema exists.
         :rtype: bool
         """
-        pass
+        return None
 
-    def __drop_schema(self, schema_name, query_, verbose):
+    def __drop_schema(self, schema_name, query_, verbose=False, raise_error=False):
         """
-        Drop a schema if it is not a built-in schema.
+        Drops a schema if it is not a built-in schema.
 
         :param schema_name: Name of the schema to drop.
         :type schema_name: str
         :param query_: SQL query to drop the schema.
         :type query_: str
-        :param verbose: Whether to print relevant information to the console.
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
 
         if schema_name in self.BUILTIN_SCHEMAS:
@@ -445,11 +457,13 @@ class _Base:
                         print("Failed.")
 
             except Exception as e:
-                _print_failure_msg(e=e, msg="Failed.")
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
-    def _drop_schema(self, schema_names, fmt, query_, confirmation_required=True, verbose=False):
+    def _drop_schema(self, schema_names, fmt, query_, confirmation_required=True, verbose=False,
+                     raise_error=False):
         """
-        Drop one or more schemas.
+        Drops one or more schemas.
 
         :param schema_names: Name(s) of the schemas to drop.
         :type schema_names: str | list[str]
@@ -462,6 +476,9 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
 
         schema_names_, print_plural, print_schema = self._msg_for_multi_items(
@@ -498,11 +515,13 @@ class _Base:
                     if len(schema_names_) > 1 and verbose:
                         print(f"\t\"{schema_name}\"", end=" ... ")
 
-                    self.__drop_schema(schema_name=schema_name, query_=query_, verbose=verbose)
+                    self.__drop_schema(
+                        schema_name=schema_name, query_=query_, verbose=verbose,
+                        raise_error=raise_error)
 
     def get_table_names(self, schema_name, verbose=False):
         """
-        Get names of all tables stored in a schema.
+        Gets names of all tables stored in a schema.
 
         :param schema_name: Name of a schema.
         :type schema_name: str | list | None
@@ -533,7 +552,7 @@ class _Base:
 
     def table_exists(self, table_name, schema_name):
         """
-        Check if a table exists in a specified schema.
+        Checks if a table exists in a specified schema.
 
         :param table_name: Name of the table to check.
         :type table_name: str
@@ -542,12 +561,57 @@ class _Base:
         :return: Whether the table exists.
         :rtype: bool
         """
-        pass
+        return None
+
+    def _create_table(self, table_name, column_specs, schema_name=None, verbose=False,
+                      raise_error=False):
+        """
+        Creates a table with specified columns.
+
+        :param table_name: Name of the table to be created.
+        :type table_name: str
+        :param column_specs: Specifications for each column of the table.
+        :type column_specs: str
+        :param schema_name: Name of the schema where the table will be created;
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
+            if ``schema_name=None``.
+        :type schema_name: str | None
+        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
+        """
+
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+
+        if self.table_exists(table_name=table_name, schema_name=schema_name):
+            if verbose:
+                print(f"The table {table_name_} already exists.")
+
+        else:
+            if not self.schema_exists(schema_name):
+                self.create_schema(schema_name=schema_name, verbose=False)
+
+            try:
+                if verbose:
+                    print(f"Creating a table: {table_name_} ... ", end="")
+
+                with self.engine.connect() as connection:
+                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
+                    connection.execute(query)
+
+                if verbose:
+                    print("Done.")
+
+            except Exception as e:
+                _print_failure_message(
+                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
-                    verbose=False):
+                    verbose=False, raise_error=False):
         """
-        Drop a table from a specified schema.
+        Drops a table from a specified schema.
 
         :param table_name: Name of the table to drop.
         :type table_name: str
@@ -560,6 +624,9 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
@@ -589,11 +656,12 @@ class _Base:
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_msg(e)
+                    _print_failure_message(
+                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def drop_table(self, table_name, schema_name, confirmation_required=True, verbose=False):
         """
-        Drop a table from a specified schema.
+        Drops a table from a specified schema.
 
         :param table_name: Name of the table to drop.
         :type table_name: str
@@ -605,13 +673,13 @@ class _Base:
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
         """
-        pass
+        return None
 
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
                      force_replace=False, chunk_size=None, col_type=None, method='multi',
                      index=False, confirmation_required=True, verbose=False, **kwargs):
         """
-        Import tabular data into a table.
+        Imports tabular data into a table.
 
         :param data: Tabular data to be imported into a database.
         :type data: pandas.DataFrame | pandas.io.parsers.TextFileReader | list | tuple
@@ -717,7 +785,7 @@ class _Base:
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Get information about columns of a table.
+        Gets information about columns of a table.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -775,7 +843,7 @@ class _Base:
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
-        Validate column names for a query statement.
+        Validates column names for a query statement.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -813,10 +881,10 @@ class _Base:
 
         return column_names_
 
-    def read_sql_query(self, sql_query, method, max_size_spooled, delimiter, tempfile_kwargs,
-                       stringio_kwargs, **kwargs):
+    def read_sql_query(self, sql_query, method='tempfile', max_size_spooled=1, delimiter=',',
+                       tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
         """
-        Execute a SQL query and read the result into a DataFrame.
+        Executes a SQL query and read the result into a DataFrame.
 
         :param sql_query: SQL query to execute.
         :type sql_query: str
@@ -832,11 +900,11 @@ class _Base:
         :type stringio_kwargs: dict
         :param kwargs: [Optional] Additional arguments passed to the reading method.
         """
-        pass
+        return None
 
     def _read_sql_query_args(self):
         """
-        Get names of arguments that are exclusive to the ``.read_sql_query()`` method.
+        Gets names of arguments that are exclusive to the ``.read_sql_query()`` method.
 
         :return: Names of arguments exclusive to ``.read_sql_query()`` method.
         :rtype: set

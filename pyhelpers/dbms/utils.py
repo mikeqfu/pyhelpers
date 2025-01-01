@@ -11,12 +11,12 @@ import sys
 import pandas as pd
 import sqlalchemy.dialects
 
-from .._cache import _check_dependency, _confirmed, _print_failure_msg
+from .._cache import _check_dependency, _confirmed, _print_failure_message
 
 
 def make_database_address(host, port, username, database_name=""):
     """
-    Generate a string representing a database address.
+    Generates a string representing a database address.
 
     :param host: Host name or IP address of the database server.
     :type host: str
@@ -50,7 +50,7 @@ def make_database_address(host, port, username, database_name=""):
 
 def get_default_database_address(db_cls):
     """
-    Retrieve the database address of a database class given its default parameters.
+    Retrieves the database address of a database class given its default parameters.
 
     :param db_cls: Class representing a database.
     :type db_cls: object
@@ -91,7 +91,7 @@ def _add_sql_query_args(arg, val, tbl_name):
 
 def add_sql_query_condition(sql_query, add_table_name=None, **kwargs):
     """
-    Add a condition to a given SQL query statement.
+    Adds a condition to a given SQL query statement.
 
     :param sql_query: SQL query statement to which the condition will be added.
     :type sql_query: str
@@ -173,7 +173,6 @@ def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_na
 
 
 def _get_col_type(mssql, mssql_table_name, source_data):
-
     source_data_ = source_data.copy()
 
     col_type = {}
@@ -208,7 +207,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
                         excluded_tables=None, file_tables=False, memory_threshold=2., update=False,
                         confirmation_required=True, verbose=True):
     """
-    Copy tables of a database from a Microsoft SQL server to a PostgreSQL server.
+    Copies tables of a database from a Microsoft SQL server to a PostgreSQL server.
 
     :param mssql: Name of the Microsoft SQL (source) database.
     :type mssql: pyhelpers.dbms.MSSQL
@@ -396,9 +395,9 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
 
 def import_data(db_instance, data, schema_name, table_name, data_name="data", prefix='', suffix='',
-                confirmation_required=True, verbose=False, **kwargs):
+                confirmation_required=True, verbose=False, raise_error=False, **kwargs):
     """
-    Import data into the project database.
+    Imports data into the project database.
 
     :param db_instance: A class instance for handling the database.
     :type db_instance: typing.Any
@@ -419,6 +418,9 @@ def import_data(db_instance, data, schema_name, table_name, data_name="data", pr
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the method
         :meth:`PostgreSQL.import_data()<pyhelpers.dbms.PostgreSQL.import_data>` or
         :meth:`MSSQL.import_data()<pyhelpers.dbms.MSSQL.import_data>`.
@@ -453,13 +455,13 @@ def import_data(db_instance, data, schema_name, table_name, data_name="data", pr
                 print("Done.")
 
         except Exception as e:
-            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="data", prefix='',
-              suffix='', verbose=False, **kwargs):
+              suffix='', verbose=False, raise_error=False, **kwargs):
     """
-    Read data from the project database.
+    Reads data from the project database.
 
     :param db_instance: A class instance for handling the database.
     :type db_instance: pyhelpers.dbms.PostgreSQL | pyhelpers.dbms.MSSQL
@@ -477,6 +479,9 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
     :type suffix: str
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the method
         :meth:`PostgreSQL.read_sql_query()<pyhelpers.dbms.PostgreSQL.read_sql_query>`,
         :meth:`PostgreSQL.read_table()<pyhelpers.dbms.PostgreSQL.read_table>` or
@@ -545,7 +550,8 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
                 print("Done.")
 
         except Exception as e:
-            _print_failure_msg(e, msg="Failed.", verbose=verbose)
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
             data = None
 
     return data

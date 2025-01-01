@@ -11,35 +11,119 @@ import sys
 
 import numpy as np
 import pandas as pd
+import requests
+
+from .._cache import _print_failure_message
 
 
-def gps_time_to_utc(gps_time):
+def get_utc_tai_offset(verbose=False, raise_error=False, url=None):
     """
-    Convert GPS time to UTC time.
+    Retrieves the difference between UTC (Coordinated Universal Time) and
+    TAI (International Atomic Time).
+
+    This difference increases as leap seconds are added to UTC.
+
+    :param verbose: Whether to print additional information to the console; defaults to ``True``.
+    :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param url: URL to the IERS (International Earth Rotation and Reference Systems Service)'s
+        Bulletin C, which announces leap seconds; defaults to ``None``.
+    :type url: str | None
+    :return: The difference between UTC and TAI, i.e. UTC - TAI.
+    :rtype: int | float | None
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_utc_tai_offset
+        >>> get_utc_tai_offset()
+        -37
+    """
+
+    if url is None:
+        url = "https://datacenter.iers.org/data/latestVersion/bulletinC.txt"
+
+    try:
+        response = requests.get(url)
+        if raise_error:
+            response.raise_for_status()  # Raise an error if the request was unsuccessful
+
+        content = response.text
+
+        desc, utc_tai_offset = None, None
+        for line in content.splitlines():  # Search for the specific line containing "UTC-TAI"
+            if 'UTC-TAI' in line:
+                desc = line.strip()
+                utc_tai_offset_ = re.search(r"UTC-TAI\s*=\s*(-?\d+)\s*s", desc)
+                utc_tai_offset = int(utc_tai_offset_.group(1).strip().replace(' ', ''))
+                break
+
+        if utc_tai_offset and verbose:
+            print("UTC-TAI difference not found in the bulletin.")
+
+        return utc_tai_offset
+
+    except requests.exceptions.RequestException as e:
+        _print_failure_message(
+            e=e, prefix="An error occurred while retrieving the data:", verbose=verbose,
+            raise_error=raise_error)
+
+
+def gps_time_to_utc(gps_time, as_datetime=True, utc_tai_offset=None):
+    # noinspection PyShadowingNames
+    """
+    Converts GPS time to UTC time.
 
     :param gps_time: Standard GPS time in seconds since GPS epoch (6 January 1980).
     :type gps_time: float
-    :return: Corresponding UTC time.
-    :rtype: datetime.datetime
+    :param as_datetime: If ``True``, the function returns the UTC time as datetime type;
+        otherwise string type; defaults to ``True``.
+    :type as_datetime: bool
+    :param utc_tai_offset: The difference between UTC (Coordinated Universal Time) and
+        the TAI (International Atomic Time), i.e. UTC - TAI; defaults to ``None``.
+    :type utc_tai_offset: float | int | None
+    :return: UTC datetime corresponding to the GPS time.
+    :rtype: datetime.datetime | str
 
     **Examples**::
 
         >>> from pyhelpers.ops import gps_time_to_utc
-        >>> utc_dt = gps_time_to_utc(gps_time=1271398985.7822514)
-        >>> utc_dt
-        datetime.datetime(2020, 4, 20, 6, 23, 5, 782251)
+        >>> gps_time = 1271398985.7822514
+        >>> utc_time = gps_time_to_utc(gps_time)
+        >>> utc_time
+        datetime.datetime(2020, 4, 20, 6, 22, 47, 782251)
+        >>> utc_time = gps_time_to_utc(gps_time, as_datetime=False)
+        >>> utc_time
+        >>> '2020-04-20T06:22:47.782251'
     """
 
-    gps_from_utc = (datetime.datetime(1980, 1, 6) - datetime.datetime(1970, 1, 1)).total_seconds()
+    gps_epoch = datetime.datetime(1980, 1, 6, 0, 0, 0)
 
-    utc_time = datetime.datetime.utcfromtimestamp(gps_time + gps_from_utc)
+    # GPS - TAI offset (19 seconds from the GPS epoch)
+    gps_tai_offset = 19
+
+    if utc_tai_offset is None:
+        # noinspection PyBroadException
+        try:
+            utc_tai_offset = get_utc_tai_offset(raise_error=True)
+        except Exception:
+            utc_tai_offset = -37  # As of December 2024
+
+    # Total offset: GPS to UTC
+    total_offset = gps_tai_offset + utc_tai_offset
+
+    utc_time = gps_epoch + datetime.timedelta(seconds=(gps_time + total_offset))
+
+    if not as_datetime:
+        utc_time = utc_time.isoformat()  # Alternatively, utc_time.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     return utc_time
 
 
 def parse_size(size, binary=True, precision=1):
     """
-    Parse size into human-readable format or vice versa.
+    Parses size into human-readable format or vice versa.
 
     :param size: Size to be parsed, either in human-readable format (e.g. ``'10 MB'``) or
         as an integer.
@@ -104,7 +188,7 @@ def parse_size(size, binary=True, precision=1):
 
 def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     """
-    Get the total number of chunks of a data file, given a minimum chunk size limit.
+    Gets the total number of chunks of a data file, given a minimum chunk size limit.
 
     :param file_or_obj: Path to a file or an object representing the data.
     :type file_or_obj: typing.Any
@@ -153,7 +237,7 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
 def get_extreme_outlier_bounds(num_dat, k=1.5):
     # noinspection PyShadowingNames
     """
-    Get the upper and lower bounds for extreme outliers using the interquartile range method.
+    Gets the upper and lower bounds for extreme outliers using the interquartile range method.
 
     :param num_dat: Array-like object containing numerical data.
     :type num_dat: array-like
@@ -207,7 +291,7 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
 
 def interquartile_range(num_dat):
     """
-    Calculate the interquartile range (IQR) of numerical data.
+    Calculates the interquartile range (IQR) of numerical data.
 
     This function can serve as an alternative to
     `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
@@ -234,7 +318,7 @@ def interquartile_range(num_dat):
 def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M:%S.%f'):
     # noinspection PyShadowingNames
     """
-    Find the closest date to a given date from a list of dates.
+    Finds the closest date to a given date from a list of dates.
 
     :param date: Date to find the closest match for.
     :type date: str | datetime.datetime

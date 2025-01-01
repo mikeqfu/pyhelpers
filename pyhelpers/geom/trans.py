@@ -17,7 +17,7 @@ import shapely.ops
 
 def transform_point_type(*pts, as_geom=True):
     """
-    Transform iterable data to geometric type or vice versa.
+    Transforms iterable data to geometric type or vice versa.
 
     :param pts: Iterable data representing points (e.g. list of lists/tuples).
     :type pts: list | tuple | shapely.geometry.Point
@@ -53,7 +53,7 @@ def transform_point_type(*pts, as_geom=True):
         ...     print(x)
         [-0.1276474 51.5073219]
         [-1.9026911 52.4796992]
-        >>> pt1, pt2 = map(Point, (pt1, pt2))
+        >>> pt1, pt2 = map(lambda p: Point(p), (pt1, pt2))
         >>> geom_points = transform_point_type(pt1, pt2)
         >>> for x in geom_points:
         ...     print(x)
@@ -88,7 +88,7 @@ def transform_point_type(*pts, as_geom=True):
 
 def get_coordinates_as_array(geom_obj, unique=False):
     """
-    Retrieve an array of coordinates from the input geometry object.
+    Retrieves an array of coordinates from the input geometry object.
 
     :param geom_obj: Input geometry object.
     :type geom_obj: numpy.ndarray | list | tuple | typing.Iterable |
@@ -174,7 +174,7 @@ def get_coordinates_as_array(geom_obj, unique=False):
 
 def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
     """
-    Convert latitude and longitude
+    Converts latitude and longitude
     (`WGS84 <https://en.wikipedia.org/wiki/World_Geodetic_System>`_)
     to British national grid
     (`OSGB36 <https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid>`_).
@@ -250,7 +250,7 @@ def wgs84_to_osgb36(longitudes, latitudes, as_array=False, **kwargs):
 
 def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
     """
-    Convert British national grid (`OSGB36`_) to latitude and longitude (`WGS84`_).
+    Converts British national grid (`OSGB36`_) to latitude and longitude (`WGS84`_).
 
     .. _`OSGB36`: https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid
     .. _`WGS84`: https://en.wikipedia.org/wiki/World_Geodetic_System
@@ -334,7 +334,7 @@ def _drop_x(_, y, z):
 
 def drop_axis(geom, axis='z', as_array=False):
     """
-    Drop an axis from a given 3D geometry object.
+    Drops an axis from a given 3D geometry object.
 
     :param geom: Geometry object that has *X*, *Y* and *Z* coordinates.
     :type geom: shapely.geometry.base.BaseGeometry
@@ -421,7 +421,7 @@ def drop_axis(geom, axis='z', as_array=False):
 
 def project_point_to_line(point, line, drop_dimension=None):
     """
-    Find the projected point from a given point to a line.
+    Finds the projected point from a given point to a line.
 
     :param point: Point geometry object representing the starting point.
     :type point: shapely.geometry.Point
