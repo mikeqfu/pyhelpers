@@ -33,6 +33,10 @@ jobs:
         cd docs
         make html
 
+    - name: Disable Jekyll
+      run: |
+        touch docs/build/html/.nojekyll  # Disable Jekyll by adding the .nojekyll file
+
     - name: Upload pages artifact
       uses: actions/upload-pages-artifact@v1
       with:
