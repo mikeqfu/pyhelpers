@@ -48,26 +48,28 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
         >>> from pyhelpers.dirs import cd, delete_dir
         >>> zip_file_path = cd("tests\\data", "zipped.zip")
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
-        Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped\\" ... Done.
-        >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
+        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped\\" ... Done.
+        >>> output_dir_1 = cd("tests\\data\\zipped")
+        >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> output_dir = cd("tests\\data\\zipped_alt")
-        >>> unzip(path_to_zip_file=zip_file_path, out_dir=output_dir, verbose=True)
-        Extracting "tests\\data\\zipped.zip" to "tests\\data\\zipped_alt\\" ... Done.
-        >>> out_file_pathname = cd("tests\\data\\zipped_alt", "zipped.txt")
+        >>> output_dir_2 = cd("tests\\data\\zipped_alt")
+        >>> unzip(path_to_zip_file=zip_file_path, out_dir=output_dir_2, verbose=True)
+        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped_alt\\" ... Done.
+        >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories "tests\\data\\zipped\\" and "tests\\data\\zipped_alt\\"
-        >>> delete_dir([cd("tests\\data\\zipped"), output_dir], verbose=True)
+        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         To delete the following directories:
-            "tests\\data\\zipped\\" (Not empty)
-            "tests\\data\\zipped_alt\\" (Not empty)
+            ".\\tests\\data\\zipped\\" (Not empty)
+            ".\\tests\\data\\zipped_alt\\" (Not empty)
         ? [No]|Yes: yes
-        Deleting "tests\\data\\zipped\\" ... Done.
-        Deleting "tests\\data\\zipped_alt\\" ... Done.
+        Deleting ".\\tests\\data\\zipped\\" ... Done.
+        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
+
     """
 
     if out_dir is None:
@@ -77,9 +79,9 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
         os.makedirs(name=out_dir)
 
     if verbose:
-        rel_path = os.path.relpath(path=path_to_zip_file)
-        out_dir_ = os.path.relpath(path=out_dir) + ("\\" if not out_dir.endswith("\\") else "")
-        print("Extracting \"{}\" to \"{}\"".format(rel_path, out_dir_), end=" ... ")
+        rel_path, out_dir_ = map(
+            lambda x: _add_slashes(os.path.relpath(x)), [path_to_zip_file, out_dir])
+        print(f'Extracting {rel_path} to {out_dir_}', end=" ... ")
 
     try:
         with zipfile.ZipFile(file=path_to_zip_file) as zf:
@@ -119,14 +121,15 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
         >>> from pyhelpers.dirs import cd, delete_dir
         >>> zip_file_pathname = cd("tests\\data", "zipped.zip")
         >>> seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
-        7-Zip 20.00 alpha (x64) : Copyright (c) 1999-2020 Igor Pavlov : 2020-02-06
+
+        7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
 
         Scanning the drive for archives:
         1 file, 158 bytes (1 KiB)
 
-        Extracting archive: \\tests\\data\\zipped.zip
+        Extracting archive: .\\tests\\data\\zipped.zip
         --
-        Path = \\tests\\data\\zipped.zip
+        Path = .\\tests\\data\\zipped.zip
         Type = zip
         Physical Size = 158
 
@@ -136,28 +139,31 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
         Compressed: 158
 
         Done.
-
-        >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
+        >>> output_dir_1 = cd("tests\\data\\zipped")
+        >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> output_dir = cd("tests\\data\\zipped_alt")
-        >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir, verbose=False)
+        >>> output_dir_2 = cd("tests\\data\\zipped_alt")
+        >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir_2, verbose=False)
         >>> out_file_pathname = cd("tests\\data\\zipped_alt", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
         >>> # Extract a .7z file
         >>> zip_file_path = cd("tests\\data", "zipped.7z")
-        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir)
+        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir_2)
         >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directory: ".\\tests\\data\\zipped_alt\\"
-        >>> delete_dir(output_dir, verbose=True)
-        To delete the directory ".\\tests\\data\\zipped_alt\\" (Not empty)
+        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
+        To delete the following directories:
+            ".\\tests\\data\\zipped\\" (Not empty)
+            ".\\tests\\data\\zipped_alt\\" (Not empty)
         ? [No]|Yes: yes
+        Deleting ".\\tests\\data\\zipped\\" ... Done.
         Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
     """
 
@@ -233,12 +239,12 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
         >>> dat_dir = cd("tests\\documents")
-        >>> path_to_md_file = cd(dat_dir, "readme.md")
-        >>> path_to_rst_file = cd(dat_dir, "readme.rst")
+        >>> path_to_md_file = cd(dat_dir, "readme1.md")
+        >>> path_to_rst_file = cd(dat_dir, "readme1.rst")
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-        Converting "tests\\data\\markdown.md" to "tests\\data\\markdown.rst" ... Done.
+        Converting ".\\tests\\documents\\readme.md" to ".\\tests\\documents\\readme.rst" ... Done.
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-        Updating "readme.rst" at ".\\tests\\documents\" ... Done.
+        Updating "readme.rst" at ".\\tests\\documents\\" ... Done.
     """
 
     exe_name = "pandoc.exe"
@@ -260,7 +266,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
             lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
 
         if not os.path.exists(abs_output_path):
-            msg = f'Converting "{rel_input_path}" to {_add_slashes(rel_output_path)}'
+            msg = f'Converting {_add_slashes(rel_input_path)} to {_add_slashes(rel_output_path)}'
         else:
             msg = f'Updating "{rel_output_path.name}" at {_add_slashes(rel_output_path.parent)}'
         print(msg, end=" ... ")
@@ -447,7 +453,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> import os
         >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
-        Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
         True
         >>> data = load_csv(path_to_temp_csv, index=0)
@@ -460,7 +466,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Leeds       -1.5437941  53.7974185
         >>> # Set `engine='xlsx2csv'`
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
-        Converting "tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
         >>> data_ = load_csv(temp_csv_buffer, index=0)
         >>> data_
@@ -478,7 +484,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
 
     if verbose:
         rel_path = _check_relative_pathname(path_to_xlsx)
-        print(f"Converting \"{rel_path}\" to a (temporary) CSV file", end=" ... ")
+        print(f'Converting {_add_slashes(rel_path)} to a (temporary) CSV file', end=" ... ")
 
     if engine is None:
         vbscript_, csv_pathname = _xlsx_to_csv_prep(
