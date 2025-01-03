@@ -176,7 +176,7 @@ def _add_slashes(pathname):
     Adds leading and/or trailing slashes to a given pathname for formatting or display purposes.
 
     :param pathname: The pathname of a file or directory.
-    :type pathname: str | os.PathLike
+    :type pathname: str | bytes | os.PathLike
     :return: A formatted pathname with added slashes.
     :rtype: str
 
@@ -191,7 +191,8 @@ def _add_slashes(pathname):
         '"C:\\Windows\\"'
     """
 
-    path = os.path.normpath(pathname)  # Normalise path separators for consistency
+    # Normalise path separators for consistency
+    path = os.path.normpath(pathname.decode() if isinstance(pathname, bytes) else pathname)
 
     # Add a leading slash if necessary
     if not path.startswith((os.path.sep, ".")) and not os.path.isabs(path):
