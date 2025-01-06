@@ -1,11 +1,11 @@
 # PyHelpers
 
-[![PyPI](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
-[![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/) 
-[![Documentation Status](https://readthedocs.org/projects/pyhelpers/badge/?version=latest)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
-[![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)
-](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![PyPI - Version](https://img.shields.io/pypi/v/pyhelpers?logo=pypi)](https://pypi.org/project/pyhelpers/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers?logo=python)](https://docs.python.org/3/)
+[![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
+[![Read the Docs - Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
+[![GitHub Pages - Documentation](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?branch=master&logo=github&label=docs)](https://mikeqfu.github.io/pyhelpers/)
+[![Codacy - Code Quality](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Zenodo](https://zenodo.org/badge/173177909.svg)](https://zenodo.org/badge/latestdoi/173177909)
 
 PyHelpers is an open-source Python package designed to streamline data (pre-)processing and manipulation tasks. It accommodates a wide range of functions and classes grounded in practical applications, making common data operations more accessible and efficient. This toolkit is particularly useful for Python learners, researchers and data scientists seeking to enhance their workflows.
@@ -26,7 +26,7 @@ For more information, see the [Installation](https://pyhelpers.readthedocs.io/en
 
 ## Quick Start
 
-For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html). 
+For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html).
 
 These examples briefly demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining work processes.
 
@@ -34,7 +34,7 @@ These examples briefly demonstrate the capabilities of PyHelpers in facilitating
 
 The complete PyHelpers Documentation is available in [HTML](https://pyhelpers.readthedocs.io/en/latest/) and [PDF](https://pyhelpers.readthedocs.io/_/downloads/en/latest/pdf/) formats. 
 
-It is hosted on [ReadTheDocs](https://readthedocs.org/projects/pyhelpers/) and includes detailed examples.
+It is hosted on [Read the Docs](https://readthedocs.org/projects/pyhelpers/), and the HTML version is also accessible via [GitHub Pages](https://mikeqfu.github.io/pyhelpers/). The documentation includes detailed examples, tutorials and comprehensive references to help users get the most out of PyHelpers. 
 
 ## Cite as
 
