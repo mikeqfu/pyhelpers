@@ -23,7 +23,8 @@ from .._cache import _add_slashes, _check_dependency, _check_file_pathname, \
 # Uncompress data
 # ==================================================================================================
 
-def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kwargs):
+def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False, raise_error=False,
+          **kwargs):
     """
     Unzips data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
@@ -31,8 +32,10 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
 
     :param path_to_zip_file: The path where the Zip file is saved.
     :type path_to_zip_file: str | os.PathLike
-    :param out_dir: The directory where the extracted data will be saved; defaults to ``None``.
-    :type out_dir: str | None
+    :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
+    :type output_dir: str | None
+    :param ret_output_dir: Whether to return the path to output directory; defaults to ``False``.
+    :type ret_output_dir: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param raise_error: Whether to raise the provided exception;
@@ -46,16 +49,16 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
 
         >>> from pyhelpers.store import unzip
         >>> from pyhelpers.dirs import cd, delete_dir
-        >>> zip_file_path = cd("tests\\data", "zipped.zip")
+        >>> zip_file_path = cd("tests", "data", "zipped.zip")
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
         Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped\\" ... Done.
-        >>> output_dir_1 = cd("tests\\data\\zipped")
+        >>> output_dir_1 = cd("tests", "data", "zipped")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> output_dir_2 = cd("tests\\data\\zipped_alt")
-        >>> unzip(path_to_zip_file=zip_file_path, out_dir=output_dir_2, verbose=True)
+        >>> output_dir_2 = cd("tests", "data", "zipped_alt")
+        >>> unzip(path_to_zip_file=zip_file_path, output_dir=output_dir_2, verbose=True)
         Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped_alt\\" ... Done.
         >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
@@ -72,39 +75,46 @@ def unzip(path_to_zip_file, out_dir=None, verbose=False, raise_error=False, **kw
 
     """
 
-    if out_dir is None:
-        out_dir = os.path.splitext(path_to_zip_file)[0]
+    if output_dir is None:
+        output_dir_ = os.path.splitext(path_to_zip_file)[0]
+    else:
+        output_dir_ = copy.deepcopy(output_dir)
 
-    if not os.path.exists(out_dir):
-        os.makedirs(name=out_dir)
+    if not os.path.exists(output_dir_):
+        os.makedirs(name=output_dir_)
 
     if verbose:
-        rel_path, out_dir_ = map(
-            lambda x: _add_slashes(os.path.relpath(x)), [path_to_zip_file, out_dir])
-        print(f'Extracting {rel_path} to {out_dir_}', end=" ... ")
+        rel_path, out_dir = map(
+            lambda x: _add_slashes(_check_relative_pathname(x)), [path_to_zip_file, output_dir_])
+        print(f'Extracting {rel_path} to {out_dir}', end=" ... ")
 
     try:
         with zipfile.ZipFile(file=path_to_zip_file) as zf:
-            zf.extractall(path=out_dir, **kwargs)
+            zf.extractall(path=output_dir_, **kwargs)
 
         if verbose:
             print("Done.")
+
+        if ret_output_dir:
+            return output_dir_
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_error=False,
-              seven_zip_exe=None):
+def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=False, verbose=False,
+              raise_error=False, seven_zip_exe=None):
     """
     Extracts data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
     :param path_to_zip_file: The path where the compressed file is saved.
     :type path_to_zip_file: str | os.PathLike
-    :param out_dir: The directory where the extracted data will be saved; defaults to ``None``.
-    :type out_dir: str | None
+    :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
+    :type output_dir: str | None
     :param mode: The extraction mode; defaults to ``'aoa'``.
     :type mode: str
+    :param ret_output_dir: Whether to return the path to output directory; defaults to ``False``.
+    :type ret_output_dir: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param raise_error: Whether to raise the provided exception;
@@ -119,7 +129,7 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
 
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dirs import cd, delete_dir
-        >>> zip_file_pathname = cd("tests\\data", "zipped.zip")
+        >>> zip_file_pathname = cd("tests", "data", "zipped.zip")
         >>> seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
 
         7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
@@ -139,21 +149,21 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
         Compressed: 158
 
         Done.
-        >>> output_dir_1 = cd("tests\\data\\zipped")
+        >>> output_dir_1 = cd("tests", "data", "zipped")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> output_dir_2 = cd("tests\\data\\zipped_alt")
-        >>> seven_zip(path_to_zip_file=zip_file_pathname, out_dir=output_dir_2, verbose=False)
-        >>> out_file_pathname = cd("tests\\data\\zipped_alt", "zipped.txt")
+        >>> output_dir_2 = cd("tests", "data", "zipped_alt")
+        >>> seven_zip(path_to_zip_file=zip_file_pathname, output_dir=output_dir_2, verbose=False)
+        >>> out_file_pathname = cd("tests", "data", "zipped_alt", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
         >>> # Extract a .7z file
-        >>> zip_file_path = cd("tests\\data", "zipped.7z")
-        >>> seven_zip(path_to_zip_file=zip_file_path, out_dir=output_dir_2)
-        >>> out_file_pathname = cd("tests\\data\\zipped", "zipped.txt")
+        >>> zip_file_path = cd("tests", "data", "zipped.7z")
+        >>> seven_zip(path_to_zip_file=zip_file_path, output_dir=output_dir_2)
+        >>> out_file_pathname = cd("tests", "data", "zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
@@ -173,11 +183,13 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
         name=exe_name, options=optional_pathnames, target=seven_zip_exe)
 
     if seven_zip_exists:
-        if out_dir is None:
-            out_dir = os.path.splitext(path_to_zip_file)[0]
+        if output_dir is None:
+            output_dir_ = os.path.splitext(path_to_zip_file)[0]
+        else:
+            output_dir_ = copy.deepcopy(output_dir)
 
         try:
-            command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + out_dir, '-' + mode]
+            command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + output_dir_, '-' + mode]
             if not verbose:
                 command_args += ['-bso0', '-bsp0']
 
@@ -186,10 +198,11 @@ def seven_zip(path_to_zip_file, out_dir=None, mode='aoa', verbose=False, raise_e
             if verbose:
                 print("\nDone." if rslt.returncode == 0 else "\nFailed.")
 
+            if ret_output_dir:
+                return output_dir_
+
         except Exception as e:
-            _print_failure_message(e, prefix="Error:", verbose=verbose, raise_error=raise_error)
-            if verbose:
-                print("An error occurred: {}.".format(e))
+            _print_failure_message(e=e, prefix="Error:", verbose=verbose, raise_error=raise_error)
 
     else:
         print('"7-Zip" (https://www.7-zip.org/) is required to run this function; '
@@ -238,7 +251,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
-        >>> dat_dir = cd("tests\\documents")
+        >>> dat_dir = cd("tests", "documents")
         >>> path_to_md_file = cd(dat_dir, "readme1.md")
         >>> path_to_rst_file = cd(dat_dir, "readme1.rst")
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
@@ -248,7 +261,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     """
 
     exe_name = "pandoc.exe"
-    optional_pathnames = {exe_name, f"C:\\Program Files\\Pandoc\\{exe_name}"}
+    optional_pathnames = {exe_name, f"C:/Program Files/Pandoc/{exe_name}"}
     pandoc_exists, pandoc_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=pandoc_exe)
 
@@ -451,7 +464,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> from pyhelpers.store import xlsx_to_csv, load_csv
         >>> from pyhelpers.dirs import cd
         >>> import os
-        >>> path_to_test_xlsx = cd("tests\\data", "dat.xlsx")
+        >>> path_to_test_xlsx = cd("tests", "data", "dat.xlsx")
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
         Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
