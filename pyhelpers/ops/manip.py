@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .._cache import _check_dependency, _check_relative_pathname, _print_failure_message
+from .._cache import _check_dependency
 
 
 # ==================================================================================================
@@ -584,71 +584,6 @@ def dict_to_dataframe(input_dict, k='key', v='value'):
     data_frame = pd.DataFrame({k: dict_keys, v: dict_vals})
 
     return data_frame
-
-
-def parse_csr_matrix(path_to_csr, verbose=False, raise_error=False, **kwargs):
-    """
-    Loads in a compressed sparse row (CSR) or compressed row storage (CRS).
-
-    :param path_to_csr: Path to the CSR file (e.g. with extension ".npz").
-    :type path_to_csr: str | os.PathLike
-    :param verbose: Whether to print relevant information in console as the function runs;
-        defaults to ``False``.
-    :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
-    :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `numpy.load()`_.
-    :return: A compressed sparse row.
-    :rtype: scipy.sparse.csr.csr_matrix
-
-    .. _`numpy.load()`: https://numpy.org/doc/stable/reference/generated/numpy.load
-
-    **Examples**::
-
-        >>> from pyhelpers.ops import parse_csr_matrix
-        >>> from pyhelpers.dirs import cd
-        >>> from scipy.sparse import csr_matrix, save_npz
-        >>> data_ = [1, 2, 3, 4, 5, 6]
-        >>> indices_ = [0, 2, 2, 0, 1, 2]
-        >>> indptr_ = [0, 2, 3, 6]
-        >>> csr_m = csr_matrix((data_, indices_, indptr_), shape=(3, 3))
-        >>> csr_m
-        <3x3 sparse matrix of type '<class 'numpy.int32'>'
-            with 6 stored elements in Compressed Sparse Row format>
-        >>> path_to_csr_npz = cd("tests\\data", "csr_mat.npz")
-        >>> save_npz(path_to_csr_npz, csr_m)
-        >>> parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
-        Loading "\\tests\\data\\csr_mat.npz" ... Done.
-        >>> # .nnz gets the count of explicitly-stored values (non-zeros)
-        >>> (parsed_csr_mat != csr_m).count_nonzero() == 0
-        True
-        >>> (parsed_csr_mat != csr_m).nnz == 0
-        True
-    """
-
-    scipy_sparse = _check_dependency(name='scipy.sparse')
-
-    if verbose:
-        rel_path_to_csr = _check_relative_pathname(path_to_csr)
-        print(f'Loading "\\{rel_path_to_csr}"', end=" ... ")
-
-    try:
-        csr_loader = np.load(path_to_csr, **kwargs)
-        data = csr_loader['data']
-        indices = csr_loader['indices']
-        indptr = csr_loader['indptr']
-        shape = csr_loader['shape']
-
-        csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
-
-        if verbose:
-            print("Done.")
-
-        return csr_mat
-
-    except Exception as e:
-        _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def swap_cols(array, c1, c2, as_list=False):
