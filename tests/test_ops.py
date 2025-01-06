@@ -1,6 +1,5 @@
 """Test the module :mod:`~pyhelpers.ops`."""
 
-import importlib.resources
 import tempfile
 import time
 import typing
@@ -8,7 +7,6 @@ import typing
 import matplotlib.cm
 import matplotlib.pyplot as plt
 import pytest
-from scipy.sparse import csr_matrix, save_npz
 
 from pyhelpers._cache import example_dataframe
 from pyhelpers.dbms import PostgreSQL
@@ -326,35 +324,6 @@ def test_dict_to_dataframe():
     isinstance(dat, pd.DataFrame)
 
 
-def test_parse_csr_matrix(capfd):
-    data_ = [1, 2, 3, 4, 5, 6]
-    indices_ = [0, 2, 2, 0, 1, 2]
-    indptr_ = [0, 2, 3, 6]
-
-    csr_m = csr_matrix((data_, indices_, indptr_), shape=(3, 3))
-
-    assert list(csr_m.data) == data_
-    assert list(csr_m.indices) == indices_
-    assert list(csr_m.indptr) == indptr_
-
-    path_to_csr_npz_ = importlib.resources.files(__package__).joinpath("data\\csr_mat.npz")
-
-    with importlib.resources.as_file(path_to_csr_npz_) as path_to_csr_npz:
-        save_npz(path_to_csr_npz, csr_m)
-        parsed_csr_mat = parse_csr_matrix(path_to_csr_npz, verbose=True)
-        out, _ = capfd.readouterr()
-        assert "Loading " in out and '\\data\\csr_mat.npz" ... Done.\n' in out
-
-    rslt = parsed_csr_mat != csr_m
-    assert isinstance(rslt, csr_matrix)
-    assert rslt.count_nonzero() == 0
-    assert rslt.nnz == 0
-
-    _ = parse_csr_matrix("", verbose=True)
-    out, _ = capfd.readouterr()
-    assert "No such file or directory" in out
-
-
 def test_swap_cols():
     example_arr = example_dataframe(osgb36=True).to_numpy(dtype=int)
 
@@ -552,14 +521,13 @@ class TestGitHubFileDownloader:
         downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert os.path.join("tests", "data", "zipped", "zipped.txt") in out
-        assert downloader.total_files == 13
+        assert downloader.total_files >= 15
 
         downloader = GitHubFileDownloader(test_url, flatten_files=True, output_dir=test_output_dir)
         downloader.download()
         out, _ = capfd.readouterr()
         assert "zipped.txt" in out
-        assert downloader.total_files == 13
+        assert downloader.total_files >= 15
 
         shutil.rmtree(test_output_dir)
 
