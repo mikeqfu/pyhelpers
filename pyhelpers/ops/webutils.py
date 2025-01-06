@@ -589,7 +589,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> from PIL import Image
         >>> import os
         >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-        >>> path_to_img = cd("tests\\images", "ops-download_file_from_url-demo.png")
+        >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
         >>> # Check if "python-logo.png" exists at the specified path
         >>> os.path.exists(path_to_img)
         False
@@ -705,30 +705,34 @@ class GitHubFileDownloader:
             Downloaded to: ".\\tests\\temp\\tests\\data\\dat.json"
             Downloaded to: ".\\tests\\temp\\tests\\data\\dat.ods"
             Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle"
+            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.bz2"
+            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.gz"
+            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.xz"
             Downloaded to: ".\\tests\\temp\\tests\\data\\dat.txt"
             Downloaded to: ".\\tests\\temp\\tests\\data\\dat.xlsx"
             Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.7z"
             Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.txt"
             Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.zip"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\zipped\\zipped.txt"
-            13
+            15
             >>> downloader = GitHubFileDownloader(
             ...     repo_url, flatten_files=True, output_dir=output_dir)
             >>> downloader.download()
-            Downloaded to: .\\tests\\temp\\csr_mat.npz
-            Downloaded to: .\\tests\\temp\\dat.csv
-            Downloaded to: .\\tests\\temp\\dat.feather
-            Downloaded to: .\\tests\\temp\\dat.joblib
-            Downloaded to: .\\tests\\temp\\dat.json
-            Downloaded to: .\\tests\\temp\\dat.ods
-            Downloaded to: .\\tests\\temp\\dat.pickle
-            Downloaded to: .\\tests\\temp\\dat.txt
-            Downloaded to: .\\tests\\temp\\dat.xlsx
-            Downloaded to: .\\tests\\temp\\zipped.7z
-            Downloaded to: .\\tests\\temp\\zipped.txt
-            Downloaded to: .\\tests\\temp\\zipped.zip
-            Downloaded to: .\\tests\\temp\\zipped.txt
-            13
+            Downloaded to: ".\\tests\\temp\\csr_mat.npz"
+            Downloaded to: ".\\tests\\temp\\dat.csv"
+            Downloaded to: ".\\tests\\temp\\dat.feather"
+            Downloaded to: ".\\tests\\temp\\dat.joblib"
+            Downloaded to: ".\\tests\\temp\\dat.json"
+            Downloaded to: ".\\tests\\temp\\dat.ods"
+            Downloaded to: ".\\tests\\temp\\dat.pickle"
+            Downloaded to: ".\\tests\temp\"dat.pickle.bz2"
+            Downloaded to: ".\\tests\\temp\"dat.pickle.gz"
+            Downloaded to: ".\\tests\\temp\\"dat.pickle.xz"
+            Downloaded to: ".\\tests\\temp\\dat.txt"
+            Downloaded to: ".\\tests\\temp\\dat.xlsx"
+            Downloaded to: ".\\tests\\temp\\zipped.7z"
+            Downloaded to: ".\\tests\\temp\\zipped.txt"
+            Downloaded to: ".\\tests\\temp\\zipped.zip"
+            15
             >>> delete_dir(output_dir)
             To delete the directory ".\\tests\\temp\\" (Not empty)
             ? [No]|Yes: yes

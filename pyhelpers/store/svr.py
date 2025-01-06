@@ -43,9 +43,9 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
         >>> pickle_dat = 1
-        >>> pickle_pathname = cd("tests\\data", "dat.pickle")
+        >>> pickle_pathname = cd("tests", "data", "dat.pickle")
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
-        Saving "dat.pickle" to "tests\\data\\" ... Done.
+        Saving "dat.pickle" to ".\\tests\\data\\" ... Done.
         >>> # Get an example dataframe
         >>> pickle_dat = example_dataframe()
         >>> pickle_dat
@@ -56,7 +56,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
-        Updating "dat.pickle" at "tests\\data\\" ... Done.
+        Updating "dat.pickle" at ".\\tests\\data\\" ... Done.
 
     .. tip::
 
@@ -166,15 +166,15 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
-        >>> spreadsheet_pathname = cd("tests\\data", "dat.csv")
+        >>> spreadsheet_pathname = cd("tests", "data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.csv" to "tests\\data\\" ... Done.
-        >>> spreadsheet_pathname = cd("tests\\data", "dat.xlsx")
+        Saving "dat.csv" to ".\\tests\\data\\" ... Done.
+        >>> spreadsheet_pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.xlsx" to "tests\\data\\" ... Done.
-        >>> spreadsheet_pathname = cd("tests\\data", "dat.ods")
+        Saving "dat.xlsx" to ".\\tests\\data\\" ... Done.
+        >>> spreadsheet_pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.ods" to "tests\\data\\" ... Done.
+        Saving "dat.ods" to ".\\tests\\data\\" ... Done.
     """
 
     _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
@@ -281,28 +281,28 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         Latitude   51.507322   52.479699   53.479489  53.797418
         >>> dat = [dat1, dat2]
         >>> sheets = ['TestSheet1', 'TestSheet2']
-        >>> pathname = cd("tests\\data", "dat.ods")
+        >>> pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
-        Saving "dat.ods" to "tests\\data\\" ...
+        Saving "dat.ods" to ".\\tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
-        >>> pathname = cd("tests\\data", "dat.xlsx")
+        >>> pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
-        Saving "dat.xlsx" to "tests\\data\\" ...
+        Saving "dat.xlsx" to ".\\tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, mode='a', verbose=True)
-        Updating "dat.xlsx" at "tests\\data\\" ...
+        Updating "dat.xlsx" at ".\\tests\\data\\" ...
             'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='replace', verbose=True)
-        Updating "dat.xlsx" at "tests\\data\\" ...
+        Updating "dat.xlsx" at ".\\tests\\data\\" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='new', verbose=True)
-        Updating "dat.xlsx" at "tests\\data\\" ...
+        Updating "dat.xlsx" at ".\\tests\\data\\" ...
             'TestSheet1' ... saved as 'TestSheet12' ... Done.
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
@@ -416,10 +416,10 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
         >>> import json
-        >>> json_pathname = cd("tests\\data", "dat.json")
+        >>> json_pathname = cd("tests", "data", "dat.json")
         >>> json_dat = {'a': 1, 'b': 2, 'c': 3, 'd': ['a', 'b', 'c']}
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
-        Saving "dat.json" to "tests\\data\\" ... Done.
+        Saving "dat.json" to ".\\tests\\data\\" ... Done.
         >>> # Get an example dataframe
         >>> example_df = example_dataframe()
         >>> example_df
@@ -438,13 +438,13 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> # Use built-in json module
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
-        Updating "dat.json" at "tests\\data\\" ... Done.
+        Updating "dat.json" at ".\\tests\\data\\" ... Done.
         >>> save_json(json_dat, json_pathname, engine='orjson', verbose=True)
-        Updating "dat.json" at "tests\\data\\" ... Done.
+        Updating "dat.json" at ".\\tests\\data\\" ... Done.
         >>> save_json(json_dat, json_pathname, engine='ujson', indent=4, verbose=True)
-        Updating "dat.json" at "tests\\data\\" ... Done.
+        Updating "dat.json" at ".\\tests\\data\\" ... Done.
         >>> save_json(json_dat, json_pathname, engine='rapidjson', indent=4, verbose=True)
-        Updating "dat.json" at "tests\\data\\" ... Done.
+        Updating "dat.json" at ".\\tests\\data\\" ... Done.
 
     .. seealso::
 
@@ -499,7 +499,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
         >>> import numpy as np
-        >>> joblib_pathname = cd("tests\\data", "dat.joblib")
+        >>> joblib_pathname = cd("tests", "data", "dat.joblib")
         >>> # Example 1:
         >>> joblib_dat = example_dataframe().to_numpy()
         >>> joblib_dat
@@ -508,7 +508,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
                [-2.2451148, 53.4794892],
                [-1.5437941, 53.7974185]])
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
-        Saving "dat.joblib" to "tests\\data\\" ... Done.
+        Saving "dat.joblib" to ".\\tests\\data\\" ... Done.
         >>> # Example 2:
         >>> np.random.seed(0)
         >>> joblib_dat = np.random.rand(100, 100)
@@ -527,7 +527,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
                [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
                 0.81357508]])
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
-        Updating "dat.joblib" at "tests\\data\\" ... Done.
+        Updating "dat.joblib" at ".\\tests\\data\\" ... Done.
 
     .. seealso::
 
@@ -656,19 +656,19 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
 
     .. code-block:: python
 
-        >>> img_dir = cd("tests\\images")
+        >>> img_dir = cd("tests", "images")
         >>> path_to_svg = cd(img_dir, "store-save_fig-demo.svg")
         >>> fig.savefig(path_to_svg)  # Save the figure as a .svg file
         >>> path_to_emf = cd(img_dir, "store-save_fig-demo.emf")
         >>> save_svg_as_emf(path_to_svg, path_to_emf, verbose=True)
-        Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
+        Saving the .svg file as ".\\tests\\images\\store-save_fig-demo.emf" ... Done.
         >>> plt.close()
     """
 
     exe_name = "inkscape.exe"
     optional_pathnames = {
-        f"C:\\Program Files\\Inkscape\\{exe_name}",
-        f"C:\\Program Files\\Inkscape\\bin\\{exe_name}",
+        f"C:/Program Files/Inkscape/{exe_name}",
+        f"C:/Program Files/Inkscape/bin/{exe_name}",
     }
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
@@ -762,13 +762,13 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
 
     .. code-block:: python
 
-        >>> img_dir = cd("tests\\images")
+        >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> save_fig(svg_file_pathname, verbose=True)
-        Saving "store-save_fig-demo.png" to "tests\\images\\" ... Done.
+        Saving "store-save_fig-demo.png" to ".\\tests\\images\\" ... Done.
         >>> save_fig(svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_fig-demo.svg" at "tests\\images\\" ... Done.
-        Saving the .svg file as "tests\\images\\store-save_fig-demo.emf" ... Done.
+        Updating "store-save_fig-demo.svg" at ".\\tests\\images\\" ... Done.
+        Saving the .svg file as ".\\tests\\images\\store-save_fig-demo.emf" ... Done.
         >>> plt.close()
     """
 
@@ -842,15 +842,15 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
 
     .. code-block:: python
 
-        >>> img_dir = cd("tests\\images")
+        >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_figure-demo.svg")
         >>> save_figure(fig, svg_file_pathname, verbose=True)
-        Saving "store-save_figure-demo.png" to "tests\\images\\" ... Done.
+        Saving "store-save_figure-demo.png" to ".\\tests\\images\\" ... Done.
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.svg", verbose=True)
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.pdf", verbose=True)
         >>> save_figure(fig, svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_figure-demo.svg" at "tests\\images\\" ... Done.
-        Saving the .svg file as "tests\\images\\store-save_figure-demo.emf" ... Done.
+        Updating "store-save_figure-demo.svg" at ".\\tests\\images\\" ... Done.
+        Saving the .svg file as ".\\tests\\images\\store-save_figure-demo.emf" ... Done.
         >>> plt.close()
     """
 
@@ -921,20 +921,20 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> from pyhelpers.store import save_html_as_pdf
         >>> from pyhelpers.dirs import cd
         >>> import subprocess
-        >>> pdf_pathname = cd("tests\\documents", "pyhelpers.pdf")
+        >>> pdf_pathname = cd("tests", "documents", "pyhelpers.pdf")
         >>> web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
         >>> save_html_as_pdf(web_page_url, pdf_pathname)
         >>> # Open the PDF file using the system's default application
         >>> subprocess.Popen(pdf_pathname, shell=True)
         >>> # Close the PDF file (if opened with Foxit Reader)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
-        >>> web_page_file = cd("docs\\build\\html\\index.html")
+        >>> web_page_file = cd("docs", "build", "html", "index.html")
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
-        Updating "pyhelpers.pdf" at "tests\\documents\\" ... Done.
+        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ... Done.
         >>> subprocess.Popen(pdf_pathname, shell=True)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=2)
-        Updating "pyhelpers.pdf" at "tests\\documents\\" ...
+        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ...
         Loading pages (1/6)
         Counting pages (2/6)
         Resolving links (4/6)
@@ -950,8 +950,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     else:
         exe_name = "wkhtmltopdf.exe"
         optional_pathnames = {
-            f"C:\\Program Files\\wkhtmltopdf\\{exe_name}",
-            f"C:\\Program Files\\wkhtmltopdf\\bin\\{exe_name}",
+            f"C:/Program Files/wkhtmltopdf/{exe_name}",
+            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}",
         }
         wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
             name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
@@ -1056,7 +1056,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> from pyhelpers.store import save_data
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
-        >>> data_dir = cd("tests\\data")
+        >>> data_dir = cd("tests", "data")
         >>> # Get an example dataframe
         >>> dat = example_dataframe()
         >>> dat
@@ -1069,19 +1069,19 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> # Save the data to files different formats:
         >>> dat_pathname = cd(data_dir, "dat.pickle")
         >>> save_data(dat, dat_pathname, verbose=True)
-        Saving "dat.pickle" to "tests\\data\\" ... Done.
+        Saving "dat.pickle" to ".\\tests\\data\\" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.csv")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.csv" to "tests\\data\\" ... Done.
+        Saving "dat.csv" to ".\\tests\\data\\" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.xlsx")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.xlsx" to "tests\\data\\" ... Done.
+        Saving "dat.xlsx" to ".\\tests\\data\\" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.txt")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.txt" to "tests\\data\\" ... Done.
+        Saving "dat.txt" to ".\\tests\\data\\" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.feather" to "tests\\data\\" ... Done.
+        Saving "dat.feather" to ".\\tests\\data\\" ... Done.
         >>> # Convert `dat` to JSON format
         >>> import json
         >>> dat_ = json.loads(dat.to_json(orient='index'))
@@ -1092,7 +1092,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.json")
         >>> save_data(dat_, dat_pathname, indent=4, verbose=True)
-        Saving "dat.json" to "tests\\data\\" ... Done.
+        Saving "dat.json" to ".\\tests\\data\\" ... Done.
 
     .. seealso::
 
