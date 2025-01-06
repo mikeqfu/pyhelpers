@@ -1,7 +1,7 @@
 # PyHelpers
 
-[![PyPI - Version](https://img.shields.io/pypi/v/pyhelpers?logo=pypi)](https://pypi.org/project/pyhelpers/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers?logo=python)](https://docs.python.org/3/)
+[![PyPI - Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![Read the Docs - Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![GitHub Pages - Documentation](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?branch=master&logo=github&label=docs)](https://mikeqfu.github.io/pyhelpers/)
