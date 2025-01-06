@@ -11,61 +11,40 @@ from .nav import cd
 from .._cache import _check_relative_pathname
 
 
-def path2linux(path):
+def normalize_pathname(pathname, sep="/", **kwargs):
     """
-    Converts a path to a standardized Linux file path format for cross-platform compatibility.
+    Converts a pathname to a consistent file path format for cross-platform compatibility.
 
-    This function:
+    This function formats a file (or an OS-specific) path to ensure compatibility across
+    Windows, Linux and macOS.
 
-        - Formats the file path to ensure compatibility across Windows, Linux and macOS.
-        - Converts an OS-specific path to a standard Linux path.
-
-    :param path: Absolute or relative pathname.
-    :type path: str | bytes | os.PathLike
-    :return: Standard Linux pathname.
+    :param pathname: A pathname.
+    :type pathname: str | bytes | pathlib.Path | os.PathLike
+    :param sep: File path separator used by the operating system;
+        defaults to ``"/"`` (forward slash) for Linux and macOS pathname.
+    :type sep: str
+    :return: Pathname of a consistent file path format.
     :rtype: str
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import path2linux
+        >>> from pyhelpers.dirs import normalize_pathname
+        >>> import os
         >>> import pathlib
-        >>> path2linux("tests\\data\\dat.csv")
+        >>> normalize_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-        >>> path2linux(pathlib.Path("tests\\data\\dat.csv"))
+        >>> normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
+        >>> normalize_pathname(pathlib.Path("tests\\data/dat.csv"), sep=os.path.sep)  # On Windows
+        'tests\\data\\dat.csv'
     """
 
-    # noinspection PyBroadException
-    try:
-        return path.replace("\\", "/")
-    except Exception:
-        return str(path).replace("\\", "/")
+    if isinstance(pathname, bytes):
+        pathname_ = pathname.decode(**kwargs)
+    else:
+        pathname_ = str(pathname)
 
-
-def uniform_pathname(pathname):
-    """
-    Converts a pathname to a standard Linux file path format.
-
-    This function serves as an alternative to :func:`~pyhelpers.dirs.path2linux`.
-
-    :param pathname: Absolute or relative pathname.
-    :type pathname: str | pathlib.Path
-    :return: Standard Linux pathname.
-    :rtype: str
-
-    **Examples**::
-
-        >>> from pyhelpers.dirs import uniform_pathname
-        >>> import pathlib
-        >>> uniform_pathname("tests\\data\\dat.csv")
-        'tests/data/dat.csv'
-        >>> uniform_pathname("tests//data/dat.csv")
-        'tests/data/dat.csv'
-        >>> uniform_pathname(pathlib.Path("tests\\data/dat.csv"))
-        'tests/data/dat.csv'
-    """
-
-    pathname_ = re.sub(r"[\\/]+", "/", str(pathname))
+    pathname_ = re.sub(r"[\\/]+", re.escape(sep), pathname_)
 
     return pathname_
 
@@ -198,9 +177,9 @@ def validate_filename(file_pathname, suffix_num=1):
         >>> from pyhelpers.dirs import validate_filename
         >>> import os
         >>> test_file_pathname = "tests/data/test.txt"
-        >>> # When the file does not exist, return the same file name
         >>> os.path.exists(test_file_pathname)
         False
+        >>> # If the file does not exist, the function returns the same filename
         >>> file_pathname_0 = validate_filename(test_file_pathname)
         >>> os.path.relpath(file_pathname_0)
         'tests\\data\\test.txt'
@@ -224,18 +203,18 @@ def validate_filename(file_pathname, suffix_num=1):
         ...     os.remove(x)
     """
 
-    # convert the path to standard linux path
-    filename_abspath = path2linux(os.path.abspath(file_pathname))
+    # Convert the path to standard linux path
+    filename_abspath = os.path.normpath(file_pathname)
 
-    # get the file suffix
+    # Get the file suffix
     file_suffix = filename_abspath.split(".")[-1]
     file_without_suffix = filename_abspath[:-len(file_suffix) - 1]
 
-    # remove the suffix if the file name contains "("
+    # Remove the suffix if the file name contains "("
     if "(" in file_without_suffix:
         file_without_suffix = file_without_suffix.split("(")[0]
 
-    # if the file does not exist, return the same file name
+    # If the file does not exist, return the same file name
     if os.path.exists(filename_abspath):
         filename_update = f"{file_without_suffix}({suffix_num}).{file_suffix}"
         return validate_filename(filename_update, suffix_num + 1)
@@ -243,7 +222,7 @@ def validate_filename(file_pathname, suffix_num=1):
     return filename_abspath
 
 
-def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
+def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=False):
     """
     Gets paths of files in a directory matching the specified file extension.
 
@@ -260,52 +239,69 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False):
         when ``incl_subdir=True``, it includes files from all subdirectories recursively;
         defaults to `False`.
     :type incl_subdir: bool
+    :param abs_path: Whether to return absolute pathname(s).
+    :type abs_path: bool
     :return: List of file paths matching the criteria.
     :rtype: list
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import get_file_pathnames
+        >>> from pyhelpers.dirs import get_file_pathnames, delete_dir
+        >>> from pyhelpers.store import unzip
+        >>> import os
         >>> test_dir_name = "tests/data"
-        >>> # Get all files in the folder (without sub-folders)
+        >>> # Get all files in the directory (without subdirectories) on Windows
         >>> get_file_pathnames(test_dir_name)
-        ['tests/data/csr_mat.npz',
-         'tests/data/dat.csv',
-         'tests/data/dat.feather',
-         'tests/data/dat.joblib',
-         'tests/data/dat.json',
-         'tests/data/dat.pickle',
-         'tests/data/dat.txt',
-         'tests/data/dat.xlsx',
-         'tests/data/zipped',
-         'tests/data/zipped.7z',
-         'tests/data/zipped.txt',
-         'tests/data/zipped.zip']
+        ['tests\\data\\csr_mat.npz',
+         'tests\\data\\dat.csv',
+         'tests\\data\\dat.feather',
+         'tests\\data\\dat.joblib',
+         'tests\\data\\dat.json',
+         'tests\\data\\dat.ods',
+         'tests\\data\\dat.pickle',
+         'tests\\data\\dat.pickle.bz2',
+         'tests\\data\\dat.pickle.gz',
+         'tests\\data\\dat.pickle.xz',
+         'tests\\data\\dat.txt',
+         'tests\\data\\dat.xlsx',
+         'tests\\data\\zipped.7z',
+         'tests\\data\\zipped.txt',
+         'tests\\data\\zipped.zip']
         >>> get_file_pathnames(test_dir_name, file_ext=".txt")
-        ['tests/data/dat.txt', 'tests/data/zipped.txt']
+        ['tests\\data\\dat.txt', 'tests\\data\\zipped.txt']
+        >>> output_dir = unzip('tests\\data\\zipped.zip', ret_output_dir=True)
+        >>> os.listdir(output_dir)
+        ['zipped.txt']
         >>> # Get absolute pathnames of all files contained in the folder (incl. all subdirectories)
-        >>> get_file_pathnames(test_dir_name, file_ext="txt", incl_subdir=True)
-        ['tests/data/dat.txt', 'tests/data/zipped.txt', 'tests/data/zipped/zipped.txt']
+        >>> get_file_pathnames(test_dir_name, file_ext="txt", incl_subdir=True, abs_path=True)
+        ['<Parent directories>\\tests\\data\\dat.txt',
+         '<Parent directories>\\tests\\data\\zipped.txt',
+         '<Parent directories>\\tests\\data\\zipped\\zipped.txt']
+        >>> delete_dir(output_dir, confirmation_required=False)
     """
 
     if incl_subdir:
-        files_list = []
-        for root, _, files in os.walk(path_to_dir):
-            files_list.extend([os.path.join(root, file) for file in files])
+        file_pathnames = [
+            os.path.normpath(os.path.join(root, file))
+            for root, _, files in os.walk(path_to_dir)
+            for file in files
+        ]
 
-        if file_ext in {None, "*", "all"}:
-            return [path2linux(file) for file in files_list]
+    else:
+        file_pathnames = [
+            os.path.normpath(os.path.join(path_to_dir, file))
+            for file in os.listdir(path_to_dir)
+            if os.path.isfile(os.path.join(path_to_dir, file))
+        ]
 
-        return [path2linux(file) for file in files_list if file.endswith(file_ext)]
-
-    # Files in the first layer of the folder
     if file_ext in {None, "*", "all"}:
-        return [path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)]
+        file_pathnames = [
+            os.path.abspath(p) if abs_path else p for p in file_pathnames]
+    elif file_ext:
+        file_pathnames = [
+            os.path.abspath(p) if abs_path else p for p in file_pathnames if p.endswith(file_ext)]
 
-    # noinspection PyTypeChecker
-    return [
-        path2linux(os.path.join(path_to_dir, file)) for file in os.listdir(path_to_dir)
-        if file.endswith(file_ext)]
+    return file_pathnames
 
 
 def check_files_exist(filenames, path_to_dir, verbose=False):
@@ -326,10 +322,10 @@ def check_files_exist(filenames, path_to_dir, verbose=False):
         >>> from pyhelpers.dirs import check_files_exist
         >>> test_dir_name = "tests/data"
         >>> # Check if all required files exist in the directory
-        >>> check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
+        >>> check_files_exist(["dat.csv", "dat.txt"], path_to_dir=test_dir_name)
         True
         >>> # If not all required files exist, print the missing files
-        >>> check_files_exist(("dat.csv", "dat.txt", "dat_0.txt"), test_dir_name)
+        >>> check_files_exist(("dat.csv", "dat.txt", "dat_0.txt"), test_dir_name, verbose=True)
         Error: Required files are not satisfied, missing files are: ['dat_0.txt']
         False
     """
@@ -337,10 +333,10 @@ def check_files_exist(filenames, path_to_dir, verbose=False):
     dir_files = get_file_pathnames(path_to_dir, file_ext="*")
 
     # Format the required file name to standard linux path
-    filenames = [path2linux(os.path.abspath(filename)) for filename in filenames]
+    file_or_pathnames = [os.path.abspath(filename) for filename in filenames]
 
-    required_files_short = [filename.split("/")[-1] for filename in filenames]
-    dir_files_short = [filename.split("/")[-1] for filename in dir_files]
+    required_files_short = [filename.split(os.path.sep)[-1] for filename in file_or_pathnames]
+    dir_files_short = [filename.split(os.path.sep)[-1] for filename in dir_files]
 
     # `mask` have the same length as `filenames`
     mask = [file in dir_files_short for file in required_files_short]
