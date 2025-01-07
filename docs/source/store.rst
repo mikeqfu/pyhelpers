@@ -40,6 +40,7 @@ Loading data
     load_json
     load_joblib
     load_feather
+    load_csr_matrix
     load_data
 
 Transforming data files

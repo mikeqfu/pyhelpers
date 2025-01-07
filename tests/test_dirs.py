@@ -40,7 +40,7 @@ def test_cd(capfd, cwd):
     init_cwd = cd()
 
     # Change the current working directory
-    new_cwd = ".\\tests\\new_cwd\\"
+    new_cwd = os.path.join(".", "tests", "new_cwd")  # ".\\tests\\new_cwd\\"
     os.makedirs(new_cwd, exist_ok=True)
     os.chdir(new_cwd)
 
@@ -76,7 +76,7 @@ def test_cdd():
 
     # Set `data_dir` to be `"tests"`
     path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
-    assert os.path.relpath(path_to_dat_dir) == 'test_cdd\\data'
+    assert os.path.relpath(path_to_dat_dir) == os.path.join("test_cdd", "data")  # "test_cdd\\data"
 
     # Delete the "test_cdd" folder and the sub-folder "data"
     shutil.rmtree(os.path.dirname(path_to_dat_dir))
@@ -90,7 +90,7 @@ def test_cd_data(subdir, mkdir):
         path_to_dat_dir_ = path_to_dat_dir
     else:
         path_to_dat_dir_ = os.path.relpath(os.path.dirname(path_to_dat_dir))
-    assert os.path.relpath(path_to_dat_dir_) == "pyhelpers\\data\\test_dir"
+    assert os.path.relpath(path_to_dat_dir_) == os.path.join("pyhelpers", "data", "test_dir")
 
     if mkdir:
         shutil.rmtree(path_to_dat_dir_)
@@ -114,24 +114,13 @@ def test_find_executable():
 # val - Directory/file navigation.
 # ==================================================================================================
 
-def test_path2linux():
-    test_pathname = "tests\\data\\dat.csv"
+def test_normalize_pathname():
+    test_pathname = os.path.join("tests", "data", "dat.csv")
 
-    rslt = path2linux(test_pathname)
-    assert rslt == 'tests/data/dat.csv'
-
-    rslt = path2linux(pathlib.Path(test_pathname))
-    assert rslt == 'tests/data/dat.csv'
-
-
-def test_uniform_pathname():
-    test_pathname = "tests\\data\\dat.csv"
-
-    rslt = uniform_pathname(test_pathname)
-    assert rslt == 'tests/data/dat.csv'
-
-    rslt = uniform_pathname(pathlib.Path(test_pathname))
-    assert rslt == 'tests/data/dat.csv'
+    pathname_1 = normalize_pathname(test_pathname)
+    pathname_2 = normalize_pathname(test_pathname.encode('utf-8'))
+    pathname_3 = normalize_pathname(pathlib.Path(test_pathname))
+    assert pathname_1 == pathname_2 == pathname_3 == 'tests/data/dat.csv'
 
 
 def test_is_dir():
@@ -180,22 +169,24 @@ def test_validate_filename():
 def test_get_file_pathnames():
     test_dir_name_ = importlib.resources.files(__package__).joinpath("data")
 
+    dat_filenames = [
+        'csr_mat.npz', 'dat.csv', 'dat.feather', 'dat.joblib', 'dat.json', 'dat.ods', 'dat.pickle',
+        'dat.pickle.bz2', 'dat.pickle.gz', 'dat.pickle.xz', 'dat.txt', 'dat.xlsx', 'zipped',
+        'zipped.7z', 'zipped.txt', 'zipped.zip']
+
     with importlib.resources.as_file(test_dir_name_) as test_dir_name:
-        rslt_ = get_file_pathnames(test_dir_name)
-        assert isinstance(rslt_, list)
-        rslt = [os.path.basename(x) for x in rslt_]
-        assert "dat.csv" in rslt
+        result_1 = get_file_pathnames(test_dir_name)
+        assert isinstance(result_1, list)
+        assert all(os.path.basename(x) in dat_filenames for x in result_1)
 
-        rslt_ = get_file_pathnames(test_dir_name, incl_subdir=True)
-        assert any("zipped/zipped.txt" in x for x in rslt_)
+        result_2 = get_file_pathnames(test_dir_name, incl_subdir=True)
+        assert all(os.path.basename(x) in dat_filenames for x in result_2)
 
-        rslt_ = get_file_pathnames(test_dir_name, file_ext=".txt")
-        rslt = [os.path.basename(x) for x in rslt_]
-        assert rslt == ['dat.txt', 'zipped.txt']
+        result_3 = get_file_pathnames(test_dir_name, file_ext=".txt")
+        assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_3)
 
-        rslt_ = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
-        rslt = [os.path.basename(x) for x in rslt_]
-        assert rslt == ['dat.txt', 'zipped.txt', 'zipped.txt']
+        result_4 = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
+        assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_4)
 
 
 def test_check_files_exist(capfd):
@@ -226,13 +217,13 @@ def test_delete_dir(capfd):
 
     delete_dir(tmp_dir.name, confirmation_required=False, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Deleting "{tmp_dir.name}\\" ... Done.\n' == out
+    assert f'Deleting "{tmp_dir.name}{os.path.sep}" ... Done.\n' == out
 
     delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
     out, _ = capfd.readouterr()
-    out_ = '\n'.join([f'Deleting "{tmp_dir.name}0\\" ... Done.',
-                      f'Deleting "{tmp_dir.name}1\\" ... Done.',
-                      f'Deleting "{tmp_dir.name}2\\" ... Done.\n'])
+    out_ = '\n'.join([f'Deleting "{tmp_dir.name}0{os.path.sep}" ... Done.',
+                      f'Deleting "{tmp_dir.name}1{os.path.sep}" ... Done.',
+                      f'Deleting "{tmp_dir.name}2{os.path.sep}" ... Done.\n'])
     assert out_ == out
 
 

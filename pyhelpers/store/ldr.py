@@ -5,12 +5,14 @@ Load data.
 import bz2
 import csv
 import gzip
+import inspect
 import logging
 import lzma
 import operator
 import pickle  # nosec
 import sys
 
+import numpy as np
 import pandas as pd
 
 from .utils import _check_loading_path, _set_index
@@ -50,9 +52,9 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
         >>> from pyhelpers.store import load_pickle
         >>> from pyhelpers.dirs import cd
-        >>> pickle_pathname = cd("tests\\data", "dat.pickle")
+        >>> pickle_pathname = cd("tests", "data", "dat.pickle")
         >>> pickle_dat = load_pickle(pickle_pathname, verbose=True)
-        Loading "tests\\data\\dat.pickle" ... Done.
+        Loading ".\\tests\\data\\dat.pickle" ... Done.
         >>> pickle_dat
                     Longitude   Latitude
         City
@@ -138,9 +140,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 
         >>> from pyhelpers.store import load_csv
         >>> from pyhelpers.dirs import cd
-        >>> csv_pathname = cd("tests\\data", "dat.csv")
+        >>> csv_pathname = cd("tests", "data", "dat.csv")
         >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
-        Loading "tests\\data\\dat.csv" ... Done.
+        Loading ".\\tests\\data\\dat.csv" ... Done.
         >>> csv_dat
                      Longitude    Latitude
         City
@@ -148,9 +150,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Birmingham  -1.9026911  52.4796992
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
-        >>> csv_pathname = cd("tests\\data", "dat.txt")
+        >>> csv_pathname = cd("tests", "data", "dat.txt")
         >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
-        Loading "tests\\data\\dat.txt" ... Done.
+        Loading ".\\tests\\data\\dat.txt" ... Done.
         >>> csv_dat
                      Longitude    Latitude
         City
@@ -159,7 +161,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
         >>> csv_dat = load_csv(csv_pathname, header=[0, 1], verbose=True)
-        Loading "tests\\data\\dat.txt" ... Done.
+        Loading ".\\tests\\data\\dat.txt" ... Done.
         >>> csv_dat
                  City Easting Northing
                London  530034   180381
@@ -193,9 +195,13 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         return data
 
     except TypeError:
-        data = pd.read_csv(path_to_file, index_col=index, **kwargs)
-
-        return data
+        try:
+            data = pd.read_csv(path_to_file, index_col=index, **kwargs)
+            if verbose:
+                print("Done.")
+            return data
+        except Exception as e:
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
@@ -220,7 +226,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     :type prt_kwargs: dict | None
     :param kwargs: [Optional] Additional parameters for the method `pandas.ExcelFile.parse()`_.
     :return: Data of all worksheets in the file from the specified pathname ``path_to_file``.
-    :rtype: list | dict
+    :rtype: list | dict | None
 
     .. _`Microsoft Excel`:
         https://en.wikipedia.org/wiki/Microsoft_Excel
@@ -239,10 +245,10 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 
         >>> from pyhelpers.store import load_spreadsheets
         >>> from pyhelpers.dirs import cd
-        >>> dat_dir = cd("tests\\data")
+        >>> dat_dir = cd("tests", "data")
         >>> path_to_xlsx = cd(dat_dir, "dat.ods")
         >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        Loading "tests\\data\\dat.ods" ...
+        Loading ".\\tests\\data\\dat.ods" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
         >>> list(wb_data.keys())
@@ -256,7 +262,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         Leeds       -1.543794  53.797418
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
         >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        Loading "tests\\data\\dat.xlsx" ...
+        Loading ".\\tests\\data\\dat.xlsx" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
             'TestSheet11'. ... Done.
@@ -284,6 +290,19 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         Leeds       -1.543794  53.797418
     """
 
+    invalid_kwargs = [
+        k for k in kwargs if k not in inspect.signature(pd.ExcelFile.parse).parameters]
+    if len(invalid_kwargs) > 0:
+        if len(invalid_kwargs) == 1:
+            be, arg_, invalid_kwargs = "is an", "argument", f"'{invalid_kwargs[0]}'"
+        else:
+            be, arg_ = "are", "arguments"
+        msg = f"{invalid_kwargs} {be} invalid keyword {arg_} for this function."
+        if raise_error:
+            raise ValueError(msg)
+        if verbose:
+            print(msg)
+
     if prt_kwargs is None:
         prt_kwargs = {}
     _check_loading_path(
@@ -296,6 +315,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         for sheet_name in sheet_names:
             if verbose:
                 print(f"\t'{sheet_name}'.", end=" ... ")
+
             try:
                 sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
                 if verbose:
@@ -357,9 +377,9 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
 
         >>> from pyhelpers.store import load_json
         >>> from pyhelpers.dirs import cd
-        >>> json_path = cd("tests\\data", "dat.json")
+        >>> json_path = cd("tests", "data", "dat.json")
         >>> json_dat = load_json(json_path, verbose=True)
-        Loading "tests\\data\\dat.json" ... Done.
+        Loading ".\\tests\\data\\dat.json" ... Done.
         >>> json_dat
         {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
          'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
@@ -425,9 +445,9 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
         >>> from pyhelpers.store import load_joblib
         >>> from pyhelpers.dirs import cd
-        >>> joblib_pathname = cd("tests\\data", "dat.joblib")
+        >>> joblib_pathname = cd("tests", "data", "dat.joblib")
         >>> joblib_dat = load_joblib(joblib_pathname, verbose=True)
-        Loading "tests\\data\\dat.joblib" ... Done.
+        Loading ".\\tests\\data\\dat.joblib" ... Done.
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],
@@ -502,9 +522,9 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
 
         >>> from pyhelpers.store import load_feather
         >>> from pyhelpers.dirs import cd
-        >>> feather_path = cd("tests\\data", "dat.feather")
+        >>> feather_path = cd("tests", "data", "dat.feather")
         >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
-        Loading "tests\\data\\dat.feather" ... Done.
+        Loading ".\\tests\\data\\dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
         City
@@ -542,6 +562,75 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Loads in a compressed sparse row (CSR) or compressed row storage (CRS).
+
+    :param path_to_file: Path to the CSR file (e.g. with extension ".npz").
+    :type path_to_file: str | os.PathLike
+    :param verbose: Whether to print relevant information in console as the function runs;
+        defaults to ``False``.
+    :type verbose: bool | int
+    :param prt_kwargs: [Optional] Additional parameters for
+        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+    :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for the function `numpy.load()`_.
+    :return: A compressed sparse row.
+    :rtype: scipy.sparse.csr.csr_matrix
+
+    .. _`numpy.load()`: https://numpy.org/doc/stable/reference/generated/numpy.load
+
+    **Examples**::
+
+        >>> from pyhelpers.store import load_csr_matrix
+        >>> from pyhelpers.dirs import cd
+        >>> from scipy.sparse import csr_matrix
+        >>> data = [1, 2, 3, 4, 5, 6]
+        >>> indices = [0, 2, 2, 0, 1, 2]
+        >>> indptr = [0, 2, 3, 6]
+        >>> csr_mat = csr_matrix((data, indices, indptr), shape=(3, 3))
+        >>> csr_mat
+        <3x3 sparse matrix of type '<class 'numpy.int32'>'
+            with 6 stored elements in Compressed Sparse Row format>
+        >>> path_to_csr_npz = cd("tests", "data", "csr_mat.npz")
+        >>> csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
+        Loading ".\\tests\\data\\csr_mat.npz" ... Done.
+        >>> # .nnz gets the count of explicitly-stored values (non-zeros)
+        >>> (csr_mat != csr_mat_).count_nonzero() == 0
+        True
+        >>> (csr_mat != csr_mat_).nnz == 0
+        True
+    """
+
+    scipy_sparse = _check_dependency(name='scipy.sparse')
+
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+
+    try:
+        csr_loader = np.load(path_to_file, **kwargs)
+
+        data = csr_loader['data']
+        indices = csr_loader['indices']
+        indptr = csr_loader['indptr']
+        shape = csr_loader['shape']
+
+        csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
+
+        if verbose:
+            print("Done.")
+
+        return csr_mat
+
+    except Exception as e:
+        _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False, **kwargs):
@@ -585,10 +674,10 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
 
         >>> from pyhelpers.store import load_data
         >>> from pyhelpers.dirs import cd
-        >>> data_dir = cd("tests\\data")
+        >>> data_dir = cd("tests", "data")
         >>> dat_pathname = cd(data_dir, "dat.pickle")
         >>> pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading "tests\\data\\dat.pickle" ... Done.
+        Loading ".\\tests\\data\\dat.pickle" ... Done.
         >>> pickle_dat
                     Longitude   Latitude
         City
@@ -598,7 +687,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.csv")
         >>> csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-        Loading "tests\\data\\dat.csv" ... Done.
+        Loading ".\\tests\\data\\dat.csv" ... Done.
         >>> csv_dat
                     Longitude   Latitude
         City
@@ -608,7 +697,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.json")
         >>> json_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading "tests\\data\\dat.json" ... Done.
+        Loading ".\\tests\\data\\dat.json" ... Done.
         >>> json_dat
         {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
          'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
@@ -616,7 +705,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-        Loading "tests\\data\\dat.feather" ... Done.
+        Loading ".\\tests\\data\\dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
         City
@@ -626,7 +715,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.joblib")
         >>> joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading "tests\\data\\dat.joblib" ... Done.
+        Loading ".\\tests\\data\\dat.joblib" ... Done.
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],

@@ -64,7 +64,6 @@ Basic data manipulation
     detect_nan_for_str_column
     create_rotation_matrix
     dict_to_dataframe
-    parse_csr_matrix
     swap_cols
     swap_rows
     np_shift
