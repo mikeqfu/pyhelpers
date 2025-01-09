@@ -1,2 +1,5 @@
+# Include data
+recursive-include pyhelpers/data *
+
 # Exclude tests
 recursive-exclude tests *
