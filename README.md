@@ -4,7 +4,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![Read the Docs - Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
-[![GitHub Pages - Documentation](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?branch=master&logo=github&label=docs)](https://mikeqfu.github.io/pyhelpers/)
+[![GitHub Pages - Documentation](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&label=docs)](https://mikeqfu.github.io/pyhelpers/)
 [![Codacy - Code Quality](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi)](https://doi.org/10.5281/zenodo.4017438)
 
