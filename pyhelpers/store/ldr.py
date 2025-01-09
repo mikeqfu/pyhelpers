@@ -30,7 +30,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
@@ -118,7 +118,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
@@ -222,7 +222,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param kwargs: [Optional] Additional parameters for the method `pandas.ExcelFile.parse()`_.
     :return: Data of all worksheets in the file from the specified pathname ``path_to_file``.
@@ -348,7 +348,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
@@ -495,7 +495,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
     :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
@@ -575,7 +575,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
@@ -644,7 +644,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         defaults to ``True``.
     :type err_warning: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
-        :func:`pyhelpers.store.ldr._check_loading_path`; defaults to ``None``.
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.

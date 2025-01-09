@@ -1,5 +1,7 @@
 """
-Performing file-like object operations, including saving, loading, and other relevant tasks.
+Performing operations on file-like objects.
+
+These operations include saving and loading data, as well as other relevant tasks.
 """
 
 from .ldr import *

@@ -154,12 +154,12 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
     :type path_to_file: str | bytes | pathlib.Path
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param print_prefix: Prefix added to the default printing message; defaults to ``""`.
+    :param print_prefix: Prefix added to the default printing message; defaults to ``""``.
     :type print_prefix: str
     :param state_verb: Action verb indicating *loading* or *reading* a file;
         defaults to ``"Loading"``.
     :type state_verb: str
-    :param print_suffix: Suffix added to the default printing message; defaults to ``""`.
+    :param print_suffix: Suffix added to the default printing message; defaults to ``""``.
     :type print_suffix: str
     :param print_end: String passed to ``end`` parameter for ``print()``; defaults to ``" ... "``.
     :type print_end: str

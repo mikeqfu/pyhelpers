@@ -8,6 +8,16 @@ store
     :no-members:
     :no-inherited-members:
 
+.. rubric:: Utilities
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    _check_saving_path
+    _autofit_column_width
+    _check_loading_path
+    _set_index
+
 Saving data
 -----------
 
