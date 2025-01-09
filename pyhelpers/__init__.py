@@ -8,7 +8,7 @@ import pkgutil
 
 from . import dbms, dirs, geom, ops, settings, store, text
 
-metadata = json.loads(pkgutil.get_data(__name__, "data/metadata").decode())
+metadata = json.loads(pkgutil.get_data(__name__, "data/.metadata").decode())
 
 __project__ = metadata['Project']
 __pkgname__ = metadata['Package']
