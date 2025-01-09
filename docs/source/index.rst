@@ -16,7 +16,7 @@ PyHelpers
 .. |Read the Docs - Documentation| image:: https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs
     :alt: Read the Docs - Documentation
     :target: https://pyhelpers.readthedocs.io/en/latest/?badge=latest
-.. |GitHub Pages - Documentation| image:: https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?branch=master&logo=github&label=docs
+.. |GitHub Pages - Documentation| image:: https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&label=docs
     :alt: GitHub Pages - Documentation
     :target: https://mikeqfu.github.io/pyhelpers/
 .. |Codacy - Code Quality| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
