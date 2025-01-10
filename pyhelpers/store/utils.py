@@ -41,11 +41,10 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> from pyhelpers.store import _check_saving_path
         >>> from pyhelpers.dirs import cd
         >>> path_to_file = cd()
-        >>> try:
-        ...     _check_saving_path(path_to_file, verbose=True)
-        ... except AssertionError as e:
-        ...     print(e)
-        The input for `path_to_file` may not be a file path.
+        >>> _check_saving_path(path_to_file, verbose=True)
+        Traceback (most recent call last):
+            ...
+        AssertionError: The input for `path_to_file` may not be a file path.
         >>> path_to_file = "pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
@@ -63,17 +62,11 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
     assert not abs_path_to_file.is_dir(), "The input for `path_to_file` may not be a file path."
 
-    filename = pathlib.Path(abs_path_to_file).name if abs_path_to_file.suffix else ""
-
     try:
-        rel_dir_path = pathlib.Path(os.path.relpath(abs_path_to_file.parent))
+        rel_dir_path = abs_path_to_file.parent.relative_to(pathlib.Path.cwd())
 
-        if rel_dir_path.is_relative_to("."):
-            pass
-        elif rel_dir_path == rel_dir_path.parent:
+        if rel_dir_path.is_relative_to(".") and rel_dir_path == rel_dir_path.parent:
             rel_dir_path = abs_path_to_file.parent
-        else:  # In case the specified path does not exist
-            os.makedirs(abs_path_to_file.parent, exist_ok=True)
 
     except ValueError:
         if verbose == 2:
@@ -83,13 +76,17 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
 
         rel_dir_path = abs_path_to_file.parent
 
+    rel_dir_path.mkdir(parents=True, exist_ok=True)  # In case the specified path does not exist
+
+    filename = abs_path_to_file.name if abs_path_to_file.suffix else ""
+
     if verbose:
-        if os.path.exists(abs_path_to_file):
+        if os.path.isfile(abs_path_to_file):
             state_verb, state_prep = "Updating", "at"
 
         end = print_end if print_end else "\n"
 
-        if (rel_dir_path == rel_dir_path.parent and
+        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == abs_path_to_file.parent) and (
                 rel_dir_path.absolute().drive == pathlib.Path.cwd().drive):
             msg = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
             print(msg, end=end)
