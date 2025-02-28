@@ -56,4 +56,6 @@ For specific version references, please refer to [Zenodo](https://zenodo.org/sea
 
 ## License
 
-PyHelpers (since v2.0.0) is licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+PyHelpers is licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+
+Please note that this project was initially licensed under the [GPLv3+](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text) up to version *1.5.2*. Starting with version *2.0.0*, it has been re-licensed under the MIT License.
