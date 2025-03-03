@@ -1,10 +1,10 @@
 # PyHelpers
 
-[![PyPI - Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
+[![PyPI Release Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
+[![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
-[![Read the Docs - Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
-[![GitHub Pages - Documentation](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&label=docs)](https://mikeqfu.github.io/pyhelpers/)
+[![ReadTheDocs Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&branch=master)](https://github.com/mikeqfu/pyhelpers/actions)
 [![Codacy - Code Quality](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![DOI](https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi)](https://doi.org/10.5281/zenodo.4017438)
 
@@ -56,4 +56,6 @@ For specific version references, please refer to [Zenodo](https://zenodo.org/sea
 
 ## License
 
-PyHelpers (since v2.0.0) is licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+PyHelpers is licensed under the [MIT License](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE).
+
+Please note that this project was initially licensed under the [GPLv3+](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text) up to version *1.5.2*. Starting with version *2.0.0*, it has been re-licensed under the MIT License.

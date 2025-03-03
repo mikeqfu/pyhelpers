@@ -2,28 +2,28 @@
 PyHelpers
 =========
 
-|PyPI - Version| |PyPI - Python Version| |Read the Docs - Documentation| |GitHub Pages - Documentation| |License| |Codacy - Code Quality| |Zenodo - DOI|
+|PyPI| |Python| |License| |Docs| |Build| |Codacy| |DOI|
 
-.. |PyPI - Version| image:: https://img.shields.io/pypi/v/pyhelpers
-    :alt: PyPI - Version
+.. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers
+    :alt: PyPI Release Version
     :target: https://pypi.org/project/pyhelpers/
-.. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/pyhelpers
-    :alt: PyPI - Python Version
+.. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers
+    :alt: Python Version
     :target: https://docs.python.org/3/
 .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers
     :alt: License
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
-.. |Read the Docs - Documentation| image:: https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs
-    :alt: Read the Docs - Documentation
+.. |Docs| image:: https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs
+    :alt: ReadTheDocs Documentation
     :target: https://pyhelpers.readthedocs.io/en/latest/?badge=latest
-.. |GitHub Pages - Documentation| image:: https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&label=docs
-    :alt: GitHub Pages - Documentation
-    :target: https://mikeqfu.github.io/pyhelpers/
-.. |Codacy - Code Quality| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
+.. |Build| image:: https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&branch=master
+    :alt: GitHub Actions Workflow Status
+    :target: https://github.com/mikeqfu/pyhelpers/actions
+.. |Codacy| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
     :alt: Codacy - Code Quality
     :target: https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
-.. |Zenodo - DOI| image:: https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi
-    :alt: Zenodo - DOI
+.. |DOI| image:: https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi
+    :alt: DOI
     :target: https://doi.org/10.5281/zenodo.4017438
 
 | **Author**: Qian Fu |ORCID|
