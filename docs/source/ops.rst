@@ -21,6 +21,8 @@ General usage
     hash_password
     verify_password
     func_running_time
+    get_git_branch
+    get_ansi_colour_code
 
 Basic computation / conversion
 ------------------------------
