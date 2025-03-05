@@ -11,7 +11,8 @@ from .._cache import _add_slashes, _check_relative_pathname
 
 
 def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
-                       state_prep="to", print_suffix="", print_end=" ... ", ret_info=False):
+                       state_prep="to", print_suffix="", print_end=" ... ", belated=False,
+                       ret_info=False):
     # noinspection PyShadowingNames
     """
     Verifies a specified file path before saving.
@@ -81,8 +82,8 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     filename = abs_path_to_file.name if abs_path_to_file.suffix else ""
 
     if verbose:
-        if os.path.isfile(abs_path_to_file):
-            state_verb, state_prep = "Updating", "at"
+        if os.path.isfile(abs_path_to_file) and not belated:
+            state_verb, state_prep = "Updating", "in"
 
         end = print_end if print_end else "\n"
 
