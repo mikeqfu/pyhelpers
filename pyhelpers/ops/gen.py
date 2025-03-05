@@ -12,7 +12,7 @@ import subprocess  # nosec
 
 import pandas as pd
 
-from .._cache import _confirmed
+from .._cache import _ANSI_ESCAPE_CODES, _confirmed
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -311,3 +311,46 @@ def get_git_branch():
         print("Not in a Git repository")
 
     return branch
+
+
+def get_ansi_colour_code(colours, show_valid_colours=False):
+    """
+    Returns the ANSI escape code(s) for the given colour name(s).
+
+    :param colours: A single colour name (str) or a sequence of colour names
+        (e.g. 'red', ['red', 'green']).
+    :type colours: str | list[str] | tuple[str]
+    :param show_valid_colours: If ``True``, returns a tuple containing the ANSI code(s) and
+        a set of valid colour names.
+    :type show_valid_colours: bool
+    :return: The ANSI escape code(s) for the given colour(s), or an error message
+        if an invalid colour is provided.
+    :rtype: str | list[str] | tuple[str | list[str], set[str]]
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_ansi_colour_code
+        >>> get_ansi_colour_code('red')
+        '\\033[31m'
+        >>> get_ansi_colour_code(['red', 'blue'])
+        ['\\033[31m', '\\033[34m']
+        >>> get_ansi_colour_code('invalid_colour')
+        Traceback (most recent call last):
+            ...
+        ValueError: 'invalid_colour' is not a valid colour name.
+        >>> get_ansi_colour_code('red', show_valid_colours=True)
+        ('\\033[31m', {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', ...})
+    """
+
+    if isinstance(colours, str):
+        colours = [colours]  # Convert single string to list for uniform processing
+
+    try:
+        color_codes = [_ANSI_ESCAPE_CODES[x.lower()] for x in colours]
+    except KeyError as e:
+        raise ValueError(f"'{e.args[0]}' is not a valid colour name.") from None
+
+    if len(color_codes) == 1:
+        color_codes = color_codes[0]  # Return a single string instead of a list
+
+    return (color_codes, set(_ANSI_ESCAPE_CODES)) if show_valid_colours else color_codes

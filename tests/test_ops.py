@@ -157,6 +157,22 @@ def test_func_running_time(capfd):
     assert "INFO Finished running function: test_func, total: 3s" in out
 
 
+def test_get_ansi_colour_code():
+    red = get_ansi_colour_code('red')
+    assert red.endswith('31m')
+
+    red, blue = get_ansi_colour_code(['red', 'blue'])
+    assert red.endswith('31m') and blue.endswith('34m')
+
+    with pytest.raises(Exception) as exc_info:
+        get_ansi_colour_code('invalid_colour')
+    # assert exc_info.value.args[0] == "'invalid_colour' is not a valid colour name."
+    assert str(exc_info.value) == "'invalid_colour' is not a valid colour name."
+
+    color_codes, _ = get_ansi_colour_code('red', show_valid_colours=True)
+    assert color_codes.endswith('31m')
+
+
 # ==================================================================================================
 # manip - Basic data manipulation.
 # ==================================================================================================
@@ -465,13 +481,13 @@ def test_download_file_from_url(capfd, verbose):
     logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
     path_to_img = "ops-download_file_from_url-demo.png"
-    download_file_from_url(logo_url, path_to_img, verbose=verbose)
+    download_file_from_url(logo_url, path_to_img, verbose=verbose, colour='green')
     assert os.path.isfile(path_to_img)
 
     download_file_from_url(logo_url, path_to_img, if_exists='pass', verbose=verbose)
     out, _ = capfd.readouterr()
     if verbose:
-        assert "The download is cancelled." in out
+        assert "Aborting download." in out
 
     os.remove(path_to_img)
 

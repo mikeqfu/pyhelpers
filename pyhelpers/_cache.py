@@ -470,3 +470,6 @@ _USER_AGENT_STRINGS = json.loads(
 
 _ENGLISH_NUMERALS = json.loads(
     pkgutil.get_data(__name__, "data/english-numerals.json").decode())
+
+_ANSI_ESCAPE_CODES = json.loads(
+    pkgutil.get_data(__name__, "data/ansi-escape-codes.json").decode())
