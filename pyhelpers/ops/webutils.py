@@ -24,6 +24,8 @@ import urllib3.util
 
 from .._cache import _add_slashes, _check_dependency, _check_relative_pathname, _check_url_scheme, \
     _format_error_message, _print_failure_message, _USER_AGENT_STRINGS
+from ..ops import get_ansi_colour_code
+from ..store import _check_saving_path
 
 
 def is_network_connected():
@@ -496,57 +498,108 @@ def fake_requests_headers(randomized=True, **kwargs):
     return fake_headers
 
 
-def _download_file_from_url(response, path_to_file):
+def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=None, bar_format=None,
+                            colour=None, validate=True, **kwargs):
+    # noinspection PyShadowingNames
     """
-    Downloads a file from a valid URL (and saves it).
+    Downloads a file from a given HTTP response and saves it to the specified location.
 
-    :param response: Server's response to an HTTP request containing the file to download.
+    This function reads the content of the response in chunks and writes it to a file while
+    displaying a progress bar using `tqdm`_.
+
+    .. _`tqdm`: https://tqdm.github.io/
+
+    :param response: The HTTP response object with streaming enabled
+        (e.g. `requests.get(url, stream=True)`).
     :type response: requests.Response
-    :param path_to_file: Path where the downloaded file will be saved;
-        it can be either a path with filename or just a filename,
-        in which case it will be saved in the current working directory.
-    :type path_to_file: str | os.PathLike[str]
+    :param path_to_file: The destination path where the downloaded file will be saved;
+        this can be either a full path including the filename,
+        or just a filename, in which case it will be saved in the current working directory.
+    :type path_to_file: str | os.PathLike
+    :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
+        this can be adjusted to optimise download performance based on file size; defaults to ``1``.
+    :type chunk_multiplier: int | float
+    :param desc: Custom description for the progress bar;
+        when ``desc=None``, it defaults to the filename.
+    :type desc: str | None
+    :param bar_format: Custom format for the progress bar.
+    :type bar_format: str | None
+    :param colour: Custom colour of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
+    :type colour: str | None
+    :param validate: Whether to validate if the downloaded file size matches the expected content
+        length; defaults to ``True``.
+    :type validate: bool
+    :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_, allowing customisation
+        of the progress bar (e.g. ``disable=True`` to hide the progress bar).
+
+    :raises TypeError: If writing the downloaded data to a file fails due to encoding issues.
+    :raises ValueError: If the downloaded file size does not match the expected content length.
+
+    .. _`tqdm.tqdm()`: https://tqdm.github.io/docs/tqdm/
+
+    **Examples**::
+
+        >>> from pyhelpers.ops.webutils import _download_file_from_url
+        >>> from pyhelpers.dirs import cd
+        >>> import requests
+        >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+        >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
+        >>> with requests.get(url, stream=True) as response:
+        ...     _download_file_from_url(response, path_to_img, colour='green')
+        Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
+            Updating "ops-download_file_from_url-demo.png" in ".\\tests\\images\\" ... Done.
     """
 
     tqdm_ = _check_dependency(name='tqdm')
 
-    file_size = int(response.headers.get('content-length'))  # Total size in bytes
+    file_size = int(response.headers.get('content-length', 0))  # Total size in bytes
 
-    unit_divisor = 1024
-    block_size = unit_divisor ** 2
-    chunk_size = block_size if file_size >= block_size else unit_divisor
+    block_size = 1024 ** 2
+    chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
-    total_iter = file_size // chunk_size
+    colour_code, reset_colour = get_ansi_colour_code([colour, 'reset']) if colour else ('', '')
 
-    pg_args = {
-        'desc': f'"{_check_relative_pathname(path_to_file)}"',
-        'total': total_iter,
+    pbar_args = {
+        'desc': desc or f'Downloading "{os.path.basename(path_to_file)}"',
+        'total': file_size,  # total_iter = file_size // chunk_size
         'unit': 'B',
         'unit_scale': True,
-        'unit_divisor': unit_divisor,
+        'bar_format':
+            bar_format or
+            f'{colour_code}{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
+            f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining}}{reset_colour}',
     }
-    with tqdm_.tqdm(**pg_args) as progress:
+    kwargs.update(pbar_args)
 
-        contents = response.iter_content(chunk_size=chunk_size, decode_unicode=True)
+    belated = False if os.path.isfile(path_to_file) else True
 
-        with open(file=path_to_file, mode='wb') as f:
-            written = 0
-            for data in contents:
+    try:
+        with open(file=path_to_file, mode='wb') as file, tqdm_.tqdm(**kwargs) as progress:
+            written = 0  # Track the amount downloaded in bytes
+
+            for data in response.iter_content(chunk_size=chunk_size, decode_unicode=True):
                 if data:
-                    try:
-                        f.write(data)
+                    try:  # Write chunk to file
+                        file.write(data)
                     except TypeError:
-                        f.write(data.encode())
-                    progress.update(len(data))
+                        file.write(data.encode())
+                    progress.update(len(data))  # Update the progress bar
                     written += len(data)
 
-    if file_size != 0 and written != file_size:
-        print("ERROR! Something went wrong!")
+    except (IOError, TypeError) as e:
+        _print_failure_message(e, prefix="Download failed:", verbose=True, raise_error=True)
+
+    _check_saving_path(path_to_file, verbose=True, print_prefix="\t", belated=belated)
+    if validate and (written != file_size) and (file_size > 0):
+        raise ValueError(f"Download failed: expected {file_size} bytes, got {written} bytes.")
+    else:
+        print("Done.")
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
-                           random_header=True, verbose=False, requests_session_args=None,
-                           fake_headers_args=None, **kwargs):
+                           random_header=True, requests_session_args=None, fake_headers_args=None,
+                           verbose=False, chunk_multiplier=1, desc=None, bar_format=None,
+                           colour=None, validate=True, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a valid URL.
@@ -570,17 +623,29 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type random_header: bool
     :param verbose: Whether to print progress and relevant information to the console;
         defaults to ``False``.
-    :type verbose: bool | int
     :param requests_session_args: [Optional] Additional parameters for initialising
         the requests session; defaults to ``None``.
     :type requests_session_args: dict | None
     :param fake_headers_args: [Optional] Additional parameters for generating fake HTTP headers;
         defaults to ``None``.
     :type fake_headers_args: dict | None
-    :param kwargs: [Optional] Additional parameters for the method `requests.Session.get()`_.
+    :type verbose: bool | int
+    :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
+        this can be adjusted to optimise download performance based on file size; defaults to ``1``.
+    :type chunk_multiplier: int | float
+    :param desc: Custom description for the progress bar;
+        when ``desc=None``, it defaults to the filename.
+    :type desc: str | None
+    :param bar_format: Custom format for the progress bar.
+    :type bar_format: str | None
+    :param colour: Custom colour of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
+    :type colour: str | None
+    :param validate: Whether to validate if the downloaded file size matches the expected content
+        length; defaults to ``True``.
+    :type validate: bool
+    :param kwargs: [Optional] Additional parameters passed to the method `tqdm.tqdm()`_.
 
-    .. _`requests.Session.get()`:
-        https://docs.python-requests.org/en/master/_modules/requests/sessions/#Session.get
+    .. _`tqdm.tqdm()`: https://tqdm.github.io/docs/tqdm/
 
     **Examples**::
 
@@ -594,7 +659,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> os.path.exists(path_to_img)
         False
         >>> # Download the .png file
-        >>> download_file_from_url(url, path_to_img)
+        >>> download_file_from_url(url, path_to_img, verbose=True, colour='green')
         >>> # If download is successful, check again:
         >>> os.path.exists(path_to_img)
         True
@@ -617,41 +682,53 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         - When ``verbose=True``, the function requires `tqdm <https://pypi.org/project/tqdm/>`_.
     """
 
-    path_to_dir = os.path.dirname(path_to_file)
-    if path_to_dir == "":
-        path_to_file_ = os.path.join(os.getcwd(), path_to_file)
-        path_to_dir = os.path.dirname(path_to_file_)
-    else:
-        path_to_file_ = copy.copy(path_to_file)
+    path_to_file_ = os.path.abspath(path_to_file)
 
-    if os.path.exists(path_to_file_) and if_exists != 'replace':
+    if os.path.isfile(path_to_file_) and if_exists != 'replace':
         if verbose:
-            print(f"The destination already has a file named "
-                  f"\"{os.path.basename(path_to_file_)}\". "
-                  f"The download is cancelled.")
+            print(f'File "{os.path.basename(path_to_file)}" already exists. Aborting download. '
+                  f'Set `if_exists="replace"` to update the existing file.')
 
     else:
-        if requests_session_args is None:
-            requests_session_args = {}
+        # Initialise session
+        requests_session_args = requests_session_args or {}
         session = init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
-        if fake_headers_args is None:
-            fake_headers_args = {}
+        fake_headers_args = fake_headers_args or {}
         fake_headers = fake_requests_headers(randomized=random_header, **fake_headers_args)
 
-        # Streaming, so we can iterate over the response
-        with session.get(url=url, stream=True, headers=fake_headers, **kwargs) as response:
-            os.makedirs(path_to_dir, exist_ok=True)  # Ensure the directory exists
+        os.makedirs(os.path.dirname(path_to_file_), exist_ok=True)  # Ensure the directory exists
 
-            if verbose:
-                _download_file_from_url(response=response, path_to_file=path_to_file_)
+        # Streaming, so we can iterate over the response
+        with session.get(url=url, stream=True, headers=fake_headers) as response:
+            if response.status_code != 200:
+                print(f"Failed to retrieve file. HTTP Status Code: {response.status_code}.")
+                return None
+
+            if verbose:  # Handle verbose output with progress bar
+                _download_file_from_url(
+                    response=response,
+                    path_to_file=path_to_file,
+                    chunk_multiplier=chunk_multiplier,
+                    desc=desc,
+                    bar_format=bar_format,
+                    colour=colour,
+                    validate=validate,
+                    **kwargs
+                )
 
             else:
-                with open(file=path_to_file_, mode='wb') as f:  # Open the file in binary write mode
+                with open(path_to_file_, mode='wb') as f:  # Open the file in binary write mode
                     shutil.copyfileobj(fsrc=response.raw, fdst=f)  # type: ignore
 
-                if os.stat(path=path_to_file_).st_size == 0:
-                    print("ERROR! Something went wrong! Check if the URL is downloadable.")
+            # Validate download if necessary
+            if validate and os.stat(path_to_file).st_size == 0:
+                rel_path = _add_slashes(_check_relative_pathname(path_to_file))
+                raise ValueError(
+                    f"Error: The downloaded file at {rel_path} is empty. "
+                    f"Check the URL or network connection.")
+            # else:
+            #     print(f"File successfully downloaded to {rel_path}.")
 
 
 class GitHubFileDownloader:
