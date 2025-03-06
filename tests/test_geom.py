@@ -140,7 +140,8 @@ def test_project_point_to_line():
     assert pt_proj.wkt == 'POINT Z (399299 655091 42)'
 
     pt = shapely.geometry.Point([399297, 655095, 43])
-    ls_ = shapely.geometry.LineString([[399299, 655091, 42], [399295, 655099, 42], [399295, 655107, 42]])
+    ls_ = shapely.geometry.LineString(
+        [[399299, 655091, 42], [399295, 655099, 42], [399295, 655107, 42]])
     _, pt_proj = project_point_to_line(point=pt, line=ls_)
     assert pt_proj.wkt == 'POINT Z (399297.9411764706 655095.2352941176 42)'
 
@@ -228,7 +229,10 @@ def test_find_closest_points():
     ref_cities_1 = example_df.to_numpy()
     ref_cities_2 = shapely.geometry.MultiPoint(ref_cities_1)
 
-    ref_rslt = np.array([(-2.2451148, 53.4794892), (-2.2451148, 53.4794892), (-1.5437941, 53.7974185)])
+    ref_rslt = np.array(
+        [(-2.2451148, 53.4794892),
+         (-2.2451148, 53.4794892),
+         (-1.5437941, 53.7974185)])
     ref_rslt_ = 'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
 
     ref_dist = np.array([0.75005697, 3.11232712, 1.17847198])
@@ -266,7 +270,8 @@ def test_find_closest_points():
     _, dist = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, ret_dist=True)
     assert np.array_equal(np.round(dist, 8), ref_dist)
 
-    _, idx, dist = find_closest_points(pts=cities_1, ref_pts=ref_cities_1, ret_idx=True, ret_dist=True)
+    _, idx, dist = find_closest_points(
+        pts=cities_1, ref_pts=ref_cities_1, ret_idx=True, ret_dist=True)
     assert np.array_equal(idx, np.array([2, 2, 3], dtype=np.int64))
     assert np.array_equal(np.round(dist, 8), ref_dist)
 
