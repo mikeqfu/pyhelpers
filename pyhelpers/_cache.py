@@ -105,10 +105,7 @@ def _check_dependency(name, package=None):
     import_name = name.replace('-', '_')
 
     if package is None:
-        if '.' in import_name:
-            pkg_name, _ = import_name.split('.', 1)
-        else:
-            pkg_name = None
+        pkg_name = import_name.split('.', 1)[0] if '.' in import_name else None
     else:
         pkg_name = package.replace('-', '_')
         import_name = f'{pkg_name}.{import_name}'
@@ -116,20 +113,20 @@ def _check_dependency(name, package=None):
     if import_name in sys.modules:  # The optional dependency has already been imported
         return sys.modules.get(import_name)
 
-    elif importlib.util.find_spec(name=import_name, package=pkg_name) is not None:
+    if importlib.util.find_spec(name=import_name, package=pkg_name):
         return importlib.import_module(name=import_name, package=pkg_name)
 
+    # Check `_OPTIONAL_DEPENDENCY` mapping
+    if name.startswith('osgeo') or 'gdal' in import_name:
+        package_name, install_name = 'GDAL', 'gdal'
+    elif import_name in _OPTIONAL_DEPENDENCY:
+        package_name, install_name = _OPTIONAL_DEPENDENCY.get(import_name)
     else:
-        if name.startswith('osgeo') or 'gdal' in import_name:
-            package_name, install_name = 'GDAL', 'gdal'
-        elif import_name in _OPTIONAL_DEPENDENCY:
-            package_name, install_name = _OPTIONAL_DEPENDENCY[import_name]
-        else:
-            package_name, install_name = name, name.split('.')[0]
+        package_name, install_name = name, name.split('.')[0]
 
-        raise ModuleNotFoundError(
-            f"Missing optional dependency '{package_name}'. "
-            f"Use pip or conda to install it, e.g. 'pip install {install_name}'.")
+    raise ModuleNotFoundError(
+        f"Missing optional dependency '{package_name}'. "
+        f"Use `pip` or `conda` to install it, e.g. `pip install {install_name}`.")
 
 
 def _check_relative_pathname(pathname):
@@ -227,13 +224,12 @@ def _check_file_pathname(name, options=None, target=None):
 
         >>> from pyhelpers._cache import _check_file_pathname
         >>> import os
+        >>> import sys
         >>> python_exe = "python.exe"
         >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
         >>> python_exe_exists
         True
-        >>> possible_paths = [
-        ...     "C:\\Program Files\\Python310",
-        ...     "C:\\Program Files\\Python310\\python.exe"]
+        >>> possible_paths = [os.path.dirname(sys.executable), sys.executable]
         >>> python_exe_exists, path_to_python_exe = _check_file_pathname(
         ...     python_exe, target=possible_paths[0])
         >>> python_exe_exists
@@ -254,10 +250,10 @@ def _check_file_pathname(name, options=None, target=None):
     """
 
     if target:
-        if os.path.isfile(target):
+        if os.path.isfile(target) and os.path.splitext(name)[0] in os.path.basename(target):
             file_exists, file_pathname = True, target
         else:
-            file_exists, file_pathname = None, False
+            file_exists, file_pathname = False, None
 
     else:
         file_pathname = copy.copy(name)
@@ -269,17 +265,14 @@ def _check_file_pathname(name, options=None, target=None):
             file_exists = False
             alt_pathnames = [shutil.which(file_pathname)]
 
-            if options is not None:
+            if options:
                 alt_pathnames = list(options) + alt_pathnames
 
             for x in [x_ for x_ in alt_pathnames if x_]:
-                if os.path.isdir(x):
-                    file_pathname_ = os.path.join(x, file_pathname)
-                else:
-                    file_pathname_ = x
+                file_pathname_ = os.path.join(x, file_pathname) if os.path.isdir(x) else x
+
                 if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
-                    file_pathname = file_pathname_
-                    file_exists = True
+                    file_exists, file_pathname = True, file_pathname_
                     break
 
     return file_exists, file_pathname
