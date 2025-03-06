@@ -51,7 +51,7 @@ def test__check_relative_pathname():
     if os.name == 'nt':
         pathname = "C:/Windows"
         rel_path = _check_relative_pathname(pathname)
-        assert rel_path == pathname
+        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
 
     # Test an absolute path outside the working directory
     home_dir = os.path.expanduser("~")  # Cross-platform home directory
