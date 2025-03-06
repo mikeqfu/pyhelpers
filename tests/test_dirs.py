@@ -238,15 +238,18 @@ def test_delete_dir(capfd):
             open(cd(tmp_dir_pathname, "file"), 'w').close()
 
     delete_dir(tmp_dir.name, confirmation_required=False, verbose=True)
-    out, _ = capfd.readouterr()
-    assert f'Deleting "{tmp_dir.name}{os.path.sep}" ... Done.\n' == out
+    out, _ = capfd.readouterr()  # Capture the output
+    expected_out = f'Deleting "{os.path.normpath(tmp_dir.name)}{os.path.sep}" ... Done.\n'
+    assert expected_out == out
 
+    # Test deleting multiple directories
     delete_dir(path_to_dir=test_dirs, confirmation_required=False, verbose=True)
     out, _ = capfd.readouterr()
-    out_ = '\n'.join([f'Deleting "{tmp_dir.name}0{os.path.sep}" ... Done.',
-                      f'Deleting "{tmp_dir.name}1{os.path.sep}" ... Done.',
-                      f'Deleting "{tmp_dir.name}2{os.path.sep}" ... Done.\n'])
-    assert out_ == out
+    expected_output = '\n'.join(
+        [f'Deleting "{os.path.normpath(tmp_dir.name)}{x}{os.path.sep}" ... Done.'
+         for x in range(3)])
+    expected_output += '\n'
+    assert expected_output == out
 
 
 if __name__ == '__main__':
