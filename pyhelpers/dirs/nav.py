@@ -2,7 +2,6 @@
 Directory/file navigation.
 """
 
-import copy
 import importlib.resources
 import os
 import re
@@ -50,13 +49,13 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     """
 
     # Current working directory
-    if cwd is None:
+    if cwd in {None, "."}:
         path = os.getcwd()
     else:
-        path = cwd.decode() if isinstance(cwd, bytes) else copy.copy(cwd)
+        path = cwd.decode() if isinstance(cwd, bytes) else str(cwd)
 
     if back_check:
-        while not os.path.exists(path):
+        while not os.path.exists(path) and path != os.path.sep:
             path = os.path.dirname(path)
 
     for x in subdir:
@@ -197,13 +196,23 @@ def find_executable(name, options=None, target=None):
 
         >>> from pyhelpers.dirs import find_executable
         >>> import os
+        >>> import sys
         >>> python_exe = "python.exe"
-        >>> possible_paths = ["C:\\Program Files\\Python310", "C:\\Python310\\python.exe"]
-        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, possible_paths)
+        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe)
         >>> python_exe_exists
         True
-        >>> os.path.relpath(path_to_python_exe)
-        'C:\\Program Files\\Python310\\python.exe'
+        >>> possible_paths = [os.path.dirname(sys.executable), sys.executable]
+        >>> python_exe_exists, path_to_python_exe = find_executable(
+        ...     python_exe, target=possible_paths[0])
+        >>> python_exe_exists
+        False
+        >>> python_exe_exists, path_to_python_exe = find_executable(
+        ...     python_exe, target=possible_paths[1])
+        >>> python_exe_exists
+        True
+        >>> python_exe_exists, path_to_python_exe = find_executable(possible_paths[1])
+        >>> python_exe_exists
+        True
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
         >>> test_exe_exists, path_to_test_exe = find_executable(text_exe, possible_paths)
         >>> test_exe_exists

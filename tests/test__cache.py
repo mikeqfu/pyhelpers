@@ -3,6 +3,7 @@ Test the module ``_cache.py``
 """
 
 import os
+import sys
 
 import pytest
 
@@ -31,7 +32,7 @@ def test__check_dependency():
     assert gdal.__name__ == 'osgeo.gdal'
 
     err_msg = ("Missing optional dependency 'unknown_package'. "
-               "Use pip or conda to install it, e.g. 'pip install unknown_package'.")
+               "Use `pip` or `conda` to install it, e.g. `pip install unknown_package`.")
     with pytest.raises(ModuleNotFoundError, match=err_msg):
         _ = _check_dependency(name='unknown_package')
 
@@ -47,31 +48,49 @@ def test__check_relative_pathname():
     rel_path = _check_relative_pathname(os.path.curdir)
     assert rel_path == pathname
 
-    pathname = "C:\\Windows"
-    rel_path = _check_relative_pathname("C:\\Windows")
-    assert rel_path == pathname
+    if os.name == 'nt':
+        pathname = "C:/Windows"
+        rel_path = _check_relative_pathname(pathname)
+        assert rel_path == pathname
+
+    # Test an absolute path outside the working directory
+    home_dir = os.path.expanduser("~")  # Cross-platform home directory
+    rel_path = _check_relative_pathname(home_dir)
+    assert rel_path == home_dir  # Should return unchanged
+
+    # Test a relative path within the current working directory
+    subdir = os.path.join(os.getcwd(), "test_dir")
+    rel_path = _check_relative_pathname(subdir)
+    assert rel_path == "test_dir"
 
 
 def test__check_file_pathname():
     from pyhelpers._cache import _check_file_pathname
 
-    python_exe = "python.exe"
+    python_exe = os.path.basename(sys.executable)
 
     python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
     assert python_exe_exists
+    assert path_to_python_exe == sys.executable
 
-    possible_paths = ["C:\\Program Files\\Python310", "C:\\Program Files\\Python310\\python.exe"]
-    python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=possible_paths[0])
-    assert not python_exe_exists
-    python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=possible_paths[1])
+    # Use the directory containing Python
+    python_dir = os.path.dirname(sys.executable)
+    possible_paths = [python_dir, sys.executable]
+
+    # Check if specifying Python's actual path works
+    python_exe_exists, path_to_python_exe = _check_file_pathname(sys.executable)
     assert python_exe_exists
+    assert path_to_python_exe == sys.executable
+    python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=os.getcwd())
+    assert not python_exe_exists
     python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
     assert python_exe_exists
 
+    # Check non-existent file
     text_exe = "pyhelpers.exe"
-    test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
+    test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, options=possible_paths)
     assert not test_exe_exists
-    assert os.path.relpath(path_to_test_exe) == 'pyhelpers.exe'
+    assert path_to_test_exe == text_exe  # Should return input name
 
 
 def test__format_error_message():
