@@ -154,16 +154,30 @@ def _check_relative_pathname(pathname):
         >>> _check_relative_pathname("C:\\Program Files")
         'C:\\Program Files'
         >>> _check_relative_pathname(pathname="C:/Windows")
-        'C:/Windows'
+        'C:\\Windows'
     """
 
-    try:
-        rel_path = os.path.relpath(pathname)
-    except ValueError:
-        rel_path = copy.copy(pathname)
+    if isinstance(pathname, (bytes, bytearray)):
+        pathname_ = str(pathname, encoding='utf-8')
+    else:
+        pathname_ = str(pathname)
 
-    if not isinstance(rel_path, str):
-        rel_path = str(rel_path, encoding='utf-8')
+    abs_pathname = os.path.abspath(pathname_)
+    abs_cwd = os.getcwd()
+
+    if os.name == "nt":  # Handle different drive letters on Windows
+        if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
+            return abs_pathname  # Return absolute path if drives differ
+
+    # Check if the pathname is inside the current working directory
+    if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
+        try:
+            rel_path = os.path.relpath(pathname_)
+        except ValueError:
+            rel_path = copy.copy(pathname_)
+
+    else:
+        rel_path = abs_pathname  # Return original absolute path if outside CWD
 
     return rel_path
 
