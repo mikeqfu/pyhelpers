@@ -177,8 +177,8 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
         Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
     """
 
-    exe_name = "7z.exe"
-    optional_pathnames = {exe_name, f"C:/Program Files/7-Zip/{exe_name}"}
+    exe_name = "7z"
+    optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/7-Zip/{exe_name}.exe"}
     seven_zip_exists, seven_zip_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=seven_zip_exe)
 
@@ -260,8 +260,8 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         Updating "readme.rst" at ".\\tests\\documents\\" ... Done.
     """
 
-    exe_name = "pandoc.exe"
-    optional_pathnames = {exe_name, f"C:/Program Files/Pandoc/{exe_name}"}
+    exe_name = "pandoc"
+    optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/Pandoc/{exe_name}.exe"}
     pandoc_exists, pandoc_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=pandoc_exe)
 
