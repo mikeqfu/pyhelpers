@@ -47,8 +47,7 @@ def test_wgs84_to_osgb36():
 
     lon, lat = example_df.loc['London'].values
     x, y = wgs84_to_osgb36(longitudes=lon, latitudes=lat)
-    assert round(x, 4) == round(530039.55884451, 4)
-    assert round(y, 4) == round(180371.68016545, 4)
+    assert np.allclose((x, y), (530039.55884451, 180371.68016545))
 
     lonlat_array = example_df.to_numpy()
 
@@ -75,8 +74,7 @@ def test_osgb36_to_wgs84():
 
     x, y = example_df.loc['London'].values
     lon, lat = osgb36_to_wgs84(eastings=x, northings=y)
-    assert round(lon, 4) == round(-0.12764738749567286, 4)
-    assert round(lat, 4) == round(51.50732189539607, 4)
+    assert np.allclose((lon, lat), (-0.12764738749567286, 51.50732189539607))
 
     xy_array = example_df.to_numpy()
     xs, ys = xy_array.T  # xy_array[:, 0], xy_array[:, 1]
