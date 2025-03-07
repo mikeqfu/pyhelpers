@@ -665,10 +665,12 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         >>> plt.close()
     """
 
-    exe_name = "inkscape.exe"
+    exe_name = "inkscape"
     optional_pathnames = {
-        f"C:/Program Files/Inkscape/{exe_name}",
-        f"C:/Program Files/Inkscape/bin/{exe_name}",
+        exe_name,
+        f"{exe_name}.exe"
+        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        f"C:/Program Files/Inkscape/bin/{exe_name}.exe",
     }
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
@@ -948,10 +950,12 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         return None
 
     else:
-        exe_name = "wkhtmltopdf.exe"
+        exe_name = "wkhtmltopdf"
         optional_pathnames = {
-            f"C:/Program Files/wkhtmltopdf/{exe_name}",
-            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}",
+            exe_name,
+            f"{exe_name}.exe"
+            f"C:/Program Files/wkhtmltopdf/{exe_name}.exe",
+            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}.exe",
         }
         wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
             name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)

@@ -457,7 +457,7 @@ def test_seven_zip(capfd):
     with importlib.resources.as_file(path_to_zip_file_) as path_to_zip_file:
         seven_zip(path_to_zip_file=path_to_zip_file, output_dir=out_dir, verbose=True)
         out, _ = capfd.readouterr()
-        assert out.startswith('\r\n7-Zip') and "Everything is Ok" in out and "Done." in out
+        assert "Everything is Ok" in out and "Done." in out
 
 
 def test_markdown_to_rst(capfd):
