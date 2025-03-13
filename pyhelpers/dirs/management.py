@@ -32,7 +32,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
 
     **Tests**::
 
-        >>> from pyhelpers.dirs.mgmt import _delete_dir
+        >>> from pyhelpers.dirs.management import _delete_dir
         >>> from pyhelpers._cache import _add_slashes
         >>> from pyhelpers.dirs import cd
         >>> import os
