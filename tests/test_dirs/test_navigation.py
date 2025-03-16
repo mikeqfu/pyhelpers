@@ -10,12 +10,12 @@ import tempfile
 import pytest
 
 from pyhelpers.dirs.navigation import *
-from pyhelpers.dirs.validation import is_dir
+from pyhelpers.dirs.validation import is_dir, normalize_pathname
 
 
 @pytest.mark.parametrize('cwd', [None, ".", os.path.join(os.sep, "some_directory")])
 def test_cd(capfd, cwd):
-    current_wd = cd(cwd=cwd, back_check=True)
+    current_wd = cd(cwd=cwd, back_check=True, normalized=False)
     if cwd in {None, "."}:
         assert current_wd == os.getcwd()
     else:
@@ -52,7 +52,7 @@ def test_cd(capfd, cwd):
     assert os.path.relpath(path_to_tests).replace(os.sep, "/") == 'tests'
 
     path_to_tests_ = cd("test1", "test2")
-    assert path_to_tests_ == os.path.join(os.getcwd(), "test1", "test2")
+    assert path_to_tests_ == normalize_pathname(os.path.join(os.getcwd(), "test1", "test2"))
 
     os.chdir(init_cwd)  # Restore the initial working directory
     shutil.rmtree(new_cwd)
