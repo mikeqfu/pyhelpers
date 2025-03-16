@@ -45,19 +45,19 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> _check_saving_path(path_to_file, verbose=True)
         Traceback (most recent call last):
             ...
-        AssertionError: The input for `path_to_file` may not be a file path.
+        AssertionError: The input for <path_to_file> may not be a file path.
         >>> path_to_file = "pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
         >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to ".\\tests\\documents\\" ... Passed.
+        Saving "pyhelpers.pdf" in "./tests/documents/" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\Windows\\" ... Passed.
+        Saving "pyhelpers.pdf" to "C:/Windows/" ... Passed.
         >>> path_to_file = "C:\\pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\" ... Passed.
+        Saving "pyhelpers.pdf" to "C:/" ... Passed.
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
@@ -169,10 +169,10 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         >>> from pyhelpers.dirs import cd
         >>> path_to_file = cd("test_func.py")
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
-        Loading ".\\test_func.py" ... Passed.
+        Loading "./test_func.py" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
-        Loading "C:\\Windows\\pyhelpers.pdf" ... Passed.
+        Loading "C:/Windows/pyhelpers.pdf" ... Passed.
     """
 
     if verbose:
