@@ -495,6 +495,51 @@ class GitHubFileDownloader:
         else:
             print(f"Downloaded to: {_add_slashes(dir_out)}")
 
+    def _get_response(self, api_url_local):
+        response, _ = urllib.request.urlretrieve(api_url_local)  # nosec
+
+        with open(response, "r") as f:  # Download files according to the response
+            data = json.load(f)
+
+        # If the data is a file, download it as one.
+        if isinstance(data, dict) and data["type"] == "file":
+            try:  # Download the file
+                self.download_single_file(
+                    data["download_url"], os.path.join(self.dir_out, data['name']))
+                self.total_files += 1
+
+                return self.total_files
+
+            except KeyboardInterrupt as e:
+                _print_failure_message(e, prefix="Error: Got interrupted for")
+
+        # If the data is a directory, download all files in it
+        for file in data:
+            file_url, file_path = file["download_url"], file["path"]
+            path = os.path.basename(file_path) if self.flatten else file_path
+            path = os.path.join(self.output_dir, path)
+
+            # Create a directory if it does not exist
+            if os.path.dirname(path) != '':
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+
+            if file_url is not None:  # Download the file if it is not a directory
+                # file_name = file["name"]
+                try:
+                    self.download_single_file(file_url, path)
+                    self.total_files += 1
+                except KeyboardInterrupt:
+                    print("Got interrupted.")
+
+            else:  # If a directory, recursively download it
+                try:
+                    self.api_url, self.download_path = self.create_url(file["html_url"])
+                    self.download(self.api_url)
+
+                except Exception as e:
+                    _print_failure_message(e, prefix="Error:")
+                    print(f"{file['html_url']} may not be a file or a directory.")
+
     def download(self, api_url=None):
         """
         Downloads files from the specified GitHub ``api_url``.
@@ -529,49 +574,7 @@ class GitHubFileDownloader:
 
         # Get response from GutHub response
         try:
-            response, _ = urllib.request.urlretrieve(api_url_local)  # nosec
-
-            with open(response, "r") as f:  # Download files according to the response
-                data = json.load(f)
-
-            # If the data is a file, download it as one.
-            if isinstance(data, dict) and data["type"] == "file":
-                try:  # Download the file
-                    self.download_single_file(
-                        data["download_url"], os.path.join(self.dir_out, data['name']))
-                    self.total_files += 1
-
-                    return self.total_files
-
-                except KeyboardInterrupt as e:
-                    _print_failure_message(e, prefix="Error: Got interrupted for")
-
-            # If the data is a directory, download all files in it
-            for file in data:
-                file_url, file_path = file["download_url"], file["path"]
-                path = os.path.basename(file_path) if self.flatten else file_path
-                path = os.path.join(self.output_dir, path)
-
-                # Create a directory if it does not exist
-                if os.path.dirname(path) != '':
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-                if file_url is not None:  # Download the file if it is not a directory
-                    # file_name = file["name"]
-                    try:
-                        self.download_single_file(file_url, path)
-                        self.total_files += 1
-                    except KeyboardInterrupt:
-                        print("Got interrupted.")
-
-                else:  # If a directory, recursively download it
-                    try:
-                        self.api_url, self.download_path = self.create_url(file["html_url"])
-                        self.download(self.api_url)
-
-                    except Exception as e:
-                        _print_failure_message(e, prefix="Error:")
-                        print(f"{file['html_url']} may not be a file or a directory.")
+            self._get_response(api_url_local=api_url_local)
 
         except urllib.error.URLError as e:
             print(f"URL error occurred: {e.reason}")
