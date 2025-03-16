@@ -1,5 +1,5 @@
 """
-Directory/file validation.
+Utilities for directory/file validation.
 """
 
 import errno
@@ -306,7 +306,7 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=F
     return file_pathnames
 
 
-def check_files_exist(filenames, path_to_dir, verbose=False):
+def check_files_exist(filenames, path_to_dir, verbose=False, **kwargs):
     """
     Checks if specified files exist within a given directory.
 
@@ -332,7 +332,7 @@ def check_files_exist(filenames, path_to_dir, verbose=False):
         False
     """
 
-    dir_files = get_file_pathnames(path_to_dir, file_ext="*")
+    dir_files = get_file_pathnames(path_to_dir=path_to_dir, file_ext="*", **kwargs)
 
     # Format the required file name to standard linux path
     file_or_pathnames = [os.path.abspath(filename) for filename in filenames]
