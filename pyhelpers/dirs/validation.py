@@ -7,22 +7,26 @@ import os
 import pathlib
 import re
 
-from .nav import cd
-from .._cache import _check_relative_pathname
+from .navigation import cd
+from .._cache import _check_relative_pathname, _normalize_pathname
 
 
-def normalize_pathname(pathname, sep="/", **kwargs):
+def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
+    # noinspection PyShadowingNames
     """
     Converts a pathname to a consistent file path format for cross-platform compatibility.
 
     This function formats a file (or an OS-specific) path to ensure compatibility across
-    Windows, Linux and macOS.
+    Windows and Ubuntu (and other Unix-like systems).
 
     :param pathname: A pathname.
     :type pathname: str | bytes | pathlib.Path | os.PathLike
-    :param sep: File path separator used by the operating system;
-        defaults to ``"/"`` (forward slash) for Linux and macOS pathname.
+    :param sep: File path separator used by the operating system; defaults to ``"/"``
+        (forward slash) for both Windows and Ubuntu (and other Unix-like systems).
     :type sep: str
+    :param add_slash:  If ``True``, adds a leading slash (and, if appropriate, a trailing slash)
+        to the returned pathname; defaults to ``False``.
+    :type add_slash: bool
     :return: Pathname of a consistent file path format.
     :rtype: str
 
@@ -33,20 +37,18 @@ def normalize_pathname(pathname, sep="/", **kwargs):
         >>> import pathlib
         >>> normalize_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
+        >>> normalize_pathname("tests\\data\\dat.csv", add_slash=True)  # on Windows
+        '.\\tests\\data\\dat.csv'
         >>> normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
-        >>> normalize_pathname(pathlib.Path("tests\\data/dat.csv"), sep=os.path.sep)  # On Windows
+        >>> pathname = pathlib.Path("tests\\data/dat.csv")
+        >>> normalize_pathname(pathname, sep=os.path.sep)  # On Windows
         'tests\\data\\dat.csv'
+        >>> normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        '.\\tests\\data\\dat.csv'
     """
 
-    if isinstance(pathname, bytes):
-        pathname_ = pathname.decode(**kwargs)
-    else:
-        pathname_ = str(pathname)
-
-    pathname_ = re.sub(r"[\\/]+", re.escape(sep), pathname_)
-
-    return pathname_
+    return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
 
 
 def is_dir(path_to_dir):
