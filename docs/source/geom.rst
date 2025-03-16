@@ -8,6 +8,41 @@ geom
     :no-members:
     :no-inherited-members:
 
+Distance-related calculations
+-----------------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    calc_distance_on_unit_sphere
+    calc_hypotenuse_distance
+    find_closest_point
+    find_closest_points
+    find_shortest_path
+
+Geometric properties and shape sketching
+----------------------------------------
+
+.. rubric:: Properties
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    get_midpoint
+    get_geometric_midpoint
+    get_geometric_midpoint_calc
+    get_rectangle_centroid
+    get_square_vertices
+    get_square_vertices_calc
+
+.. rubric:: Sketching
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    sketch_square
+
 Geometric data transformation
 -----------------------------
 
@@ -35,37 +70,3 @@ Geometric data transformation
     drop_axis
     project_point_to_line
 
-Geometric data computation
---------------------------
-
-.. rubric:: Distance
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    calc_distance_on_unit_sphere
-    calc_hypotenuse_distance
-    find_closest_point
-    find_closest_points
-    find_shortest_path
-
-.. rubric:: Locating
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    get_midpoint
-    get_geometric_midpoint
-    get_geometric_midpoint_calc
-    get_rectangle_centroid
-    get_square_vertices
-    get_square_vertices_calc
-
-Geometric data sketching
-------------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    sketch_square

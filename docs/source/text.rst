@@ -23,8 +23,8 @@ Textual data (pre)processing
     calculate_idf
     calculate_tfidf
 
-Textual data analysis
----------------------
+Textual data similarity
+-----------------------
 
 .. autosummary::
     :toctree: _generated/

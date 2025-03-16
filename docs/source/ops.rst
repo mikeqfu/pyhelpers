@@ -8,22 +8,6 @@ ops
     :no-members:
     :no-inherited-members:
 
-General usage
--------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    confirmed
-    get_obj_attr
-    eval_dtype
-    hash_password
-    verify_password
-    func_running_time
-    get_git_branch
-    get_ansi_colour_code
-
 Basic computation / conversion
 ------------------------------
 
@@ -33,11 +17,11 @@ Basic computation / conversion
 
     get_utc_tai_offset
     gps_time_to_utc
+    find_closest_date
     parse_size
     get_number_of_chunks
-    get_extreme_outlier_bounds
     interquartile_range
-    find_closest_date
+    get_extreme_outlier_bounds
 
 Basic data manipulation
 -----------------------
@@ -69,8 +53,6 @@ Basic data manipulation
     swap_cols
     swap_rows
     np_shift
-    cmap_discretisation
-    colour_bar_index
 
 .. rubric:: Graph plotting
 .. autosummary::
@@ -83,6 +65,7 @@ Basic data manipulation
 Web data manipulation
 ---------------------
 
+.. rubric:: Internet-related utilities
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
@@ -90,11 +73,17 @@ Web data manipulation
     is_network_connected
     is_url
     is_url_connectable
-    is_downloadable
     init_requests_session
     load_user_agent_strings
     get_user_agent_string
     fake_requests_headers
+
+.. rubric:: File downloads utilities
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    is_downloadable
     download_file_from_url
 
 .. autosummary::
@@ -102,3 +91,26 @@ Web data manipulation
     :template: class.rst
 
     GitHubFileDownloader
+
+.. rubric:: API-related utilities
+.. autosummary::
+    :toctree: _generated/
+    :template: class.rst
+
+    CrossRefOrcid
+
+Misc general utilities
+----------------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    confirmed
+    get_obj_attr
+    eval_dtype
+    hash_password
+    verify_password
+    func_running_time
+    get_git_branch
+    get_ansi_colour_code
