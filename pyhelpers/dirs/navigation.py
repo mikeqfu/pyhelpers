@@ -6,7 +6,7 @@ import importlib.resources
 import os
 import re
 
-from .._cache import _check_file_pathname
+from .._cache import _add_slashes, _check_file_pathname
 
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
@@ -176,7 +176,8 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     return path
 
 
-def find_executable(name, options=None, target=None):
+def find_executable(name, options=None, target=None, normalized=True):
+    # noinspection PyShadowingNames
     """
     Finds the pathname of an executable file for a specified application.
 
@@ -188,6 +189,8 @@ def find_executable(name, options=None, target=None):
     :param target: Specific pathname of the executable file (if already known);
         defaults to ``None``.
     :type target: str | None
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
     :return: Whether the specified executable file exists (i.e. a boolean indicating existence),
         together with its pathname.
     :rtype: tuple[bool, str]
@@ -202,12 +205,12 @@ def find_executable(name, options=None, target=None):
         >>> python_exe_exists
         True
         >>> possible_paths = [os.path.dirname(sys.executable), sys.executable]
-        >>> python_exe_exists, path_to_python_exe = find_executable(
-        ...     python_exe, target=possible_paths[0])
+        >>> target = possible_paths[0]
+        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, target=target)
         >>> python_exe_exists
         False
-        >>> python_exe_exists, path_to_python_exe = find_executable(
-        ...     python_exe, target=possible_paths[1])
+        >>> target = possible_paths[1]
+        >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, target=target)
         >>> python_exe_exists
         True
         >>> python_exe_exists, path_to_python_exe = find_executable(possible_paths[1])
@@ -221,4 +224,9 @@ def find_executable(name, options=None, target=None):
         'pyhelpers.exe'
     """
 
-    return _check_file_pathname(name=name, options=options, target=target)
+    file_exists, file_pathname = _check_file_pathname(name=name, options=options, target=target)
+
+    if file_exists and normalized:
+        file_pathname = _add_slashes(file_pathname, normalized=normalized, surrounded_by="")
+
+    return file_exists, file_pathname
