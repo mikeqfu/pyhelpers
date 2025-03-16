@@ -128,29 +128,27 @@ def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
     """
 
     if isinstance(geom_obj, np.ndarray):
-        coords = geom_obj if dtype is None else geom_obj.astype(dtype)
+        coords = geom_obj
 
     elif (isinstance(geom_obj, typing.Iterable) and
           not isinstance(geom_obj, (str, shapely.geometry.base.BaseGeometry))):
-        coords = np.array(geom_obj, dtype=dtype)
+        coords = np.array(geom_obj)
 
     elif shapely.is_geometry(geom_obj) and hasattr(geom_obj, 'geom_type'):
         geom_type = geom_obj.geom_type.lower()
 
         if 'collection' in geom_type:  # Handle GeometryCollection
-            coords = np.concatenate(
-                [get_coordinates_as_array(x) for x in geom_obj.geoms], dtype=dtype)
+            coords = np.concatenate([get_coordinates_as_array(x) for x in geom_obj.geoms])
+            coords = coords
 
         elif geom_type.startswith('multi'):  # Handle MultiLineString, MultiPoint, and MultiPolygon
             coords = np.vstack(
                 [np.array(x.exterior.coords if geom_type.endswith('polygon') else x.coords)
-                 for x in geom_obj.geoms],
-                dtype=dtype)
+                 for x in geom_obj.geoms])
 
         else:
             coords = np.array(
-                geom_obj.exterior.coords if geom_type.endswith('polygon') else geom_obj.coords,
-                dtype=dtype)
+                geom_obj.exterior.coords if geom_type.endswith('polygon') else geom_obj.coords)
 
     else:
         raise TypeError(f"Unsupported geometry type: {type(geom_obj)}")
@@ -159,7 +157,7 @@ def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
         _, idx = np.unique(coords, axis=0, return_index=True)
         coords = coords[np.sort(idx)]
 
-    return coords
+    return coords.astype(dtype)
 
 
 # Coordinate system
