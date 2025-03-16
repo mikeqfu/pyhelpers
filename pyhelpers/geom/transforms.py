@@ -1,8 +1,7 @@
 """
-Geometric data transformation.
+Geometric data transformations.
 """
 
-import collections.abc
 import copy
 import functools
 import typing
@@ -11,6 +10,8 @@ import numpy as np
 import pyproj
 import shapely.geometry
 import shapely.ops
+
+from .._cache import _transform_point_type
 
 
 # Data type
@@ -70,20 +71,7 @@ def transform_point_type(*pts, as_geom=True):
         (1.0, 2.0, 3.0)
     """
 
-    for pt in pts:
-        if isinstance(pt, shapely.geometry.Point):
-            if not as_geom:
-                if pt.has_z:
-                    pt = (pt.x, pt.y, pt.z)
-                else:
-                    pt = (pt.x, pt.y)
-
-        elif isinstance(pt, collections.abc.Iterable):
-            assert len(list(pt)) <= 3
-            if as_geom:
-                pt = shapely.geometry.Point(pt)
-
-        yield pt
+    return _transform_point_type(*pts, as_geom=as_geom)
 
 
 def get_coordinates_as_array(geom_obj, unique=False):
