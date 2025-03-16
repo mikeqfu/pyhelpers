@@ -121,6 +121,61 @@ def gps_time_to_utc(gps_time, as_datetime=True, utc_tai_offset=None):
     return utc_time
 
 
+def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M:%S.%f'):
+    # noinspection PyShadowingNames
+    """
+    Finds the closest date to a given date from a list of dates.
+
+    :param date: Date to find the closest match for.
+    :type date: str | datetime.datetime
+    :param lookup_dates: Iterable of dates to search within.
+    :type lookup_dates: typing.Iterable
+    :param as_datetime: Whether to return the closest date as a datetime.datetime object;
+        defaults to ``False`` which returns a string representation.
+    :type as_datetime: bool
+    :param fmt: Format string for datetime parsing and formatting;
+        defaults to ``'%Y-%m-%d %H:%M:%S.%f'``.
+    :type fmt: str
+    :return: Closest date to the given `date`.
+    :rtype: str | datetime.datetime
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import find_closest_date
+        >>> import pandas
+        >>> lookup_dates = pandas.date_range('2019-01-02', '2019-12-31')
+        >>> lookup_dates
+        DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
+                       '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09',
+                       '2019-01-10', '2019-01-11',
+                       ...
+                       '2019-12-22', '2019-12-23', '2019-12-24', '2019-12-25',
+                       '2019-12-26', '2019-12-27', '2019-12-28', '2019-12-29',
+                       '2019-12-30', '2019-12-31'],
+                      dtype='datetime64[ns]', length=364, freq='D')
+        >>> date = '2019-01-01'
+        >>> closest_example_date = find_closest_date(date, lookup_dates)
+        >>> closest_example_date
+        '2019-01-02 00:00:00.000000'
+        >>> date = pandas.to_datetime('2019-01-01')
+        >>> closest_date = find_closest_date(date, lookup_dates, as_datetime=True)
+        >>> closest_date
+        Timestamp('2019-01-02 00:00:00', freq='D')
+    """
+
+    closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
+
+    if as_datetime:
+        if isinstance(closest_date, str):
+            closest_date = pd.to_datetime(closest_date)
+
+    else:
+        if isinstance(closest_date, datetime.datetime):
+            closest_date = closest_date.strftime(fmt)
+
+    return closest_date
+
+
 def parse_size(size, binary=True, precision=1):
     """
     Parses size into human-readable format or vice versa.
@@ -234,6 +289,32 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     return number_of_chunks
 
 
+def interquartile_range(num_dat):
+    """
+    Calculates the interquartile range (IQR) of numerical data.
+
+    This function can serve as an alternative to
+    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
+
+    :param num_dat: Array-like object containing numerical data.
+    :type num_dat: numpy.ndarray | list | tuple
+    :return: Interquartile range of `num_dat`.
+    :rtype: float
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import interquartile_range
+        >>> data = list(range(100))
+        >>> iqr_result = interquartile_range(data)
+        >>> iqr_result
+        49.5
+    """
+
+    iqr = np.subtract(*np.percentile(num_dat, [75, 25]))
+
+    return iqr
+
+
 def get_extreme_outlier_bounds(num_dat, k=1.5):
     # noinspection PyShadowingNames
     """
@@ -287,84 +368,3 @@ def get_extreme_outlier_bounds(num_dat, k=1.5):
     upper_bound = q3 + k * iqr
 
     return lower_bound, upper_bound
-
-
-def interquartile_range(num_dat):
-    """
-    Calculates the interquartile range (IQR) of numerical data.
-
-    This function can serve as an alternative to
-    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
-
-    :param num_dat: Array-like object containing numerical data.
-    :type num_dat: numpy.ndarray | list | tuple
-    :return: Interquartile range of `num_dat`.
-    :rtype: float
-
-    **Examples**::
-
-        >>> from pyhelpers.ops import interquartile_range
-        >>> data = list(range(100))
-        >>> iqr_result = interquartile_range(data)
-        >>> iqr_result
-        49.5
-    """
-
-    iqr = np.subtract(*np.percentile(num_dat, [75, 25]))
-
-    return iqr
-
-
-def find_closest_date(date, lookup_dates, as_datetime=False, fmt='%Y-%m-%d %H:%M:%S.%f'):
-    # noinspection PyShadowingNames
-    """
-    Finds the closest date to a given date from a list of dates.
-
-    :param date: Date to find the closest match for.
-    :type date: str | datetime.datetime
-    :param lookup_dates: Iterable of dates to search within.
-    :type lookup_dates: typing.Iterable
-    :param as_datetime: Whether to return the closest date as a datetime.datetime object;
-        defaults to ``False`` which returns a string representation.
-    :type as_datetime: bool
-    :param fmt: Format string for datetime parsing and formatting;
-        defaults to ``'%Y-%m-%d %H:%M:%S.%f'``.
-    :type fmt: str
-    :return: Closest date to the given `date`.
-    :rtype: str | datetime.datetime
-
-    **Examples**::
-
-        >>> from pyhelpers.ops import find_closest_date
-        >>> import pandas
-        >>> lookup_dates = pandas.date_range('2019-01-02', '2019-12-31')
-        >>> lookup_dates
-        DatetimeIndex(['2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05',
-                       '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09',
-                       '2019-01-10', '2019-01-11',
-                       ...
-                       '2019-12-22', '2019-12-23', '2019-12-24', '2019-12-25',
-                       '2019-12-26', '2019-12-27', '2019-12-28', '2019-12-29',
-                       '2019-12-30', '2019-12-31'],
-                      dtype='datetime64[ns]', length=364, freq='D')
-        >>> date = '2019-01-01'
-        >>> closest_example_date = find_closest_date(date, lookup_dates)
-        >>> closest_example_date
-        '2019-01-02 00:00:00.000000'
-        >>> date = pandas.to_datetime('2019-01-01')
-        >>> closest_date = find_closest_date(date, lookup_dates, as_datetime=True)
-        >>> closest_date
-        Timestamp('2019-01-02 00:00:00', freq='D')
-    """
-
-    closest_date = min(lookup_dates, key=lambda x: abs(pd.to_datetime(x) - pd.to_datetime(date)))
-
-    if as_datetime:
-        if isinstance(closest_date, str):
-            closest_date = pd.to_datetime(closest_date)
-
-    else:
-        if isinstance(closest_date, datetime.datetime):
-            closest_date = closest_date.strftime(fmt)
-
-    return closest_date
