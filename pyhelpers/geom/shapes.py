@@ -1,5 +1,5 @@
 """
-Geometric properties (e.g. midpoints, centroids and vertices) and shape sketching.
+Utilities for calculating geometric properties and shape sketching.
 """
 
 import copy

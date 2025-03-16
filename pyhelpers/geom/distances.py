@@ -1,5 +1,5 @@
 """
-Distance-related calculations and proximity operations.
+Utilities for distance-related calculations and proximity operations.
 """
 
 import copy
