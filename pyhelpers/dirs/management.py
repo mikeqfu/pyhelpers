@@ -107,7 +107,10 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
             func(rel_path_to_dir, **kwargs)
 
         if verbose:
-            print("Done.") if not os.path.exists(path_to_dir) else print("Cancelled.")
+            if not os.path.exists(path_to_dir):
+                print("Done.")
+            else:
+                print("Cancelled.")
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
