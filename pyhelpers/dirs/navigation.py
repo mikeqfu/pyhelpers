@@ -1,5 +1,5 @@
 """
-Directory/file navigation.
+Utilities for directory/file navigation.
 """
 
 import importlib.resources
