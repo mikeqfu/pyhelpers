@@ -1,22 +1,11 @@
-"""Test the module :mod:`~pyhelpers.settings`."""
+"""
+Tests the :mod:`~pyhelpers.settings.preferences` submodule.
+"""
 
 import pytest
 
-from pyhelpers.settings import *
+from pyhelpers.settings.preferences import *
 
-
-# ==================================================================================================
-# configs - Configurations.
-# ==================================================================================================
-
-@pytest.mark.parametrize('reset', [False, True])
-def test_gdal_configurations(reset):
-    gdal_configurations(reset=reset)
-
-
-# ==================================================================================================
-# prefs - Preferences.
-# ==================================================================================================
 
 @pytest.mark.parametrize('reset', [False, True, 'all'])
 @pytest.mark.parametrize('backend', [None, 'TkAgg'])

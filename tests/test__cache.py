@@ -8,15 +8,18 @@ import sys
 import pytest
 
 
-def test__confirmed(monkeypatch, capfd):
-    from pyhelpers._cache import _confirmed
+@pytest.mark.parametrize('osgb36', [False, True])
+def test_example_dataframe(osgb36):
+    from pyhelpers._cache import example_dataframe
 
-    monkeypatch.setattr('builtins.input', lambda _: 'yes')
-    if _confirmed(prompt="Testing if the function works?", resp=True):
-        print("Passed.")
+    data = example_dataframe(osgb36=osgb36)
+    assert data.shape == (4, 2)
+    assert data.index.tolist() == ['London', 'Birmingham', 'Manchester', 'Leeds']
 
-    out, _ = capfd.readouterr()
-    assert "Passed." in out
+    if osgb36:
+        assert data.columns.tolist() == ['Easting', 'Northing']
+    else:
+        assert data.columns.tolist() == ['Longitude', 'Latitude']
 
 
 def test__check_dependency():
@@ -31,10 +34,22 @@ def test__check_dependency():
     gdal = _check_dependency(name='gdal', package='osgeo')
     assert gdal.__name__ == 'osgeo.gdal'
 
-    err_msg = ("Missing optional dependency 'unknown_package'. "
-               "Use `pip` or `conda` to install it, e.g. `pip install unknown_package`.")
+    test_name = 'unknown_package'
+    err_msg = (f"Missing optional dependency '{test_name}'. "
+               f"Use `pip` or `conda` to install it, e.g. `pip install unknown_package`.")
     with pytest.raises(ModuleNotFoundError, match=err_msg):
-        _ = _check_dependency(name='unknown_package')
+        _ = _check_dependency(name=test_name)
+
+
+def test__confirmed(monkeypatch, capfd):
+    from pyhelpers._cache import _confirmed
+
+    monkeypatch.setattr('builtins.input', lambda _: 'yes')
+    if _confirmed(prompt="Testing if the function works?", resp=True):
+        print("Passed.")
+
+    out, _ = capfd.readouterr()
+    assert "Passed." in out
 
 
 def test__check_relative_pathname():
@@ -62,6 +77,49 @@ def test__check_relative_pathname():
     subdir = os.path.join(os.getcwd(), "test_dir")
     rel_path = _check_relative_pathname(subdir)
     assert rel_path == "test_dir"
+
+
+def test__normalize_pathname():
+    from pyhelpers._cache import _normalize_pathname
+    import pathlib
+
+    pathname = _normalize_pathname("tests\\data\\dat.csv")
+    assert pathname == 'tests/data/dat.csv'
+
+    pathname = _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
+    if os.name == 'nt':
+        assert pathname == '.\\tests\\data\\dat.csv'
+    else:
+        assert pathname == './tests/data/dat.csv'
+
+    pathname = _normalize_pathname("tests//data/dat.csv".encode('utf-8'))
+    assert pathname == 'tests/data/dat.csv'
+
+    pathname = pathlib.Path("tests\\data/dat.csv")
+    pathname_1 = _normalize_pathname(pathname, sep=os.path.sep)
+    pathname_2 = _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
+    if os.name == 'nt':
+        assert pathname_1 == 'tests\\data\\dat.csv'
+        assert pathname_2 == '.\\tests\\data\\dat.csv'
+    else:
+        assert pathname_1 == 'tests/data/dat.csv'
+        assert pathname_2 == './tests/data/dat.csv'
+
+
+def test__add_slashes():
+    from pyhelpers._cache import _add_slashes
+
+    path = _add_slashes("pyhelpers\\data")
+    assert path == '"./pyhelpers/data/"'
+
+    path = _add_slashes("pyhelpers\\data", normalized=False)
+    if os.name == 'nt':
+        assert path == '".\\pyhelpers\\data\\"'
+    else:
+        assert path == '"./pyhelpers/data/"'
+
+    path = _add_slashes("pyhelpers\\data\\pyhelpers.dat", surrounded_by='')
+    assert path == './pyhelpers/data/pyhelpers.dat'
 
 
 def test__check_file_pathname():
@@ -112,6 +170,78 @@ def test__print_failure_message(capfd):
     _print_failure_message('test', prefix="Failed.")
     out, _ = capfd.readouterr()
     assert out == 'Failed. test.\n'
+
+
+@pytest.mark.parametrize('allowed_schemes', [None, {'https'}])
+def test__check_url_scheme(allowed_schemes):
+    from pyhelpers._cache import _check_url_scheme
+
+    url = 'https://github.com/mikeqfu/pyhelpers'
+    parsed_url = _check_url_scheme(url, allowed_schemes=allowed_schemes)
+    assert parsed_url.netloc == 'github.com'
+
+    with pytest.raises(ValueError) as exc_info:
+        _ = _check_url_scheme('httpx://github.com/mikeqfu/pyhelpers')
+    assert str(exc_info.value) == "Unknown/unsafe URL scheme: 'httpx'."
+
+
+@pytest.mark.parametrize('retry_status', ['default', 123])
+def test__init_requests_session(retry_status):
+    from pyhelpers._cache import _init_requests_session
+    import requests
+
+    logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+    s = _init_requests_session(logo_url, retry_status=retry_status)
+    assert isinstance(s, requests.sessions.Session)
+
+
+def test__get_ansi_colour_code():
+    from pyhelpers._cache import _get_ansi_colour_code, _ANSI_ESCAPE_CODES
+
+    color_codes = _get_ansi_colour_code('red')
+    assert color_codes == '\033[31m'
+
+    color_codes = _get_ansi_colour_code(['red', 'blue'])
+    assert color_codes == ['\033[31m', '\033[34m']
+
+    with pytest.raises(ValueError, match="'invalid_colour' is not a valid colour name."):
+        _ = _get_ansi_colour_code('invalid_colour')
+
+    color_codes = _get_ansi_colour_code('red', show_valid_colours=True)
+    assert isinstance(color_codes, tuple)
+    assert color_codes[0] == '\033[31m'
+    assert color_codes[1] == set(_ANSI_ESCAPE_CODES)
+
+
+def test__transform_point_type():
+    from pyhelpers._cache import _transform_point_type, example_dataframe
+    import numpy as np
+    import shapely.geometry
+
+    example_df = example_dataframe()
+
+    pt1 = example_df.loc['London'].values  # array([-0.1276474, 51.5073219])
+    pt2 = example_df.loc['Birmingham'].values  # array([-1.9026911, 52.4796992])
+
+    ref_rslt_1 = ['POINT (-0.1276474 51.5073219)', 'POINT (-1.9026911 52.4796992)']
+    ref_rslt_2 = [np.array([-0.1276474, 51.5073219]), np.array([-1.9026911, 52.4796992])]
+
+    geom_points = [x.wkt for x in _transform_point_type(pt1, pt2)]
+    assert geom_points == ref_rslt_1
+
+    geom_points = list(_transform_point_type(pt1, pt2, as_geom=False))
+    assert np.array_equal(geom_points, ref_rslt_2)
+
+    pt1, pt2 = map(lambda x: shapely.geometry.Point(x), (pt1, pt2))
+
+    geom_points = [x.wkt for x in _transform_point_type(pt1, pt2)]
+    assert geom_points == ref_rslt_1
+
+    geom_points = list(_transform_point_type(pt1, pt2, as_geom=False))
+    assert np.array_equal(geom_points, ref_rslt_2)
+
+    geom_points_ = _transform_point_type(shapely.geometry.Point([1, 2, 3]), as_geom=False)
+    assert np.array_equal(list(geom_points_), [(1.0, 2.0, 3.0)])
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 """
-Basic functions that support the main modules of :mod:`~pyhelpers.dbms`.
+Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
 import copy
@@ -61,7 +61,8 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    assert not abs_path_to_file.is_dir(), "The input for `path_to_file` may not be a file path."
+    if abs_path_to_file.is_dir():
+        raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
 
     try:
         rel_dir_path = abs_path_to_file.parent.relative_to(pathlib.Path.cwd())
@@ -132,7 +133,7 @@ def _autofit_column_width(writer, writer_kwargs, **kwargs):
 
     if 'sheet_name' in kwargs and writer_kwargs['engine'] == 'openpyxl':
         # Reference: https://stackoverflow.com/questions/39529662/
-        ws = writer.sheets[kwargs['sheet_name']]
+        ws = writer.sheets[kwargs.get('sheet_name')]
         for column in ws.columns:
             max_length = 0
             column_letter = column[0].column_letter

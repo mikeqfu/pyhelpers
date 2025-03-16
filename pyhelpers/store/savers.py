@@ -1,5 +1,5 @@
 """
-Save data.
+Utilities for saving data in various formats.
 """
 
 import bz2
@@ -17,6 +17,7 @@ import pandas as pd
 
 from .utils import _autofit_column_width, _check_saving_path
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_message
+from ..ops.web import is_url
 
 
 def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
@@ -181,7 +182,8 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
     _, ext = os.path.splitext(filename)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
-    assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
+    if raise_error:
+        assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
 
     try:  # to save the data
         if ext in {".csv", ".txt", ".odt"}:  # a .csv file
@@ -215,6 +217,49 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exists,
+                       autofit_column_width, writer_kwargs, verbose, raise_error, **kwargs):
+    for sheet_data, sheet_name in zip(data, sheet_names):
+        # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
+        if verbose:
+            print(f"\t'{sheet_name}'", end=" ... ")
+
+        if sheet_name in cur_sheet_names:
+            if if_sheet_exists is None:
+                if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
+            else:
+                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
+                    "Invalid option for `if_sheet_exists`."
+                if_sheet_exists_ = copy.copy(if_sheet_exists)
+
+            if if_sheet_exists_ != 'pass':
+                writer._if_sheet_exists = if_sheet_exists_
+
+        try:
+            kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
+            sheet_data.to_excel(**kwargs)
+
+            if autofit_column_width:
+                _autofit_column_width(writer, writer_kwargs, **kwargs)
+
+            if writer._if_sheet_exists == 'new':
+                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
+                prefix = "\t\t" if if_sheet_exists is None else ""
+                add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
+            else:
+                add_msg = "Done."
+
+            if verbose:
+                print(add_msg)
+
+            cur_sheet_names = list(writer.sheets.keys())
+
+        except Exception as e:
+            _print_failure_message(
+                e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
+                raise_error=raise_error)
 
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
@@ -330,45 +375,10 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         if verbose:
             print("")
 
-        for sheet_data, sheet_name in zip(data, sheet_names):
-            # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
-            if verbose:
-                print(f"\t'{sheet_name}'", end=" ... ")
-
-            if sheet_name in cur_sheet_names:
-                if if_sheet_exists is None:
-                    if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
-                else:
-                    assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
-                        "Invalid option for `if_sheet_exists`."
-                    if_sheet_exists_ = copy.copy(if_sheet_exists)
-
-                if if_sheet_exists_ != 'pass':
-                    writer._if_sheet_exists = if_sheet_exists_
-
-            try:
-                kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
-                sheet_data.to_excel(**kwargs)
-
-                if autofit_column_width:
-                    _autofit_column_width(writer, writer_kwargs, **kwargs)
-
-                if writer._if_sheet_exists == 'new':
-                    new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
-                    prefix = "\t\t" if if_sheet_exists is None else ""
-                    add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
-                else:
-                    add_msg = "Done."
-
-                if verbose:
-                    print(add_msg)
-
-                cur_sheet_names = list(writer.sheets.keys())
-
-            except Exception as e:
-                _print_failure_message(
-                    e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
-                    raise_error=raise_error)
+        _save_spreadsheets(
+            data=data, sheet_names=sheet_names, cur_sheet_names=cur_sheet_names, writer=writer,
+            if_sheet_exists=if_sheet_exists, autofit_column_width=autofit_column_width,
+            writer_kwargs=writer_kwargs, verbose=verbose, raise_error=raise_error, **kwargs)
 
 
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
@@ -688,13 +698,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
 
             result = subprocess.run(
                 [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf],
-                check=True,
-            )  # nosec
-            ret_code = result.returncode
-
-        except subprocess.CalledProcessError:
-            result = subprocess.run(
-                [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],
+                # [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],  # Old
                 check=True,
             )  # nosec
             ret_code = result.returncode
@@ -706,8 +710,8 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
             print("Done.")
 
     else:
-        if verbose:
-            print(
+        if raise_error:
+            raise FileNotFoundError(
                 '"Inkscape" (https://inkscape.org) is required to '
                 'convert a SVG file to an EMF file; however, it is not found on this device.'
                 '\nInstall it and then try again.')
@@ -985,8 +989,6 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                 options.update(wkhtmltopdf_options)
             configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
             kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
-
-            from pyhelpers.ops.webutils import is_url
 
             try:
                 if is_url(data):

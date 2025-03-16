@@ -12,7 +12,7 @@ import subprocess  # nosec
 
 import pandas as pd
 
-from .._cache import _ANSI_ESCAPE_CODES, _confirmed
+from .._cache import _confirmed, _get_ansi_colour_code
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -275,18 +275,18 @@ def func_running_time(func):
         time_start = datetime.datetime.now()
         res = func(*args, **kwargs)
         time_diff = datetime.datetime.now() - time_start
-        print(
-            f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s')
-        print()
+        print(f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s\n')
         return res
 
     return inner
 
 
-def get_git_branch():
+def get_git_branch(verbose=False):
     """
     Gets the current Git branch name.
 
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
+    :type verbose: bool | int
     :return: The name of the currently checked-out Git branch.
     :rtype: str
 
@@ -304,13 +304,13 @@ def get_git_branch():
             text=True,
             capture_output=True
         )  # nosec
-        branch = result.stdout.strip()
+        branch_name = result.stdout.strip()
+
+        return branch_name
 
     except subprocess.CalledProcessError:
-        branch = None
-        print("Not in a Git repository")
-
-    return branch
+        if verbose:
+            print("Not in a Git repository")
 
 
 def get_ansi_colour_code(colours, show_valid_colours=False):
@@ -342,15 +342,4 @@ def get_ansi_colour_code(colours, show_valid_colours=False):
         ('\\033[31m', {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', ...})
     """
 
-    if isinstance(colours, str):
-        colours = [colours]  # Convert single string to list for uniform processing
-
-    try:
-        color_codes = [_ANSI_ESCAPE_CODES[x.lower()] for x in colours]
-    except KeyError as e:
-        raise ValueError(f"'{e.args[0]}' is not a valid colour name.") from None
-
-    if len(color_codes) == 1:
-        color_codes = color_codes[0]  # Return a single string instead of a list
-
-    return (color_codes, set(_ANSI_ESCAPE_CODES)) if show_valid_colours else color_codes
+    return _get_ansi_colour_code(colours=colours, show_valid_colours=show_valid_colours)

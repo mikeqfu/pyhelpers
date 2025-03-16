@@ -2,5 +2,5 @@
 Settings of working environment.
 """
 
-from .configs import *
-from .prefs import *
+from .configurations import *
+from .preferences import *

@@ -1,26 +1,16 @@
 """
-Manipulation of textual data.
+Utilities for measuring similarity between textual data.
 """
 
 import re
 
 import numpy as np
 
-from .preproc import remove_punctuation
-from .._cache import _check_dependency
-
-
-def _vectorize_text(*txt):
-    txt_ = [
-        re.compile(r"\w+").findall(x.lower()) if isinstance(x, str) else [x_.lower() for x_ in x]
-        for x in txt]
-    doc_words = set().union(*txt_)
-
-    for x in txt_:
-        yield [x.count(word) for word in doc_words]
+from .._cache import _check_dependency, _remove_punctuation, _vectorize_text
 
 
 def euclidean_distance_between_texts(txt1, txt2):
+    # noinspection PyShadowingNames
     """
     Computes the Euclidean distance between two sentences.
 
@@ -34,8 +24,8 @@ def euclidean_distance_between_texts(txt1, txt2):
     **Examples**::
 
         >>> from pyhelpers.text import euclidean_distance_between_texts
-        >>> txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-        >>> euclidean_distance = euclidean_distance_between_texts(txt_1, txt_2)
+        >>> txt1, txt2 = 'This is an apple.', 'That is a pear.'
+        >>> euclidean_distance = euclidean_distance_between_texts(txt1, txt2)
         >>> euclidean_distance
         2.449489742783178
     """
@@ -87,48 +77,62 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
     return cos_similarity
 
 
-def find_matched_str(x, lookup_list):
+def find_matched_str(input_str, lookup_list, use_regex=True):
+    # noinspection PyShadowingNames
     """
-    Finds all strings (in a sequence) that match a given string.
+    Finds all strings (in a sequence) that match a given string or regex pattern.
 
-    :param x: The string to match.
-    :type x: str
+    :param input_str: The string to match.
+    :type input_str: str
     :param lookup_list: A sequence of strings for lookup.
-    :type lookup_list: typing.Iterable
-    :return: A generator containing all strings that match ``x``.
+    :type lookup_list: typing.Iterable[str]
+    :param use_regex: Whether to treat `text` as a regex pattern; defaults to `True`.
+    :type use_regex: bool
+    :return: A generator containing all strings that match ``text``.
     :rtype: typing.Generator | None
 
     **Examples**::
 
         >>> from pyhelpers.text import find_matched_str
         >>> lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
-        >>> res = find_matched_str('apple', lookup_lst)
-        >>> list(res)
+        >>> text_ = find_matched_str('apple', lookup_lst)
+        >>> list(text_)
         []
         >>> lookup_lst += ['apple']
         >>> lookup_lst
         ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
-        >>> res = find_matched_str('apple', lookup_lst)
-        >>> list(res)
+        >>> text_ = find_matched_str('apple', lookup_lst)
+        >>> list(text_)
         ['apple']
-        >>> res = find_matched_str(r'app(le)?', lookup_lst)
-        >>> list(res)
+        >>> text_ = find_matched_str(r'app(le)?', lookup_lst)
+        >>> list(text_)
         ['app', 'apple']
+        >>> text_ = find_matched_str('app(le)?', lookup_lst, use_regex=False)
+        >>> list(text_)  # No match because regex behavior is disabled
+        []
     """
 
-    if x is not None:
-        for y in lookup_list:
-            if re.match(x, y, re.IGNORECASE):
-                yield y
+    if not isinstance(input_str, str):
+        raise TypeError("The search string `'input_str'` must be a string.")
+
+    if use_regex:
+        pattern = re.compile(input_str, re.IGNORECASE)
+    else:
+        # Treat `input_str` as a literal string
+        pattern = re.compile(re.escape(input_str), re.IGNORECASE)
+
+    for output_str in lookup_list:
+        if pattern.fullmatch(output_str):  # Ensures full matching
+            yield output_str
 
 
-def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs):
+def _find_str_by_difflib(input_str, lookup_list, n=1, ignore_punctuation=True, **kwargs):
     """
-    Finds ``n`` strings similar to ``x`` from a sequence of candidates
+    Finds ``n`` strings similar to ``input_str`` from a sequence of candidates
     by using `difflib <https://docs.python.org/3/library/difflib.html>`_.
 
-    :param x: The string to match.
-    :type x: str
+    :param input_str: The string to match.
+    :type input_str: str
     :param lookup_list: A sequence of strings for lookup.
     :type lookup_list: typing.Iterable
     :param n: The number of similar strings to return; defaults to ``1``;
@@ -139,40 +143,43 @@ def _find_str_by_difflib(x, lookup_list, n=1, ignore_punctuation=True, **kwargs)
         defaults to ``True``.
     :type ignore_punctuation: bool
     :param kwargs: [Optional] Additional parameters for the function `difflib.get_close_matches()`.
-    :return: A string or list of strings similar to (or the same as) ``x``.
+    :return: A string or list of strings similar to (or the same as) ``input_str``.
     :rtype: str | list | None
 
     .. _`difflib.get_close_matches()`:
         https://docs.python.org/3/library/difflib.html#difflib.get_close_matches
     """
 
+    if not lookup_list:  # Handle empty lookup lists
+        return None
+
     difflib_ = _check_dependency(name='difflib')
 
-    x_, lookup_dict = x.lower(), {y.lower(): y for y in lookup_list}
+    x, lookup_dict = input_str.lower(), {y.lower(): y for y in lookup_list}
 
     if ignore_punctuation:
-        x_ = remove_punctuation(x_)
-        lookup_dict = {remove_punctuation(k): v for k, v in lookup_dict.items()}
+        x = _remove_punctuation(x)
+        lookup_dict = {_remove_punctuation(k): v for k, v in lookup_dict.items()}
 
-    sim_str_ = difflib_.get_close_matches(word=x_, possibilities=lookup_dict.keys(), n=n, **kwargs)
+    matches = difflib_.get_close_matches(word=x, possibilities=lookup_dict.keys(), n=n, **kwargs)
 
-    if not sim_str_:
+    if not matches:
         sim_str = None
-    elif len(sim_str_) == 1:
-        sim_str = lookup_dict[sim_str_[0]]
+    elif len(matches) == 1:
+        sim_str = lookup_dict[matches[0]]
     else:
-        sim_str = [lookup_dict[k] for k in sim_str_]
+        sim_str = [lookup_dict[k] for k in matches]
 
     return sim_str
 
 
-def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
+def _find_str_by_rapidfuzz(input_str, lookup_list, n=1, **kwargs):
     """
-    Finds ``n`` strings that are similar to ``x`` from a sequence of candidates
+    Finds ``n`` strings that are similar to ``input_str`` from a sequence of candidates
     using `RapidFuzz <https://pypi.org/project/rapidfuzz/>`_.
 
-    :param x: The string to match.
-    :type x: str
+    :param input_str: The string to match.
+    :type input_str: str
     :param lookup_list: A sequence of strings for lookup.
     :type lookup_list: typing.Iterable
     :param n: Number of similar strings to return; defaults to ``1``;
@@ -180,14 +187,14 @@ def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
         in descending order.
     :type n: int | None
     :param kwargs: [Optional] Additional parameters for the function `rapidfuzz.fuzz.QRatio()`_.
-    :return: A string or list of strings similar to (or the same as) ``x``.
+    :return: A string or list of strings similar to (or the same as) ``text``.
     :rtype: str | list | None
 
     .. _`rapidfuzz.fuzz.QRatio()`: https://github.com/maxbachmann/RapidFuzz#quick-ratio
 
     **Tests**::
 
-        >>> from pyhelpers.text.analyser import _find_str_by_rapidfuzz
+        >>> from pyhelpers.text.similarity import _find_str_by_rapidfuzz
         >>> lookup_lst = ['Anglia',
         ...               'East Coast',
         ...               'East Midlands',
@@ -206,30 +213,41 @@ def _find_str_by_rapidfuzz(x, lookup_list, n=1, **kwargs):
         True
     """
 
+    if not lookup_list:
+        return None
+    else:
+        lookup_list_ = list(lookup_list)
+
     rapidfuzz_fuzz, rapidfuzz_utils = map(_check_dependency, ['rapidfuzz.fuzz', 'rapidfuzz.utils'])
 
-    lookup_list_ = list(lookup_list)
+    kwargs.setdefault('processor', rapidfuzz_utils.default_process)
+    l_distances = [rapidfuzz_fuzz.QRatio(s1=input_str, s2=a, **kwargs) for a in lookup_list_]
 
-    kwargs.update({'processor': rapidfuzz_utils.default_process})
-    l_distances = [rapidfuzz_fuzz.QRatio(s1=x, s2=a, **kwargs) for a in lookup_list_]
-
-    if sum(l_distances) == 0:
+    if max(l_distances) == 0:  # If all scores are zero, return None
         sim_str = None
+
     else:
+        # Sort indices based on similarity scores
+        sorted_indices = np.argsort(l_distances)[::-1]
+
         if n == 1:
-            sim_str = lookup_list_[l_distances.index(max(l_distances))]
+            sim_str = lookup_list_[sorted_indices[0]]
+        elif n is None:
+            sim_str = [lookup_list_[i] for i in sorted_indices]
         else:
-            sim_str = [lookup_list_[i] for i in np.argsort(l_distances)[::-1]][:n]
+            sim_str = [lookup_list_[i] for i in sorted_indices[:n]]
 
     return sim_str
 
 
-def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='difflib', **kwargs):
+def find_similar_str(input_str, lookup_list, n=1, ignore_punctuation=True, engine='difflib',
+                     **kwargs):
+    # noinspection PyShadowingNames
     """
-    Finds ``n`` strings that are similar to ``x`` from a sequence of candidates.
+    Finds ``n`` strings that are similar to ``input_str`` from a sequence of candidates.
 
-    :param x: The string to find similar matches for.
-    :type x: str
+    :param input_str: The string to find similar matches for.
+    :type input_str: str
     :param lookup_list: A sequence of strings to search for matches.
     :type lookup_list: typing.Iterable
     :param n: Number of similar strings to return; defaults to ``1``;
@@ -247,7 +265,7 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
     :type engine: str | typing.Callable
     :param kwargs: [Optional] Additional parameters for the chosen engine; for instance,
         ``cutoff`` for ``'difflib'`` and ``score_cutoff`` for ``'rapidfuzz'``.
-    :return: A string or list of strings similar to ``x``,
+    :return: A string or list of strings similar to ``input_str``,
         depending on ``n`` and the ``engine`` used.
     :rtype: str | list | None
 
@@ -267,56 +285,50 @@ def find_similar_str(x, lookup_list, n=1, ignore_punctuation=True, engine='diffl
     **Examples**::
 
         >>> from pyhelpers.text import find_similar_str
-        >>> lookup_lst = ['Anglia',
-        ...               'East Coast',
-        ...               'East Midlands',
-        ...               'North and East',
-        ...               'London North Western',
-        ...               'Scotland',
-        ...               'South East',
-        ...               'Wales',
-        ...               'Wessex',
-        ...               'Western']
-        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst)
-        >>> y
+        >>> lookup_list = ['Anglia',
+        ...                'East Coast',
+        ...                'East Midlands',
+        ...                'North and East',
+        ...                'London North Western',
+        ...                'Scotland',
+        ...                'South East',
+        ...                'Wales',
+        ...                'Wessex',
+        ...                'Western']
+        >>> find_similar_str('angle', lookup_list)
         'Anglia'
-        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, n=2)
-        >>> y
+        >>> find_similar_str('angle', lookup_list, n=2)
         ['Anglia', 'Wales']
-        >>> y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='fuzz')
-        >>> y
+        >>> find_similar_str('angle', lookup_list, engine='fuzz')
         'Anglia'
-        >>> y = find_similar_str('angle', lookup_lst, n=2, engine='fuzz')
-        >>> y
+        >>> find_similar_str('angle', lookup_list, n=2, engine='fuzz')
         ['Anglia', 'Wales']
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst)
-        >>> y is None
+        >>> find_similar_str('x', lookup_list) is None
         True
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, cutoff=0.25)
-        >>> y
+        >>> find_similar_str('x', lookup_list, cutoff=0.25)
         'Wessex'
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, cutoff=0.25)
-        >>> y
+        >>> find_similar_str('x', lookup_list, n=2, cutoff=0.25)
         'Wessex'
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzz')
-        >>> y
+        >>> find_similar_str('x', lookup_list, engine='fuzz')
         'Wessex'
-        >>> y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzz')
-        >>> y
+        >>> find_similar_str('x', lookup_list, n=2, engine='fuzz')
         ['Wessex', 'Western']
     """
 
     methods = {'difflib', 'fuzzywuzzy', 'rapidfuzz', 'fuzz', None}
-    assert engine in methods or callable(engine), \
-        f"Invalid input: `engine`. Valid options can include {methods}."
+    if not (engine in methods or callable(engine)):
+        raise ValueError(f"Invalid engine: {engine}. Valid options are {methods}.")
 
     if engine in {'difflib', None}:
-        sim_str = _find_str_by_difflib(x, lookup_list, n, ignore_punctuation, **kwargs)
+        sim_str = _find_str_by_difflib(
+            input_str=input_str, lookup_list=lookup_list, n=n,
+            ignore_punctuation=ignore_punctuation, **kwargs)
 
     elif engine in {'rapidfuzz', 'fuzz'}:
-        sim_str = _find_str_by_rapidfuzz(x, lookup_list, n, **kwargs)
+        sim_str = _find_str_by_rapidfuzz(
+            input_str=input_str, lookup_list=lookup_list, n=n, **kwargs)
 
     else:
-        sim_str = engine(x, lookup_list, **kwargs)
+        sim_str = engine(input_str, lookup_list, **kwargs)
 
     return sim_str

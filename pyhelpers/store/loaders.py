@@ -1,5 +1,5 @@
 """
-Load data.
+Utilities for loading data of various formats.
 """
 
 import bz2

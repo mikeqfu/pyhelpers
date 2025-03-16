@@ -1,5 +1,5 @@
 """
-Directory/file management.
+Utilities for directory/file management.
 """
 
 import collections.abc
@@ -9,8 +9,37 @@ import shutil
 from .._cache import _add_slashes, _check_relative_pathname, _confirmed, _print_failure_message
 
 
-def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
-                **kwargs):
+def add_slashes(pathname, normalized=True, surrounded_by='"'):
+    """
+    Adds leading and/or trailing slashes to a given pathname for formatting or display purposes.
+
+    :param pathname: The pathname of a file or directory.
+    :type pathname: str | bytes | os.PathLike
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
+    :param surrounded_by: A string by which the returned pathname is surrounded;
+        defaults to ``'"'``.
+    :type surrounded_by: str
+    :return: A formatted pathname with added slashes.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _add_slashes
+        >>> _add_slashes("pyhelpers\\data")
+        '"./pyhelpers/data/"'
+        >>> _add_slashes("pyhelpers\\data", normalized=False)  # on Windows
+        '".\\pyhelpers\\data\\"'
+        >>> _add_slashes("pyhelpers\\data\\pyhelpers.dat")
+        '"./pyhelpers/data/pyhelpers.dat"'
+        >>> _add_slashes("C:\\Windows")  # on Windows
+        '"C:/Windows/"'
+    """
+
+    return _add_slashes(pathname, normalized=normalized, surrounded_by=surrounded_by)
+
+
+def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=True, **kwargs):
     """
     Deletes a directory.
 
@@ -22,7 +51,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+        if ``raise_error=False``, the error will be suppressed; defaults to ``True``.
     :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the function `shutil.rmtree`_ or
         `os.rmdir`_.
@@ -32,7 +61,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
 
     **Tests**::
 
-        >>> from pyhelpers.dirs.mgmt import _delete_dir
+        >>> from pyhelpers.dirs.management import _delete_dir
         >>> from pyhelpers._cache import _add_slashes
         >>> from pyhelpers.dirs import cd
         >>> import os
@@ -87,8 +116,7 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False,
-               **kwargs):
+def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False, **kwargs):
     """
     Deletes a directory or directories.
 
