@@ -302,12 +302,12 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
         >>> dat_dir = cd("tests", "documents")
-        >>> path_to_md_file = cd(dat_dir, "readme1.md")
-        >>> path_to_rst_file = cd(dat_dir, "readme1.rst")
+        >>> path_to_md_file = cd(dat_dir, "readme.md")
+        >>> path_to_rst_file = cd(dat_dir, "readme.rst")
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-        Converting ".\\tests\\documents\\readme.md" to ".\\tests\\documents\\readme.rst" ... Done.
+        Converting "./tests/documents/readme.md" to "./tests/documents/readme.rst" ... Done.
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-        Updating "readme.rst" in ".\\tests\\documents\\" ... Done.
+        Updating "readme.rst" in "./tests/documents/" ... Done.
     """
 
     exe_name = "pandoc"
