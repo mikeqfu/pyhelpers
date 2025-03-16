@@ -6,10 +6,10 @@ import importlib.resources
 import os
 import re
 
-from .._cache import _add_slashes, _check_file_pathname
+from .._cache import _add_slashes, _check_file_pathname, _normalize_pathname
 
 
-def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
+def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwargs):
     """
     Specifies the pathname of a directory (or file).
 
@@ -18,9 +18,11 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
     :param mkdir: Whether to create the directory; defaults to ``False``.
     :type mkdir: bool
     :param cwd: Current working directory; defaults to ``None``.
-    :type cwd: str | os.PathLike | bytes | | None
+    :type cwd: str | os.PathLike | bytes | None
     :param back_check: Whether to check if a parent directory exists; defaults to ``False``.
     :type back_check: bool
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
     :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
         `os.makedirs`_.
     :return: Pathname of the directory or file.
@@ -43,8 +45,8 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
         >>> path_to_tests_dir = cd(pathlib.Path("tests"))
         >>> os.path.relpath(path_to_tests_dir)
         'tests'
-        >>> path_to_tests_dir = cd("tests\\folder1/folder2")
-        >>> os.path.relpath(path_to_tests_dir)
+        >>> path_to_tests_dir = cd("tests\\folder1/folder2")  # on Windows
+        >>> os.path.relpath(path_to_tests_dir)  # on Windows
         'tests\\folder1\\folder2'
     """
 
@@ -74,10 +76,10 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, **kwargs):
         else:
             os.makedirs(os.path.dirname(path_to_file), **kwargs)
 
-    return path
+    return _normalize_pathname(path) if normalized else path
 
 
-def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
+def cdd(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
     """
     Specifies the pathname of a directory (or file) under `data_dir`.
 
@@ -88,6 +90,8 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str | os.PathLike | bytes
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
     :param kwargs: [Optional] Additional parameters for the function :func:`~pyhelpers.dirs.cd`.
     :return: Pathname of a directory or file under ``data_dir``.
     :rtype: str
@@ -106,9 +110,9 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
         'test_cdd'
         >>> # Delete the "test_cdd" folder
         >>> delete_dir(path_to_dat_dir, verbose=True)
-        To delete the directory ".\\test_cdd\\"
+        To delete the directory "./test_cdd/"
         ? [No]|Yes: yes
-        Deleting ".\\test_cdd\\" ... Done.
+        Deleting "./test_cdd/" ... Done.
         >>> # Set `data_dir` to be `"tests"`
         >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
         >>> os.path.relpath(path_to_dat_dir)
@@ -116,21 +120,21 @@ def cdd(*subdir, data_dir="data", mkdir=False, **kwargs):
         >>> # Delete the "test_cdd" folder and the sub-folder "data"
         >>> test_cdd = os.path.dirname(path_to_dat_dir)
         >>> delete_dir(test_cdd, verbose=True)
-        To delete the directory ".\\test_cdd\\" (Not empty)
+        To delete the directory "./test_cdd/" (Not empty)
         ? [No]|Yes: yes
-        Deleting ".\\test_cdd\\" ... Done.
+        Deleting "./test_cdd/" ... Done.
         >>> # # Alternatively,
         >>> # import shutil
         >>> # shutil.rmtree(test_cdd)
     """
 
     kwargs.update({'mkdir': mkdir})
-    path = cd(data_dir, *subdir, **kwargs)
+    path = cd(data_dir, *subdir, normalized=normalized, **kwargs)
 
     return path
 
 
-def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
+def cd_data(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
     """
     Specifies the pathname of a directory (or file) under ``data_dir`` of a package.
 
@@ -140,6 +144,8 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
     :type data_dir: str | os.PathLike | bytes
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
     :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
         `os.makedirs`_.
     :return: Pathname of a directory or file under ``data_dir`` of a package.
@@ -152,7 +158,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
         >>> from pyhelpers.dirs import cd_data
         >>> import os
         >>> path_to_dat_dir = cd_data("tests", mkdir=False)
-        >>> os.path.relpath(path_to_dat_dir)
+        >>> os.path.relpath(path_to_dat_dir)  # on Windows
         'pyhelpers\\data\\tests'
     """
 
@@ -173,7 +179,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, **kwargs):
         else:
             os.makedirs(os.path.dirname(path_to_file), **kwargs)
 
-    return path
+    return _normalize_pathname(path) if normalized else path
 
 
 def find_executable(name, options=None, target=None, normalized=True):

@@ -15,10 +15,7 @@ def test_normalize_pathname():
     assert pathname == 'tests/data/dat.csv'
 
     pathname = normalize_pathname("tests\\data\\dat.csv", add_slash=True)
-    if os.name == 'nt':
-        assert pathname == '.\\tests\\data\\dat.csv'
-    else:
-        assert pathname == './tests/data/dat.csv'
+    assert pathname == './tests/data/dat.csv'
 
     pathname = normalize_pathname("tests//data/dat.csv".encode('utf-8'))
     assert pathname == 'tests/data/dat.csv'

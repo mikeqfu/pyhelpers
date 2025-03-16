@@ -50,7 +50,7 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         >>> from pyhelpers.dirs import cd, delete_dir
         >>> zip_file_path = cd("tests", "data", "zipped.zip")
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
-        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped\\" ... Done.
+        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped/" ... Done.
         >>> output_dir_1 = cd("tests", "data", "zipped")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
@@ -58,19 +58,19 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         test
         >>> output_dir_2 = cd("tests", "data", "zipped_alt")
         >>> unzip(path_to_zip_file=zip_file_path, output_dir=output_dir_2, verbose=True)
-        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped_alt\\" ... Done.
+        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped_alt\\" ... Done.
         >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         To delete the following directories:
-            ".\\tests\\data\\zipped\\" (Not empty)
-            ".\\tests\\data\\zipped_alt\\" (Not empty)
+            "./tests/data/zipped/" (Not empty)
+            "./tests/data/zipped_alt/" (Not empty)
         ? [No]|Yes: yes
-        Deleting ".\\tests\\data\\zipped\\" ... Done.
-        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
+        Deleting "./tests/data/zipped/" ... Done.
+        Deleting "./tests/data/zipped_alt/" ... Done.
 
     """
 
@@ -166,14 +166,14 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         To delete the following directories:
-            ".\\tests\\data\\zipped\\" (Not empty)
-            ".\\tests\\data\\zipped_alt\\" (Not empty)
+            "./tests/data/zipped/" (Not empty)
+            "./tests/data/zipped_alt/" (Not empty)
         ? [No]|Yes: yes
-        Deleting ".\\tests\\data\\zipped\\" ... Done.
-        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
+        Deleting "./tests/data/zipped/" ... Done.
+        Deleting "./tests/data/zipped_alt/" ... Done.
     """
 
     exe_name = "7z"
@@ -494,7 +494,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> import os
         >>> path_to_test_xlsx = cd("tests", "data", "dat.xlsx")
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
-        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
         True
         >>> data = load_csv(path_to_temp_csv, index=0)
@@ -507,7 +507,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Leeds       -1.5437941  53.7974185
         >>> # Set `engine='xlsx2csv'`
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
-        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
         >>> data_ = load_csv(temp_csv_buffer, index=0)
         >>> data_

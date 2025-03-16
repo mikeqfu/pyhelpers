@@ -349,8 +349,11 @@ latex_preamble = r'''
                      {\endoldlongtable}
     \usepackage[open,openlevel=1]{bookmark}
     \bookmarksetup{numbered}
-
     \addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
+    \usepackage{xcolor}
+    \usepackage{newunicodechar}
+    \definecolor{ansiGreen}{RGB}{34, 139, 34}
+    \newunicodechar{█}{\textcolor{ansiGreen}{\rule{0.6em}{0.6em}}}
     '''
 
 # LaTeX customisation:

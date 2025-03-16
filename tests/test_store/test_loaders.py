@@ -65,7 +65,7 @@ def test_parse_csr_matrix(capfd):
         ".csv", ".xlsx", ".json", ".feather", ".joblib"])
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
 def test_load_data(ext, engine, capfd, caplog):
-    path_to_file = importlib.resources.files("tests").joinpath(f"data{os.path.sep}dat{ext}")
+    path_to_file = importlib.resources.files("tests").joinpath("data", f"dat{ext}")
 
     with importlib.resources.as_file(path_to_file) as f:
         if ext in {".csv", ".xlsx", ".feather"}:

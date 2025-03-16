@@ -273,8 +273,8 @@ def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         >>> import pathlib
         >>> _normalize_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-        >>> _normalize_pathname("tests\\data\\dat.csv", add_slash=True)  # on Windows
-        '.\\tests\\data\\dat.csv'
+        >>> _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
+        './tests/data/dat.csv'
         >>> _normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
         >>> pathname = pathlib.Path("tests\\data/dat.csv")
@@ -284,14 +284,11 @@ def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         '.\\tests\\data\\dat.csv'
     """
 
-    if isinstance(pathname, bytes):
-        pathname_ = pathname.decode(**kwargs)
-    else:
-        pathname_ = str(pathname)
+    pathname_ = pathname.decode(**kwargs) if isinstance(pathname, bytes) else str(pathname)
 
-    pathname_ = re.sub(r"[\\/]+", re.escape(sep), pathname_)
+    pathname_ = _add_slashes(pathname_, surrounded_by='') if add_slash else pathname_
 
-    return _add_slashes(pathname_, surrounded_by='', normalized=False) if add_slash else pathname_
+    return re.sub(r"[\\/]+", re.escape(sep), pathname_)
 
 
 def _add_slashes(pathname, normalized=True, surrounded_by='"'):

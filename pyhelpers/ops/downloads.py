@@ -215,6 +215,8 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         False
         >>> # Download the .png file
         >>> download_file_from_url(url, path_to_img, verbose=True, colour='green')
+        Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
+            Saving "ops-download_file_from_url-demo.png" to "./tests/images/" ... Done.
         >>> # If download is successful, check again:
         >>> os.path.exists(path_to_img)
         True
@@ -551,8 +553,30 @@ class GitHubFileDownloader:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+            >>> from pyhelpers.ops import GitHubFileDownloader
+            >>> from pyhelpers.dirs import delete_dir
+            >>> import tempfile
+            >>> test_output_dir = tempfile.mkdtemp()
+            >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
+            >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
+            >>> downloader.download()
+            Downloaded to: "<temp_dir>/tests/data/csr_mat.npz"
+            Downloaded to: "<temp_dir>/tests/data/dat.csv"
+            Downloaded to: "<temp_dir>/tests/data/dat.feather"
+            Downloaded to: "<temp_dir>/tests/data/dat.joblib"
+            Downloaded to: "<temp_dir>/tests/data/dat.json"
+            Downloaded to: "<temp_dir>/tests/data/dat.ods"
+            Downloaded to: "<temp_dir>/tests/data/dat.pickle"
+            Downloaded to: "<temp_dir>/tests/data/dat.pickle.bz2"
+            Downloaded to: "<temp_dir>/tests/data/dat.pickle.gz"
+            Downloaded to: "<temp_dir>/tests/data/dat.pickle.xz"
+            Downloaded to: "<temp_dir>/tests/data/dat.txt"
+            Downloaded to: "<temp_dir>/tests/data/dat.xlsx"
+            Downloaded to: "<temp_dir>/tests/data/zipped.7z"
+            Downloaded to: "<temp_dir>/tests/data/zipped.txt"
+            Downloaded to: "<temp_dir>/tests/data/zipped.zip"
+            >>> delete_dir(test_output_dir, confirmation_required=False, verbose=True)
+            Deleting "<temp_dir>/" ... Done.
         """
 
         # Update `api_url` if it is not specified
