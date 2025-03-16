@@ -935,12 +935,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> # Close the PDF file (if opened with Foxit Reader)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> web_page_file = cd("docs", "build", "html", "index.html")
-        >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
-        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ... Done.
-        >>> subprocess.Popen(pdf_pathname, shell=True)
-        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=2)
-        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ...
+        Updating "pyhelpers.pdf" in "./tests/documents/" ...
         Loading pages (1/6)
         Counting pages (2/6)
         Resolving links (4/6)
@@ -948,6 +944,11 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         Printing pages (6/6)
         Done
         >>> subprocess.Popen(pdf_pathname, shell=True)
+        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
+        >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
+        Updating "pyhelpers.pdf" in "./tests/documents/" ... Done.
+        >>> subprocess.Popen(pdf_pathname, shell=True)
+        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
     """
 
     if os.path.isfile(path_to_file) and if_exists == 'pass':
