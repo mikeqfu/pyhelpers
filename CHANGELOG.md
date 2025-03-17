@@ -1,6 +1,20 @@
 # Changelog / Release notes
 
 
+## [2.2.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.1.0)
+
+(*17 March 2025*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.1.0...2.2.0) since [2.1.0](https://pypi.org/project/pyhelpers/2.1.0/):
+
+- **Code enhancements:** Refactored multiple submodules for better maintainability.
+- **Testing:** Improved test cases and updated test data for better coverage.
+- **Bug fixes:** Fixed various issues.
+- **Documentation:** Enhanced docstrings for clarity.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.2.0 documentation](https://pyhelpers.readthedocs.io/en/2.2.0/).**
+
+
 ## [2.1.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.1.0)
 
 (*10 January 2025*)
