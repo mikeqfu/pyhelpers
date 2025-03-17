@@ -1,5 +1,5 @@
 """
-Manipulate or transform data in various ways.
+Utilities for file extraction and format conversion
 
 The functions and classes of this module take data objects and perform various operations,
 including compression and conversion.
@@ -10,7 +10,6 @@ import importlib.resources
 import io
 import os
 import pathlib
-import platform
 import subprocess  # nosec
 import tempfile
 import zipfile
@@ -51,7 +50,7 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         >>> from pyhelpers.dirs import cd, delete_dir
         >>> zip_file_path = cd("tests", "data", "zipped.zip")
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
-        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped\\" ... Done.
+        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped/" ... Done.
         >>> output_dir_1 = cd("tests", "data", "zipped")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
@@ -59,19 +58,19 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         test
         >>> output_dir_2 = cd("tests", "data", "zipped_alt")
         >>> unzip(path_to_zip_file=zip_file_path, output_dir=output_dir_2, verbose=True)
-        Extracting ".\\tests\\data\\zipped.zip" to ".\\tests\\data\\zipped_alt\\" ... Done.
+        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped_alt\\" ... Done.
         >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         To delete the following directories:
-            ".\\tests\\data\\zipped\\" (Not empty)
-            ".\\tests\\data\\zipped_alt\\" (Not empty)
+            "./tests/data/zipped/" (Not empty)
+            "./tests/data/zipped_alt/" (Not empty)
         ? [No]|Yes: yes
-        Deleting ".\\tests\\data\\zipped\\" ... Done.
-        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
+        Deleting "./tests/data/zipped/" ... Done.
+        Deleting "./tests/data/zipped_alt/" ... Done.
 
     """
 
@@ -167,18 +166,18 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories ".\\tests\\data\\zipped\\" and ".\\tests\\data\\zipped_alt\\"
+        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         To delete the following directories:
-            ".\\tests\\data\\zipped\\" (Not empty)
-            ".\\tests\\data\\zipped_alt\\" (Not empty)
+            "./tests/data/zipped/" (Not empty)
+            "./tests/data/zipped_alt/" (Not empty)
         ? [No]|Yes: yes
-        Deleting ".\\tests\\data\\zipped\\" ... Done.
-        Deleting ".\\tests\\data\\zipped_alt\\" ... Done.
+        Deleting "./tests/data/zipped/" ... Done.
+        Deleting "./tests/data/zipped_alt/" ... Done.
     """
 
-    exe_name = "7z.exe"
-    optional_pathnames = {exe_name, f"C:/Program Files/7-Zip/{exe_name}"}
+    exe_name = "7z"
+    optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/7-Zip/{exe_name}.exe"}
     seven_zip_exists, seven_zip_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=seven_zip_exe)
 
@@ -205,13 +204,64 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
             _print_failure_message(e=e, prefix="Error:", verbose=verbose, raise_error=raise_error)
 
     else:
-        print('"7-Zip" (https://www.7-zip.org/) is required to run this function; '
-              'however, it is not found on this device.\nInstall it and then try again.')
+        if raise_error:
+            raise FileNotFoundError(
+                '"7-Zip" (https://www.7-zip.org/) is required to run this function; '
+                'however, it is not found on this device.\nInstall it and then try again.')
 
 
 # ==================================================================================================
 # Convert data
 # ==================================================================================================
+
+
+def _markdown_to_rst_print(abs_input_path, abs_output_path, verbose):
+    if verbose:
+        rel_input_path, rel_output_path = map(
+            lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
+
+        if not os.path.exists(abs_output_path):
+            msg = f'Converting {_add_slashes(rel_input_path)} to {_add_slashes(rel_output_path)}'
+        else:
+            msg = f'Updating "{rel_output_path.name}" in {_add_slashes(rel_output_path.parent)}'
+        print(msg, end=" ... ")
+
+
+def _markdown_to_rst_b_by_pandoc(pandoc_exists, pandoc_exe_, abs_input_path, abs_output_path,
+                                 arg_f, arg_t, reverse):
+    if pandoc_exists:
+        cmd_args = [
+            pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
+        if reverse:
+            cmd_args += ['-o', abs_output_path]
+        else:
+            cmd_args += ['-s', '-o', abs_output_path]
+
+        rslt = subprocess.run(cmd_args, check=True)  # nosec
+        ret_code = rslt.returncode
+
+    else:
+        ret_code = -1
+
+    return ret_code
+
+
+def _markdown_to_rst_by_pypandoc(abs_input_path, arg_t, abs_output_path, **kwargs):
+    py_pandoc = _check_dependency(name='pypandoc')
+
+    if 'extra_args' in kwargs:
+        kwargs['extra_args'].append(['--wrap=preserve'])
+    else:
+        kwargs.update({'extra_args': ['--wrap=preserve']})
+
+    rslt = py_pandoc.convert_file(
+        source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path),
+        **kwargs)
+
+    ret_code = 0 if rslt == '' else -2
+
+    return ret_code
+
 
 def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
                     verbose=False, raise_error=False, **kwargs):
@@ -252,16 +302,16 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
         >>> dat_dir = cd("tests", "documents")
-        >>> path_to_md_file = cd(dat_dir, "readme1.md")
-        >>> path_to_rst_file = cd(dat_dir, "readme1.rst")
+        >>> path_to_md_file = cd(dat_dir, "readme.md")
+        >>> path_to_rst_file = cd(dat_dir, "readme.rst")
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-        Converting ".\\tests\\documents\\readme.md" to ".\\tests\\documents\\readme.rst" ... Done.
+        Converting "./tests/documents/readme.md" to "./tests/documents/readme.rst" ... Done.
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-        Updating "readme.rst" at ".\\tests\\documents\\" ... Done.
+        Updating "readme.rst" in "./tests/documents/" ... Done.
     """
 
-    exe_name = "pandoc.exe"
-    optional_pathnames = {exe_name, f"C:/Program Files/Pandoc/{exe_name}"}
+    exe_name = "pandoc"
+    optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/Pandoc/{exe_name}.exe"}
     pandoc_exists, pandoc_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=pandoc_exe)
 
@@ -274,55 +324,29 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     abs_input_path, abs_output_path = map(pathlib.Path, [input_path, output_path])
     # assert abs_from_path.suffix == ".md" and abs_to_path.suffix == ".rst"
 
-    if verbose:
-        rel_input_path, rel_output_path = map(
-            lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
-
-        if not os.path.exists(abs_output_path):
-            msg = f'Converting {_add_slashes(rel_input_path)} to {_add_slashes(rel_output_path)}'
-        else:
-            msg = f'Updating "{rel_output_path.name}" at {_add_slashes(rel_output_path.parent)}'
-        print(msg, end=" ... ")
+    _markdown_to_rst_print(
+        abs_input_path=abs_input_path, abs_output_path=abs_output_path, verbose=verbose)
 
     try:
         if engine is None:
-            if pandoc_exists:
-                cmd_args = [
-                    pandoc_exe_, '--wrap=preserve', abs_input_path, '-f', arg_f, '-t', arg_t]
-                if reverse:
-                    cmd_args += ['-o', abs_output_path]
-                else:
-                    cmd_args += ['-s', '-o', abs_output_path]
-
-                rslt = subprocess.run(cmd_args, check=True)  # nosec
-                ret_code = rslt.returncode
-
-            else:
-                ret_code = -1
+            ret_code = _markdown_to_rst_b_by_pandoc(
+                pandoc_exists=pandoc_exists, pandoc_exe_=pandoc_exe_, abs_input_path=abs_input_path,
+                abs_output_path=abs_output_path, arg_f=arg_f, arg_t=arg_t, reverse=reverse)
 
         else:
-            py_pandoc = _check_dependency(name='pypandoc')
-
-            if 'extra_args' in kwargs:
-                kwargs['extra_args'].append(['--wrap=preserve'])
-            else:
-                kwargs.update({'extra_args': ['--wrap=preserve']})
-            rslt = py_pandoc.convert_file(
-                source_file=str(abs_input_path), to=arg_t, outputfile=str(abs_output_path),
+            ret_code = _markdown_to_rst_by_pypandoc(
+                abs_input_path=abs_input_path, arg_t=arg_t, abs_output_path=abs_output_path,
                 **kwargs)
-
-            ret_code = 0 if rslt == '' else -2
 
         if verbose:
             if ret_code == 0:
                 print("Done.")
             elif ret_code == -1:
                 print(
-                    "Failed."
-                    "\n\"Pandoc\" is required to proceed with `engine=None`; "
-                    "however, it is not found on this device."
-                    "\nInstall it (https://pandoc.org/) and then try again; "
-                    "or, try instead `engine='pypandoc'`")
+                    "Failed.\n"
+                    "\"Pandoc\" (https://pandoc.org/) is required to proceed with `engine=None`; "
+                    "however, it is not found on this device.\n"
+                    "Install it and then try again; or, try instead `engine='pypandoc'`")
             else:
                 print("Failed.")
 
@@ -394,7 +418,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None):
     """
 
     command_args = ["cscript.exe", "//Nologo", vbscript, xlsx_pathname, csv_pathname, sheet_name]
-    if platform.system() == 'Linux':
+    if os.name == 'posix':
         command_args = ["wine"] + command_args
 
     rslt = subprocess.run(command_args, check=True)  # nosec
@@ -404,7 +428,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None):
 
 
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
-                sheet_name='1', ret_null=False, verbose=False, raise_error=False):
+                sheet_name='1', ret_null=False, verbose=False, raise_error=False, **kwargs):
     """
     Converts a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
@@ -442,6 +466,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
     :type verbose: bool | int
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
+    :param kwargs: [Optional] Additional parameters for the function `xlsx2csv.Xlsx2csv()`_
+        (if ``engine='xlsx2csv'``).
     :return: The path of the generated CSV file or ``None`` when ``engine=None``;
         an `io.StringIO()`_ buffer when ``engine='xlsx2csv'``.
     :rtype: str | _io.StringIO | None
@@ -456,6 +482,8 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile
     .. _`xlsx2csv`:
         https://github.com/dilshod/xlsx2csv
+    .. _`xlsx2csv.Xlsx2csv()`:
+        https://github.com/dilshod/xlsx2csv/blob/master/xlsx2csv.py#L180
     .. _`io.StringIO()`:
         https://docs.python.org/3/library/io.html#io.StringIO
 
@@ -466,7 +494,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> import os
         >>> path_to_test_xlsx = cd("tests", "data", "dat.xlsx")
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
-        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
         True
         >>> data = load_csv(path_to_temp_csv, index=0)
@@ -479,7 +507,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Leeds       -1.5437941  53.7974185
         >>> # Set `engine='xlsx2csv'`
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
-        Converting ".\\tests\\data\\dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
         >>> data_ = load_csv(temp_csv_buffer, index=0)
         >>> data_
@@ -499,36 +527,36 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         rel_path = _check_relative_pathname(path_to_xlsx)
         print(f'Converting {_add_slashes(rel_path)} to a (temporary) CSV file', end=" ... ")
 
-    if engine is None:
-        vbscript_, csv_pathname = _xlsx_to_csv_prep(
-            path_to_xlsx=path_to_xlsx, path_to_csv=path_to_csv, vbscript=vbscript)
+    try:
+        if engine is None:
+            vbscript_, csv_pathname = _xlsx_to_csv_prep(
+                path_to_xlsx=path_to_xlsx, path_to_csv=path_to_csv, vbscript=vbscript)
 
-        if os.path.exists(csv_pathname):
-            if if_exists == 'replace':
-                os.remove(csv_pathname)
-            elif if_exists == 'pass':
-                if verbose:
-                    print("Cancelled.")
+            if os.path.exists(csv_pathname):
+                if if_exists == 'replace':
+                    os.remove(csv_pathname)
+                elif if_exists == 'pass':
+                    if verbose:
+                        print("Cancelled.")
+                    return csv_pathname
+
+            ret_code = _xlsx_to_csv(
+                xlsx_pathname=path_to_xlsx, csv_pathname=csv_pathname, sheet_name=sheet_name,
+                vbscript=vbscript_)
+
+            if verbose:
+                print("Done." if ret_code == 0 else "Failed.")
+
+            if not ret_null and ret_code == 0:
                 return csv_pathname
 
-        ret_code = _xlsx_to_csv(
-            xlsx_pathname=path_to_xlsx, csv_pathname=csv_pathname, sheet_name=sheet_name,
-            vbscript=vbscript_)
+        elif engine == 'xlsx2csv':
+            xlsx2csv_ = _check_dependency(name='xlsx2csv')
 
-        if verbose:
-            print("Done." if ret_code == 0 else "Failed.")
+            buffer = io.StringIO()
 
-        if not ret_null and ret_code == 0:
-            return csv_pathname
-
-    elif engine == 'xlsx2csv':
-        xlsx2csv = _check_dependency(name='xlsx2csv')
-
-        buffer = io.StringIO()
-        try:
-            xlsx2csv.Xlsx2csv(
-                xlsxfile=path_to_xlsx, sheet_name=sheet_name, outputencoding="utf-8").convert(
-                buffer)
+            kwargs.update({'xlsxfile': path_to_xlsx})
+            xlsx2csv_.Xlsx2csv(**kwargs).convert(buffer)
             buffer.seek(0)
 
             if verbose:
@@ -536,6 +564,5 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
 
             return buffer
 
-        except Exception as e:
-            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
-            buffer.close()
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)

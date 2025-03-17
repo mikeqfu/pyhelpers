@@ -2,5 +2,5 @@
 Manipulation of textual data.
 """
 
-from .analyser import *
-from .preproc import *
+from .preprocessing import *
+from .similarity import *

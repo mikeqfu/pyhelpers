@@ -12,7 +12,7 @@ import subprocess  # nosec
 
 import pandas as pd
 
-from .._cache import _confirmed
+from .._cache import _confirmed, _get_ansi_colour_code
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -275,18 +275,18 @@ def func_running_time(func):
         time_start = datetime.datetime.now()
         res = func(*args, **kwargs)
         time_diff = datetime.datetime.now() - time_start
-        print(
-            f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s')
-        print()
+        print(f'INFO Finished running function: {func.__name__}, total: {time_diff.seconds}s\n')
         return res
 
     return inner
 
 
-def get_git_branch():
+def get_git_branch(verbose=False):
     """
     Gets the current Git branch name.
 
+    :param verbose: Whether to print relevant information in console; defaults to ``False``.
+    :type verbose: bool | int
     :return: The name of the currently checked-out Git branch.
     :rtype: str
 
@@ -304,10 +304,42 @@ def get_git_branch():
             text=True,
             capture_output=True
         )  # nosec
-        branch = result.stdout.strip()
+        branch_name = result.stdout.strip()
+
+        return branch_name
 
     except subprocess.CalledProcessError:
-        branch = None
-        print("Not in a Git repository")
+        if verbose:
+            print("Not in a Git repository")
 
-    return branch
+
+def get_ansi_colour_code(colours, show_valid_colours=False):
+    """
+    Returns the ANSI escape code(s) for the given colour name(s).
+
+    :param colours: A single colour name (str) or a sequence of colour names
+        (e.g. 'red', ['red', 'green']).
+    :type colours: str | list[str] | tuple[str]
+    :param show_valid_colours: If ``True``, returns a tuple containing the ANSI code(s) and
+        a set of valid colour names.
+    :type show_valid_colours: bool
+    :return: The ANSI escape code(s) for the given colour(s), or an error message
+        if an invalid colour is provided.
+    :rtype: str | list[str] | tuple[str | list[str], set[str]]
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_ansi_colour_code
+        >>> get_ansi_colour_code('red')
+        '\\033[31m'
+        >>> get_ansi_colour_code(['red', 'blue'])
+        ['\\033[31m', '\\033[34m']
+        >>> get_ansi_colour_code('invalid_colour')
+        Traceback (most recent call last):
+            ...
+        ValueError: 'invalid_colour' is not a valid colour name.
+        >>> get_ansi_colour_code('red', show_valid_colours=True)
+        ('\\033[31m', {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', ...})
+    """
+
+    return _get_ansi_colour_code(colours=colours, show_valid_colours=show_valid_colours)

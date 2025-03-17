@@ -17,14 +17,14 @@ Textual data (pre)processing
 
     remove_punctuation
     get_acronym
-    extract_words1upper
+    split_on_uppercase
     numeral_english_to_arabic
     count_words
     calculate_idf
     calculate_tfidf
 
-Textual data analysis
----------------------
+Textual data similarity
+-----------------------
 
 .. autosummary::
     :toctree: _generated/

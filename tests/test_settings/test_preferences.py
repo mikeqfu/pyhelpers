@@ -1,29 +1,21 @@
-"""Test the module :mod:`~pyhelpers.settings`."""
+"""
+Tests the :mod:`~pyhelpers.settings.preferences` submodule.
+"""
 
 import pytest
 
-from pyhelpers.settings import *
+from pyhelpers.settings.preferences import *
 
-
-# ==================================================================================================
-# configs - Configurations.
-# ==================================================================================================
-
-@pytest.mark.parametrize('reset', [False, True])
-def test_gdal_configurations(reset):
-    gdal_configurations(reset=reset)
-
-
-# ==================================================================================================
-# prefs - Preferences.
-# ==================================================================================================
 
 @pytest.mark.parametrize('reset', [False, True, 'all'])
 @pytest.mark.parametrize('backend', [None, 'TkAgg'])
 @pytest.mark.parametrize('font_name', [None, 'Cambria'])
 @pytest.mark.parametrize('fig_style', [None, 'ggplot'])
 def test_mpl_preferences(reset, backend, font_name, fig_style):
-    mpl_preferences(reset=reset, backend='TkAgg', font_name=font_name, fig_style=fig_style)
+    if os.environ.get('CI', False):  # Check if running in CI environment
+        backend = 'Agg'  # Override to Agg backend if CI environment
+
+    mpl_preferences(reset=reset, backend=backend, font_name=font_name, fig_style=fig_style)
 
 
 @pytest.mark.parametrize('reset', [False, True])

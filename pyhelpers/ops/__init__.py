@@ -2,7 +2,9 @@
 Miscellaneous operations.
 """
 
-from .comp import *
-from .gen import *
-from .manip import *
-from .webutils import *
+from .apis import *
+from .computation import *
+from .downloads import *
+from .general import *
+from .manipulation import *
+from .web import *

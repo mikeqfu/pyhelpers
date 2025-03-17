@@ -27,17 +27,5 @@ Preferences
     :template: function.rst
 
     mpl_preferences
-
-.. rubric:: NumPy
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
     np_preferences
-
-.. rubric:: Pandas
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
     pd_preferences

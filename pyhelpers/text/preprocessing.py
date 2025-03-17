@@ -1,5 +1,5 @@
 """
-Textual data (pre)processing.
+Utilities for (pre)processing textual data.
 """
 
 import collections
@@ -8,17 +8,39 @@ import math
 import re
 import string
 
-from .._cache import _check_dependency, _ENGLISH_NUMERALS
+from .._cache import _check_dependency, _ENGLISH_NUMERALS, _remove_punctuation, _vectorize_text
 
 
-def remove_punctuation(x, rm_whitespace=True):
+def vectorize_text(*input_text):
+    """
+    Converts input texts into a bag-of-words vector representation.
+
+    :param input_text: Multiple text inputs as strings or lists of words.
+    :type input_text: str
+    :return: Generator yielding word count vectors for each input.
+    :rtype: typing.Generator
+
+    **Examples**::
+
+        >>> from pyhelpers.text import vectorize_text
+        >>> vectors = list(vectorize_text("Hello world!", "Hello, hello world."))
+        >>> vectors  # "hello" appears twice in the second text
+        [[1, 1], [2, 1]]
+    """
+
+    return _vectorize_text(*input_text)
+
+
+def remove_punctuation(input_text, rm_whitespace=True, preserve_hyphenated=True):
     """
     Removes punctuation from textual data.
 
-    :param x: The input text from which punctuation will be removed.
-    :type x: str
+    :param input_text: The input text from which punctuation will be removed.
+    :type input_text: str
     :param rm_whitespace: Whether to remove whitespace characters as well; defaults to ``True``.
     :type rm_whitespace: bool
+    :param preserve_hyphenated: Whether to preserve hyphenated words; defaults to ``True``.
+    :type preserve_hyphenated: bool
     :return: The input text without punctuation (and optionally without whitespace).
     :rtype: str
 
@@ -29,7 +51,7 @@ def remove_punctuation(x, rm_whitespace=True):
         'Hello world'
         >>> remove_punctuation('   How   are you? ', rm_whitespace=False)
         'How   are you'
-        >>> remove_punctuation('No-punctuation!')
+        >>> remove_punctuation('No-punctuation!', preserve_hyphenated=False)
         'No punctuation'
         >>> raw_text = 'Hello world!\tThis is a test. :-)'
         >>> remove_punctuation(raw_text)
@@ -38,28 +60,19 @@ def remove_punctuation(x, rm_whitespace=True):
         'Hello world \tThis is a test'
     """
 
-    x_ = re.sub(r'[^\w\s]', ' ', x)
-
-    # y = ''.join(y_ for y_ in x_ if y_ not in string.punctuation)
-    y = x_.translate(str.maketrans('', '', string.punctuation))
-
-    z = y.strip()
-
-    if rm_whitespace:
-        z = ' '.join(z.split())
-
-    return z
+    return _remove_punctuation(
+        text=input_text, rm_whitespace=rm_whitespace, preserve_hyphenated=preserve_hyphenated)
 
 
-def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
+def get_acronym(input_text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
     """
     Generates an acronym (in capital letters) from textual data.
 
     An acronym is typically formed by taking the initial letters of each word in a phrase
     and combining them into a single string of uppercase letters.
 
-    :param text: The input text from which to generate the acronym.
-    :type text: str
+    :param input_text: The input text from which to generate the acronym.
+    :type input_text: str
     :param only_capitals: Whether to include only capital letters in the acronym;
         defaults to ``False``.
     :type only_capitals: bool
@@ -94,9 +107,9 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctua
     """
 
     if keep_punctuation:
-        txt = ''.join(f' {x} ' if x in string.punctuation else x for x in text)
+        txt = ''.join(f' {x} ' if x in string.punctuation else x for x in input_text)
     else:
-        txt = remove_punctuation(text)
+        txt = remove_punctuation(input_text)
 
     if only_capitals and capitals_in_words:
         acronym = ''.join(filter(lambda x: x.isupper() or x in string.punctuation, txt))
@@ -113,7 +126,7 @@ def get_acronym(text, only_capitals=False, capitals_in_words=False, keep_punctua
     return acronym
 
 
-def extract_words1upper(x, join_with=None):
+def split_on_uppercase(input_text, join_with=None):
     """
     Extracts words from a string by splitting it at occurrences of uppercase letters.
 
@@ -121,34 +134,53 @@ def extract_words1upper(x, join_with=None):
     is encountered. Optionally, it can join these words back into a single string using a specified
     delimiter.
 
-    :param x: Input text containing a number of words each starting with an uppercase letter.
-    :type x: str
+    :param input_text: Input text containing a number of words each starting with
+        an uppercase letter.
+    :type input_text: str
     :param join_with: Optional delimiter used to join the extracted words into a single string;
         defaults to ``None``.
     :type join_with: str | None
-    :return: If ``join_with=None``, the function returns a list of words extracted from ``x`` where
-        each word starts with an uppercase letter; if ``join_with`` is specified, it returns a
-        single string where these words are joined by ``join_with``.
+    :return: If ``join_with=None``, the function returns a list of words extracted from
+        ``input_text`` where each word starts with an uppercase letter;
+        if ``join_with`` is specified, it returns a single string where these words are
+        joined by ``join_with``.
     :rtype: list | str
 
     **Examples**::
 
-        >>> from pyhelpers.text import extract_words1upper
-        >>> extract_words1upper('Network_Waymarks')
+        >>> from pyhelpers.text import split_on_uppercase
+        >>> split_on_uppercase('Network_Waymarks')
         ['Network', 'Waymarks']
-        >>> extract_words1upper('NetworkRailRetainingWall', join_with=' ')
+        >>> split_on_uppercase('NetworkRailRetainingWall', join_with=' ')
         'Network Rail Retaining Wall'
+        >>> split_on_uppercase('BCRRE_Projects')
+        ['BCRRE', 'Projects']
     """
 
-    y = remove_punctuation(x)
+    input_text_ = remove_punctuation(input_text)
 
-    # re.sub(r"([A-Z])", r" \1", x).split()
-    extracted_words = re.findall(r'[a-zA-Z][^A-Z]*', y)
+    # Split camelCase, PascalCase, and numbers
+    parts = re.sub(r'([A-Z][a-z]+)', r' \1', re.sub(r'([A-Z]+)', r' \1', input_text_))
+    parts = re.sub(r'([0-9]+)', r' \1', parts)  # Split numbers from letters
 
-    if join_with:
-        extracted_words = join_with.join(extracted_words)
+    # Split on underscores or hyphens, but preserve kebab-case and snake_case
+    result = []
+    for part in parts.split():
+        if re.match(r'^[a-z]+(-[a-z]+)*$', part) or re.match(r'^[a-z]+(_[a-z]+)*$', part):
+            # Preserve kebab-case and snake_case as single tokens
+            result.append(part)
+        else:
+            # Split on underscores or hyphens
+            sub_parts = re.split(r'[-_]', part)
+            result.extend(sub_parts)
 
-    return extracted_words
+    # Remove empty strings from the result
+    result = [part for part in result if part]
+
+    if join_with is not None:  # Join words with the specified delimiter
+        result = join_with.join(result)
+
+    return result
 
 
 def _english_numerals():
@@ -162,7 +194,7 @@ def _english_numerals():
 
     **Examples**::
 
-        >>> from pyhelpers.text.preproc import _english_numerals
+        >>> from pyhelpers.text.preprocessing import _english_numerals
         >>> eng_num = _english_numerals()
         >>> list(eng_num.keys())[:5]
         ['and', 'zero', 'one', 'two', 'three']
@@ -202,13 +234,13 @@ def _english_numerals():
     return metadata
 
 
-def numeral_english_to_arabic(x):
+def numeral_english_to_arabic(input_text):
     """
     Converts a number written in English words into its equivalent numerical value represented in
     Arabic numerals.
 
-    :param x: A number expressed in the English language.
-    :type x: str
+    :param input_text: A number expressed in the English language.
+    :type input_text: str
     :return: The equivalent Arabic number.
     :rtype: int
 
@@ -229,7 +261,7 @@ def numeral_english_to_arabic(x):
 
     current = result = 0
 
-    for word in x.lower().replace('-', ' ').split():
+    for word in input_text.lower().replace('-', ' ').split():
         if word not in _ENGLISH_NUMERALS and not word.isdigit():
             # word_ = find_similar_str(word, ENGLISH_WRITTEN_NUMBERS)
             # if word_ is None:
@@ -252,13 +284,13 @@ def numeral_english_to_arabic(x):
     return result
 
 
-def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
+def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
     # noinspection PyShadowingNames
     """
     Counts the occurrences of each word in the given text.
 
-    :param text: The input text from which words will be counted.
-    :type text: str
+    :param input_text: The input text from which words will be counted.
+    :type input_text: str
     :param lowercase: Whether to convert the text to lowercase before counting;
         defaults to ``False``.
     :type lowercase: bool
@@ -281,8 +313,8 @@ def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None
     **Examples**::
 
         >>> from pyhelpers.text import count_words
-        >>> text = 'This is an apple. That is a pear. Hello world!'
-        >>> count_words(text)
+        >>> input_text = 'This is an apple. That is a pear. Hello world!'
+        >>> count_words(input_text)
         {'This': 1,
          'is': 2,
          'an': 1,
@@ -294,7 +326,7 @@ def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None
          'Hello': 1,
          'world': 1,
          '!': 1}
-        >>> count_words(text, lowercase=True)
+        >>> count_words(input_text, lowercase=True)
         {'this': 1,
          'is': 2,
          'an': 1,
@@ -306,7 +338,7 @@ def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None
          'hello': 1,
          'world': 1,
          '!': 1}
-        >>> count_words(text, lowercase=True, ignore_punctuation=True)
+        >>> count_words(input_text, lowercase=True, ignore_punctuation=True)
         {'this': 1,
          'is': 2,
          'an': 1,
@@ -316,7 +348,7 @@ def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None
          'pear': 1,
          'hello': 1,
          'world': 1}
-        >>> count_words(text, lowercase=True, ignore_punctuation=True, stop_words=['is'])
+        >>> count_words(input_text, lowercase=True, ignore_punctuation=True, stop_words=['is'])
         {'this': 1,
          'an': 1,
          'apple': 1,
@@ -325,13 +357,13 @@ def count_words(text, lowercase=False, ignore_punctuation=False, stop_words=None
          'pear': 1,
          'hello': 1,
          'world': 1}
-        >>> count_words(text, lowercase=True, ignore_punctuation=True, stop_words=True)
+        >>> count_words(input_text, lowercase=True, ignore_punctuation=True, stop_words=True)
         {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
     """
 
     nltk_ = _check_dependency(name='nltk')
 
-    doc = str(text).lower() if lowercase else str(text)
+    doc = str(input_text).lower() if lowercase else str(input_text)
     if ignore_punctuation:
         doc = remove_punctuation(doc, rm_whitespace=False)
 

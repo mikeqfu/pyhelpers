@@ -18,9 +18,13 @@ authors:
 identifiers:
   - type: doi
     value: 10.5281/zenodo.4017438
+    description: >-
+      This DOI represents all versions of PyHelpers, and will
+      always resolve to the latest one.
 repository-code: 'https://github.com/mikeqfu/pyhelpers'
-url: 'https://pyhelpers.readthedocs.io'
-repository: 'https://pypi.org/project/pyhelpers/'
+url: 'https://mikeqfu.github.io/pyhelpers/'
+repository: 'https://pyhelpers.readthedocs.io'
+repository-artifact: 'https://pypi.org/project/pyhelpers/'
 abstract: >-
   PyHelpers is an open-source Python package designed to
   streamline data (pre-)processing and manipulation tasks.

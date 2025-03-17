@@ -34,11 +34,12 @@ Directory validation
     get_file_pathnames
     check_files_exist
 
-Directory/file control
-----------------------
+Directory/file management
+-------------------------
 
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
+    add_slashes
     delete_dir

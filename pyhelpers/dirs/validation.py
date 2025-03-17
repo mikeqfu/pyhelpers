@@ -1,5 +1,5 @@
 """
-Directory/file validation.
+Utilities for directory/file validation.
 """
 
 import errno
@@ -7,22 +7,26 @@ import os
 import pathlib
 import re
 
-from .nav import cd
-from .._cache import _check_relative_pathname
+from .navigation import cd
+from .._cache import _check_relative_pathname, _normalize_pathname
 
 
-def normalize_pathname(pathname, sep="/", **kwargs):
+def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
+    # noinspection PyShadowingNames
     """
     Converts a pathname to a consistent file path format for cross-platform compatibility.
 
     This function formats a file (or an OS-specific) path to ensure compatibility across
-    Windows, Linux and macOS.
+    Windows and Ubuntu (and other Unix-like systems).
 
     :param pathname: A pathname.
     :type pathname: str | bytes | pathlib.Path | os.PathLike
-    :param sep: File path separator used by the operating system;
-        defaults to ``"/"`` (forward slash) for Linux and macOS pathname.
+    :param sep: File path separator used by the operating system; defaults to ``"/"``
+        (forward slash) for both Windows and Ubuntu (and other Unix-like systems).
     :type sep: str
+    :param add_slash: If ``True``, adds a leading slash (and, if appropriate, a trailing slash)
+        to the returned pathname; defaults to ``False``.
+    :type add_slash: bool
     :return: Pathname of a consistent file path format.
     :rtype: str
 
@@ -33,20 +37,18 @@ def normalize_pathname(pathname, sep="/", **kwargs):
         >>> import pathlib
         >>> normalize_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
+        >>> normalize_pathname("tests\\data\\dat.csv", add_slash=True)  # on Windows
+        './tests/data/dat.csv'
         >>> normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
-        >>> normalize_pathname(pathlib.Path("tests\\data/dat.csv"), sep=os.path.sep)  # On Windows
+        >>> pathname = pathlib.Path("tests\\data/dat.csv")
+        >>> normalize_pathname(pathname, sep=os.path.sep)  # On Windows
         'tests\\data\\dat.csv'
+        >>> normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        '.\\tests\\data\\dat.csv'
     """
 
-    if isinstance(pathname, bytes):
-        pathname_ = pathname.decode(**kwargs)
-    else:
-        pathname_ = str(pathname)
-
-    pathname_ = re.sub(r"[\\/]+", re.escape(sep), pathname_)
-
-    return pathname_
+    return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
 
 
 def is_dir(path_to_dir):
@@ -181,7 +183,7 @@ def validate_filename(file_pathname, suffix_num=1):
         False
         >>> # If the file does not exist, the function returns the same filename
         >>> file_pathname_0 = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_0)
+        >>> os.path.relpath(file_pathname_0)  # on Windows
         'tests\\data\\test.txt'
         >>> # Create a file named "test.txt"
         >>> open(test_file_pathname, 'w').close()
@@ -189,14 +191,14 @@ def validate_filename(file_pathname, suffix_num=1):
         True
         >>> # As "test.txt" exists, the function returns a new pathname ending with "test(1).txt"
         >>> file_pathname_1 = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_1)
+        >>> os.path.relpath(file_pathname_1)  # on Windows
         'tests\\data\\test(1).txt'
         >>> # When "test(1).txt" exists, it returns a pathname of a file named "test(2).txt"
         >>> open(file_pathname_1, 'w').close()
         >>> os.path.exists(file_pathname_1)
         True
         >>> file_pathname_2 = validate_filename(test_file_pathname)
-        >>> os.path.relpath(file_pathname_2)
+        >>> os.path.relpath(file_pathname_2)  # on Windows
         'tests\\data\\test(2).txt'
         >>> # Remove the created files
         >>> for x in [file_pathname_0, file_pathname_1]:
@@ -222,7 +224,8 @@ def validate_filename(file_pathname, suffix_num=1):
     return filename_abspath
 
 
-def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=False):
+def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=False,
+                       normalized=True, add_slash=False):
     """
     Gets paths of files in a directory matching the specified file extension.
 
@@ -241,6 +244,11 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=F
     :type incl_subdir: bool
     :param abs_path: Whether to return absolute pathname(s).
     :type abs_path: bool
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
+    :param add_slash: If ``True``, adds a leading slash (and, if appropriate, a trailing slash)
+        to the returned pathname; defaults to ``False``.
+    :type add_slash: bool
     :return: List of file paths matching the criteria.
     :rtype: list
 
@@ -251,32 +259,32 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=F
         >>> import os
         >>> test_dir_name = "tests/data"
         >>> # Get all files in the directory (without subdirectories) on Windows
-        >>> get_file_pathnames(test_dir_name)
-        ['tests\\data\\csr_mat.npz',
-         'tests\\data\\dat.csv',
-         'tests\\data\\dat.feather',
-         'tests\\data\\dat.joblib',
-         'tests\\data\\dat.json',
-         'tests\\data\\dat.ods',
-         'tests\\data\\dat.pickle',
-         'tests\\data\\dat.pickle.bz2',
-         'tests\\data\\dat.pickle.gz',
-         'tests\\data\\dat.pickle.xz',
-         'tests\\data\\dat.txt',
-         'tests\\data\\dat.xlsx',
-         'tests\\data\\zipped.7z',
-         'tests\\data\\zipped.txt',
-         'tests\\data\\zipped.zip']
+        >>> get_file_pathnames(test_dir_name, add_slash=True)
+        ['./tests/data/csr_mat.npz',
+         './tests/data/dat.csv',
+         './tests/data/dat.feather',
+         './tests/data/dat.joblib',
+         './tests/data/dat.json',
+         './tests/data/dat.ods',
+         './tests/data/dat.pickle',
+         './tests/data/dat.pickle.bz2',
+         './tests/data/dat.pickle.gz',
+         './tests/data/dat.pickle.xz',
+         './tests/data/dat.txt',
+         './tests/data/dat.xlsx',
+         './tests/data/zipped.7z',
+         './tests/data/zipped.txt',
+         './tests/data/zipped.zip']
         >>> get_file_pathnames(test_dir_name, file_ext=".txt")
-        ['tests\\data\\dat.txt', 'tests\\data\\zipped.txt']
-        >>> output_dir = unzip('tests\\data\\zipped.zip', ret_output_dir=True)
+        ['tests/data/dat.txt', 'tests/data/zipped.txt']
+        >>> output_dir = unzip('tests/data/zipped.zip', ret_output_dir=True)
         >>> os.listdir(output_dir)
         ['zipped.txt']
         >>> # Get absolute pathnames of all files contained in the folder (incl. all subdirectories)
         >>> get_file_pathnames(test_dir_name, file_ext="txt", incl_subdir=True, abs_path=True)
-        ['<Parent directories>\\tests\\data\\dat.txt',
-         '<Parent directories>\\tests\\data\\zipped.txt',
-         '<Parent directories>\\tests\\data\\zipped\\zipped.txt']
+        ['<Parent directories>/tests/data/dat.txt',
+         '<Parent directories>/tests/data/zipped.txt',
+         '<Parent directories>/tests/data/zipped/zipped.txt']
         >>> delete_dir(output_dir, confirmation_required=False)
     """
 
@@ -301,10 +309,13 @@ def get_file_pathnames(path_to_dir, file_ext=None, incl_subdir=False, abs_path=F
         file_pathnames = [
             os.path.abspath(p) if abs_path else p for p in file_pathnames if p.endswith(file_ext)]
 
+    file_pathnames = [
+        normalize_pathname(p, add_slash=add_slash) if normalized else p for p in file_pathnames]
+
     return file_pathnames
 
 
-def check_files_exist(filenames, path_to_dir, verbose=False):
+def check_files_exist(filenames, path_to_dir, verbose=False, **kwargs):
     """
     Checks if specified files exist within a given directory.
 
@@ -330,7 +341,8 @@ def check_files_exist(filenames, path_to_dir, verbose=False):
         False
     """
 
-    dir_files = get_file_pathnames(path_to_dir, file_ext="*")
+    dir_files = get_file_pathnames(
+        path_to_dir=path_to_dir, file_ext="*", normalized=False, **kwargs)
 
     # Format the required file name to standard linux path
     file_or_pathnames = [os.path.abspath(filename) for filename in filenames]

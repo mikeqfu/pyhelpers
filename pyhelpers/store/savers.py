@@ -1,5 +1,5 @@
 """
-Save data.
+Utilities for saving data in various formats.
 """
 
 import bz2
@@ -17,6 +17,7 @@ import pandas as pd
 
 from .utils import _autofit_column_width, _check_saving_path
 from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_message
+from ..ops.web import is_url
 
 
 def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
@@ -45,7 +46,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> pickle_dat = 1
         >>> pickle_pathname = cd("tests", "data", "dat.pickle")
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
-        Saving "dat.pickle" to ".\\tests\\data\\" ... Done.
+        Saving "dat.pickle" to "./tests/data/" ... Done.
         >>> # Get an example dataframe
         >>> pickle_dat = example_dataframe()
         >>> pickle_dat
@@ -56,7 +57,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
         >>> save_pickle(pickle_dat, pickle_pathname, verbose=True)
-        Updating "dat.pickle" at ".\\tests\\data\\" ... Done.
+        Updating "dat.pickle" in "./tests/data/" ... Done.
 
     .. tip::
 
@@ -168,20 +169,21 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Leeds       -1.543794  53.797418
         >>> spreadsheet_pathname = cd("tests", "data", "dat.csv")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.csv" to ".\\tests\\data\\" ... Done.
+        Saving "dat.csv" to "./tests/data/" ... Done.
         >>> spreadsheet_pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.xlsx" to ".\\tests\\data\\" ... Done.
+        Saving "dat.xlsx" to "./tests/data/" ... Done.
         >>> spreadsheet_pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheet(spreadsheet_dat, spreadsheet_pathname, index=True, verbose=True)
-        Saving "dat.ods" to ".\\tests\\data\\" ... Done.
+        Saving "dat.ods" to "./tests/data/" ... Done.
     """
 
     _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
     _, ext = os.path.splitext(filename)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
-    assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
+    if raise_error:
+        assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
 
     try:  # to save the data
         if ext in {".csv", ".txt", ".odt"}:  # a .csv file
@@ -215,6 +217,49 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exists,
+                       autofit_column_width, writer_kwargs, verbose, raise_error, **kwargs):
+    for sheet_data, sheet_name in zip(data, sheet_names):
+        # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
+        if verbose:
+            print(f"\t'{sheet_name}'", end=" ... ")
+
+        if sheet_name in cur_sheet_names:
+            if if_sheet_exists is None:
+                if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
+            else:
+                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
+                    "Invalid option for `if_sheet_exists`."
+                if_sheet_exists_ = copy.copy(if_sheet_exists)
+
+            if if_sheet_exists_ != 'pass':
+                writer._if_sheet_exists = if_sheet_exists_
+
+        try:
+            kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
+            sheet_data.to_excel(**kwargs)
+
+            if autofit_column_width:
+                _autofit_column_width(writer, writer_kwargs, **kwargs)
+
+            if writer._if_sheet_exists == 'new':
+                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
+                prefix = "\t\t" if if_sheet_exists is None else ""
+                add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
+            else:
+                add_msg = "Done."
+
+            if verbose:
+                print(add_msg)
+
+            cur_sheet_names = list(writer.sheets.keys())
+
+        except Exception as e:
+            _print_failure_message(
+                e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
+                raise_error=raise_error)
 
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
@@ -283,26 +328,26 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         >>> sheets = ['TestSheet1', 'TestSheet2']
         >>> pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
-        Saving "dat.ods" to ".\\tests\\data\\" ...
+        Saving "dat.ods" to "./tests/data/" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
         >>> pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
-        Saving "dat.xlsx" to ".\\tests\\data\\" ...
+        Saving "dat.xlsx" to "./tests/data/" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, mode='a', verbose=True)
-        Updating "dat.xlsx" at ".\\tests\\data\\" ...
+        Updating "dat.xlsx" at "./tests/data/" ...
             'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='replace', verbose=True)
-        Updating "dat.xlsx" at ".\\tests\\data\\" ...
+        Updating "dat.xlsx" at "./tests/data/" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='new', verbose=True)
-        Updating "dat.xlsx" at ".\\tests\\data\\" ...
+        Updating "dat.xlsx" at "./tests/data/" ...
             'TestSheet1' ... saved as 'TestSheet12' ... Done.
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
@@ -330,45 +375,10 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         if verbose:
             print("")
 
-        for sheet_data, sheet_name in zip(data, sheet_names):
-            # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
-            if verbose:
-                print(f"\t'{sheet_name}'", end=" ... ")
-
-            if sheet_name in cur_sheet_names:
-                if if_sheet_exists is None:
-                    if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
-                else:
-                    assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
-                        "Invalid option for `if_sheet_exists`."
-                    if_sheet_exists_ = copy.copy(if_sheet_exists)
-
-                if if_sheet_exists_ != 'pass':
-                    writer._if_sheet_exists = if_sheet_exists_
-
-            try:
-                kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
-                sheet_data.to_excel(**kwargs)
-
-                if autofit_column_width:
-                    _autofit_column_width(writer, writer_kwargs, **kwargs)
-
-                if writer._if_sheet_exists == 'new':
-                    new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
-                    prefix = "\t\t" if if_sheet_exists is None else ""
-                    add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
-                else:
-                    add_msg = "Done."
-
-                if verbose:
-                    print(add_msg)
-
-                cur_sheet_names = list(writer.sheets.keys())
-
-            except Exception as e:
-                _print_failure_message(
-                    e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
-                    raise_error=raise_error)
+        _save_spreadsheets(
+            data=data, sheet_names=sheet_names, cur_sheet_names=cur_sheet_names, writer=writer,
+            if_sheet_exists=if_sheet_exists, autofit_column_width=autofit_column_width,
+            writer_kwargs=writer_kwargs, verbose=verbose, raise_error=raise_error, **kwargs)
 
 
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
@@ -419,7 +429,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         >>> json_pathname = cd("tests", "data", "dat.json")
         >>> json_dat = {'a': 1, 'b': 2, 'c': 3, 'd': ['a', 'b', 'c']}
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
-        Saving "dat.json" to ".\\tests\\data\\" ... Done.
+        Saving "dat.json" to "./tests/data/" ... Done.
         >>> # Get an example dataframe
         >>> example_df = example_dataframe()
         >>> example_df
@@ -438,13 +448,13 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> # Use built-in json module
         >>> save_json(json_dat, json_pathname, indent=4, verbose=True)
-        Updating "dat.json" at ".\\tests\\data\\" ... Done.
+        Updating "dat.json" in "./tests/data/" ... Done.
         >>> save_json(json_dat, json_pathname, engine='orjson', verbose=True)
-        Updating "dat.json" at ".\\tests\\data\\" ... Done.
+        Updating "dat.json" in "./tests/data/" ... Done.
         >>> save_json(json_dat, json_pathname, engine='ujson', indent=4, verbose=True)
-        Updating "dat.json" at ".\\tests\\data\\" ... Done.
+        Updating "dat.json" in "./tests/data/" ... Done.
         >>> save_json(json_dat, json_pathname, engine='rapidjson', indent=4, verbose=True)
-        Updating "dat.json" at ".\\tests\\data\\" ... Done.
+        Updating "dat.json" in "./tests/data/" ... Done.
 
     .. seealso::
 
@@ -508,7 +518,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
                [-2.2451148, 53.4794892],
                [-1.5437941, 53.7974185]])
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
-        Saving "dat.joblib" to ".\\tests\\data\\" ... Done.
+        Saving "dat.joblib" to "./tests/data/" ... Done.
         >>> # Example 2:
         >>> np.random.seed(0)
         >>> joblib_dat = np.random.rand(100, 100)
@@ -527,7 +537,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
                [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
                 0.81357508]])
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
-        Updating "dat.joblib" at ".\\tests\\data\\" ... Done.
+        Updating "dat.joblib" in "./tests/data/" ... Done.
 
     .. seealso::
 
@@ -583,9 +593,9 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         Leeds       -1.543794  53.797418
         >>> feather_pathname = cd("tests\\data", "dat.feather")
         >>> save_feather(feather_dat, feather_pathname, verbose=True)
-        Saving "dat.feather" to "tests\\data\\" ... Done.
+        Saving "dat.feather" to "./tests/data/" ... Done.
         >>> save_feather(feather_dat, feather_pathname, index=True, verbose=True)
-        Updating "dat.feather" at "tests\\data\\" ... Done.
+        Updating "dat.feather" in "./tests/data/" ... Done.
 
     .. seealso::
 
@@ -661,14 +671,16 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         >>> fig.savefig(path_to_svg)  # Save the figure as a .svg file
         >>> path_to_emf = cd(img_dir, "store-save_fig-demo.emf")
         >>> save_svg_as_emf(path_to_svg, path_to_emf, verbose=True)
-        Saving the .svg file as ".\\tests\\images\\store-save_fig-demo.emf" ... Done.
+        Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
-    exe_name = "inkscape.exe"
+    exe_name = "inkscape"
     optional_pathnames = {
-        f"C:/Program Files/Inkscape/{exe_name}",
-        f"C:/Program Files/Inkscape/bin/{exe_name}",
+        exe_name,
+        f"{exe_name}.exe"
+        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        f"C:/Program Files/Inkscape/bin/{exe_name}.exe",
     }
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
@@ -686,13 +698,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
 
             result = subprocess.run(
                 [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf],
-                check=True,
-            )  # nosec
-            ret_code = result.returncode
-
-        except subprocess.CalledProcessError:
-            result = subprocess.run(
-                [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],
+                # [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],  # Old
                 check=True,
             )  # nosec
             ret_code = result.returncode
@@ -704,8 +710,8 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
             print("Done.")
 
     else:
-        if verbose:
-            print(
+        if raise_error:
+            raise FileNotFoundError(
                 '"Inkscape" (https://inkscape.org) is required to '
                 'convert a SVG file to an EMF file; however, it is not found on this device.'
                 '\nInstall it and then try again.')
@@ -765,10 +771,10 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> save_fig(svg_file_pathname, verbose=True)
-        Saving "store-save_fig-demo.png" to ".\\tests\\images\\" ... Done.
+        Saving "store-save_fig-demo.png" in "./tests/images/" ... Done.
         >>> save_fig(svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_fig-demo.svg" at ".\\tests\\images\\" ... Done.
-        Saving the .svg file as ".\\tests\\images\\store-save_fig-demo.emf" ... Done.
+        Updating "store-save_fig-demo.svg" in "./tests/images/" ... Done.
+        Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
@@ -845,12 +851,12 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_figure-demo.svg")
         >>> save_figure(fig, svg_file_pathname, verbose=True)
-        Saving "store-save_figure-demo.png" to ".\\tests\\images\\" ... Done.
+        Saving "store-save_figure-demo.png" in "./tests/images/" ... Done.
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.svg", verbose=True)
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.pdf", verbose=True)
         >>> save_figure(fig, svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_figure-demo.svg" at ".\\tests\\images\\" ... Done.
-        Saving the .svg file as ".\\tests\\images\\store-save_figure-demo.emf" ... Done.
+        Updating "store-save_figure-demo.svg" in "./tests/images/" ... Done.
+        Saving "store-save_figure-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
@@ -929,12 +935,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> # Close the PDF file (if opened with Foxit Reader)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> web_page_file = cd("docs", "build", "html", "index.html")
-        >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
-        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ... Done.
-        >>> subprocess.Popen(pdf_pathname, shell=True)
-        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=2)
-        Updating "pyhelpers.pdf" at ".\\tests\\documents\\" ...
+        Updating "pyhelpers.pdf" in "./tests/documents/" ...
         Loading pages (1/6)
         Counting pages (2/6)
         Resolving links (4/6)
@@ -942,16 +944,23 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         Printing pages (6/6)
         Done
         >>> subprocess.Popen(pdf_pathname, shell=True)
+        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
+        >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
+        Updating "pyhelpers.pdf" in "./tests/documents/" ... Done.
+        >>> subprocess.Popen(pdf_pathname, shell=True)
+        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
     """
 
     if os.path.isfile(path_to_file) and if_exists == 'pass':
         return None
 
     else:
-        exe_name = "wkhtmltopdf.exe"
+        exe_name = "wkhtmltopdf"
         optional_pathnames = {
-            f"C:/Program Files/wkhtmltopdf/{exe_name}",
-            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}",
+            exe_name,
+            f"{exe_name}.exe"
+            f"C:/Program Files/wkhtmltopdf/{exe_name}.exe",
+            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}.exe",
         }
         wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
             name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
@@ -981,8 +990,6 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                 options.update(wkhtmltopdf_options)
             configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
             kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
-
-            from pyhelpers.ops.webutils import is_url
 
             try:
                 if is_url(data):
@@ -1069,19 +1076,19 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> # Save the data to files different formats:
         >>> dat_pathname = cd(data_dir, "dat.pickle")
         >>> save_data(dat, dat_pathname, verbose=True)
-        Saving "dat.pickle" to ".\\tests\\data\\" ... Done.
+        Saving "dat.pickle" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.csv")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.csv" to ".\\tests\\data\\" ... Done.
+        Saving "dat.csv" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.xlsx")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.xlsx" to ".\\tests\\data\\" ... Done.
+        Saving "dat.xlsx" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.txt")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.txt" to ".\\tests\\data\\" ... Done.
+        Saving "dat.txt" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
-        Saving "dat.feather" to ".\\tests\\data\\" ... Done.
+        Saving "dat.feather" to "./tests/data/" ... Done.
         >>> # Convert `dat` to JSON format
         >>> import json
         >>> dat_ = json.loads(dat.to_json(orient='index'))
@@ -1092,7 +1099,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.json")
         >>> save_data(dat_, dat_pathname, indent=4, verbose=True)
-        Saving "dat.json" to ".\\tests\\data\\" ... Done.
+        Saving "dat.json" to "./tests/data/" ... Done.
 
     .. seealso::
 

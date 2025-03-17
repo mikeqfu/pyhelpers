@@ -1,5 +1,5 @@
 """
-Load data.
+Utilities for loading data of various formats.
 """
 
 import bz2
@@ -54,7 +54,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         >>> from pyhelpers.dirs import cd
         >>> pickle_pathname = cd("tests", "data", "dat.pickle")
         >>> pickle_dat = load_pickle(pickle_pathname, verbose=True)
-        Loading ".\\tests\\data\\dat.pickle" ... Done.
+        Loading "./tests/data/dat.pickle" ... Done.
         >>> pickle_dat
                     Longitude   Latitude
         City
@@ -142,7 +142,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         >>> from pyhelpers.dirs import cd
         >>> csv_pathname = cd("tests", "data", "dat.csv")
         >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
-        Loading ".\\tests\\data\\dat.csv" ... Done.
+        Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                      Longitude    Latitude
         City
@@ -152,7 +152,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Leeds       -1.5437941  53.7974185
         >>> csv_pathname = cd("tests", "data", "dat.txt")
         >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
-        Loading ".\\tests\\data\\dat.txt" ... Done.
+        Loading "./tests/data/dat.txt" ... Done.
         >>> csv_dat
                      Longitude    Latitude
         City
@@ -161,7 +161,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
         >>> csv_dat = load_csv(csv_pathname, header=[0, 1], verbose=True)
-        Loading ".\\tests\\data\\dat.txt" ... Done.
+        Loading "./tests/data/dat.txt" ... Done.
         >>> csv_dat
                  City Easting Northing
                London  530034   180381
@@ -248,7 +248,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         >>> dat_dir = cd("tests", "data")
         >>> path_to_xlsx = cd(dat_dir, "dat.ods")
         >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        Loading ".\\tests\\data\\dat.ods" ...
+        Loading "./tests/data/dat.ods" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
         >>> list(wb_data.keys())
@@ -262,7 +262,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         Leeds       -1.543794  53.797418
         >>> path_to_xlsx = cd(dat_dir, "dat.xlsx")
         >>> wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        Loading ".\\tests\\data\\dat.xlsx" ...
+        Loading "./tests/data/dat.xlsx" ...
             'TestSheet1'. ... Done.
             'TestSheet2'. ... Done.
             'TestSheet11'. ... Done.
@@ -379,7 +379,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
         >>> from pyhelpers.dirs import cd
         >>> json_path = cd("tests", "data", "dat.json")
         >>> json_dat = load_json(json_path, verbose=True)
-        Loading ".\\tests\\data\\dat.json" ... Done.
+        Loading "./tests/data/dat.json" ... Done.
         >>> json_dat
         {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
          'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
@@ -447,7 +447,7 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         >>> from pyhelpers.dirs import cd
         >>> joblib_pathname = cd("tests", "data", "dat.joblib")
         >>> joblib_dat = load_joblib(joblib_pathname, verbose=True)
-        Loading ".\\tests\\data\\dat.joblib" ... Done.
+        Loading "./tests/data/dat.joblib" ... Done.
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],
@@ -524,7 +524,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         >>> from pyhelpers.dirs import cd
         >>> feather_path = cd("tests", "data", "dat.feather")
         >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
-        Loading ".\\tests\\data\\dat.feather" ... Done.
+        Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
         City
@@ -542,18 +542,6 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         data = pd.read_feather(path_to_file, **kwargs)
 
         data = _set_index(data, index=index)
-
-        # if isinstance(feather_data, pd.DataFrame):
-        #     col_0 = feather_data.columns[0]
-        #
-        #     if (col_0.startswith('level_') and
-        #             all(feather_data[col_0] == range(feather_data.shape[0]))):
-        #         del feather_data[col_0]
-        #
-        #     if feather_data.columns[0] == 'index':
-        #         feather_data.set_index('index', inplace=True)
-        #         # feather_data = feather_data.rename_axis(None, axis=1)
-        #         feather_data.index.name = None
 
         if verbose:
             print("Done.")
@@ -600,7 +588,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
             with 6 stored elements in Compressed Sparse Row format>
         >>> path_to_csr_npz = cd("tests", "data", "csr_mat.npz")
         >>> csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
-        Loading ".\\tests\\data\\csr_mat.npz" ... Done.
+        Loading "./tests/data/csr_mat.npz" ... Done.
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
         >>> (csr_mat != csr_mat_).count_nonzero() == 0
         True
@@ -677,7 +665,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         >>> data_dir = cd("tests", "data")
         >>> dat_pathname = cd(data_dir, "dat.pickle")
         >>> pickle_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading ".\\tests\\data\\dat.pickle" ... Done.
+        Loading "./tests/data/dat.pickle" ... Done.
         >>> pickle_dat
                     Longitude   Latitude
         City
@@ -687,7 +675,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.csv")
         >>> csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-        Loading ".\\tests\\data\\dat.csv" ... Done.
+        Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                     Longitude   Latitude
         City
@@ -697,7 +685,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.json")
         >>> json_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading ".\\tests\\data\\dat.json" ... Done.
+        Loading "./tests/data/dat.json" ... Done.
         >>> json_dat
         {'London': {'Longitude': -0.1276474, 'Latitude': 51.5073219},
          'Birmingham': {'Longitude': -1.9026911, 'Latitude': 52.4796992},
@@ -705,7 +693,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
-        Loading ".\\tests\\data\\dat.feather" ... Done.
+        Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
         City
@@ -715,7 +703,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.joblib")
         >>> joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
-        Loading ".\\tests\\data\\dat.joblib" ... Done.
+        Loading "./tests/data/dat.joblib" ... Done.
         >>> joblib_dat
         array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
                 0.00469548],

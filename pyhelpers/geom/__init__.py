@@ -2,6 +2,6 @@
 Manipulation of geometric/geographical data.
 """
 
-from .sketch import *
-from .spatial import *
-from .trans import *
+from .distances import *
+from .shapes import *
+from .transforms import *

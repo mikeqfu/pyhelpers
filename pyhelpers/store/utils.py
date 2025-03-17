@@ -1,5 +1,5 @@
 """
-Basic functions that support the main modules of :mod:`~pyhelpers.dbms`.
+Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
 import copy
@@ -11,7 +11,8 @@ from .._cache import _add_slashes, _check_relative_pathname
 
 
 def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
-                       state_prep="to", print_suffix="", print_end=" ... ", ret_info=False):
+                       state_prep="to", print_suffix="", print_end=" ... ", belated=False,
+                       ret_info=False):
     # noinspection PyShadowingNames
     """
     Verifies a specified file path before saving.
@@ -44,23 +45,24 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> _check_saving_path(path_to_file, verbose=True)
         Traceback (most recent call last):
             ...
-        AssertionError: The input for `path_to_file` may not be a file path.
+        AssertionError: The input for <path_to_file> may not be a file path.
         >>> path_to_file = "pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" ... Passed.
         >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to ".\\tests\\documents\\" ... Passed.
+        Saving "pyhelpers.pdf" in "./tests/documents/" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\Windows\\" ... Passed.
+        Saving "pyhelpers.pdf" to "C:/Windows/" ... Passed.
         >>> path_to_file = "C:\\pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:\\" ... Passed.
+        Saving "pyhelpers.pdf" to "C:/" ... Passed.
     """
 
     abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    assert not abs_path_to_file.is_dir(), "The input for `path_to_file` may not be a file path."
+    if abs_path_to_file.is_dir():
+        raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
 
     try:
         rel_dir_path = abs_path_to_file.parent.relative_to(pathlib.Path.cwd())
@@ -81,8 +83,8 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     filename = abs_path_to_file.name if abs_path_to_file.suffix else ""
 
     if verbose:
-        if os.path.isfile(abs_path_to_file):
-            state_verb, state_prep = "Updating", "at"
+        if os.path.isfile(abs_path_to_file) and not belated:
+            state_verb, state_prep = "Updating", "in"
 
         end = print_end if print_end else "\n"
 
@@ -131,7 +133,7 @@ def _autofit_column_width(writer, writer_kwargs, **kwargs):
 
     if 'sheet_name' in kwargs and writer_kwargs['engine'] == 'openpyxl':
         # Reference: https://stackoverflow.com/questions/39529662/
-        ws = writer.sheets[kwargs['sheet_name']]
+        ws = writer.sheets[kwargs.get('sheet_name')]
         for column in ws.columns:
             max_length = 0
             column_letter = column[0].column_letter
@@ -167,10 +169,10 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         >>> from pyhelpers.dirs import cd
         >>> path_to_file = cd("test_func.py")
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
-        Loading ".\\test_func.py" ... Passed.
+        Loading "./test_func.py" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
-        Loading "C:\\Windows\\pyhelpers.pdf" ... Passed.
+        Loading "C:/Windows/pyhelpers.pdf" ... Passed.
     """
 
     if verbose:

@@ -1,21 +1,32 @@
-"""Test the module :mod:`~pyhelpers.text`."""
+"""
+Tests the :mod:`~pyhelpers.text.utils` submodule.
+"""
 
 import functools
 
 import pytest
 
-from pyhelpers.text import *
+from pyhelpers.text.preprocessing import *
+from pyhelpers.text.preprocessing import _english_numerals
 
 
 @pytest.mark.parametrize('rm_whitespace', [True, False])
-def test_remove_punctuation(rm_whitespace):
-    raw_text = 'Hello world!\tThis is a test. :-)'
-    text = remove_punctuation(raw_text, rm_whitespace)
+@pytest.mark.parametrize('preserve_hyphenated', [True, False])
+def test_remove_punctuation(rm_whitespace, preserve_hyphenated):
+    raw_text = 'Hello world!\tThis is a test. :-) No hyphenated-word contents.'
 
+    text = remove_punctuation(
+        raw_text, rm_whitespace=rm_whitespace, preserve_hyphenated=preserve_hyphenated)
     if rm_whitespace:
-        assert text == 'Hello world This is a test'
+        if preserve_hyphenated:
+            assert text == 'Hello world This is a test No hyphenated-word contents'
+        else:
+            assert text == 'Hello world This is a test No hyphenated word contents'
     else:
-        assert text == 'Hello world \tThis is a test'
+        if preserve_hyphenated:
+            assert text == 'Hello world \tThis is a test      No hyphenated-word contents'
+        else:
+            assert text == 'Hello world \tThis is a test      No hyphenated word contents'
 
 
 @pytest.mark.parametrize('only_capitals', [False, True])
@@ -47,21 +58,40 @@ def test_get_acronym(only_capitals, capitals_in_words, keep_punctuation):
 
 
 @pytest.mark.parametrize('join_with', [None, ' '])
-def test_extract_words1upper(join_with):
-    x1, x2 = 'Network_Waymarks', 'NetworkRailRetainingWall'
-    y1, y2 = map(functools.partial(extract_words1upper, join_with=join_with), [x1, x2])
+def test_split_on_uppercase(join_with):
+    test_inputs = [
+        'Network_Waymarks',
+        'NetworkRailRetainingWall',
+        'BCRRE_Projects',
+        'BCRRE-Projects',
+        'Version2Update',
+        'file_name_with_underscores',
+        'some-text-in-kebab-case',
+    ]
+    test_outputs = map(functools.partial(split_on_uppercase, join_with=join_with), test_inputs)
 
     if join_with:
-        assert y1 == 'Network Waymarks'
-        assert y2 == 'Network Rail Retaining Wall'
+        assert list(test_outputs) == [
+            'Network Waymarks',
+            'Network Rail Retaining Wall',
+            'BCRRE Projects',
+            'BCRRE Projects',
+            'Version 2 Update',
+            'file_name_with_underscores',
+            'some-text-in-kebab-case',
+        ]
     else:
-        assert y1 == ['Network', 'Waymarks']
-        assert y2 == ['Network', 'Rail', 'Retaining', 'Wall']
+        assert list(test_outputs) == [
+            ['Network', 'Waymarks'],
+            ['Network', 'Rail', 'Retaining', 'Wall'],
+            ['BCRRE', 'Projects'],
+            ['BCRRE', 'Projects'],
+            ['Version', '2', 'Update'],
+            ['file_name_with_underscores'],
+            ['some-text-in-kebab-case']]
 
 
 def test__english_numerals():
-    from pyhelpers.text.preproc import _english_numerals
-
     res = _english_numerals()
     assert isinstance(res, dict)
     assert len(res) >= 36
@@ -268,88 +298,6 @@ def test_calculate_tfidf(lowercase):
             'being': 0.6931471805599453,
             'Hello': 0.6931471805599453,
             'world': 0.6931471805599453}
-
-
-def test_euclidean_distance_between_texts():
-    txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-
-    euclidean_distance = euclidean_distance_between_texts(txt_1, txt_2)
-    assert euclidean_distance == 2.449489742783178
-
-
-def test_cosine_similarity_between_texts():
-    txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-
-    cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
-    assert cos_sim == 0.25
-
-    cos_dist = cosine_similarity_between_texts(txt_1, txt_2, cosine_distance=True)  # 1 - cos_sim
-    assert cos_dist == 0.75
-
-
-def test_find_matched_str():
-    lookup_lst = ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel']
-    res = find_matched_str('apple', lookup_lst)
-    assert list(res) == []
-
-    lookup_lst += ['apple']
-    assert lookup_lst == ['abc', 'aapl', 'app', 'ap', 'ape', 'apex', 'apel', 'apple']
-
-    res = find_matched_str('apple', lookup_lst)
-    assert list(res) == ['apple']
-
-    res = find_matched_str(r'app(le)?', lookup_lst)
-    assert list(res) == ['app', 'apple']
-
-
-def test_find_similar_str():
-    from pyhelpers.text.analyser import _find_str_by_rapidfuzz
-
-    lookup_lst = [
-        'Anglia',
-        'East Coast',
-        'East Midlands',
-        'North and East',
-        'London North Western',
-        'Scotland',
-        'South East',
-        'Wales',
-        'Wessex',
-        'Western']
-
-    y = find_similar_str(x='angle', lookup_list=lookup_lst)
-    assert y == 'Anglia'
-    y = find_similar_str(x='angle', lookup_list=lookup_lst, n=2)
-    assert y == ['Anglia', 'Wales']
-
-    y = find_similar_str(x='angle', lookup_list=lookup_lst, engine='rapidfuzz')
-    assert y == 'Anglia'
-    y = find_similar_str('angle', lookup_lst, n=2, engine='rapidfuzz')
-    assert y == ['Anglia', 'Wales']
-
-    y = find_similar_str(x='x', lookup_list=lookup_lst)
-    assert y is None
-    y = find_similar_str(x='x', lookup_list=lookup_lst, cutoff=0.25)
-    assert y == 'Wessex'
-    y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, cutoff=0.25)
-    assert y == 'Wessex'
-
-    y = find_similar_str(x='x', lookup_list=lookup_lst, engine='fuzz')
-    assert y == 'Wessex'
-    y = find_similar_str(x='x', lookup_list=lookup_lst, n=2, engine='fuzz')
-    assert y == ['Wessex', 'Western']
-
-    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine='fuzz')
-    assert y is None
-
-    y = find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=_find_str_by_rapidfuzz)
-    assert y == 'Anglia'
-
-    y = find_similar_str(x='123', lookup_list=lookup_lst, n=1, engine=_find_str_by_rapidfuzz)
-    assert y is None
-
-    with pytest.raises(Exception):
-        find_similar_str(x='anglia', lookup_list=lookup_lst, n=1, engine=str)
 
 
 if __name__ == '__main__':
