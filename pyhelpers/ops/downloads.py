@@ -60,7 +60,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 
 def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=None, bar_format=None,
-                            colour=None, validate=True, **kwargs):
+                            colour=None, validate=True, print_wrap_limit=None, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a given HTTP response and saves it to the specified location.
@@ -90,6 +90,11 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
     :param validate: Whether to validate if the downloaded file size matches the expected content
         length; defaults to ``True``.
     :type validate: bool
+    :param print_wrap_limit: Maximum length of the string before splitting into two lines;
+        defaults to ``None``, which disables splitting. If the string exceeds this value,
+        e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
+        when printed.
+    :type print_wrap_limit: int | None
     :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_, allowing customisation
         of the progress bar (e.g. ``disable=True`` to hide the progress bar).
 
@@ -150,7 +155,10 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
     except (IOError, TypeError) as e:
         _print_failure_message(e, prefix="Download failed:", verbose=True, raise_error=True)
 
-    _check_saving_path(path_to_file, verbose=True, print_prefix="\t", belated=belated)
+    _check_saving_path(
+        path_to_file, verbose=True, print_prefix="\t", print_wrap_limit=print_wrap_limit,
+        belated=belated)
+
     if validate and (written != file_size) and (file_size > 0):
         raise ValueError(f"Download failed: expected {file_size} bytes, got {written} bytes.")
     else:
@@ -158,8 +166,9 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
-                           requests_session_args=None, verbose=False, chunk_multiplier=1, desc=None,
-                           bar_format=None, colour=None, validate=True, **kwargs):
+                           requests_session_args=None, verbose=False, print_wrap_limit=None,
+                           chunk_multiplier=1, desc=None, bar_format=None, colour=None,
+                           validate=True, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a valid URL.
@@ -185,6 +194,11 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         the requests session; defaults to ``None``.
     :type requests_session_args: dict | None
     :type verbose: bool | int
+    :param print_wrap_limit: Maximum length of the string before splitting into two lines;
+        defaults to ``None``, which disables splitting. If the string exceeds this value,
+        e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
+        when printed.
+    :type print_wrap_limit: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
         this can be adjusted to optimise download performance based on file size; defaults to ``1``.
     :type chunk_multiplier: int | float
@@ -243,7 +257,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
     if os.path.isfile(path_to_file_) and if_exists != 'replace':
         if verbose:
-            print(f'File "{os.path.basename(path_to_file)}" already exists. Aborting download. '
+            print(f'File "{os.path.basename(path_to_file)}" already exists. Aborting download.\n'
                   f'Set `if_exists="replace"` to update the existing file.')
 
     else:
@@ -272,6 +286,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     bar_format=bar_format,
                     colour=colour,
                     validate=validate,
+                    print_wrap_limit=print_wrap_limit,
                     **kwargs
                 )
 
