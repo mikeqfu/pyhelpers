@@ -194,59 +194,6 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def _check_relative_pathname(pathname):
-    """
-    Checks if the pathname is relative to the current working directory.
-
-    This function returns a relative pathname of the input ``pathname`` to the current working
-    directory if ``pathname`` is within the current working directory;
-    otherwise, it returns a copy of the input.
-
-    :param pathname: Pathname (of a file or directory).
-    :type pathname: str | bytes | pathlib.Path
-    :return: A location relative to the current working directory
-        if ``pathname`` is within the current working directory; otherwise, a copy of ``pathname``.
-    :rtype: str
-
-    **Tests**::
-
-        >>> from pyhelpers._cache import _check_relative_pathname
-        >>> from pyhelpers.dirs import cd
-        >>> _check_relative_pathname(".")
-        '.'
-        >>> _check_relative_pathname(cd())
-        '.'
-        >>> _check_relative_pathname("C:\\Program Files")
-        'C:\\Program Files'
-        >>> _check_relative_pathname(pathname="C:/Windows")
-        'C:\\Windows'
-    """
-
-    if isinstance(pathname, (bytes, bytearray)):
-        pathname_ = str(pathname, encoding='utf-8')
-    else:
-        pathname_ = str(pathname)
-
-    abs_pathname = os.path.abspath(pathname_)
-    abs_cwd = os.getcwd()
-
-    if os.name == "nt":  # Handle different drive letters on Windows
-        if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
-            return abs_pathname  # Return absolute path if drives differ
-
-    # Check if the pathname is inside the current working directory
-    if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
-        try:
-            rel_path = os.path.relpath(pathname_)
-        except ValueError:
-            rel_path = copy.copy(pathname_)
-
-    else:
-        rel_path = abs_pathname  # Return original absolute path if outside CWD
-
-    return rel_path
-
-
 def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -337,6 +284,62 @@ def _add_slashes(pathname, normalized=True, surrounded_by='"'):
     s = surrounded_by or ""
 
     return f'{s}{path}{s}'
+
+
+def _check_relative_pathname(pathname, normalized=True):
+    """
+    Checks if the pathname is relative to the current working directory.
+
+    This function returns a relative pathname of the input ``pathname`` to the current working
+    directory if ``pathname`` is within the current working directory;
+    otherwise, it returns a copy of the input.
+
+    :param pathname: Pathname (of a file or directory).
+    :type pathname: str | bytes | pathlib.Path
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
+    :return: A location relative to the current working directory
+        if ``pathname`` is within the current working directory; otherwise, a copy of ``pathname``.
+    :rtype: str
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _check_relative_pathname
+        >>> from pyhelpers.dirs import cd
+        >>> _check_relative_pathname(pathname=".")
+        '.'
+        >>> _check_relative_pathname(pathname=cd())
+        '.'
+        >>> _check_relative_pathname(pathname="C:/Windows")
+        'C:/Windows'
+        >>> _check_relative_pathname(pathname="C:\\Program Files", normalized=False)
+        'C:\\Program Files'
+    """
+
+    if isinstance(pathname, (bytes, bytearray)):
+        pathname_ = str(pathname, encoding='utf-8')
+    else:
+        pathname_ = str(pathname)
+
+    abs_pathname = os.path.abspath(pathname_)
+    abs_cwd = os.getcwd()
+
+    if os.name == "nt":  # Handle different drive letters on Windows
+        if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
+            # Return absolute path if drives differ
+            return _normalize_pathname(abs_pathname) if normalized else abs_pathname
+
+    # Check if the pathname is inside the current working directory
+    if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
+        try:
+            rel_path = os.path.relpath(pathname_)
+        except ValueError:
+            rel_path = copy.copy(pathname_)
+
+    else:
+        rel_path = abs_pathname  # Return original absolute path if outside CWD
+
+    return _normalize_pathname(rel_path) if normalized else rel_path
 
 
 def _check_file_pathname(name, options=None, target=None):
