@@ -169,7 +169,7 @@ The :mod:`pyhelpers.dirs` module aids in manipulating directories. For instance,
     >>> cwd = cd()  # The current working directory
     >>> # Relative path of `cwd` to the current working directory
     >>> rel_path_cwd = os.path.relpath(cwd)
-    >>> print(rel_path_cwd)
+    >>> print(rel_path_cwd)  # (on Windows)
     .
 
 To specify a path to a temporary folder named ``"pyhelpers_tutorial"``:
@@ -182,7 +182,7 @@ To specify a path to a temporary folder named ``"pyhelpers_tutorial"``:
     >>> path_to_dir = cd(dir_name)
     >>> # Relative path of the directory
     >>> rel_dir_path = os.path.relpath(path_to_dir)
-    >>> print(rel_dir_path)
+    >>> print(rel_dir_path)  # (on Windows)
     pyhelpers_tutorial
 
 Check whether the directory ``"pyhelpers_tutorial\"`` exists:
@@ -212,7 +212,7 @@ When we specify a sequence of names (in order with a filename being the last), t
     >>> path_to_file = cd(dir_name, filename)  # path_to_file = cd(path_to_dir, filename)
     >>> # Relative path of the file "quick_start.dat"
     >>> rel_file_path = os.path.relpath(path_to_file)
-    >>> print(rel_file_path)
+    >>> print(rel_file_path)  # (on Windows)
     pyhelpers_tutorial\quick_start.dat
 
 If any directories in the specified path do not exist, setting ``mkdir=True`` will create them. For example, to specify a data directory named ``"data"`` within the ``"pyhelpers_tutorial"`` folder:
@@ -223,7 +223,7 @@ If any directories in the specified path do not exist, setting ``mkdir=True`` wi
     >>> data_dir = cd(dir_name, "data")  # equivalent to `cd(path_to_dir, "data")`
     >>> # Relative path of the data directory
     >>> rel_data_dir = os.path.relpath(data_dir)
-    >>> print(rel_data_dir)
+    >>> print(rel_data_dir)  # (on Windows)
     pyhelpers_tutorial\data
 
 We can then use the :func:`~pyhelpers.dirs.is_dir` function to check if ``data_dir`` (or ``rel_data_dir``) is a directory:
@@ -250,7 +250,7 @@ For another example, to specify a path to a Pickle file, named ``"dat.pkl"``, in
     >>> path_to_pickle = cd(data_dir, pickle_filename)
     >>> # Relative path of the Pickle file
     >>> rel_pickle_path = os.path.relpath(path_to_pickle)
-    >>> print(rel_pickle_path)
+    >>> print(rel_pickle_path)  # (on Windows)
     pyhelpers_tutorial\data\dat.pkl
 
 Check ``rel_pickle_path`` (or ``path_to_pickle``):
@@ -286,9 +286,9 @@ To delete the directory ``"pyhelpers_tutorial\"`` (including all its contents), 
     >>> from pyhelpers.dirs import delete_dir
     >>> # Delete the "pyhelpers_tutorial" directory
     >>> delete_dir(path_to_dir, verbose=True)
-    To delete the directory "pyhelpers_tutorial\" (Not empty)
+    To delete the directory "./pyhelpers_tutorial/" (Not empty)
     ? [No]|Yes: yes
-    Deleting "pyhelpers_tutorial\" ... Done.
+    Deleting "./pyhelpers_tutorial/" ... Done.
 
 .. _quickstart-store-examples:
 
@@ -308,14 +308,14 @@ To demonstrate, let's save the ``data_frame`` created earlier (see :ref:`Prepara
     >>> from pyhelpers.store import save_pickle, load_pickle
     >>> # Save `data_frame` to "dat.pkl"
     >>> save_pickle(data_frame, path_to_pickle, verbose=True)
-    Saving "dat.pkl" to "pyhelpers_tutorial\data\" ... Done.
+    Saving "dat.pkl" to "./pyhelpers_tutorial/data/" ... Done.
 
 We can now retrieve/load the data from ``path_to_pickle`` and store it as ``df_retrieved``:
 
 .. code-block:: python
 
     >>> df_retrieved = load_pickle(path_to_pickle, verbose=True)
-    Loading "pyhelpers_tutorial\data\dat.pkl" ... Done.
+    Loading "./pyhelpers_tutorial/data/dat.pkl" ... Done.
 
 To verify if ``df_retrieved`` matches ``data_frame``:
 
@@ -329,9 +329,9 @@ Before proceeding, let's delete the Pickle file (i.e. ``path_to_pickle``) and th
 .. code-block:: python
 
     >>> delete_dir(path_to_dir, verbose=True)
-    To delete the directory "pyhelpers_tutorial\" (Not empty)
+    To delete the directory "./pyhelpers_tutorial/" (Not empty)
     ? [No]|Yes: yes
-    Deleting "pyhelpers_tutorial\" ... Done.
+    Deleting "./pyhelpers_tutorial/" ... Done.
 
 .. note::
 
@@ -481,11 +481,12 @@ If we set ``verbose=True`` (given that `tqdm`_ is available in our working envir
 .. code-block:: python
 
     >>> download_file_from_url(url, python_logo_file_path, if_exists='replace', verbose=True)
-    "pyhelpers_tutorial\images\python-logo.png": 81.6kB [00:00, 10.8MB/s]
+    Downloading "python-logo.png" 100%|██████████| 83.6k/83.6k | 403kB/s | ETA: 00:00
+        Saving "python-logo.png" to "./pyhelpers_tutorial/images/" ... Done.
 
 .. note::
 
-    - *'10.8MB/s'* shown at the end of the output is an estimated speed of downloading the file, which varies depending on network conditions at the time of running the function.
+    - *'403kB/s'* shown at the end of the output is an estimated speed of downloading the file, which varies depending on network conditions at the time of running the function.
     - Setting ``if_exists='replace'`` (default) allows us to replace the image file that already exists at the specified destination.
 
 Now let's have a look at the downloaded image file using `Pillow`_:
@@ -512,7 +513,7 @@ To delete ``"pyhelpers_tutorial\"`` and its subdirectories (including ``"pyhelpe
 .. code-block:: python
 
     >>> delete_dir(path_to_dir, confirmation_required=False, verbose=True)
-    Deleting "pyhelpers_tutorial\" ... Done.
+    Deleting "./pyhelpers_tutorial/" ... Done.
 
 Setting the parameter ``confirmation_required=False`` can allow us to delete the directory straightaway without typing a ``yes`` to confirm the action. The confirmation prompt is actually implemented through the :func:`~pyhelpers.ops.confirmed` function, which is also from the :mod:`pyhelpers.ops` module and can be helpful especially when we'd like to impose a manual confirmation before proceeding with certain actions. For example:
 
