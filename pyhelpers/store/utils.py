@@ -10,9 +10,49 @@ import pathlib
 from .._cache import _add_slashes, _check_relative_pathname
 
 
+def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
+    """
+    Prints a string, splitting it into two lines if it exceeds the threshold, with the second half
+    being indented based on the initial indentation level.
+
+    :param message: The string to print.
+    :type message: str
+    :param filename: The filename to be included in the string.
+    :type filename: str
+    :param end:
+    :param print_wrap_limit: The maximum length before splitting.
+    :type print_wrap_limit: int | None
+    """
+
+    if print_wrap_limit:
+        stripped_text = message.lstrip()  # Remove leading spaces for accurate tab count
+        leading_tabs = len(message) - len(stripped_text)
+
+        if len(stripped_text) <= print_wrap_limit:
+            print(message, end=end)
+
+        else:
+            # Find a suitable split point (preferably at a space)
+            split_index = message.find(f'"{filename}"') + len(f'"{filename}"')
+            if message[split_index] == " ":
+                split_index += 1  # Move to space if it exists
+
+            first_part = message[:split_index].rstrip()  # Trim trailing spaces
+            second_part = message[split_index:].lstrip()  # Trim leading spaces
+
+            # Print first part as is
+            print(first_part + " ... ")
+
+            # Print second part with increased indentation (original + 1 extra tab)
+            print("\t" * (leading_tabs + 1) + second_part, end=end)
+
+    else:
+        print(message, end=end)
+
+
 def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
-                       state_prep="to", print_suffix="", print_end=" ... ", belated=False,
-                       ret_info=False):
+                       state_prep="to", print_suffix="", print_end=" ... ", print_wrap_limit=None,
+                       belated=False, ret_info=False):
     # noinspection PyShadowingNames
     """
     Verifies a specified file path before saving.
@@ -32,6 +72,11 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     :type print_suffix: str
     :param print_end: String passed to the ``end`` parameter of ``print``; defaults to ``" ... "``.
     :type print_end: str
+    :param print_wrap_limit: Maximum length of the string before splitting into two lines;
+        defaults to ``None``, which disables splitting. If the string exceeds this value,
+        e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
+        when printed.
+    :type print_wrap_limit: int | None
     :param ret_info: Whether to return file path information; defaults to ``False``.
     :type ret_info: bool
     :return: A tuple containing the relative path and, if ``ret_info=True``, the filename.
@@ -52,6 +97,9 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" in "./tests/documents/" ... Passed.
+        >>> _check_saving_path(path_to_file, verbose=True, print_wrap_limit=10); print("Passed.")
+        Updating "pyhelpers.pdf" ...
+            in "./tests/documents/" ... Passed.
         >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
         Saving "pyhelpers.pdf" to "C:/Windows/" ... Passed.
@@ -90,12 +138,15 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
 
         if (rel_dir_path == rel_dir_path.parent or rel_dir_path == abs_path_to_file.parent) and (
                 rel_dir_path.absolute().drive == pathlib.Path.cwd().drive):
-            msg = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
-            print(msg, end=end)
+            message = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
+            print(message, end=end)
+
         else:
-            msg = (f'{print_prefix}{state_verb} "{filename}" '
-                   f'{state_prep} {_add_slashes(rel_dir_path)}{print_suffix}')
-            print(msg, end=end)
+            message = (f'{print_prefix}{state_verb} "{filename}" '
+                       f'{state_prep} {_add_slashes(rel_dir_path)}{print_suffix}')
+
+            _print_wrapped_string(
+                message=message, filename=filename, end=end, print_wrap_limit=print_wrap_limit)
 
     if ret_info:
         return rel_dir_path, filename
