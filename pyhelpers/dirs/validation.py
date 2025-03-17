@@ -88,7 +88,7 @@ def is_dir(path_to_dir):
 
         for i in range(len(dir_names)):
             try:
-                os.lstat(os.path.join(root_dirname, *dir_names[:i+1]))
+                os.lstat(os.path.join(root_dirname, *dir_names[:i + 1]))
             except OSError as exc:
                 if hasattr(exc, 'winerror'):
                     if exc.winerror == 123:  # ERROR_INVALID_NAME
@@ -365,3 +365,36 @@ def check_files_exist(filenames, path_to_dir, verbose=False, **kwargs):
         rslt = False
 
     return rslt
+
+
+def check_relative_pathname(pathname, normalized=True):
+    """
+    Checks if the pathname is relative to the current working directory.
+
+    This function returns a relative pathname of the input ``pathname`` to the current working
+    directory if ``pathname`` is within the current working directory;
+    otherwise, it returns a copy of the input.
+
+    :param pathname: Pathname (of a file or directory).
+    :type pathname: str | bytes | pathlib.Path
+    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type normalized: bool
+    :return: A location relative to the current working directory
+        if ``pathname`` is within the current working directory; otherwise, a copy of ``pathname``.
+    :rtype: str
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _check_relative_pathname
+        >>> from pyhelpers.dirs import cd
+        >>> _check_relative_pathname(pathname=".")
+        '.'
+        >>> _check_relative_pathname(pathname=cd())
+        '.'
+        >>> _check_relative_pathname(pathname="C:/Windows")
+        'C:/Windows'
+        >>> _check_relative_pathname(pathname="C:\\Program Files", normalized=False)
+        'C:\\Program Files'
+    """
+
+    return _check_relative_pathname(pathname=pathname, normalized=normalized)
