@@ -52,33 +52,6 @@ def test__confirmed(monkeypatch, capfd):
     assert "Passed." in out
 
 
-def test__check_relative_pathname():
-    from pyhelpers._cache import _check_relative_pathname
-
-    pathname = ""
-    rel_path = _check_relative_pathname(pathname=pathname)
-    assert rel_path == pathname
-
-    pathname = os.path.curdir
-    rel_path = _check_relative_pathname(os.path.curdir)
-    assert rel_path == pathname
-
-    if os.name == 'nt':
-        pathname = "C:/Windows"
-        rel_path = _check_relative_pathname(pathname)
-        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
-
-    # Test an absolute path outside the working directory
-    home_dir = os.path.expanduser("~")  # Cross-platform home directory
-    rel_path = _check_relative_pathname(home_dir)
-    assert rel_path == home_dir  # Should return unchanged
-
-    # Test a relative path within the current working directory
-    subdir = os.path.join(os.getcwd(), "test_dir")
-    rel_path = _check_relative_pathname(subdir)
-    assert rel_path == "test_dir"
-
-
 def test__normalize_pathname():
     from pyhelpers._cache import _normalize_pathname
     import pathlib
@@ -117,6 +90,33 @@ def test__add_slashes():
 
     path = _add_slashes("pyhelpers\\data\\pyhelpers.dat", surrounded_by='')
     assert path == './pyhelpers/data/pyhelpers.dat'
+
+
+def test__check_relative_pathname():
+    from pyhelpers._cache import _check_relative_pathname
+
+    pathname = ""
+    rel_path = _check_relative_pathname(pathname=pathname)
+    assert rel_path == pathname
+
+    pathname = os.path.curdir
+    rel_path = _check_relative_pathname(os.path.curdir)
+    assert rel_path == pathname
+
+    if os.name == 'nt':
+        pathname = "C:/Windows"
+        rel_path = _check_relative_pathname(pathname)
+        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
+
+    # Test an absolute path outside the working directory
+    home_dir = os.path.expanduser("~")  # Cross-platform home directory
+    rel_path = _check_relative_pathname(home_dir, normalized=False)
+    assert rel_path == home_dir  # Should return unchanged
+
+    # Test a relative path within the current working directory
+    subdir = os.path.join(os.getcwd(), "test_dir")
+    rel_path = _check_relative_pathname(subdir)
+    assert rel_path == "test_dir"
 
 
 def test__check_file_pathname():
