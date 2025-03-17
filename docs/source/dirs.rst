@@ -33,6 +33,7 @@ Directory validation
     validate_filename
     get_file_pathnames
     check_files_exist
+    check_relative_pathname
 
 Directory/file management
 -------------------------

@@ -123,5 +123,30 @@ def test_check_files_exist(capfd):
         assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 
 
+def test_check_relative_pathname():
+    pathname = ""
+    rel_path = check_relative_pathname(pathname=pathname)
+    assert rel_path == pathname
+
+    pathname = os.path.curdir
+    rel_path = check_relative_pathname(os.path.curdir)
+    assert rel_path == pathname
+
+    if os.name == 'nt':
+        pathname = "C:/Windows"
+        rel_path = check_relative_pathname(pathname)
+        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
+
+    # Test an absolute path outside the working directory
+    home_dir = os.path.expanduser("~")  # Cross-platform home directory
+    rel_path = check_relative_pathname(home_dir, normalized=False)
+    assert rel_path == home_dir  # Should return unchanged
+
+    # Test a relative path within the current working directory
+    subdir = os.path.join(os.getcwd(), "test_dir")
+    rel_path = check_relative_pathname(subdir)
+    assert rel_path == "test_dir"
+
+
 if __name__ == '__main__':
     pytest.main()

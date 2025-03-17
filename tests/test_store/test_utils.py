@@ -11,7 +11,8 @@ from pyhelpers._cache import _add_slashes, example_dataframe
 from pyhelpers.store.utils import *
 
 
-def test__check_saving_path(capfd):
+@pytest.mark.parametrize('print_wrap_limit', [None, 10, 100])
+def test__check_saving_path(capfd, print_wrap_limit):
     from pyhelpers.store import _check_saving_path
 
     file_path = os.getcwd()
@@ -26,9 +27,13 @@ def test__check_saving_path(capfd):
 
     file_path_ = importlib.resources.files("tests").joinpath("documents", "pyhelpers.pdf")
     with importlib.resources.as_file(file_path_) as file_path:
-        _check_saving_path(file_path, verbose=True)
+        _check_saving_path(file_path, verbose=True, print_wrap_limit=print_wrap_limit)
         out, _ = capfd.readouterr()
-        assert "Updating " in out
+
+        if print_wrap_limit in {None, 100}:
+            assert "Updating " in out and "\t" not in out
+        else:
+            assert "Updating " in out and "\t" in out
 
 
 def test__check_loading_path(capfd):
