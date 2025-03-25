@@ -14,7 +14,7 @@ jobs:
   test:
     name: Run tests and collect coverage
     runs-on: ubuntu-22.04
-    environment: test-coverage
+    environment: test-coverage-trials
 
     services:
       mssql:
@@ -27,7 +27,7 @@ jobs:
           MSSQL_PID: Developer
           MSSQL_MEMORY_LIMIT_MB: 4096
         options: >-
-          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '${SA_PASSWORD}' -Q 'SELECT 1' || exit 1"
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'TestP@ssw0rd123!' -Q 'SELECT 1' || exit 1"
           --health-interval 10s
           --health-timeout 300s
           --health-retries 5
@@ -43,7 +43,7 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U postgres -d testdb"
           --health-interval 10s 
-          --health-timeout 5s 
+          --health-timeout 10s  
           --health-retries 5
 
     steps:
@@ -58,21 +58,16 @@ jobs:
           docker exec mssql chmod -R 777 /var/opt/mssql/data
         if: always()
 
-      - name: Start MSSQL container
+      - name: Wait for services to be ready
         run: |
-          for i in {1..30}; do
-            nc -zv localhost 1433 && echo "PostgreSQL is up" && break
-            echo "Waiting for MSSQL to start..."
-            sleep 5
+          echo "Waiting for MSSQL to be ready..."
+          for i in {1..30}; do 
+            /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'TestP@ssw0rd123!' -Q "SELECT 1" && break
+            sleep 2
           done
-        shell: bash
-
-      - name: Start PostgreSQL container
-        run: |
-          for i in {1..30}; do
-            nc -zv localhost 5432 && echo "PostgreSQL is up" && break
-            sleep 5
-          done
+          
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -p 5432 -U postgres; do sleep 2; done
         shell: bash
 
       - name: Set up Conda
