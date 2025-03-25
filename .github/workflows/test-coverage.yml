@@ -1,0 +1,170 @@
+name: Run tests and upload coverage
+
+on:
+  push:
+    branches-ignore:
+      - develop
+      - master
+  pull_request:
+    branches-ignore:
+      - develop
+      - master
+
+jobs:
+  test:
+    name: Run tests and collect coverage
+    runs-on: ubuntu-22.04
+    environment: test-coverage
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        ports:
+          - 1433:1433
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: "TestP@ssw0rd123!"
+          MSSQL_PID: Developer
+          MSSQL_MEMORY_LIMIT_MB: 4096
+        options: >-
+          --health-cmd "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P '${SA_PASSWORD}' -Q 'SELECT 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 300s
+          --health-retries 5
+
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123
+        options: >-
+          --health-cmd "pg_isready -U postgres -d testdb"
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fix MSSQL data directory permissions
+        run: |
+          docker exec mssql chown -R mssql:mssql /var/opt/mssql/data
+          docker exec mssql chmod -R 777 /var/opt/mssql/data
+        if: always()
+
+      - name: Start MSSQL container
+        run: |
+          for i in {1..30}; do
+            nc -zv localhost 1433 && echo "PostgreSQL is up" && break
+            echo "Waiting for MSSQL to start..."
+            sleep 5
+          done
+        shell: bash
+
+      - name: Start PostgreSQL container
+        run: |
+          for i in {1..30}; do
+            nc -zv localhost 5432 && echo "PostgreSQL is up" && break
+            sleep 5
+          done
+        shell: bash
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: pyhelpers-test-env
+          python-version: "3.10"
+          auto-update-conda: true
+
+      - name: Install application dependencies (7-Zip, Pandoc, Inkscape, wkhtmltopdf, Wine)
+        shell: bash -l {0}  # Ensures Conda environment is active
+        run: |
+          sudo apt update
+          sudo apt install -y p7zip-full pandoc inkscape wkhtmltopdf netcat
+          
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y software-properties-common wget
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/jammy/winehq-jammy.sources
+          sudo apt update
+          sudo apt install -y --install-recommends winehq-stable wine32
+
+      - name: Install Xvfb for Wine (Headless Mode)
+        run: |
+          sudo apt install -y xvfb
+
+      - name: Set up virtual display with Xvfb
+        run: |
+          echo "Starting virtual display"
+          export DISPLAY=:99
+          Xvfb :99 &
+          echo "DISPLAY=:99" >> $GITHUB_ENV  # Persist for subsequent steps
+
+      - name: Initialise Wine
+        run: |
+          export DISPLAY=:99
+          WINEARCH=win32 WINEPREFIX=~/.wine wineboot -u
+          winecfg >/dev/null 2>&1  # Ensure Wine is fully initialized
+          fc-cache -fv
+
+      - name: Install required Wine libraries
+        run: |
+          sudo apt install -y winetricks
+          WINEARCH=win32 WINEPREFIX=~/.wine winetricks --unattended vcrun2010 corefonts
+
+      - name: Verify the installation of application dependencies
+        run: |
+          WINEARCH=win32 WINEPREFIX=~/.wine wine cmd /c echo 'Wine is working!'
+          wine --version
+          7z --help
+          pandoc --version
+          inkscape --version
+          wkhtmltopdf --version
+
+      - name: Install GDAL and PyHelpers' essential dependencies
+        shell: bash -l {0}
+        run: |
+          conda activate pyhelpers-test-env
+          conda install -y -c conda-forge gdal
+          python -c "from osgeo import gdal; print(gdal.__version__)"
+          python -m pip install --upgrade pip
+          sed '/gdal/d' requirements.txt | pip install -r /dev/stdin
+          python -m nltk.downloader popular
+
+      - name: Cache NLTK data
+        uses: actions/cache@v4
+        with:
+          path: ~/.nltk_data
+          key: ${{ runner.os }}-nltk-data-${{ hashFiles('**/*.py') }}
+          restore-keys: |
+            ${{ runner.os }}-nltk-data-
+
+      - name: Run tests
+        shell: bash -l {0}
+        env:
+          MSSQL_SERVER: localhost
+          MSSQL_PORT: 1433
+          MSSQL_USER: sa
+          MSSQL_PASSWORD: "TestP@ssw0rd123!"
+          MSSQL_DB: testdb
+
+          POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123
+          POSTGRES_DB: testdb
+        run: |
+          python -m pytest -v --cov=pyhelpers --cov-branch \
+          --cov-report=term --cov-report=xml:coverage.xml tests/
+
+      - name: Debug coverage file
+        shell: bash -l {0}
+        run: ls -lah
