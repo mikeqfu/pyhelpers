@@ -710,12 +710,12 @@ def _transform_point_type(*pts, as_geom=True):
         yield pt
 
 
-def _vectorize_text(*text):
+def _vectorize_text(*texts):
     """
     Converts input texts into a bag-of-words vector representation.
 
-    :param text: Multiple text inputs as strings or lists of words.
-    :type text: str
+    :param texts: Multiple text inputs as strings or lists of words.
+    :type texts: str
     :return: Generator yielding word count vectors for each input.
     :rtype: typing.Generator
 
@@ -727,20 +727,19 @@ def _vectorize_text(*text):
         [[1, 1], [2, 1]]
     """
 
-    text_ = [
-        re.findall(r"[a-zA-Z0-9'-]+", x.lower()) if isinstance(x, str)
-        else [x_.lower() for x_ in x] if isinstance(x, list)
-        else None
-        for x in text
+    token_lists = [
+        re.findall(r"[a-zA-Z0-9']+", text.lower().replace("-", " ")) if isinstance(text, str)
+        else [] for text in texts
     ]
-    if None in text_:
+
+    if any(not tokens for tokens in token_lists):
         raise TypeError("Inputs must be strings or lists of words.")
 
-    doc_words = sorted(set().union(*text_))  # Ensure consistent word order
+    vocab = sorted(set().union(*token_lists))  # Ensure consistent word order
 
     # Generate word count vectors
-    for x in text_:
-        yield [x.count(word) for word in doc_words]
+    for tokens in token_lists:
+        yield [tokens.count(word) for word in vocab]
 
 
 def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
