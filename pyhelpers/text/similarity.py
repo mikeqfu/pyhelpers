@@ -6,7 +6,7 @@ import re
 
 import numpy as np
 
-from .._cache import _check_dependency, _remove_punctuation, _vectorize_text
+from .._cache import _check_dependencies, _remove_punctuation, _vectorize_text
 
 
 def euclidean_distance_between_texts(txt1, txt2):
@@ -161,7 +161,7 @@ def _find_str_by_difflib(input_str, lookup_list, n=1, ignore_punctuation=True, *
     if not lookup_list:  # Handle empty lookup lists
         return None
 
-    difflib_ = _check_dependency(name='difflib')
+    difflib = _check_dependencies('difflib')
 
     x, lookup_dict = input_str.lower(), {y.lower(): y for y in lookup_list}
 
@@ -169,7 +169,7 @@ def _find_str_by_difflib(input_str, lookup_list, n=1, ignore_punctuation=True, *
         x = _remove_punctuation(x)
         lookup_dict = {_remove_punctuation(k): v for k, v in lookup_dict.items()}
 
-    matches = difflib_.get_close_matches(word=x, possibilities=lookup_dict.keys(), n=n, **kwargs)
+    matches = difflib.get_close_matches(word=x, possibilities=lookup_dict.keys(), n=n, **kwargs)
 
     if not matches:
         sim_str = None
@@ -226,7 +226,7 @@ def _find_str_by_rapidfuzz(input_str, lookup_list, n=1, **kwargs):
     else:
         lookup_list_ = list(lookup_list)
 
-    rapidfuzz_fuzz, rapidfuzz_utils = map(_check_dependency, ['rapidfuzz.fuzz', 'rapidfuzz.utils'])
+    rapidfuzz_fuzz, rapidfuzz_utils = _check_dependencies('rapidfuzz.fuzz', 'rapidfuzz.utils')
 
     kwargs.setdefault('processor', rapidfuzz_utils.default_process)
     l_distances = [rapidfuzz_fuzz.QRatio(s1=input_str, s2=a, **kwargs) for a in lookup_list_]

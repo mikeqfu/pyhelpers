@@ -14,7 +14,7 @@ import sqlalchemy.dialects
 
 from ._base import _Base
 from .utils import make_database_address
-from .._cache import _check_dependency, _confirmed, _print_failure_message
+from .._cache import _check_dependencies, _confirmed, _print_failure_message
 
 
 class PostgreSQL(_Base):
@@ -134,7 +134,7 @@ class PostgreSQL(_Base):
 
         super().__init__()
 
-        _ = _check_dependency(name='psycopg2')
+        _ = _check_dependencies('psycopg2')
 
         self.host = copy.copy(self.DEFAULT_HOST) if host is None else str(host)
         self.port = copy.copy(self.DEFAULT_PORT) if port is None else int(port)
@@ -1655,6 +1655,7 @@ class PostgreSQL(_Base):
                 data = pd.read_sql(sql=sql_query_, con=connection, chunksize=chunk_size, **kwargs)
 
         if sorted_by:
+            # noinspection PyUnboundLocalVariable
             data.sort_values(sorted_by, inplace=True, ignore_index=True)
 
         return data

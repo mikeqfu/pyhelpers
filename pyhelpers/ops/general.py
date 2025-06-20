@@ -201,6 +201,8 @@ def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash
         salt_and_key = salt_ + key
         return salt_and_key
 
+    return None
+
 
 def verify_password(password, salt, key, iterations=None):
     """

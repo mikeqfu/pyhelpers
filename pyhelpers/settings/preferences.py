@@ -5,7 +5,7 @@ Preferences.
 import copy
 import os
 
-from .._cache import _check_dependency
+from .._cache import _check_dependencies
 
 
 def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, precision=4,
@@ -119,7 +119,7 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
             https://pandas.pydata.org/docs/reference/api/pandas.describe_option.html
     """
 
-    pd = _check_dependency(name='pandas')
+    pd = _check_dependencies('pandas')
 
     options = {
         'display.max_columns': max_columns,  # 0
@@ -239,9 +239,9 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
                 0.81357508]])
     """
 
-    np = _check_dependency(name='numpy')
+    np = _check_dependencies('numpy')
 
-    if reset is False:
+    if not reset:
         if formatter is None:
             formatter = dict(float=lambda x: "%.{}f".format(precision) % x)
 
@@ -249,7 +249,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
             precision=precision, linewidth=line_char, edgeitems=head_tail, formatter=formatter,
             **kwargs)
 
-    elif reset is True:
+    elif reset:
         # true default linewidth = 75
         np.set_printoptions(
             precision=8, threshold=1000, edgeitems=3, linewidth=80, suppress=False, nanstr=np.nan,
@@ -343,12 +343,12 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     (The above code should display the same figure as :numref:`settings-mpl_preferences-demo-1`.)
     """
 
-    mpl, mpl_style = map(_check_dependency, ['matplotlib', 'matplotlib.style'])
+    mpl, mpl_style = _check_dependencies('matplotlib', 'matplotlib.style')
 
     if backend:
         mpl.use(backend=backend)
 
-    if reset is False:
+    if not reset:
         if fig_style is not None:
             mpl_style.use(style=fig_style)
 
@@ -357,7 +357,7 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
         mpl.rcParams['legend.labelspacing'] = legend_spacing
 
         if font_name:  # Use the font, 'Cambria'
-            mpl_font_manager = _check_dependency(name='matplotlib.font_manager')
+            mpl_font_manager = _check_dependencies('matplotlib.font_manager')
 
             if os.path.isfile(mpl_font_manager.findfont(font_name)):
                 # Set 'font.family' to 'serif', then matplotlib will use that list
@@ -375,7 +375,7 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
         if reset == 'all':
             mpl.rcParams = mpl.rcParamsDefault
 
-        elif reset is True:
+        elif reset:
             mpl.rcParams['font.size'] = 10.0
             mpl.rcParams['legend.labelspacing'] = 0.5
             mpl.rcParams['font.family'] = ['sans-serif']

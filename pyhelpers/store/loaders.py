@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 from .utils import _check_loading_path, _set_index
-from .._cache import _check_dependency, _print_failure_message
+from .._cache import _check_dependencies, _print_failure_message
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
@@ -390,7 +390,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
     if engine is not None:
         valid_engines = {'ujson', 'orjson', 'rapidjson'}
         assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
-        mod = _check_dependency(name=engine)
+        mod = _check_dependencies(engine)
     else:
         mod = sys.modules.get('json')
 
@@ -464,14 +464,14 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
                 0.81357508]])
     """
 
-    joblib_ = _check_dependency(name='joblib')
+    joblib = _check_dependencies('joblib')
 
     if prt_kwargs is None:
         prt_kwargs = {}
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
 
     try:
-        data = joblib_.load(filename=path_to_file, **kwargs)
+        data = joblib.load(filename=path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
@@ -596,7 +596,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         True
     """
 
-    scipy_sparse = _check_dependency(name='scipy.sparse')
+    scipy_sparse = _check_dependencies('scipy.sparse')
 
     if prt_kwargs is None:
         prt_kwargs = {}
