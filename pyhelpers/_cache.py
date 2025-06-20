@@ -19,6 +19,10 @@ import requests.adapters
 import shapely.geometry
 import urllib3
 
+# import name: (package/module name, install name)
+_OPTIONAL_DEPENDENCY = json.loads(
+    pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
+
 
 def _check_dependencies(*names):
     """
@@ -98,13 +102,11 @@ def _check_dependencies(*names):
                 f"\tInstead of `import gdal`, try `import osgeo.gdal` or `from osgeo import gdal`.\n"
                 f"\t  If the error remains, try `pip install {pip_name}` or "
                 f"`pip install <wheel_file>`.")
-        else:
-            # import name: (package/module name, install name)
-            _OPTIONAL_DEPENDENCY = json.loads(
-                pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
 
+        else:
             if import_name in _OPTIONAL_DEPENDENCY:
                 display_name, pip_name = _OPTIONAL_DEPENDENCY.get(import_name)
+
             else:
                 display_name = pip_name = import_name.split('.')[0]
 
