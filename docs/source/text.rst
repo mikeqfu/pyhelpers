@@ -15,6 +15,7 @@ Textual data (pre)processing
     :toctree: _generated/
     :template: function.rst
 
+    clean_html_text
     remove_punctuation
     get_acronym
     split_on_uppercase
