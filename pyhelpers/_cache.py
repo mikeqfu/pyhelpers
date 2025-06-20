@@ -4,6 +4,7 @@ Cached functions and constants.
 
 import collections.abc
 import copy
+import functools
 import importlib
 import importlib.util
 import json
@@ -112,6 +113,69 @@ def _check_dependencies(*names):
                 f"Use `pip install {pip_name}` to install it.")
 
     return results[0] if len(results) == 1 else results
+
+
+def _lazy_check_dependencies(*args, **kwargs):
+    """
+    Decorator for lazy imports supporting both package names and aliases.
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _lazy_check_dependencies
+        >>> @_lazy_check_dependencies('numpy', 'pandas')  # no aliases
+        >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # with aliases
+        >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # mixed
+    """
+
+    # Convert all arguments to package:alias mapping
+    package_mapping = {}
+
+    # Handle positional arguments (no aliases)
+    for package in args:
+        if isinstance(package, str):
+            package_mapping[package] = package
+        else:
+            raise TypeError("Package names must be strings.")
+
+    # Handle keyword arguments (with aliases)
+    package_mapping.update(kwargs)
+
+    def decorator(func):
+        # Create proxy class that handles the lazy loading
+        class LazyModule:
+            __slots__ = ['_name', '_module']
+
+            def __init__(self, name):
+                self._name = name
+                self._module = None
+
+            def __getattr__(self, attr):
+                if self._module is None:
+                    try:
+                        self._module = __import__(self._name)
+                    except ImportError as e:
+                        raise ImportError(
+                            f"Required package '{self._name}' not found. "
+                            f"Please install it to use '{func.__name__}'."
+                        ) from e
+
+                # Support 'from module import x' syntax
+                if attr == '__all__':
+                    return dir(self._module)
+
+                return getattr(self._module, attr)
+
+        @functools.wraps(func)
+        def wrapper(*_args, **_kwargs):
+            # Add lazy modules to function globals
+            for package_, alias_ in package_mapping.items():
+                func.__globals__[alias_] = LazyModule(package_)
+
+            return func(*_args, **_kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def example_dataframe(osgb36=False):
