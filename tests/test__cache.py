@@ -23,22 +23,22 @@ def test_example_dataframe(osgb36):
 
 
 def test__check_dependency():
-    from pyhelpers._cache import _check_dependency
+    from pyhelpers._cache import _check_dependencies
 
-    psycopg2 = _check_dependency(name='psycopg2')
+    psycopg2 = _check_dependencies('psycopg2')
     assert psycopg2.__name__ == 'psycopg2'
 
-    sqlalchemy_dialects = _check_dependency(name='dialects', package='sqlalchemy')
+    sqlalchemy_dialects = _check_dependencies(('sqlalchemy', 'dialects'))
     assert sqlalchemy_dialects.__name__ == 'sqlalchemy.dialects'
 
-    gdal = _check_dependency(name='gdal', package='osgeo')
+    gdal = _check_dependencies(('osgeo', 'gdal'))
     assert gdal.__name__ == 'osgeo.gdal'
 
     test_name = 'unknown_package'
     err_msg = (f"Missing optional dependency '{test_name}'. "
-               f"Use `pip` or `conda` to install it, e.g. `pip install unknown_package`.")
+               f"Use `pip install unknown_package` to install it.")
     with pytest.raises(ModuleNotFoundError, match=err_msg):
-        _ = _check_dependency(name=test_name)
+        _ = _check_dependencies(test_name)
 
 
 def test__confirmed(monkeypatch, capfd):
