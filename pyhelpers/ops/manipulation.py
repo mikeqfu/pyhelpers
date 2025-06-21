@@ -735,7 +735,6 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
-# noinspection PyUnresolvedReferences
 @_lazy_check_dependencies(polars='pl')
 def downcast_numeric_columns(*dataframes):
     # noinspection PyShadowingNames
@@ -819,17 +818,18 @@ def downcast_numeric_columns(*dataframes):
 
             results.append(df_)
 
-        elif isinstance(df, pl.DataFrame):  # Handle polars DataFrames
+        # Handle polars DataFrames
+        elif isinstance(df, pl.DataFrame):  # noqa
             df_ = df.clone()
             # Process integer columns
             int_cols = [col for col in df.columns if df[col].dtype.is_integer()]
             if int_cols:
-                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in int_cols])
+                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in int_cols]) # noqa
 
             # Process float columns
             float_cols = [col for col in df.columns if df[col].dtype.is_float()]
             if float_cols:
-                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in float_cols])
+                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in float_cols]) # noqa
 
             results.append(df_)
 
