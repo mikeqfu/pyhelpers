@@ -17,12 +17,12 @@ class BindColormap(branca.element.MacroElement):
 
     def __init__(self, layer, colormap, display=True):
         """
-        :param layer: Folium layer object (FeatureGroup, GeoJson, etc.) to bind with.
-        :type layer: folium.FeatureGroup | folium.GeoJson | folium.vector_layers.Path
+        :param layer: Folium layer object (``FeatureGroup``, ``GeoJson``, etc.) to bind with.
+        :type layer: folium.FeatureGroup | folium.GeoJson
         :param colormap: Color scale to display and synchronize with layer visibility.
         :type colormap: branca.colormap.ColorMap
-        :param display: Initial visibility state of the colormap legend. When ``True`` (default),
-            the legend will be visible by default;
+        :param display: Initial visibility state of the colormap legend;
+            when ``display=True`` (default), the legend will be visible by default;
             valid options are ``'block'`` (visible) or ``'none'`` (hidden).
         :type display: bool
 
@@ -32,10 +32,9 @@ class BindColormap(branca.element.MacroElement):
 
         .. seealso::
 
-            - Example usages:
-              - `Exploration of UK's Food Hygiene Rating data
-                <https://github.com/mikeqfu/uk-fsa-fhr-exploration/blob/
-                master/src/geographic_disparities.py>`_
+            - Example usages: `Exploration of UK's Food Hygiene Rating data
+              <https://github.com/mikeqfu/uk-fsa-fhr-exploration/blob/master/src/
+              geographic_disparities.py>`_
             - Reference: [`VIZ-BC-1
               <https://nbviewer.org/gist/BibMartin/f153aa957ddc5fadc64929abdee9ff2e>`_].
         """
