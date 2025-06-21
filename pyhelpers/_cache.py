@@ -4,6 +4,7 @@ Cached functions and constants.
 
 import collections.abc
 import copy
+import functools
 import importlib
 import importlib.util
 import json
@@ -17,6 +18,166 @@ import urllib.parse
 import requests.adapters
 import shapely.geometry
 import urllib3
+
+# import name: (package/module name, install name)
+_OPTIONAL_DEPENDENCY = json.loads(
+    pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
+
+
+def _check_dependencies(*names):
+    """
+    Imports one or multiple optional dependency packages/modules.
+
+    This function attempts to import the module specified its name as an optional dependency.
+    If a tuple (i.e. ``(package, name)``) is provided, it attempts to perform
+    `from package import name`.
+
+    :param name: One or multiple names of the packages/modules as optional dependencies.
+    :type name: str
+    :param package: Name of the package that contains ``name``; defaults to ``None``.
+    :type package: str | None
+    :return: A module object if one dependency is passed, or a dict of ``{import_path: module}``
+        if multiple.
+    :rtype: module
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _check_dependencies
+        >>> psycopg2 = _check_dependencies('psycopg2')
+        >>> psycopg2.__name__
+        'psycopg2'
+        >>> psycopg2_, pyodbc_ = _check_dependencies('pyodbc', 'psycopg2')
+        >>> (psycopg2_.__name__, pyodbc_.__name__)
+        ('pyodbc', 'psycopg2')
+        >>> sqlalchemy_dialects = _check_dependencies(('sqlalchemy', 'dialects'))
+        >>> sqlalchemy_dialects.__name__
+        'sqlalchemy.dialects'
+        >>> gdal = _check_dependencies('gdal')
+        ModuleNotFoundError:
+          Possibly the optional dependency 'GDAL' has not been installed.
+            Instead of `import gdal`, try `import osgeo.gdal` or `from osgeo import gdal`.
+              If the error remains, try `pip install gdal` or `pip install <wheel_file>`.
+        >>> gdal = _check_dependencies(('osgeo', 'gdal'))
+        >>> gdal.__name__
+        'osgeo.gdal'
+        >>> gdal_ = _check_dependencies('osgeo.gdal')
+        >>> gdal.__name__
+        'osgeo.gdal'
+    """
+
+    results = []
+
+    for name in names:
+        if isinstance(name, str):
+            package = None
+        elif isinstance(name, (tuple, list)) and len(name) == 2:
+            package, name = name
+        else:
+            raise TypeError("Each dependency must be a str or a (name, package) tuple.")
+
+        import_name = name.replace('-', '_')
+        if package:
+            pkg_name = package.replace('-', '_')
+            import_name = f'{pkg_name}.{import_name}'
+        else:
+            pkg_name = import_name.split('.', 1)[0] if '.' in import_name else None
+
+        if import_name in sys.modules:  # The optional dependency has already been imported
+            results.append(sys.modules.get(import_name))
+            continue
+
+        if importlib.util.find_spec(name=import_name, package=pkg_name):
+            try:
+                results.append(importlib.import_module(name=import_name, package=pkg_name))
+                continue
+            except ModuleNotFoundError:
+                pass  # Fall back to checking optional mapping
+
+        # Check `_OPTIONAL_DEPENDENCY` mapping
+        if name.startswith('osgeo') or 'gdal' in import_name:
+            display_name, pip_name = 'GDAL', 'gdal'
+
+            raise ModuleNotFoundError(
+                f"\n  Possibly the optional dependency '{display_name}' has not been installed.\n"
+                f"\tInstead of `import gdal`, try `import osgeo.gdal` or `from osgeo import gdal`.\n"
+                f"\t  If the error remains, try `pip install {pip_name}` or "
+                f"`pip install <wheel_file>`.")
+
+        else:
+            if import_name in _OPTIONAL_DEPENDENCY:
+                display_name, pip_name = _OPTIONAL_DEPENDENCY.get(import_name)
+
+            else:
+                display_name = pip_name = import_name.split('.')[0]
+
+            raise ModuleNotFoundError(
+                f"Missing optional dependency '{display_name}'. "
+                f"Use `pip install {pip_name}` to install it.")
+
+    return results[0] if len(results) == 1 else results
+
+
+def _lazy_check_dependencies(*args, **kwargs):
+    """
+    Decorator for lazy imports supporting both package names and aliases.
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _lazy_check_dependencies
+        >>> @_lazy_check_dependencies('numpy', 'pandas')  # no aliases
+        >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # with aliases
+        >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # mixed
+    """
+
+    # Convert all arguments to package:alias mapping
+    package_mapping = {}
+
+    # Handle positional arguments (no aliases)
+    for package in args:
+        if isinstance(package, str):
+            package_mapping[package] = package
+        else:
+            raise TypeError("Package names must be strings.")
+
+    # Handle keyword arguments (with aliases)
+    package_mapping.update(kwargs)
+
+    def decorator(func):
+        # Create proxy class that handles the lazy loading
+        class LazyModule:
+            __slots__ = ['_name', '_module']
+
+            def __init__(self, name):
+                self._name = name
+                self._module = None
+
+            def __getattr__(self, attr):
+                if self._module is None:
+                    try:
+                        self._module = __import__(self._name)
+                    except ImportError as e:
+                        raise ImportError(
+                            f"Required package '{self._name}' not found. "
+                            f"Please install it to use '{func.__name__}'."
+                        ) from e
+
+                # Support 'from module import x' syntax
+                if attr == '__all__':
+                    return dir(self._module)
+
+                return getattr(self._module, attr)
+
+        @functools.wraps(func)
+        def wrapper(*_args, **_kwargs):
+            # Add lazy modules to function globals
+            for package_, alias_ in package_mapping.items():
+                func.__globals__[alias_] = LazyModule(package_)
+
+            return func(*_args, **_kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def example_dataframe(osgb36=False):
@@ -50,7 +211,7 @@ def example_dataframe(osgb36=False):
         Leeds       -1.543794  53.797418
     """
 
-    pd = _check_dependency(name='pandas')
+    pd = _check_dependencies('pandas')
 
     if osgb36:
         _columns = ['Easting', 'Northing']
@@ -76,69 +237,6 @@ def example_dataframe(osgb36=False):
     _example_dataframe.index.name = 'City'
 
     return _example_dataframe
-
-
-# import name: (package/module name, install name)
-_OPTIONAL_DEPENDENCY = json.loads(
-    pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
-
-
-def _check_dependency(name, package=None):
-    """
-    Imports an optional dependency package/module.
-
-    Attempts to import the module specified by ``name`` as an optional dependency.
-    If ``package`` is provided, attempts to import ``name`` from within ``package``.
-
-    :param name: Name of the package/module as an optional dependency of pyhelpers.
-    :type name: str
-    :param package: Name of the package that contains ``name``; defaults to ``None``.
-    :type package: str | None
-    :return: Imported module object.
-    :rtype: module
-
-    **Tests**::
-
-        >>> from pyhelpers._cache import _check_dependency
-        >>> psycopg2_ = _check_dependency(name='psycopg2')
-        >>> psycopg2_.__name__
-        'psycopg2'
-        >>> pyodbc_ = _check_dependency(name='pyodbc')
-        >>> pyodbc_.__name__
-        'pyodbc'
-        >>> sqlalchemy_dialects = _check_dependency(name='dialects', package='sqlalchemy')
-        >>> sqlalchemy_dialects.__name__
-        'sqlalchemy.dialects'
-        >>> gdal_ = _check_dependency(name='gdal', package='osgeo')
-        >>> gdal_.__name__
-        'osgeo.gdal'
-    """
-
-    import_name = name.replace('-', '_')
-
-    if package is None:
-        pkg_name = import_name.split('.', 1)[0] if '.' in import_name else None
-    else:
-        pkg_name = package.replace('-', '_')
-        import_name = f'{pkg_name}.{import_name}'
-
-    if import_name in sys.modules:  # The optional dependency has already been imported
-        return sys.modules.get(import_name)
-
-    if importlib.util.find_spec(name=import_name, package=pkg_name):
-        return importlib.import_module(name=import_name, package=pkg_name)
-
-    # Check `_OPTIONAL_DEPENDENCY` mapping
-    if name.startswith('osgeo') or 'gdal' in import_name:
-        package_name, install_name = 'GDAL', 'gdal'
-    elif import_name in _OPTIONAL_DEPENDENCY:
-        package_name, install_name = _OPTIONAL_DEPENDENCY.get(import_name)
-    else:
-        package_name, install_name = name, name.split('.')[0]
-
-    raise ModuleNotFoundError(
-        f"Missing optional dependency '{package_name}'. "
-        f"Use `pip` or `conda` to install it, e.g. `pip install {install_name}`.")
 
 
 def _confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -176,10 +274,11 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         else:
             prompt_ = copy.copy(prompt)
 
-        if resp is True:  # meaning that default response is True
-            prompt_ = f"{prompt_} [Yes]|No: "
-        else:
-            prompt_ = f"{prompt_} [No]|Yes: "
+        if resp:
+            if isinstance(resp, bool):  # meaning that default response is True
+                prompt_ = f"{prompt_} [Yes]|No: "
+            else:
+                prompt_ = f"{prompt_} [No]|Yes: "
 
         ans = input(prompt_)
         if not ans:
@@ -189,6 +288,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
             return True
         if re.match('[Nn](o)?', ans):
             return False
+        return None
 
     else:
         return True

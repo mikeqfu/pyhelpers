@@ -213,7 +213,7 @@ def parse_size(size, binary=True, precision=1):
     """
 
     min_unit, units_prefixes = 'B', ['K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y']
-    if binary is True:  # Binary system
+    if binary:  # Binary system
         factor, units = 2 ** 10, [x + 'i' + min_unit for x in units_prefixes]
     else:  # Decimal (or metric) system
         factor, units = 10 ** 3, [x + min_unit for x in units_prefixes]
@@ -289,30 +289,72 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     return number_of_chunks
 
 
-def interquartile_range(num_dat):
+def interquartile_range(num_dat, axis=None, rng=(25, 75), scale=1.0, outlier_fences=False, k=1.5,
+                        ignore_nan=True, **kwargs):
+    # noinspection PyShadowingNames
     """
     Calculates the interquartile range (IQR) of numerical data.
 
-    This function can serve as an alternative to
-    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_.
+    This function may serve as an alternative to
+    `scipy.stats.iqr <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.iqr.html>`_
+    when ``scipy`` is not available.
 
-    :param num_dat: Array-like object containing numerical data.
+    :param num_dat: Numerical data.
     :type num_dat: numpy.ndarray | list | tuple
-    :return: Interquartile range of `num_dat`.
+    :param axis: Axis along which to calculate IQR; defaults to ``None``.
+    :type axis: int | None
+    :param rng: Percentile range for calculating IQR; defaults to ``(25, 75)``.
+    :type rng: tuple
+    :param scale: Scaling factor for the IQR; defaults to ``1.0``.
+    :type scale: int | float
+    :param outlier_fences: Whether to calculate and return outlier fences; defaults to ``False``.
+    :type outlier_fences: bool
+    :param k: Multiplier for IQR for calculating outlier fences; defaults to ``1.5``
+    :type k: int | float
+    :param ignore_nan: Whether to ignore NaN values; defaults to ``True``.
+    :type ignore_nan: bool
+    :param kwargs: [Optional] Additional parameters passed to `numpy.percentile`_.
+    :return: Scaled interquartile range.
     :rtype: float
+    :raises ValueError: If input has insufficient non-NaN values.
+
+    .. _`numpy.percentile`: https://numpy.org/doc/stable/reference/generated/numpy.percentile.html
 
     **Examples**::
 
         >>> from pyhelpers.ops import interquartile_range
-        >>> data = list(range(100))
-        >>> iqr_result = interquartile_range(data)
-        >>> iqr_result
-        49.5
+        >>> num_dat = [1, 2, 'nan', 3, 4]
+        >>> iqr = interquartile_range(num_dat, ignore_nan=True)
+        >>> iqr
+        np.float64(1.5)
+        >>> num_dat = list(range(100))
+        >>> iqr = interquartile_range(num_dat)
+        >>> iqr
+        np.float64(49.5)
+        >>> iqr, lower_fence, upper_fence = interquartile_range(num_dat, outlier_fences=True)
+        >>> iqr, lower_fence, upper_fence
+        (np.float64(49.5), np.float64(-49.5), np.float64(148.5))
     """
 
-    iqr = np.subtract(*np.percentile(num_dat, [75, 25]))
+    if isinstance(ignore_nan, np.ndarray):
+        arr = num_dat.copy()
+    else:
+        arr = np.array(list(map(float, num_dat)))
 
-    return iqr
+    if len(num_dat) < 2:
+        raise ValueError("Input must contain at least 2 elements.")
+
+    if ignore_nan and arr.dtype.kind == 'f':
+        arr = arr[~np.isnan(arr)]
+
+    q1, q3 = np.percentile(arr, q=rng, axis=axis, **kwargs)
+    iqr = (q3 - q1) * scale
+
+    if outlier_fences:
+        lower_fence, upper_fence = q1 - k * iqr, q3 + k * iqr
+        return iqr, lower_fence, upper_fence
+    else:
+        return iqr
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):

@@ -14,7 +14,7 @@ import subprocess  # nosec
 import tempfile
 import zipfile
 
-from .._cache import _add_slashes, _check_dependency, _check_file_pathname, \
+from .._cache import _add_slashes, _check_dependencies, _check_file_pathname, \
     _check_relative_pathname, _print_failure_message
 
 
@@ -209,6 +209,8 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
                 '"7-Zip" (https://www.7-zip.org/) is required to run this function; '
                 'however, it is not found on this device.\nInstall it and then try again.')
 
+        return None
+
 
 # ==================================================================================================
 # Convert data
@@ -247,7 +249,7 @@ def _markdown_to_rst_b_by_pandoc(pandoc_exists, pandoc_exe_, abs_input_path, abs
 
 
 def _markdown_to_rst_by_pypandoc(abs_input_path, arg_t, abs_output_path, **kwargs):
-    py_pandoc = _check_dependency(name='pypandoc')
+    py_pandoc = _check_dependencies('pypandoc')
 
     if 'extra_args' in kwargs:
         kwargs['extra_args'].append(['--wrap=preserve'])
@@ -551,12 +553,12 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
                 return csv_pathname
 
         elif engine == 'xlsx2csv':
-            xlsx2csv_ = _check_dependency(name='xlsx2csv')
+            xlsx2csv = _check_dependencies('xlsx2csv')
 
             buffer = io.StringIO()
 
             kwargs.update({'xlsxfile': path_to_xlsx})
-            xlsx2csv_.Xlsx2csv(**kwargs).convert(buffer)
+            xlsx2csv.Xlsx2csv(**kwargs).convert(buffer)
             buffer.seek(0)
 
             if verbose:

@@ -53,6 +53,8 @@ Basic data manipulation
     swap_cols
     swap_rows
     np_shift
+    downcast_numeric_columns
+    flatten_columns
 
 .. rubric:: Graph plotting
 .. autosummary::

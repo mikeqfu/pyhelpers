@@ -11,7 +11,7 @@ import sys
 import pandas as pd
 import sqlalchemy.dialects
 
-from .._cache import _check_dependency, _confirmed, _print_failure_message
+from .._cache import _check_dependencies, _confirmed, _print_failure_message
 
 
 def make_database_address(host, port, username, database_name=""):
@@ -269,6 +269,7 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
     if not db_instance.table_exists(table_name=table_name, schema_name=schema_name):
         if verbose:
             print(f"The table {tbl} does not exist.")
+        return None
 
     else:
         try:
@@ -328,9 +329,9 @@ def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_na
                                 mssql_table_name, memory_threshold, chunk_size, col_type):
     memory_usage = sys.getsizeof(source_data) / 1024 ** 3
     if memory_usage > memory_threshold:
-        np_ = _check_dependency(name='numpy')
+        np = _check_dependencies('numpy')
 
-        source_data = np_.array_split(source_data, memory_usage // memory_threshold)
+        source_data = np.array_split(source_data, memory_usage // memory_threshold)
 
         i = 0
         while i < len(source_data):
@@ -549,3 +550,5 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
         else:
             if verbose:
                 print("Completed.")
+
+    return None

@@ -11,7 +11,7 @@ import typing
 import pandas as pd
 import sqlalchemy
 
-from .._cache import _check_dependency, _confirmed, _print_failure_message
+from .._cache import _check_dependencies, _confirmed, _print_failure_message
 
 
 class _Base:
@@ -767,7 +767,7 @@ class _Base:
 
             kwargs.update(to_sql_args)
 
-            pd_parsers = _check_dependency(name='pandas.io.parsers')
+            pd_parsers = _check_dependencies('pandas.io.parsers')
 
             if isinstance(data, (pd_parsers.TextFileReader, list, tuple)):
                 for chunk in data:
@@ -782,6 +782,8 @@ class _Base:
 
             if verbose:
                 print("Done.")
+
+        return None
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
