@@ -56,14 +56,6 @@ Basic data manipulation
     downcast_numeric_columns
     flatten_columns
 
-.. rubric:: Graph plotting
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    cmap_discretisation
-    colour_bar_index
-
 Web data manipulation
 ---------------------
 
