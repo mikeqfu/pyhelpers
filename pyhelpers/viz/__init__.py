@@ -1,15 +1,14 @@
 """
-Visualisation utilities for geospatial and map-related operations.
+Visualization utilities for geospatial and map-related operations.
 
-This sub-package provides tools to enhance and simplify visualisation workflows, particularly
-for interactive maps and geospatial data rendering. Current features include colormap binding
-utilities for Folium maps.
+This subpackage provides tools to enhance and simplify visualization workflows
+(for interactive maps and geospatial data rendering).
 """
 
 import inspect
 
-from .colour_utils import *
-from .colourmap import *
+from .color_utils import *
+from .colormap import *
 
 __all__ = [
     name for name, obj in locals().items()
