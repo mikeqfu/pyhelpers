@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
 
 # == Project information ===========================================================================
-from pyhelpers import (__affil__, __author__, __copyright__, __desc__, __pkgname__, __project__,
-                       __version__, __first_release__)
+from pyhelpers import __affil__, __author__, __copyright__, __desc__, __first_release__, \
+    __pkgname__, __project__, __version__
 
 # General information about the project:
 project = __project__
