@@ -49,38 +49,34 @@ def cmap_discretization(cmap, n_colors):
         >>> ax.axis('off')
         >>> fig.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # path_to_fig_ = "docs/source/_images/ops-cmap_discretisation-demo"
+        >>> # path_to_fig_ = "docs/source/_images/viz-cmap_discretisation-demo"
         >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
         >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
-    The exmaple is illustrated in :numref:`ops-cmap_discretization-demo`:
+    The exmaple is illustrated in :numref:`viz-cmap_discretization-demo`:
 
-    .. figure:: ../_images/ops-cmap_discretization-demo.*
-        :name: ops-cmap_discretization-demo
+    .. figure:: ../_images/viz-cmap_discretization-demo.*
+        :name: viz-cmap_discretization-demo
         :align: center
         :width: 60%
 
         An example of discrete colour ramp, created by the function
-        :func:`~pyhelpers.ops.cmap_discretization`.
+        :func:`~pyhelpers.viz.cmap_discretization`.
     """
 
     mpl, mpl_colors = _check_dependencies('matplotlib', 'matplotlib.colors')
 
-    if isinstance(cmap, str):
-        cmap_ = mpl.colormaps[cmap]
-    else:
-        cmap_ = cmap
+    cmap_ = mpl.colormaps[cmap] if isinstance(cmap, str) else cmap
 
     colors_ = np.concatenate((np.linspace(0, 1., n_colors), (0., 0., 0., 0.)))
-    # noinspection PyTypeChecker
     colors_rgba = cmap_(colors_)
+
     indices = np.linspace(0, 1., n_colors + 1)
     c_dict = {}
 
     for ki, key in enumerate(('red', 'green', 'blue')):
         c_dict[key] = [
-            (indices[x], colors_rgba[x - 1, ki], colors_rgba[x, ki])
-            for x in range(n_colors + 1)]
+            (indices[x], colors_rgba[x - 1, ki], colors_rgba[x, ki]) for x in range(n_colors + 1)]
 
     color_map = mpl_colors.LinearSegmentedColormap(cmap_.name + '_%d' % n_colors, c_dict, 1024)
 
@@ -132,14 +128,14 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
         >>> # ax.axis('off')
         >>> fig1.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # path_to_fig1_ = "docs/source/_images/ops-colour_bar_index-demo-1"
+        >>> # path_to_fig1_ = "docs/source/_images/viz-color_bar_index-demo-1"
         >>> # save_figure(fig1, f"{path_to_fig1_}.svg", verbose=True)
         >>> # save_figure(fig1, f"{path_to_fig1_}.pdf", verbose=True)
 
-    The above example is illustrated in :numref:`ops-colour_bar_index-demo-1`:
+    The above example is illustrated in :numref:`ops-color_bar_index-demo-1`:
 
-    .. figure:: ../_images/ops-colour_bar_index-demo-1.*
-        :name: ops-colour_bar_index-demo-1
+    .. figure:: ../_images/viz-color_bar_index-demo-1.*
+        :name: ops-color_bar_index-demo-1
         :align: center
         :width: 32%
 
@@ -155,14 +151,14 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
         >>> cbar2.ax.tick_params(labelsize=14)
         >>> # ax.axis('off')
         >>> fig2.show()
-        >>> # path_to_fig2_ = "docs/source/_images/ops-colour_bar_index-demo-2"
+        >>> # path_to_fig2_ = "docs/source/_images/viz-color_bar_index-demo-2"
         >>> # save_figure(fig2, f"{path_to_fig2_}.svg", verbose=True)
         >>> # save_figure(fig2, f"{path_to_fig2_}.pdf", verbose=True)
 
-    This second example is illustrated in :numref:`ops-colour_bar_index-demo-2`:
+    This second example is illustrated in :numref:`ops-color_bar_index-demo-2`:
 
-    .. figure:: ../_images/ops-colour_bar_index-demo-2.*
-        :name: ops-colour_bar_index-demo-2
+    .. figure:: ../_images/viz-color_bar_index-demo-2.*
+        :name: ops-color_bar_index-demo-2
         :align: center
         :width: 32%
 
