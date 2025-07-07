@@ -1,5 +1,5 @@
 furo==2024.8.6
-pandas==2.2.3
+pandas==2.3.0
 psycopg2==2.9.10
 pyproj==3.7.1
 shapely==2.1.1
