@@ -807,7 +807,7 @@ def downcast_numeric_columns(*dataframes):
         if isinstance(df, pd.DataFrame):
             df_ = df.copy()
             # Process all integer columns
-            int_cols = df_.select_dtypes(include=['integer']).columns
+            int_cols = df_.select_dtypes(include=['integer'], exclude=['timedelta']).columns
             if not int_cols.empty:
                 df_[int_cols] = df_[int_cols].apply(pd.to_numeric, downcast='integer')
 

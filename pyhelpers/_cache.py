@@ -274,11 +274,10 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         else:
             prompt_ = copy.copy(prompt)
 
-        if resp:
-            if isinstance(resp, bool):  # meaning that default response is True
-                prompt_ = f"{prompt_} [Yes]|No: "
-            else:
-                prompt_ = f"{prompt_} [No]|Yes: "
+        if resp:  # meaning that default response is True
+            prompt_ = f"{prompt_} [Yes]|No: "
+        else:
+            prompt_ = f"{prompt_} [No]|Yes: "
 
         ans = input(prompt_)
         if not ans:
