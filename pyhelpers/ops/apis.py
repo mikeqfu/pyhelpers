@@ -107,6 +107,7 @@ class CrossRefOrcid:
             else:
                 if verbose:
                     print(f"Error: {response.status_code}. Check `response.text` for details.")
+                return None
 
     def get_list_of_works(self, orcid_id):
         # noinspection PyShadowingNames
@@ -445,6 +446,7 @@ class CrossRefOrcid:
 
         else:
             print("Style not found!")
+            return None
 
     def format_references(self, ref_data, style='APA'):
         # noinspection PyShadowingNames

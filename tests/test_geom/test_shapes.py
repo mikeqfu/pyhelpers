@@ -24,7 +24,7 @@ def test_get_midpoint():
     assert np.array_equal(midpt, np.array([[2.0429, 53.1347], [1.9909, 53.1271]]))
 
     midpt = get_midpoint(x_1, y_1, x_2, y_2, as_geom=True)
-    assert midpt.wkt == 'MULTIPOINT (2.0429 53.1347, 1.9909 53.1271)'
+    assert midpt.wkt == 'MULTIPOINT ((2.0429 53.1347), (1.9909 53.1271))'
 
 
 def test_get_geometric_midpoint():

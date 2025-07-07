@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .._cache import _check_dependency
+from .._cache import _lazy_check_dependencies
 
 
 # ==================================================================================================
@@ -236,6 +236,8 @@ def update_dict(dictionary, updates, inplace=False):
 
     if not inplace:
         return updated_dict
+
+    return None
 
 
 def update_dict_keys(dictionary, replacements=None):
@@ -733,185 +735,169 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
-# ==================================================================================================
-# Graph plotting
-# ==================================================================================================
-
-def cmap_discretisation(cmap, n_colours):
+@_lazy_check_dependencies(polars='pl')
+def downcast_numeric_columns(*dataframes):
     # noinspection PyShadowingNames
     """
-    Creates a discrete colour ramp.
+    Downcasts numeric columns in pandas DataFrames to optimal dtypes to reduce memory usage.
 
-    See also [`OPS-CD-1
-    <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
+    This function processes multiple DataFrames in one pass, converting:
+        - Integer columns to the smallest signed integer dtype (int8, int16, int32, or int64)
+        - Floating-point columns to the smallest floating dtype (float32 or float64)
+          that can safely represent their values.
 
-    :param cmap: A colormap instance, e.g. built-in `colormaps`_ available via
-        `matplotlib.colormaps.get_cmap`_.
-    :type cmap: matplotlib.colors.ListedColormap | matplotlib.colors.LinearSegmentedColormap | str
-    :param n_colours: Number of colours to discretise the colormap.
-    :type n_colours: int
-    :return: A discrete colormap derived from the continuous ``cmap``.
-    :rtype: matplotlib.colors.LinearSegmentedColormap
-
-    .. _`colormaps`:
-        https://matplotlib.org/stable/tutorials/colors/colormaps.html
-    .. _`matplotlib.colormaps.get_cmap`:
-        https://matplotlib.org/stable/api/cm_api.html#matplotlib.cm.ColormapRegistry.get_cmap
-
-    **Examples**::
-
-        >>> from pyhelpers.ops import cmap_discretisation
-        >>> from pyhelpers.settings import mpl_preferences
-        >>> mpl_preferences(backend='TkAgg')
-        >>> import matplotlib
-        >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
-        >>> cm_accent = cmap_discretisation(cmap=matplotlib.colormaps['Accent'], n_colours=5)
-        >>> cm_accent.name
-        'Accent_5'
-        >>> cm_accent = cmap_discretisation(cmap='Accent', n_colours=5)
-        >>> cm_accent.name
-        'Accent_5'
-        >>> fig = plt.figure(figsize=(10, 2), constrained_layout=True)
-        >>> ax = fig.add_subplot()
-        >>> ax.imshow(np.resize(range(100), (5, 100)), cmap=cm_accent, interpolation='nearest')
-        >>> ax.axis('off')
-        >>> fig.show()
-        >>> # from pyhelpers.store import save_figure
-        >>> # path_to_fig_ = "docs/source/_images/ops-cmap_discretisation-demo"
-        >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
-        >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
-
-    The exmaple is illustrated in :numref:`ops-cmap_discretisation-demo`:
-
-    .. figure:: ../_images/ops-cmap_discretisation-demo.*
-        :name: ops-cmap_discretisation-demo
-        :align: center
-        :width: 60%
-
-        An example of discrete colour ramp, created by the function
-        :func:`~pyhelpers.ops.cmap_discretisation`.
-    """
-
-    mpl, mpl_colors = map(_check_dependency, ['matplotlib', 'matplotlib.colors'])
-
-    if isinstance(cmap, str):
-        cmap_ = mpl.colormaps[cmap]
-    else:
-        cmap_ = cmap
-
-    colours_ = np.concatenate((np.linspace(0, 1., n_colours), (0., 0., 0., 0.)))
-    # noinspection PyTypeChecker
-    colours_rgba = cmap_(colours_)
-    indices = np.linspace(0, 1., n_colours + 1)
-    c_dict = {}
-
-    for ki, key in enumerate(('red', 'green', 'blue')):
-        c_dict[key] = [
-            (indices[x], colours_rgba[x - 1, ki], colours_rgba[x, ki])
-            for x in range(n_colours + 1)]
-
-    colour_map = mpl_colors.LinearSegmentedColormap(cmap_.name + '_%d' % n_colours, c_dict, 1024)
-
-    return colour_map
-
-
-def colour_bar_index(cmap, n_colours, labels=None, **kwargs):
-    """
-    Creates a colour bar with correctly aligned labels.
+    :param dataframes: One or more pandas DataFrames to optimize
+    :type dataframes: pandas.DataFrame | polars.DataFrame
+    :return: New DataFrame(s) with downcasted numeric columns.
+    :rtype: None | pandas.DataFrame | polars.DataFrame | tuple[pandas.DataFrame | polars.DataFrame]
 
     .. note::
 
-        - To avoid off-by-one errors, this function takes a standard colour ramp,
-          discretizes it, and then draws a colour bar with labels aligned correctly.
-        - See also [`OPS-CBI-1
-          <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html
-          #.WbpP0T6GNQB>`_].
-
-    :param cmap: A colormap instance,
-        e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap()`_.
-    :type cmap: matplotlib.colors.ListedColormap
-    :param n_colours: Number of discrete colours to use in the colour bar.
-    :type n_colours: int
-    :param labels: Optional list of labels for the colour bar; defaults to ``None``.
-    :type labels: list | None
-    :param kwargs: [Optional] Additional optional parameters for the funtion
-        `matplotlib.pyplot.colorbar()`_.
-    :return: A colour bar object.
-    :rtype: matplotlib.colorbar.Colorbar
-
-    .. _`colormaps`:
-        https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap()`:
-        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
-    .. _`matplotlib.pyplot.colorbar()`:
-        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
+        - Modifies DataFrames in place for memory efficiency.
+        - Skips non-numeric columns automatically.
+        - Uses pandas' built-in optimisations for batch processing.
 
     **Examples**::
 
-        >>> from pyhelpers.ops import colour_bar_index
-        >>> from pyhelpers.settings import mpl_preferences
-        >>> mpl_preferences(backend='TkAgg')
-        >>> import matplotlib.pyplot as plt
-        >>> fig1 = plt.figure(figsize=(2, 6), constrained_layout=True)
-        >>> ax1 = fig1.add_subplot()
-        >>> cbar1 = colour_bar_index(cmap=plt.colormaps['Accent'], n_colours=5)
-        >>> ax1.tick_params(axis='both', which='major', labelsize=14)
-        >>> cbar1.ax.tick_params(labelsize=14)
-        >>> # ax.axis('off')
-        >>> fig1.show()
-        >>> # from pyhelpers.store import save_figure
-        >>> # path_to_fig1_ = "docs/source/_images/ops-colour_bar_index-demo-1"
-        >>> # save_figure(fig1, f"{path_to_fig1_}.svg", verbose=True)
-        >>> # save_figure(fig1, f"{path_to_fig1_}.pdf", verbose=True)
+        >>> from pyhelpers.ops import downcast_numeric_columns
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import polars as pl
+        >>> df1 = example_dataframe().copy()
+        >>> df1.dtypes
+        Longitude    float64
+        Latitude     float64
+        dtype: object
+        >>> df2 = example_dataframe().T.copy()
+        >>> df2.dtypes
+        City
+        London        float64
+        Birmingham    float64
+        Manchester    float64
+        Leeds         float64
+        dtype: object
 
-    The above example is illustrated in :numref:`ops-colour_bar_index-demo-1`:
+        >>> df11, df21 = downcast_numeric_columns(df1, df2)
+        >>> df11.dtypes
+        Longitude    float32
+        Latitude     float32
+        dtype: object
+        >>> df21.dtypes
+        City
+        London        float32
+        Birmingham    float32
+        Manchester    float32
+        Leeds         float32
+        dtype: object
 
-    .. figure:: ../_images/ops-colour_bar_index-demo-1.*
-        :name: ops-colour_bar_index-demo-1
-        :align: center
-        :width: 32%
+        >>> df1, df2 = map(pl.from_pandas, (df1, df2))
+        >>> df1.dtypes
+        [Float64, Float64]
+        >>> df2.dtypes
+        [Float64, Float64, Float64, Float64]
+        >>> df21, df22 = downcast_numeric_columns(df1, df2)
+        >>> df21.dtypes
+        [Float32, Float32]
+        >>> df22.dtypes
+        [Float32, Float32, Float32, Float32]
+        """
 
-        An example of colour bar with numerical index.
+    results = []
 
-    .. code-block:: python
+    for df in dataframes:
+        if isinstance(df, pd.DataFrame):
+            df_ = df.copy()
+            # Process all integer columns
+            int_cols = df_.select_dtypes(include=['integer'], exclude=['timedelta']).columns
+            if not int_cols.empty:
+                df_[int_cols] = df_[int_cols].apply(pd.to_numeric, downcast='integer')
 
-        >>> fig2 = plt.figure(figsize=(2, 6), constrained_layout=True)
-        >>> ax2 = fig2.add_subplot()
-        >>> labels_ = list('abcde')
-        >>> cbar2 = colour_bar_index(cmap=plt.colormaps['Accent'], n_colours=5, labels=labels_)
-        >>> ax2.tick_params(axis='both', which='major', labelsize=14)
-        >>> cbar2.ax.tick_params(labelsize=14)
-        >>> # ax.axis('off')
-        >>> fig2.show()
-        >>> # path_to_fig2_ = "docs/source/_images/ops-colour_bar_index-demo-2"
-        >>> # save_figure(fig2, f"{path_to_fig2_}.svg", verbose=True)
-        >>> # save_figure(fig2, f"{path_to_fig2_}.pdf", verbose=True)
+            # Process all float columns
+            float_cols = df_.select_dtypes(include=['floating']).columns
+            if not float_cols.empty:
+                df_[float_cols] = df_[float_cols].apply(pd.to_numeric, downcast='float')
 
-    This second example is illustrated in :numref:`ops-colour_bar_index-demo-2`:
+            results.append(df_)
 
-    .. figure:: ../_images/ops-colour_bar_index-demo-2.*
-        :name: ops-colour_bar_index-demo-2
-        :align: center
-        :width: 32%
+        # Handle polars DataFrames
+        elif isinstance(df, pl.DataFrame):  # noqa
+            df_ = df.clone()
+            # Process integer columns
+            int_cols = [col for col in df.columns if df[col].dtype.is_integer()]
+            if int_cols:
+                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in int_cols]) # noqa
 
-        An example of colour bar with textual index.
+            # Process float columns
+            float_cols = [col for col in df.columns if df[col].dtype.is_float()]
+            if float_cols:
+                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in float_cols]) # noqa
+
+            results.append(df_)
+
+        else:
+            raise TypeError(f"Unsupported DataFrame type: {type(df)}")
+
+    return results[0] if len(results) == 1 else tuple(results)
+
+
+def flatten_columns(columns, ignore_linear_level=False):
+    """
+    Flattens multi-level column names into single-level strings.
+
+    This function processes column names (either as tuples or lists of strings) by joining them with
+    underscores; optionally, it simplifies column names when they represent linear hierarchies.
+
+    :param columns: Iterable of multi-level column names (each column is a sequence of strings).
+    :type columns: Iterable[Sequence[str]]
+    :param ignore_linear_level: If ``ignore_linear_level=True``,
+        the function simplifies linear hierarchies by omitting single-child levels;
+        defaults to ``False``.
+    :type ignore_linear_level: bool
+    :return: List of flattened column names.
+    :rtype: List[str]
+
+    .. note::
+
+        - For MultiIndex columns, passes the result of ``df.columns.tolist()``.
+        - When ``ignore_linear_level=True``, parent levels with only one child are collapsed.
+        - Preserves original order of columns.
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import flatten_columns
+        >>> flatten_columns([('A', 'B'), ('A', 'C')])
+        ['A_B', 'A_C']
+        >>> flatten_columns([('A', 'B', 'C'), ('A', 'B', 'D')], ignore_linear_level=True)
+        ['A_B_C', 'A_B_D']
+        >>> flatten_columns([('A', 'C'), ('B', 'C')], ignore_linear_level=True)
+        ['A', 'B']
+        >>> flatten_columns([('A',), ('B', 'C')], ignore_linear_level=True)
+        ['A', 'B']
     """
 
-    mpl_cm, mpl_plt = map(_check_dependency, ['matplotlib.cm', 'matplotlib.pyplot'])
+    if not ignore_linear_level:
+        return ['_'.join(col) for col in columns]
 
-    # assert isinstance(cmap, mpl_cm.ListedColormap)
-    cmap_ = cmap_discretisation(cmap, n_colours)
+    col_groups = collections.defaultdict(list)
+    for col in columns:
+        if len(col) < 2:
+            col_groups[col].append(None)  # Single-level columns stay as-is
+            continue
+        parent_levels, last_level = col[:-1], col[-1]
+        col_groups[parent_levels].append(last_level)
 
-    mappable = mpl_cm.ScalarMappable(cmap=cmap_)
-    mappable.set_array(np.array([]))
-    mappable.set_clim(-0.5, n_colours + 0.5)
+    # Build new column names
+    flattened_columns = []
+    for col in columns:
+        if len(col) < 2:
+            flattened_columns.append(col[0])
+            continue
 
-    colour_bar = mpl_plt.colorbar(mappable=mappable, ax=mpl_plt.gca(), **kwargs)
-    colour_bar.set_ticks(np.linspace(0, n_colours, n_colours))
-    colour_bar.set_ticklabels(range(n_colours))
+        parent_levels = col[:-1]
+        if len(col_groups[parent_levels]) == 1:
+            # Join parent levels only if multiple exist
+            name = '_'.join(parent_levels) if len(parent_levels) > 1 else parent_levels[0]
+            flattened_columns.append(name)
+        else:
+            flattened_columns.append('_'.join(col))
 
-    if labels:
-        colour_bar.set_ticklabels(labels)
-
-    return colour_bar
+    return flattened_columns

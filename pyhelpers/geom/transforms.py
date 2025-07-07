@@ -79,7 +79,7 @@ def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
     Retrieves an array of coordinates from the input geometry object.
 
     :param geom_obj: Input geometry object.
-    :type geom_obj: numpy.ndarray | typing.Iterable | shapely.geometry.base.BaseGeometry
+    :type geom_obj: numpy.ndarray | typing.Iterable | shapely.Geometry
     :param unique: Whether to remove duplicated points; defaults to ``False``.
     :type unique: bool
     :param dtype: The desired data-type for the array;
@@ -138,15 +138,18 @@ def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
         geom_type = geom_obj.geom_type.lower()
 
         if 'collection' in geom_type:  # Handle GeometryCollection
+            # noinspection PyUnresolvedReferences
             coords = np.concatenate([get_coordinates_as_array(x) for x in geom_obj.geoms])
             coords = coords
 
         elif geom_type.startswith('multi'):  # Handle MultiLineString, MultiPoint, and MultiPolygon
+            # noinspection PyUnresolvedReferences
             coords = np.vstack(
                 [np.array(x.exterior.coords if geom_type.endswith('polygon') else x.coords)
                  for x in geom_obj.geoms])
 
         else:
+            # noinspection PyUnresolvedReferences
             coords = np.array(
                 geom_obj.exterior.coords if geom_type.endswith('polygon') else geom_obj.coords)
 
@@ -410,6 +413,7 @@ def drop_axis(geom, axis='z', as_array=False):
 
 
 def project_point_to_line(point, line, drop_dimension=None):
+    # noinspection PyUnresolvedReferences
     """
     Finds the projected point from a given point to a line.
 
@@ -438,7 +442,7 @@ def project_point_to_line(point, line, drop_dimension=None):
 
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.settings import mpl_preferences
-        >>> mpl_preferences(backend='TkAgg', font_size=12)
+        >>> mpl_preferences(font_size=12)
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection='3d')
         >>> ls_zs = list(map(lambda c: c[2], ls.coords))

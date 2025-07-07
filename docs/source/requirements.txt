@@ -1,9 +1,9 @@
 furo==2024.8.6
-pandas==2.2.3
+pandas==2.3.0
 psycopg2==2.9.10
 pyproj==3.7.1
-shapely==2.0.7
+shapely==2.1.1
 sphinx-copybutton==0.5.2
-sphinx-new-tab-link==0.7.0
+sphinx-new-tab-link==0.8.0
 sphinx-toggleprompt==0.6.0
-sqlalchemy==2.0.39
+sqlalchemy==2.0.41

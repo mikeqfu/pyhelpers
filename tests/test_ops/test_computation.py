@@ -56,10 +56,16 @@ def test_get_extreme_outlier_bounds():
 
 
 def test_interquartile_range():
-    data = list(range(100))
+    num_dat = [1, 2, 'nan', 3, 4]
+    iqr = interquartile_range(num_dat, ignore_nan=True)
+    assert iqr == 1.5
 
-    iqr_result = interquartile_range(data)
-    assert iqr_result == 49.5
+    num_dat = list(range(100))
+    iqr = interquartile_range(num_dat)
+    assert iqr == 49.5
+
+    result = interquartile_range(num_dat, outlier_fences=True)
+    assert result == (49.5, -49.5, 148.5)
 
 
 def test_find_closest_date():

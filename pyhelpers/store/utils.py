@@ -151,6 +151,8 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
     if ret_info:
         return rel_dir_path, filename
 
+    return None
+
 
 def _autofit_column_width(writer, writer_kwargs, **kwargs):
     """

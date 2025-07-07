@@ -4,11 +4,49 @@ Utilities for (pre)processing textual data.
 
 import collections
 import copy
+import html
 import math
 import re
 import string
 
-from .._cache import _check_dependency, _ENGLISH_NUMERALS, _remove_punctuation, _vectorize_text
+from .._cache import _check_dependencies, _ENGLISH_NUMERALS, _remove_punctuation, _vectorize_text
+
+
+def clean_html_text(input_text):
+    """
+    Clean and normalize text extracted from HTML content.
+
+    Performs multiple cleaning operations on HTML text including:
+
+        - Decoding HTML entities (including double-encoded entities)
+        - Converting non-breaking spaces to regular spaces
+        - Removing all HTML tags
+        - Normalising whitespace and trimming the result
+
+    :param input_text: Raw text containing HTML markup and entities.
+    :type input_text: str
+    :return: Cleaned text with all HTML artifacts removed and normalised whitespace.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import clean_html_text
+        >>> clean_html_text('&lt;p&gt;Hello&nbsp;world!&lt;/p&gt;')
+        'Hello world!'
+    """
+
+    # First pass: decode standard HTML entities
+    decoded = html.unescape(input_text)
+    # Second pass: handle double-encoded entities
+    decoded = html.unescape(decoded)
+    # Convert all non-breaking spaces to regular spaces
+    decoded = decoded.replace('&nbsp;', ' ').replace('\xa0', ' ')
+    # Remove HTML tags
+    no_tags = re.sub(r'<[^>]*>', '', decoded)
+    # Normalize all whitespace and trim
+    clean_text = ' '.join(no_tags.split())
+
+    return clean_text
 
 
 def vectorize_text(*input_text):
@@ -361,18 +399,18 @@ def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_word
         {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
     """
 
-    nltk_ = _check_dependency(name='nltk')
+    nltk = _check_dependencies('nltk')
 
     doc = str(input_text).lower() if lowercase else str(input_text)
     if ignore_punctuation:
         doc = remove_punctuation(doc, rm_whitespace=False)
 
-    tokens = nltk_.word_tokenize(doc, **kwargs)
+    tokens = nltk.word_tokenize(doc, **kwargs)
 
     if stop_words:  # Remove stop words if provided
         if stop_words is True:
             language = kwargs['language'] if 'language' in kwargs else 'english'
-            stop_words_ = set(nltk_.corpus.stopwords.words(language))
+            stop_words_ = set(nltk.corpus.stopwords.words(language))
         else:
             stop_words_ = copy.copy(stop_words)
         tokens = [w for w in tokens if not w.lower() in stop_words_]

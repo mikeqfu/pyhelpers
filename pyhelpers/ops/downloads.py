@@ -14,7 +14,7 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_dependency, _check_relative_pathname, _check_url_scheme, \
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _check_url_scheme, \
     _get_ansi_colour_code, _init_requests_session, _print_failure_message, _USER_AGENT_STRINGS
 from ..store import _check_saving_path
 
@@ -116,7 +116,7 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
             Updating "ops-download_file_from_url-demo.png" in ".\\tests\\images\\" ... Done.
     """
 
-    tqdm_ = _check_dependency(name='tqdm')
+    tqdm_ = _check_dependencies('tqdm')
 
     file_size = int(response.headers.get('content-length', 0))  # Total size in bytes
 
@@ -259,6 +259,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         if verbose:
             print(f'File "{os.path.basename(path_to_file)}" already exists. Aborting download.\n'
                   f'Set `if_exists="replace"` to update the existing file.')
+        return None
 
     else:
         # Initialise session
@@ -302,6 +303,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     f"Check the URL or network connection.")
             # else:
             #     print(f"File successfully downloaded to {rel_path}.")
+            return None
 
 
 class GitHubFileDownloader:
@@ -556,6 +558,8 @@ class GitHubFileDownloader:
                 except Exception as e:
                     _print_failure_message(e, prefix="Error:")
                     print(f"{file['html_url']} may not be a file or a directory.")
+
+        return None
 
     def download(self, api_url=None):
         """

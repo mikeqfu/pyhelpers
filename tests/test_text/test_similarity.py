@@ -15,13 +15,17 @@ def test_euclidean_distance_between_texts():
 
 
 def test_cosine_similarity_between_texts():
-    txt_1, txt_2 = 'This is an apple.', 'That is a pear.'
-
-    cos_sim = cosine_similarity_between_texts(txt_1, txt_2)
+    txt1, txt2 = 'This is an apple.', 'That is a pear.'
+    cos_sim = cosine_similarity_between_texts(txt1, txt2)
     assert cos_sim == 0.25
-
-    cos_dist = cosine_similarity_between_texts(txt_1, txt_2, cosine_distance=True)  # 1 - cos_sim
+    cos_dist = cosine_similarity_between_texts(txt1, txt2, cosine_distance=True)  # 1 - cos_sim
     assert cos_dist == 0.75
+
+    txt1, txt2 = 'up-to-date', 'Up to date'
+    cos_sim = cosine_similarity_between_texts(txt1, txt2)
+    assert int(cos_sim) == 1
+    cos_dist = cosine_similarity_between_texts(txt1, txt2, cosine_distance=True)  # 1 - cos_sim
+    assert int(cos_dist) == 0
 
 
 def test_find_matched_str():

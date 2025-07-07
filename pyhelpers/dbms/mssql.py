@@ -17,7 +17,7 @@ import sqlalchemy.dialects
 import sqlalchemy.exc
 
 from ._base import _Base
-from .._cache import _check_dependency, _confirmed, _print_failure_message
+from .._cache import _check_dependencies, _confirmed, _print_failure_message
 
 
 class MSSQL(_Base):
@@ -126,7 +126,7 @@ class MSSQL(_Base):
 
         super().__init__()
 
-        pyodbc_ = _check_dependency(name='pyodbc')
+        pyodbc = _check_dependencies('pyodbc')
 
         self.host = copy.copy(self.DEFAULT_HOST) if host is None else str(host)
         self.port = copy.copy(self.DEFAULT_PORT) if port is None else int(port)
@@ -151,9 +151,8 @@ class MSSQL(_Base):
             'database': self.DEFAULT_DATABASE,
         }
 
-        if self.DEFAULT_ODBC_DRIVER not in pyodbc_.drivers():
-            self.odbc_driver = [
-                x for x in pyodbc_.drivers() if 'ODBC' in x and 'SQL Server' in x][0]
+        if self.DEFAULT_ODBC_DRIVER not in pyodbc.drivers():
+            self.odbc_driver = [x for x in pyodbc.drivers() if 'ODBC' in x and 'SQL Server' in x][0]
         else:
             self.odbc_driver = self.DEFAULT_ODBC_DRIVER
 
@@ -351,11 +350,9 @@ class MSSQL(_Base):
             conn = engine.connect()
 
         else:  # use 'pyodbc'
-            pyodbc_ = _check_dependency(name='pyodbc')
-
+            pyodbc = _check_dependencies('pyodbc')
             conn_str = self.specify_conn_str(database_name=self.database_name, auth=self.auth)
-
-            conn = pyodbc_.connect(conn_str)
+            conn = pyodbc.connect(conn_str)
 
         return conn
 
@@ -1841,7 +1838,7 @@ class MSSQL(_Base):
             data = pd.concat(data, ignore_index=True)
 
         if dtype == 'geometry':
-            shapely_wkt = _check_dependency(name='shapely.wkt')
+            shapely_wkt = _check_dependencies('shapely.wkt')
             data[col_names] = data[col_names].map(shapely_wkt.loads)
 
         return data

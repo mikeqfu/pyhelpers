@@ -53,14 +53,8 @@ Basic data manipulation
     swap_cols
     swap_rows
     np_shift
-
-.. rubric:: Graph plotting
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    cmap_discretisation
-    colour_bar_index
+    downcast_numeric_columns
+    flatten_columns
 
 Web data manipulation
 ---------------------
