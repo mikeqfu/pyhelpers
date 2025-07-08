@@ -6,5 +6,4 @@ recursive-include pyhelpers/data *
 prune tests
 prune tutorials
 prune venv
-prune build
 prune dist
