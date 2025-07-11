@@ -1,7 +1,5 @@
-branca==0.8.1
 furo==2024.8.6
-jinja2==3.1.6
-pandas==2.3.0
+pandas==2.3.1
 psycopg2==2.9.10
 pyproj==3.7.1
 shapely==2.1.1

@@ -1,5 +1,9 @@
 # Include data
+include LICENSE
 recursive-include pyhelpers/data *
 
 # Exclude tests
 prune tests
+prune tutorials
+prune venv
+prune dist

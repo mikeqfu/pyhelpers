@@ -4,10 +4,8 @@ Colormap utilities for Folium map visualization.
 
 from .._cache import _check_dependencies
 
-branca, jinja2 = _check_dependencies('branca', 'jinja2')
 
-
-class BindColormap(branca.element.MacroElement):
+class BindColormap:
     """
     Binds a colormap to a Folium layer with visibility synchronization.
 
@@ -15,7 +13,7 @@ class BindColormap(branca.element.MacroElement):
     showing/hiding the colormap legend when the layer visibility changes.
     """
 
-    def __init__(self, layer, colormap, display=True):
+    def __new__(cls, layer, colormap, display=True):
         """
         :param layer: Folium layer object (``FeatureGroup``, ``GeoJson``, etc.) to bind with.
         :type layer: folium.FeatureGroup | folium.GeoJson
@@ -55,26 +53,35 @@ class BindColormap(branca.element.MacroElement):
               <https://nbviewer.org/gist/BibMartin/f153aa957ddc5fadc64929abdee9ff2e>`_].
         """
 
-        super().__init__()
+        branca, jinja2 = _check_dependencies('branca', 'jinja2')
 
-        self.layer = layer
-        self.colormap = colormap
+        class _BindColormap(branca.element.MacroElement):
 
-        display_first = "'block'" if display else "'none'"
+            def __init__(self, _layer, _colormap, _display):
+                super().__init__()
 
-        # noinspection SpellCheckingInspection
-        template_str = u"""
-            {% macro script(this, kwargs) %}
-                {{this.colormap.get_name()}}.svg[0][0].style.display = {display_first};
-                {{this._parent.get_name()}}.on('overlayadd', function(eventLayer) {
-                    if (eventLayer.layer == {{this.layer.get_name()}}) {
-                        {{this.colormap.get_name()}}.svg[0][0].style.display = 'block';
-                    }});
-                {{this._parent.get_name()}}.on('overlayremove', function(eventLayer) {
-                    if (eventLayer.layer == {{this.layer.get_name()}}) {
-                        {{this.colormap.get_name()}}.svg[0][0].style.display = 'none';
-                    }});
-            {% endmacro %}
-            """
+                self.layer = _layer
+                self.colormap = _colormap
 
-        self._template = jinja2.Template(template_str.replace('{display_first}', display_first))
+                display_first = "'block'" if _display else "'none'"
+
+                # noinspection SpellCheckingInspection
+                template_str = u"""
+                    {% macro script(this, kwargs) %}
+                        {{this.colormap.get_name()}}.svg[0][0].style.display = {display_first};
+                        {{this._parent.get_name()}}.on('overlayadd', function(eventLayer) {
+                            if (eventLayer.layer == {{this.layer.get_name()}}) {
+                                {{this.colormap.get_name()}}.svg[0][0].style.display = 'block';
+                            }});
+                        {{this._parent.get_name()}}.on('overlayremove', function(eventLayer) {
+                            if (eventLayer.layer == {{this.layer.get_name()}}) {
+                                {{this.colormap.get_name()}}.svg[0][0].style.display = 'none';
+                            }});
+                    {% endmacro %}
+                    """
+
+                self._template = jinja2.Template(
+                    template_str.replace('{display_first}', display_first))
+
+        # Instantiate the dynamic subclass and return it directly
+        return _BindColormap(layer, colormap, display)

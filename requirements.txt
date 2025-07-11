@@ -13,9 +13,10 @@ notebook==7.4.4
 odfpy==1.4.1
 openpyxl==3.1.5
 orjson==3.10.18
-pandas==2.3.0
+pandas==2.3.1
 pdfkit==1.0.0
 pip-chill==1.0.3
+pkginfo==1.12.1.2
 polars==1.31.0
 psycopg2==2.9.10
 pyarrow==20.0.0
@@ -33,7 +34,7 @@ sphinx-toggleprompt==0.6.0
 sqlalchemy==2.0.41
 tinycss2==1.4.0
 tomli==2.0.1
-twine==6.0.1
+twine==6.1.0
 ujson==5.10.0
 uri-template==1.3.0
 webcolors==24.11.1

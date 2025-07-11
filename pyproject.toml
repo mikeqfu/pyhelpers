@@ -1,3 +1,48 @@
 [build-system]
-requires = ["setuptools>=70.0"]
+requires = ["setuptools>=70", "wheel", "build"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyhelpers"
+dynamic = [
+    "version",
+    "description",
+    "urls",
+    "authors",
+    "license"
+]
+readme = { file = "README.md", content-type = "text/markdown" }
+keywords = [
+    "Python",
+    "Utilities",
+    "Data preprocessing",
+    "Data manipulation",
+    "Python utilities",
+    "Python utils",
+    "Python utility"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "psycopg2",
+    "pyproj",
+    "requests",
+    "shapely",
+    "sqlalchemy"
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux"
+]
+
+[tool.setuptools]
+packages = { find = {} }
