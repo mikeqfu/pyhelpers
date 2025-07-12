@@ -10,6 +10,16 @@ from pyhelpers.text.preprocessing import *
 from pyhelpers.text.preprocessing import _english_numerals
 
 
+def test_clean_html_text():
+    cleaned_html_text = clean_html_text('&lt;p&gt;Hello&nbsp;world!&lt;/p&gt;')
+    assert cleaned_html_text == 'Hello world!'
+
+
+def test_vectorize_text():
+    vectors = list(vectorize_text("Hello world!", "Hello, hello world."))
+    assert vectors == [[1, 1], [2, 1]]
+
+
 @pytest.mark.parametrize('rm_whitespace', [True, False])
 @pytest.mark.parametrize('preserve_hyphenated', [True, False])
 def test_remove_punctuation(rm_whitespace, preserve_hyphenated):

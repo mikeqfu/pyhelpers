@@ -3,30 +3,40 @@
 .. currentmodule:: {{ module }}.{{ objname }}
 
 .. autoclass:: {{ module }}.{{ objname }}
+
     {% block attributes %}
-    {% if attributes %}
+    {% set ns = namespace(attrs=[]) %}
+    {% for item in all_attributes %}
+        {% if not item.startswith('_') %}
+            {% set _ = ns.attrs.append(item) %}
+        {% endif %}
+    {% endfor %}
+    {% if ns.attrs %}
     .. rubric:: {{ _('Attributes') }}
     .. autosummary::
         :template: base.rst
         :toctree:
-        {% for item in all_attributes %}
-        {%- if not item.startswith('_') %}
+        {% for item in ns.attrs %}
         {{ item }}
-        {%- endif -%}
-        {%- endfor %}
+        {% endfor %}
     {% endif %}
     {% endblock %}
+
     {% block methods %}
-    {% if methods %}
+    {% set ns = namespace(methods=[]) %}
+    {% for item in all_methods %}
+        {% if not item.startswith('_') or item in ['__call__'] %}
+            {% set _ = ns.methods.append(item) %}
+        {% endif %}
+    {% endfor %}
+    {% if ns.methods %}
     .. rubric:: {{ _('Methods') }}
     .. autosummary::
         :template: base.rst
         :toctree:
-        {% for item in all_methods %}
-        {%- if not item.startswith('_') or item in ['__call__'] %}
+        {% for item in ns.methods %}
         {{ item }}
-        {%- endif -%}
-        {%- endfor %}
+        {% endfor %}
     {% endif %}
     {% endblock %}
 

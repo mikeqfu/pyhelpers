@@ -6,7 +6,7 @@ import re
 
 import numpy as np
 
-from .._cache import _check_dependency, _remove_punctuation, _vectorize_text
+from .._cache import _check_dependencies, _remove_punctuation, _vectorize_text
 
 
 def euclidean_distance_between_texts(txt1, txt2):
@@ -59,22 +59,30 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
         >>> txt1, txt2 = 'This is an apple.', 'That is a pear.'
         >>> cos_sim = cosine_similarity_between_texts(txt1, txt2)
         >>> cos_sim
-        0.25
+        np.float64(0.25)
         >>> cos_dist = cosine_similarity_between_texts(txt1, txt2, cosine_distance=True)
         >>> cos_dist  # 1 - cos_sim
-        0.75
+        np.float64(0.75)
+        >>> txt1, txt2 = 'up-to-date', 'Up to date'
+        >>> cos_sim = cosine_similarity_between_texts(txt1, txt2)
+        >>> cos_sim  # ≈1
+        np.float64(1.0000000000000002)
+        >>> cos_dist = cosine_similarity_between_texts(txt1, txt2, cosine_distance=True)
+        >>> cos_dist  # ≈0
+        np.float64(-2.220446049250313e-16)
     """
 
     # noinspection PyTypeChecker
-    s1_count, s2_count = map(np.array, _vectorize_text(txt1, txt2))
+    vec1, vec2 = _vectorize_text(txt1, txt2)
 
-    similarity = np.dot(s1_count, s2_count)
-    cos_similarity = np.divide(similarity, np.linalg.norm(s1_count) * np.linalg.norm(s2_count))
+    norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
 
-    if cosine_distance:
-        cos_similarity = 1 - cos_similarity
+    if norm_product == 0:
+        return 0.0  # Avoid division by zero if either vector is all zeros
 
-    return cos_similarity
+    cos_similarity = np.divide(np.dot(vec1, vec2), norm_product)
+
+    return 1 - cos_similarity if cosine_distance else cos_similarity
 
 
 def find_matched_str(input_str, lookup_list, use_regex=True):
@@ -153,7 +161,7 @@ def _find_str_by_difflib(input_str, lookup_list, n=1, ignore_punctuation=True, *
     if not lookup_list:  # Handle empty lookup lists
         return None
 
-    difflib_ = _check_dependency(name='difflib')
+    difflib = _check_dependencies('difflib')
 
     x, lookup_dict = input_str.lower(), {y.lower(): y for y in lookup_list}
 
@@ -161,7 +169,7 @@ def _find_str_by_difflib(input_str, lookup_list, n=1, ignore_punctuation=True, *
         x = _remove_punctuation(x)
         lookup_dict = {_remove_punctuation(k): v for k, v in lookup_dict.items()}
 
-    matches = difflib_.get_close_matches(word=x, possibilities=lookup_dict.keys(), n=n, **kwargs)
+    matches = difflib.get_close_matches(word=x, possibilities=lookup_dict.keys(), n=n, **kwargs)
 
     if not matches:
         sim_str = None
@@ -218,7 +226,7 @@ def _find_str_by_rapidfuzz(input_str, lookup_list, n=1, **kwargs):
     else:
         lookup_list_ = list(lookup_list)
 
-    rapidfuzz_fuzz, rapidfuzz_utils = map(_check_dependency, ['rapidfuzz.fuzz', 'rapidfuzz.utils'])
+    rapidfuzz_fuzz, rapidfuzz_utils = _check_dependencies('rapidfuzz.fuzz', 'rapidfuzz.utils')
 
     kwargs.setdefault('processor', rapidfuzz_utils.default_process)
     l_distances = [rapidfuzz_fuzz.QRatio(s1=input_str, s2=a, **kwargs) for a in lookup_list_]

@@ -4,11 +4,9 @@ Tests the :mod:`~pyhelpers.ops.manipulation` submodule.
 
 import typing
 
-import matplotlib.cm
-import matplotlib.pyplot as plt
 import pytest
 
-from pyhelpers._cache import example_dataframe
+from pyhelpers._cache import _lazy_check_dependencies, example_dataframe
 from pyhelpers.ops.manipulation import *
 
 
@@ -223,18 +221,29 @@ def test_np_shift():
     assert np.array_equal(rslt3, arr)
 
 
-def test_cmap_discretisation():
-    cm_accent = cmap_discretisation(matplotlib.colormaps['Accent'], n_colours=5)
-    assert cm_accent.name == 'Accent_5'
+@_lazy_check_dependencies(polars='pl')
+def test_downcast_numeric_columns():
+    df1 = example_dataframe().copy()
+    df2 = example_dataframe().T.copy()
+
+    df11, df21 = downcast_numeric_columns(df1, df2)
+    assert df11.dtypes.values[0].name == df21.dtypes.values[0].name == 'float32'
+
+    # noinspection PyUnresolvedReferences
+    df1, df2 = map(pl.from_pandas, (df1, df2))
+    df21, df22 = downcast_numeric_columns(df1, df2)
+    # noinspection PyUnresolvedReferences
+    assert df21.dtypes == [pl.Float32, pl.Float32]
+    # noinspection PyUnresolvedReferences
+    assert df22.dtypes == [pl.Float32, pl.Float32, pl.Float32, pl.Float32]
 
 
-def test_colour_bar_index():
-    plt.figure(figsize=(2, 6))
-
-    cbar = colour_bar_index(cmap=matplotlib.colormaps['Accent'], n_colours=5, labels=list('abcde'))
-    cbar.ax.tick_params(labelsize=14)
-
-    plt.close(fig='all')
+def test_flatten_columns():
+    assert flatten_columns([('A', 'B'), ('A', 'C')]) == ['A_B', 'A_C']
+    assert (flatten_columns([('A', 'B', 'C'), ('A', 'B', 'D')], ignore_linear_level=True) ==
+            ['A_B_C', 'A_B_D'])
+    assert flatten_columns([('A', 'C'), ('B', 'C')], ignore_linear_level=True) == ['A', 'B']
+    assert flatten_columns([('A',), ('B', 'C')], ignore_linear_level=True) == ['A', 'B']
 
 
 if __name__ == '__main__':

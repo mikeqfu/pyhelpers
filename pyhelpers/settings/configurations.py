@@ -2,7 +2,7 @@
 Configurations.
 """
 
-from .._cache import _check_dependency
+from .._cache import _check_dependencies
 
 
 def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=True,
@@ -42,9 +42,9 @@ def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=
         - `pydriosm Documentation <https://pydriosm.readthedocs.io/en/latest/>`_
     """
 
-    osgeo_gdal = _check_dependency(name='osgeo.gdal')
+    osgeo_gdal = _check_dependencies('osgeo.gdal')
 
-    if reset is False:
+    if not reset:
         max_tmpfile_size_ = 5000 if max_tmpfile_size is None else max_tmpfile_size
 
         # Max. size (MB) of in-memory temporary file. Defaults to 100.
@@ -57,7 +57,7 @@ def gdal_configurations(reset=False, max_tmpfile_size=None, interleaved_reading=
         osgeo_gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', val_dict[custom_indexing])
         osgeo_gdal.SetConfigOption('OSM_COMPRESS_NODES', val_dict[compress_nodes])
 
-    elif reset is True:
+    elif reset:
         osgeo_gdal.SetConfigOption('OGR_INTERLEAVED_READING', 'NO')
         osgeo_gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'YES')
         osgeo_gdal.SetConfigOption('OSM_COMPRESS_NODES', 'NO')

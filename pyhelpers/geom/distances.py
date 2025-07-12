@@ -12,7 +12,7 @@ import shapely.geometry
 import shapely.ops
 
 from .transforms import get_coordinates_as_array, transform_point_type
-from .._cache import _check_dependency
+from .._cache import _check_dependencies
 
 
 def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
@@ -315,7 +315,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
     """
 
-    ckdtree = _check_dependency(name='scipy.spatial')
+    ckdtree = _check_dependencies('scipy.spatial')
 
     pts_, ref_pts_ = map(
         functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
@@ -434,8 +434,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         shortest_path = points_sequence
 
     else:
-        nx = _check_dependency(name='networkx')
-        sklearn_neighbors = _check_dependency(name='sklearn.neighbors')
+        nx, sklearn_neighbors = _check_dependencies('networkx', 'sklearn.neighbors')
 
         nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
         kn_g = nn_clf.kneighbors_graph()

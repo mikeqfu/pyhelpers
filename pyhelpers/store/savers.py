@@ -16,7 +16,8 @@ import sys
 import pandas as pd
 
 from .utils import _autofit_column_width, _check_saving_path
-from .._cache import _check_dependency, _check_file_pathname, _confirmed, _print_failure_message
+from .._cache import _check_dependencies, _check_file_pathname, _confirmed, \
+    _lazy_check_dependencies, _print_failure_message
 from ..ops.web import is_url
 
 
@@ -98,6 +99,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('openpyxl', 'odf')
 def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engine=None,
                      delimiter=',', autofit_column_width=True, writer_kwargs=None,
                      verbose=False, raise_error=False, **kwargs):
@@ -197,10 +199,10 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
                 writer_kwargs.update({'path': path_to_file})
 
             if ext.startswith(".xls"):  # a .xlsx file or a .xls file
-                _ = _check_dependency(name='openpyxl')
+                _ = _check_dependencies('openpyxl')
                 writer_kwargs.update({'engine': 'openpyxl'})
             elif ext == ".ods":
-                _ = _check_dependency(name='odf')
+                _ = _check_dependencies('odf')
                 writer_kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
             else:
                 writer_kwargs.update({'engine': engine})
@@ -464,7 +466,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
     if engine is not None:
         valid_engines = {'ujson', 'orjson', 'rapidjson'}
         assert engine in valid_engines, f"`engine` must be on one of {valid_engines}."
-        mod = _check_dependency(name=engine)
+        mod = _check_dependencies(engine)
     else:
         mod = sys.modules.get('json')
 
@@ -547,9 +549,9 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
-        joblib_ = _check_dependency(name='joblib')
+        joblib = _check_dependencies('joblib')
 
-        joblib_.dump(value=data, filename=path_to_file, **kwargs)
+        joblib.dump(value=data, filename=path_to_file, **kwargs)
 
         if verbose:
             print("Done.")
@@ -781,13 +783,10 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
-        mpl_plt = _check_dependency(name='matplotlib.pyplot')
-
+        mpl_plt = _check_dependencies('matplotlib.pyplot')
         mpl_plt.savefig(path_to_file, dpi=dpi, **kwargs)
-
         if verbose:
             print("Done.")
-
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
@@ -966,7 +965,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
 
         if wkhtmltopdf_exists:
-            pdfkit_ = _check_dependency(name='pdfkit')
+            pdfkit = _check_dependencies('pdfkit')
 
             if os.path.dirname(path_to_file):
                 os.makedirs(os.path.dirname(path_to_file), exist_ok=True)
@@ -988,14 +987,14 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             }
             if isinstance(wkhtmltopdf_options, dict):
                 options.update(wkhtmltopdf_options)
-            configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
+            configuration = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_exe)
             kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
 
             try:
                 if is_url(data):
-                    status = pdfkit_.from_url(data, path_to_file, **kwargs)
+                    status = pdfkit.from_url(data, path_to_file, **kwargs)
                 elif os.path.isfile(data):
-                    status = pdfkit_.from_file(data, path_to_file, **kwargs)
+                    status = pdfkit.from_file(data, path_to_file, **kwargs)
                 else:
                     status = None
 
@@ -1012,6 +1011,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         else:
             print('"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function; '
                   'however, it is not found on this device.\nInstall it and then try again.')
+
+            return None
 
 
 def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,

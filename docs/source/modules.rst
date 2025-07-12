@@ -15,6 +15,7 @@ The current release includes the following modules, with each containing a numbe
     geom
     text
     dbms
+    viz
 
 .. toctree::
     :maxdepth: 2
@@ -27,3 +28,4 @@ The current release includes the following modules, with each containing a numbe
     geom
     text
     dbms
+    viz

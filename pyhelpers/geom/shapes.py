@@ -10,7 +10,7 @@ import numpy as np
 import shapely.geometry
 import shapely.ops
 
-from .._cache import _check_dependency, _transform_point_type
+from .._cache import _check_dependencies, _transform_point_type
 
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
@@ -414,7 +414,7 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         >>> from pyhelpers.geom import sketch_square
         >>> from pyhelpers.settings import mpl_preferences
         >>> import matplotlib.pyplot as plt
-        >>> mpl_preferences(backend='TkAgg')
+        >>> mpl_preferences()
         >>> c1, c2 = 1, 1
         >>> side_len = 2
         >>> sketch_square(c1, c2, side_len, rotation_theta=0, annotation=True, fig_size=(5, 5))
@@ -451,7 +451,7 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         An example of a sketch of a square rotated 75 degrees anticlockwise about the centre.
     """
 
-    mpl_plt, mpl_ticker = map(_check_dependency, ['matplotlib.pyplot', 'matplotlib.ticker'])
+    mpl_plt, mpl_ticker = _check_dependencies('matplotlib.pyplot', 'matplotlib.ticker')
 
     vertices_ = get_square_vertices(
         ctr_x=ctr_x, ctr_y=ctr_y, side_length=side_length, rotation_theta=rotation_theta)
@@ -480,7 +480,9 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
     ax.yaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
     ax.xaxis.set_major_locator(mpl_ticker.MaxNLocator(integer=True))
 
-    mpl_plt.tight_layout()
+    fig.tight_layout()
 
     if ret_vertices:
         return vertices
+
+    return None
