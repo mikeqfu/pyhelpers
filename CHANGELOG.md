@@ -1,7 +1,29 @@
 # Changelog / Release notes
 
 
-## [2.2.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.1.0)
+## [2.3.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.0)
+
+(*12 July 2025*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.2.0...2.3.0) since [2.2.0](https://pypi.org/project/pyhelpers/2.2.0/):
+
+- **Bug fixes:**
+  * Fixed `cosine_similarity_between_texts()` to handle edge cases (#77)
+  * Minor bug fixes and test improvements (#80)
+- **Refactoring & utilities:**
+  * Refactored dependency management and added new utility functions (#78)
+  * Refactored `BindColormap` class for better clarity and modularity
+- **New features:**
+  * Introduced the `viz` subpackage (#79)
+- **Packaging & documentation:**
+  * Removed `setup.cfg` and modified `pyproject.toml`
+  * Updated `MANIFEST.in` and `requirements.txt`
+  * Improved Sphinx documentation templates for class rendering
+
+**For more information and detailed specifications, check out the [PyHelpers 2.3.0 documentation](https://pyhelpers.readthedocs.io/en/2.3.0/).**
+
+
+## [2.2.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.2.0)
 
 (*17 March 2025*)
 
