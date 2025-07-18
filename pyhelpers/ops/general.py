@@ -345,3 +345,71 @@ def get_ansi_colour_code(colours, show_valid_colours=False):
     """
 
     return _get_ansi_colour_code(colours=colours, show_valid_colours=show_valid_colours)
+
+
+def get_project_structure(start_path, ignore_dirs=None, out_file=None, encoding='utf-8',
+                          print_in_console=True):
+    """
+    Prints and/or writes the directory and file structure of a given project folder
+    starting from ``start_path``.
+
+    The output shows a tree-like hierarchy with branch symbols for better readability.
+
+    :param start_path: Path to the root directory whose structure to visualize;
+        can be absolute or relative to the current working directory.
+    :type start_path: str | pathlib.Path
+    :param ignore_dirs: Optional set of directory names to ignore during traversal;
+        defaults to ``{'__pycache__'}``.
+    :type ignore_dirs: None | typying.Iterable
+    :param out_file: Optional file path to write the structure output. If ``None`` (default),
+        no file will be written.
+        If specified, the structure will be saved to the specified file path.
+    :type out_file: str | None
+    :param encoding: The encoding to use when writing to the output file; defaults to ``'utf-8'``.
+    :type encoding: str
+    :param print_in_console: Whether to print the structure to the console; defaults to ``True``.
+    :type print_in_console: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_project_structure
+        >>> get_project_structure(start_path="pyhelpers")
+        >>> get_project_structure("my_project", print_in_console=False, out_file="structure.txt")
+    """
+
+    if ignore_dirs is None:
+        ignore_dirs = {'__pycache__'}
+
+    def _print(text, file_handle=None):
+        if print_in_console:
+            try:
+                print(text)
+            except UnicodeEncodeError:
+                # Fallback for consoles that can't handle Unicode
+                ascii_text = text.replace('├', '+').replace('│', '|').replace('──', '--')
+                print(ascii_text)
+
+        if file_handle is not None:
+            file_handle.write(text + '\n')
+
+    f = None
+    if out_file is not None:
+        f = open(out_file, 'w', encoding=encoding)
+
+    try:
+        for root, dirs, files in os.walk(start_path):
+            dirs[:] = [d for d in dirs if d not in ignore_dirs]
+
+            level = root.replace(start_path, '').count(os.sep)
+            indent = '│   ' * level + '├── '
+            line = f"{indent}{os.path.basename(root)}/"
+            _print(line, f)
+
+            sub_indent = '│   ' * (level + 1)
+            for file in sorted(files):
+                file_line = f"{sub_indent}├── {file}"
+                _print(file_line, f)
+
+    finally:
+        if f is not None:
+            f.close()
