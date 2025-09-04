@@ -812,7 +812,7 @@ def downcast_numeric_columns(*dataframes):
                 df_[int_cols] = df_[int_cols].apply(pd.to_numeric, downcast='integer')
 
             # Process all float columns
-            float_cols = df_.select_dtypes(include=['floating']).columns
+            float_cols = df_.select_dtypes(include=['floating']).columns  # noqa
             if not float_cols.empty:
                 df_[float_cols] = df_[float_cols].apply(pd.to_numeric, downcast='float')
 
@@ -822,14 +822,14 @@ def downcast_numeric_columns(*dataframes):
         elif isinstance(df, pl.DataFrame):  # noqa
             df_ = df.clone()
             # Process integer columns
-            int_cols = [col for col in df.columns if df[col].dtype.is_integer()]
+            int_cols = [col for col in df_.columns if df_[col].dtype.is_integer()]
             if int_cols:
-                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in int_cols]) # noqa
+                df_ = df_.with_columns([df_[col].shrink_dtype() for col in int_cols]) # noqa
 
             # Process float columns
-            float_cols = [col for col in df.columns if df[col].dtype.is_float()]
+            float_cols = [col for col in df_.columns if df_[col].dtype.is_float()]
             if float_cols:
-                df_ = df_.with_columns([pl.col(col).shrink_dtype() for col in float_cols]) # noqa
+                df_ = df_.with_columns([df_[col].shrink_dtype() for col in float_cols]) # noqa
 
             results.append(df_)
 
