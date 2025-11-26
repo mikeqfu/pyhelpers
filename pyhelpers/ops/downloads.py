@@ -168,7 +168,7 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
                            requests_session_args=None, verbose=False, print_wrap_limit=None,
                            chunk_multiplier=1, desc=None, bar_format=None, colour=None,
-                           validate=True, **kwargs):
+                           validate=True, stream_download=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a valid URL.
@@ -212,6 +212,11 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param validate: Whether to validate if the downloaded file size matches the expected content
         length; defaults to ``True``.
     :type validate: bool
+    :param stream_download: When `stream_download=True`, use streaming download
+        (memory-efficient, perferred for large files);
+        When `stream_download=False`, not streaming (simpler/faster for small files);
+        defaults to ``False``.
+    :type stream_download: bool
     :param kwargs: [Optional] Additional parameters passed to the method `tqdm.tqdm()`_.
 
     .. _`tqdm.tqdm()`: https://tqdm.github.io/docs/tqdm/
@@ -272,8 +277,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
         os.makedirs(os.path.dirname(path_to_file_), exist_ok=True)  # Ensure the directory exists
 
-        # Streaming, so we can iterate over the response
-        with session.get(url=url, stream=True, headers=fake_headers) as response:
+        # If streaming, we can iterate over the response
+        stream_download_ = verbose or stream_download
+
+        with session.get(url=url, stream=stream_download_, headers=fake_headers) as response:
             if response.status_code != 200:
                 print(f"Failed to retrieve file. HTTP Status Code: {response.status_code}.")
                 return None
@@ -292,8 +299,17 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                 )
 
             else:
-                with open(path_to_file_, mode='wb') as f:  # Open the file in binary write mode
-                    shutil.copyfileobj(fsrc=response.raw, fdst=f)  # type: ignore
+                if stream_download_:
+                    encoding = response.headers.get('Content-Encoding', '')
+                    if 'gzip' in encoding or 'deflate' in encoding:
+                        response.raw.decode_content = True
+
+                    with open(path_to_file_, mode='wb') as f:  # Open the file in binary write mode
+                        shutil.copyfileobj(fsrc=response.raw, fdst=f)  # type: ignore
+
+                else:
+                    with open(path_to_file_, mode='wb') as f:
+                        f.write(response.content)
 
             # Validate download if necessary
             if validate and os.stat(path_to_file).st_size == 0:
