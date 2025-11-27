@@ -23,4 +23,5 @@ formats:
 
 # Optionally declare the Python requirements required to build the docs
 python:
-  requirements: docs/source/requirements.txt
+  install:
+    - requirements: docs/source/requirements.txt
