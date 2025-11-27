@@ -1,6 +1,25 @@
 # Changelog / Release notes
 
 
+## [2.3.1](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.1)
+
+(*27 November 2025*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.0...2.3.1) since [2.3.0](https://pypi.org/project/pyhelpers/2.3.0/):
+
+- **Bug fixes:**
+  * Resolved a dependency deprecation issue by migrating `Expr.shrink_dtype()` to `Series.shrink_dtype()` within `downcast_numeric_columns()` (#86).
+  * Fixed an issue in `download_file_from_url()` where streaming compressed files (Gzip/Deflate) resulted in corrupted output (#88). The fix introduces the **`stream_download`** parameter for controlled, memory-efficient decompression.
+- **New features:**
+  * Added a new function: `get_project_structure()`, a utility for visualizing or generating project file/directory structure.
+- **Maintenance & documentation:**
+  * **Bumped minimum required Python version to 3.12** from 3.10.**.
+  * Updated build configuration (`.readthedocs.yml`) to use **Python 3.12** for documentation builds, resolving dependency conflicts (e.g. `pyproj`).
+  * Updated `requirements.txt` to reflect current dependencies.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.3.1 documentation](https://pyhelpers.readthedocs.io/en/2.3.1/).**
+
+
 ## [2.3.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.0)
 
 (*12 July 2025*)

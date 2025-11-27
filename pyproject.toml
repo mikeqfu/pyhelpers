@@ -21,7 +21,7 @@ keywords = [
     "Python utils",
     "Python utility"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "numpy",
     "pandas",
