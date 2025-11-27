@@ -19,14 +19,17 @@ def test_is_downloadable():
 
 
 @pytest.mark.parametrize('verbose', [True, False])
-def test_download_file_from_url(capfd, verbose):
+@pytest.mark.parametrize('stream_download', [True, False])
+def test_download_file_from_url(capfd, verbose, stream_download):
     logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
     path_to_img = "ops-download_file_from_url-demo.png"
-    download_file_from_url(logo_url, path_to_img, verbose=verbose, colour='green')
+    download_file_from_url(
+        logo_url, path_to_img, verbose=verbose, colour='green', stream_download=stream_download)
     assert os.path.isfile(path_to_img)
 
-    download_file_from_url(logo_url, path_to_img, if_exists='pass', verbose=verbose)
+    download_file_from_url(
+        logo_url, path_to_img, if_exists='pass', verbose=verbose, stream_download=stream_download)
     out, _ = capfd.readouterr()
     if verbose:
         assert "Aborting download." in out
@@ -35,7 +38,7 @@ def test_download_file_from_url(capfd, verbose):
 
     path_to_img_ = tempfile.NamedTemporaryFile()
     path_to_img = path_to_img_.name + ".png"
-    download_file_from_url(logo_url, path_to_img, verbose=verbose)
+    download_file_from_url(logo_url, path_to_img, verbose=verbose, stream_download=stream_download)
     assert os.path.isfile(path_to_img)
 
     os.remove(path_to_img_.name)
