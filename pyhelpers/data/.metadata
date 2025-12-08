@@ -3,7 +3,7 @@
     "Description": "An open-source toolkit for facilitating Python users' data manipulation tasks",
     "Package": "pyhelpers",
     "Author": "Qian Fu",
-    "Affiliation": "School of Engineering, University of Birmingham",
+    "Affiliation": "University of Birmingham",
     "Email": "q.fu@bham.ac.uk",
     "Version": "2.3.2.dev1",
     "License": "MIT",
