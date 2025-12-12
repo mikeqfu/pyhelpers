@@ -59,14 +59,72 @@ def is_downloadable(url, request_field='content-type', **kwargs):
     return downloadable
 
 
-def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=None, bar_format=None,
-                            colour=None, validate=True, print_wrap_limit=None, **kwargs):
+def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_multiplier=1,
+                            bar_desc=None, bar_format=None, bar_colour=None):
+    file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
+
+    total_records_ = int(total_records) if total_records else 0
+
+    block_size = 1024 ** 2
+    chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
+
+    colour_code, reset_colour = _get_ansi_colour_code([bar_colour, 'reset']) if bar_colour \
+        else ('', '')
+
+    pbar_args = {
+        'desc': bar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
+        'unit': 'B',
+        'unit_scale': True,
+        'leave': True,  # Ensures bar stays visible after completion
+        'miniters': 1,  # Forces update even for small changes
+    }
+    if file_size > 0:
+        pbar_args.update({
+            'total': file_size,  # total_iter = file_size // chunk_size
+            'bar_format':
+                bar_format or
+                f'{colour_code}'
+                f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
+                f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                f'{reset_colour}'
+        })
+    elif total_records:  # 'Content-Length' is missing, but record count is known (Fallback)
+        total_records_ = int(total_records)
+        pbar_args.update({  # Use a line-counting mechanism to simulate record progress
+            'total': total_records_ + 1,  # +1 for header
+            'unit': ' rec',
+            'unit_scale': False,
+            'bar_format':
+                bar_format or
+                f'{colour_code}'
+                f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
+                f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                f'{reset_colour}'
+        })
+    else:
+        pbar_args.update({
+            'total': None,
+            'bar_format':
+                bar_format or
+                f'{colour_code}'
+                f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
+                f'{reset_colour}'
+        })
+
+    return file_size, chunk_size, total_records_, pbar_args
+
+
+def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
+                            desc=None, bar_format=None, colour=None, validate=True,
+                            print_wrap_limit=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Downloads a file from a given HTTP response and saves it to the specified location.
+    Downloads a file with a persistent progress bar, handling both byte-size
+    and record-count tracking.
 
     This function reads the content of the response in chunks and writes it to a file while
-    displaying a progress bar using `tqdm`_.
+    displaying a progress bar using `tqdm`_. It supports a fallback progress bar based on
+    record counts for streams where ``Content-Length`` is missing.
 
     .. _`tqdm`: https://tqdm.github.io/
 
@@ -77,6 +135,9 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
         this can be either a full path including the filename,
         or just a filename, in which case it will be saved in the current working directory.
     :type path_to_file: str | os.PathLike
+    :param total_records: The expected number of records (rows) in the dataset,
+        used for progress tracking when ``Content-Length`` is unavailable; defaults to ``None``.
+    :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
         this can be adjusted to optimise download performance based on file size; defaults to ``1``.
     :type chunk_multiplier: int | float
@@ -118,39 +179,70 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
 
     tqdm_ = _check_dependencies('tqdm')
 
-    file_size = int(response.headers.get('content-length', 0))  # Total size in bytes
+    file_size, chunk_size, total_records_, pbar_args = _prep_progress_bar_args(
+        response=response, path_to_file=path_to_file, total_records=total_records,
+        chunk_multiplier=chunk_multiplier, bar_desc=desc, bar_format=bar_format, bar_colour=colour)
 
-    block_size = 1024 ** 2
-    chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
-
-    colour_code, reset_colour = _get_ansi_colour_code([colour, 'reset']) if colour else ('', '')
-
-    pbar_args = {
-        'desc': desc or f'Downloading "{os.path.basename(path_to_file)}"',
-        'total': file_size,  # total_iter = file_size // chunk_size
-        'unit': 'B',
-        'unit_scale': True,
-        'bar_format':
-            bar_format or
-            f'{colour_code}{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
-            f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining}}{reset_colour}',
-    }
     kwargs.update(pbar_args)
 
     belated = False if os.path.isfile(path_to_file) else True
 
-    try:
-        with open(file=path_to_file, mode='wb') as file, tqdm_.tqdm(**kwargs) as progress:
-            written = 0  # Track the amount downloaded in bytes
+    # Variables for Validation Tracking
+    written = 0  # Total bytes written
+    buffer = b''
+    actual_records = 0
 
-            for data in response.iter_content(chunk_size=chunk_size, decode_unicode=True):
-                if data:
-                    try:  # Write chunk to file
-                        file.write(data)
-                    except TypeError:
-                        file.write(data.encode())
-                    progress.update(len(data))  # Update the progress bar
-                    written += len(data)
+    try:
+        with open(file=path_to_file, mode='wb') as f, tqdm_.tqdm(**kwargs) as progress:
+
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if not chunk:
+                    continue
+
+                try:  # Write chunk to file
+                    f.write(chunk)
+                except TypeError:
+                    f.write(chunk.encode())
+
+                written += len(chunk)
+
+                if file_size > 0:
+                    progress.update(len(chunk))  # Bytes tracking
+
+                elif total_records_ > 0:
+                    buffer += chunk
+                    lines = buffer.count(b'\n')
+                    if lines > 0:
+                        actual_records += lines  # Track the real count for validation later
+
+                        # Calculate pending update
+                        current_n = progress.n
+                        max_visual_progress = progress.total - 1
+
+                        if current_n + lines >= max_visual_progress:
+                            # Only update enough to reach 99.9% (Total - 1)
+                            # We stop updating the visual bar here, even if download continues
+                            increment = max(0, max_visual_progress - current_n)
+                            progress.update(increment)
+                        else:
+                            progress.update(lines)  # Update records
+
+                        # Keep only the tail of the buffer that does NOT end in a newline
+                        buffer = buffer.split(b'\n', lines - 1)[-1]
+
+                else:
+                    progress.update(len(chunk))  # Unbounded bytes
+
+            if (file_size <= 0) and (total_records_ > 0):
+                if buffer.strip():
+                    actual_records += 1  # Count the final record
+
+                # Smoothly finish the bar
+                remaining = progress.total - progress.n
+                if remaining > 0:
+                    progress.update(remaining)
+
+            progress.refresh()  # Force the final 100% state to be drawn
 
     except (IOError, TypeError) as e:
         _print_failure_message(e, prefix="Download failed:", verbose=True, raise_error=True)
@@ -159,8 +251,24 @@ def _download_file_from_url(response, path_to_file, chunk_multiplier=1, desc=Non
         path_to_file, verbose=True, print_prefix="\t", print_wrap_limit=print_wrap_limit,
         belated=belated)
 
-    if validate and (written != file_size) and (file_size > 0):
-        raise ValueError(f"Download failed: expected {file_size} bytes, got {written} bytes.")
+    if validate:
+        if file_size > 0:
+            if written != file_size:
+                raise ValueError(
+                    f"Download failed (byte count mismatch).\n"
+                    f"\t\tExpected {file_size} bytes, but received {written} bytes.")
+            else:
+                print("Done.")
+        elif (file_size <= 0) and (total_records_ > 0):
+            expected = total_records_ + 1
+            if actual_records != expected:
+                print(f"Done.\n"
+                      f"\t\t(Warning: Expected {expected} lines, but received {actual_records}, "
+                      f"likely due to embedded newlines in the data.)")
+        else:
+            # Case where both `file_size` and `total_records` are missing.
+            # We assume success if no exception was raised above.
+            print("Done. (Stream completed, validation skipped due to unknown total size/records.)")
     else:
         print("Done.")
 
@@ -414,7 +522,7 @@ class GitHubFileDownloader:
         # Create a URL that is compatible with GitHub's REST API
         self.api_url, self.download_path = self.create_url(self.repo_url)
 
-        # Initialize the total number of files under the given directory
+        # Initialise the total number of files under the given directory
         self.total_files = 0
 
         # Set user agent in default
