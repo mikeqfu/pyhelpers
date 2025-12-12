@@ -59,8 +59,8 @@ def is_downloadable(url, request_field='content-type', **kwargs):
     return downloadable
 
 
-def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_multiplier=1,
-                            bar_desc=None, bar_format=None, bar_colour=None):
+def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
+                    pbar_format=None, pbar_colour=None):
     file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
 
     total_records_ = int(total_records) if total_records else 0
@@ -68,11 +68,11 @@ def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_mu
     block_size = 1024 ** 2
     chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
-    colour_code, reset_colour = _get_ansi_colour_code([bar_colour, 'reset']) if bar_colour \
+    colour_code, reset_colour = _get_ansi_colour_code([pbar_colour, 'reset']) if pbar_colour \
         else ('', '')
 
     pbar_args = {
-        'desc': bar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
+        'desc': pbar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
         'unit': 'B',
         'unit_scale': True,
         'leave': True,  # Ensures bar stays visible after completion
@@ -82,7 +82,7 @@ def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_mu
         pbar_args.update({
             'total': file_size,  # total_iter = file_size // chunk_size
             'bar_format':
-                bar_format or
+                pbar_format or
                 f'{colour_code}'
                 f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
                 f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
@@ -95,7 +95,7 @@ def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_mu
             'unit': ' rec',
             'unit_scale': False,
             'bar_format':
-                bar_format or
+                pbar_format or
                 f'{colour_code}'
                 f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
                 f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
@@ -105,7 +105,7 @@ def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_mu
         pbar_args.update({
             'total': None,
             'bar_format':
-                bar_format or
+                pbar_format or
                 f'{colour_code}'
                 f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
                 f'{reset_colour}'
@@ -202,9 +202,10 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 
     tqdm_ = _check_dependencies('tqdm')
 
-    file_size, chunk_size, total_records_, pbar_args = _prep_progress_bar_args(
+    file_size, chunk_size, total_records_, pbar_args = _prep_pbar_args(
         response=response, path_to_file=path_to_file, total_records=total_records,
-        chunk_multiplier=chunk_multiplier, bar_desc=desc, bar_format=bar_format, bar_colour=colour)
+        chunk_multiplier=chunk_multiplier, pbar_desc=desc, pbar_format=bar_format,
+        pbar_colour=colour)
 
     kwargs.update(pbar_args)
 
