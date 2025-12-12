@@ -114,6 +114,29 @@ def _prep_progress_bar_args(response, path_to_file, total_records=None, chunk_mu
     return file_size, chunk_size, total_records_, pbar_args
 
 
+def _validate_downloaded_file(validate, file_size, written, total_records_, actual_records):
+    if validate:
+        if file_size > 0:
+            if written != file_size:
+                raise ValueError(
+                    f"Download failed (byte count mismatch).\n"
+                    f"\t\tExpected {file_size} bytes, but received {written} bytes.")
+            else:
+                print("Done.")
+        elif (file_size <= 0) and (total_records_ > 0):
+            expected = total_records_ + 1
+            if actual_records != expected:
+                print(f"Done.\n"
+                      f"\t\t(Warning: Expected {expected} lines, but received {actual_records}, "
+                      f"likely due to embedded newlines in the data.)")
+        else:
+            # Case where both `file_size` and `total_records` are missing.
+            # We assume success if no exception was raised above.
+            print("Done. (Stream completed, validation skipped due to unknown total size/records.)")
+    else:
+        print("Done.")
+
+
 def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
                             desc=None, bar_format=None, colour=None, validate=True,
                             print_wrap_limit=None, **kwargs):
@@ -251,26 +274,9 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         path_to_file, verbose=True, print_prefix="\t", print_wrap_limit=print_wrap_limit,
         belated=belated)
 
-    if validate:
-        if file_size > 0:
-            if written != file_size:
-                raise ValueError(
-                    f"Download failed (byte count mismatch).\n"
-                    f"\t\tExpected {file_size} bytes, but received {written} bytes.")
-            else:
-                print("Done.")
-        elif (file_size <= 0) and (total_records_ > 0):
-            expected = total_records_ + 1
-            if actual_records != expected:
-                print(f"Done.\n"
-                      f"\t\t(Warning: Expected {expected} lines, but received {actual_records}, "
-                      f"likely due to embedded newlines in the data.)")
-        else:
-            # Case where both `file_size` and `total_records` are missing.
-            # We assume success if no exception was raised above.
-            print("Done. (Stream completed, validation skipped due to unknown total size/records.)")
-    else:
-        print("Done.")
+    _validate_downloaded_file(
+        validate=validate, file_size=file_size, written=written,
+        total_records_=total_records_, actual_records=actual_records)
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
