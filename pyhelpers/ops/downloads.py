@@ -138,7 +138,7 @@ def _validate_downloaded_file(validate, file_size, written, total_records_, actu
 
 
 def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
-                            desc=None, bar_format=None, colour=None, validate=True,
+                            pbar_desc=None, pbar_format=None, pbar_colour=None, validate=True,
                             print_wrap_limit=None, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -162,15 +162,17 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         used for progress tracking when ``Content-Length`` is unavailable; defaults to ``None``.
     :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
-        this can be adjusted to optimise download performance based on file size; defaults to ``1``.
+        this can be adjusted to optimise download performance based on file size;
+        defaults to ``1``.
     :type chunk_multiplier: int | float
-    :param desc: Custom description for the progress bar;
+    :param pbar_desc: Custom description for the progress bar;
         when ``desc=None``, it defaults to the filename.
-    :type desc: str | None
-    :param bar_format: Custom format for the progress bar.
-    :type bar_format: str | None
-    :param colour: Custom colour of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
-    :type colour: str | None
+    :type pbar_desc: str | None
+    :param pbar_format: Custom format for the progress bar.
+    :type pbar_format: str | None
+    :param pbar_colour: Custom colour of the progress bar (e.g. 'green', 'yellow');
+        defaults to ``None``.
+    :type pbar_colour: str | None
     :param validate: Whether to validate if the downloaded file size matches the expected content
         length; defaults to ``True``.
     :type validate: bool
@@ -179,8 +181,9 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
         when printed.
     :type print_wrap_limit: int | None
-    :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_, allowing customisation
-        of the progress bar (e.g. ``disable=True`` to hide the progress bar).
+    :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_,
+        allowing customisation of the progress bar
+        (e.g. ``disable=True`` to hide the progress bar).
 
     :raises TypeError: If writing the downloaded data to a file fails due to encoding issues.
     :raises ValueError: If the downloaded file size does not match the expected content length.
@@ -195,7 +198,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
         >>> with requests.get(url, stream=True) as response:
-        ...     _download_file_from_url(response, path_to_img, colour='green')
+        ...     _download_file_from_url(response, path_to_img, pbar_colour='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
             Updating "ops-download_file_from_url-demo.png" in ".\\tests\\images\\" ... Done.
     """
@@ -204,8 +207,8 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 
     file_size, chunk_size, total_records_, pbar_args = _prep_pbar_args(
         response=response, path_to_file=path_to_file, total_records=total_records,
-        chunk_multiplier=chunk_multiplier, pbar_desc=desc, pbar_format=bar_format,
-        pbar_colour=colour)
+        chunk_multiplier=chunk_multiplier, pbar_desc=pbar_desc, pbar_format=pbar_format,
+        pbar_colour=pbar_colour)
 
     kwargs.update(pbar_args)
 
@@ -405,9 +408,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     response=response,
                     path_to_file=path_to_file,
                     chunk_multiplier=chunk_multiplier,
-                    desc=desc,
-                    bar_format=bar_format,
-                    colour=colour,
+                    pbar_desc=desc,
+                    pbar_format=bar_format,
+                    pbar_colour=colour,
                     validate=validate,
                     print_wrap_limit=print_wrap_limit,
                     **kwargs
