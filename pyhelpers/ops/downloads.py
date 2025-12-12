@@ -14,8 +14,9 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _check_url_scheme, \
-    _get_ansi_colour_code, _init_requests_session, _print_failure_message, _USER_AGENT_STRINGS
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, \
+    _check_url_scheme, _get_ansi_colour_code, _init_requests_session, _print_failure_message, \
+    _USER_AGENT_STRINGS
 from ..store import _check_saving_path
 
 
@@ -118,9 +119,10 @@ def _validate_downloaded_file(validate, file_size, written, total_records_, actu
     if validate:
         if file_size > 0:
             if written != file_size:
+                print("Failed.")
                 raise ValueError(
-                    f"Download failed (byte count mismatch).\n"
-                    f"\t\tExpected {file_size} bytes, but received {written} bytes.")
+                    f"Byte count mismatch. "
+                    f"Expected {file_size} bytes, but received {written} bytes.")
             else:
                 print("Done.")
         elif (file_size <= 0) and (total_records_ > 0):
@@ -129,6 +131,8 @@ def _validate_downloaded_file(validate, file_size, written, total_records_, actu
                 print(f"Done.\n"
                       f"\t\t(Warning: Expected {expected} lines, but received {actual_records}, "
                       f"likely due to embedded newlines in the data.)")
+            else:
+                print("Done.")
         else:
             # Case where both `file_size` and `total_records` are missing.
             # We assume success if no exception was raised above.
@@ -200,7 +204,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         >>> with requests.get(url, stream=True) as response:
         ...     _download_file_from_url(response, path_to_img, pbar_colour='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
-            Updating "ops-download_file_from_url-demo.png" in ".\\tests\\images\\" ... Done.
+            Updating "ops-download_file_from_url-demo.png" in "./tests/images/" ... Done.
     """
 
     tqdm_ = _check_dependencies('tqdm')
@@ -284,12 +288,15 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
-                           requests_session_args=None, verbose=False, print_wrap_limit=None,
-                           chunk_multiplier=1, desc=None, bar_format=None, colour=None,
-                           validate=True, stream_download=False, **kwargs):
+                           requests_session_args=None, requests_headers=None, verbose=False,
+                           print_wrap_limit=None, total_records=None, chunk_multiplier=1,
+                           desc=None, bar_format=None, colour=None, validate=True,
+                           stream_download=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a valid URL.
+
+    The function uses the `requests` library and optionally `tqdm` for progress bar display.
 
     See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_] and
     [`OPS-DFFU-2 <https://stackoverflow.com/questions/15431044/>`_].
@@ -302,21 +309,28 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type path_to_file: str | os.PathLike[str]
     :param if_exists: Action to take if the specified file already exists;
         options include ``'replace'`` (default - download and replace the existing file) and
-        ``'pass'`` (cancel the download).
+        ``'pass'`` (cancel the download and return ``None``).
     :type if_exists: str
     :param max_retries: Maximum number of retries in case of download failures; defaults to ``5``.
     :type max_retries: int
-    :param verbose: Whether to print progress and relevant information to the console;
-        defaults to ``False``.
     :param requests_session_args: [Optional] Additional parameters for initialising
-        the requests session; defaults to ``None``.
+        the requests session (e.g., `proxies`, `verify`); defaults to ``None``.
     :type requests_session_args: dict | None
+    :param requests_headers: [Optional] Custom headers to be included in the HTTP request.
+        A default 'User-Agent' is automatically generated unless overridden.
+    :type requests_headers: dict | None
+    :param verbose: Whether to print progress and relevant information to the console;
+        defaults to ``False``. If ``True``, a `tqdm` progress bar is displayed.
     :type verbose: bool | int
     :param print_wrap_limit: Maximum length of the string before splitting into two lines;
         defaults to ``None``, which disables splitting. If the string exceeds this value,
         e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
         when printed.
     :type print_wrap_limit: int | None
+    :param total_records: The expected number of records (rows) in the dataset,
+        used for progress tracking when the response's ``Content-Length`` header is unavailable;
+        defaults to ``None``.
+    :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
         this can be adjusted to optimise download performance based on file size; defaults to ``1``.
     :type chunk_multiplier: int | float
@@ -327,15 +341,21 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type bar_format: str | None
     :param colour: Custom colour of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
     :type colour: str | None
-    :param validate: Whether to validate if the downloaded file size matches the expected content
-        length; defaults to ``True``.
+    :param validate: Whether to validate if the downloaded file is non-empty after download.
+        Validation checks if the final file size is greater than 0; defaults to ``True``.
     :type validate: bool
     :param stream_download: When `stream_download=True`, use streaming download
-        (memory-efficient, perferred for large files);
-        When `stream_download=False`, not streaming (simpler/faster for small files);
-        defaults to ``False``.
+        (memory-efficient, preferred for large files or when `verbose=False`);
+        When `stream_download=False`, the entire file content is loaded into memory first
+        (simpler/faster for small files); defaults to ``False``.
     :type stream_download: bool
     :param kwargs: [Optional] Additional parameters passed to the method `tqdm.tqdm()`_.
+
+    :return: ``None`` upon successful completion or if the download is skipped (i.e., when
+        ``if_exists='pass'`` and the file already exists).
+    :rtype: None
+
+    :raises ValueError: If ``validate=True`` and the downloaded file size is zero.
 
     .. _`tqdm.tqdm()`: https://tqdm.github.io/docs/tqdm/
 
@@ -374,14 +394,15 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     .. note::
 
         - When ``verbose=True``, the function requires `tqdm <https://pypi.org/project/tqdm/>`_.
+        - The function handles HTTP retries internally using a `requests` session adapter.
     """
 
     path_to_file_ = os.path.abspath(path_to_file)
 
     if os.path.isfile(path_to_file_) and if_exists != 'replace':
         if verbose:
-            print(f'File "{os.path.basename(path_to_file)}" already exists. Aborting download.\n'
-                  f'Set `if_exists="replace"` to update the existing file.')
+            print(f'File "{os.path.basename(path_to_file)}" already exists. Download skipped\n'
+                  f'(use `if_exists=\'replace\'` to overwrite)')
         return None
 
     else:
@@ -389,16 +410,18 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         requests_session_args = requests_session_args or {}
         session = _init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
-        fake_headers = {
+        headers = {
             'user-agent': secrets.choice(
                 _USER_AGENT_STRINGS.get(secrets.choice(list(_USER_AGENT_STRINGS))))}
+        if requests_headers:
+            headers.update(requests_headers)
 
         os.makedirs(os.path.dirname(path_to_file_), exist_ok=True)  # Ensure the directory exists
 
         # If streaming, we can iterate over the response
         stream_download_ = verbose or stream_download
 
-        with session.get(url=url, stream=stream_download_, headers=fake_headers) as response:
+        with session.get(url=url, stream=stream_download_, headers=headers) as response:
             if response.status_code != 200:
                 print(f"Failed to retrieve file. HTTP Status Code: {response.status_code}.")
                 return None
@@ -407,6 +430,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                 _download_file_from_url(
                     response=response,
                     path_to_file=path_to_file,
+                    total_records=total_records,
                     chunk_multiplier=chunk_multiplier,
                     pbar_desc=desc,
                     pbar_format=bar_format,
@@ -458,7 +482,7 @@ class GitHubFileDownloader:
         :type flatten_files: bool
         :param output_dir: Output directory where downloaded files will be saved;
             defaults to ``None``, meaning files will be saved in the current directory.
-        :type output_dir: str | None
+        :type output_dir: str | os.PathLike | None
 
         :ivar str repo_url: URL of the GitHub repository.
         :ivar bool flatten_files: Whether to flatten the directory structure
@@ -478,49 +502,49 @@ class GitHubFileDownloader:
             >>> repo_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv'
             >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
             >>> downloader.download()
-            Downloaded to: ".\\tests\\temp\\dat.csv"
+            Downloaded to: "./tests/temp/dat.csv"
             1
             >>> # Download a directory
             >>> repo_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data'
             >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
             >>> downloader.download()
-            Downloaded to: ".\\tests\\temp\\tests\\data\\csr_mat.npz"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.csv"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.feather"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.joblib"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.json"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.ods"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.bz2"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.gz"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.pickle.xz"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.txt"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\dat.xlsx"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.7z"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.txt"
-            Downloaded to: ".\\tests\\temp\\tests\\data\\zipped.zip"
+            Downloaded to: "./tests/temp/tests/data/csr_mat.npz"
+            Downloaded to: "./tests/temp/tests/data/dat.csv"
+            Downloaded to: "./tests/temp/tests/data/dat.feather"
+            Downloaded to: "./tests/temp/tests/data/dat.joblib"
+            Downloaded to: "./tests/temp/tests/data/dat.json"
+            Downloaded to: "./tests/temp/tests/data/dat.ods"
+            Downloaded to: "./tests/temp/tests/data/dat.pickle"
+            Downloaded to: "./tests/temp/tests/data/dat.pickle.bz2"
+            Downloaded to: "./tests/temp/tests/data/dat.pickle.gz"
+            Downloaded to: "./tests/temp/tests/data/dat.pickle.xz"
+            Downloaded to: "./tests/temp/tests/data/dat.txt"
+            Downloaded to: "./tests/temp/tests/data/dat.xlsx"
+            Downloaded to: "./tests/temp/tests/data/zipped.7z"
+            Downloaded to: "./tests/temp/tests/data/zipped.txt"
+            Downloaded to: "./tests/temp/tests/data/zipped.zip"
             15
             >>> downloader = GitHubFileDownloader(
             ...     repo_url, flatten_files=True, output_dir=output_dir)
             >>> downloader.download()
-            Downloaded to: ".\\tests\\temp\\csr_mat.npz"
-            Downloaded to: ".\\tests\\temp\\dat.csv"
-            Downloaded to: ".\\tests\\temp\\dat.feather"
-            Downloaded to: ".\\tests\\temp\\dat.joblib"
-            Downloaded to: ".\\tests\\temp\\dat.json"
-            Downloaded to: ".\\tests\\temp\\dat.ods"
-            Downloaded to: ".\\tests\\temp\\dat.pickle"
-            Downloaded to: ".\\tests\temp\"dat.pickle.bz2"
-            Downloaded to: ".\\tests\\temp\"dat.pickle.gz"
-            Downloaded to: ".\\tests\\temp\\"dat.pickle.xz"
-            Downloaded to: ".\\tests\\temp\\dat.txt"
-            Downloaded to: ".\\tests\\temp\\dat.xlsx"
-            Downloaded to: ".\\tests\\temp\\zipped.7z"
-            Downloaded to: ".\\tests\\temp\\zipped.txt"
-            Downloaded to: ".\\tests\\temp\\zipped.zip"
+            Downloaded to: "./tests/temp/csr_mat.npz"
+            Downloaded to: "./tests/temp/dat.csv"
+            Downloaded to: "./tests/temp/dat.feather"
+            Downloaded to: "./tests/temp/dat.joblib"
+            Downloaded to: "./tests/temp/dat.json"
+            Downloaded to: "./tests/temp/dat.ods"
+            Downloaded to: "./tests/temp/dat.pickle"
+            Downloaded to: "./tests/temp/dat.pickle.bz2"
+            Downloaded to: "./tests/temp/dat.pickle.gz"
+            Downloaded to: "./tests/temp/dat.pickle.xz"
+            Downloaded to: "./tests/temp/dat.txt"
+            Downloaded to: "./tests/temp/dat.xlsx"
+            Downloaded to: "./tests/temp/zipped.7z"
+            Downloaded to: "./tests/temp/zipped.txt"
+            Downloaded to: "./tests/temp/zipped.zip"
             15
             >>> delete_dir(output_dir)
-            To delete the directory ".\\tests\\temp\\" (Not empty)
+            To delete the directory "./tests/temp/" (Not empty)
             ? [No]|Yes: yes
         """
 
@@ -643,7 +667,7 @@ class GitHubFileDownloader:
             if self.output_dir == os.path.relpath(os.getcwd()):
                 print(f"Downloaded to: {_add_slashes(dir_out_)}")
             else:
-                print(f"Downloaded to: {_add_slashes(self.output_dir)}{dir_out_}")
+                print(f"Downloaded to: {_add_slashes(os.path.join(self.output_dir, dir_out_))}")
 
         else:
             print(f"Downloaded to: {_add_slashes(dir_out)}")
@@ -704,7 +728,7 @@ class GitHubFileDownloader:
         :return: Total number of files downloaded under the given directory.
         :rtype: int
 
-        .. seealso::
+        **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
             >>> from pyhelpers.dirs import delete_dir
@@ -713,23 +737,23 @@ class GitHubFileDownloader:
             >>> test_url = "https://github.com/mikeqfu/pyhelpers/blob/master/tests/data"
             >>> downloader = GitHubFileDownloader(test_url, output_dir=test_output_dir)
             >>> downloader.download()
-            Downloaded to: "<temp_dir>/tests/data/csr_mat.npz"
-            Downloaded to: "<temp_dir>/tests/data/dat.csv"
-            Downloaded to: "<temp_dir>/tests/data/dat.feather"
-            Downloaded to: "<temp_dir>/tests/data/dat.joblib"
-            Downloaded to: "<temp_dir>/tests/data/dat.json"
-            Downloaded to: "<temp_dir>/tests/data/dat.ods"
-            Downloaded to: "<temp_dir>/tests/data/dat.pickle"
-            Downloaded to: "<temp_dir>/tests/data/dat.pickle.bz2"
-            Downloaded to: "<temp_dir>/tests/data/dat.pickle.gz"
-            Downloaded to: "<temp_dir>/tests/data/dat.pickle.xz"
-            Downloaded to: "<temp_dir>/tests/data/dat.txt"
-            Downloaded to: "<temp_dir>/tests/data/dat.xlsx"
-            Downloaded to: "<temp_dir>/tests/data/zipped.7z"
-            Downloaded to: "<temp_dir>/tests/data/zipped.txt"
-            Downloaded to: "<temp_dir>/tests/data/zipped.zip"
+            Downloaded to: "<TEMP_DIR>/tests/data/csr_mat.npz"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.csv"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.feather"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.joblib"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.json"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.ods"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.pickle"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.pickle.bz2"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.pickle.gz"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.pickle.xz"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.txt"
+            Downloaded to: "<TEMP_DIR>/tests/data/dat.xlsx"
+            Downloaded to: "<TEMP_DIR>/tests/data/zipped.7z"
+            Downloaded to: "<TEMP_DIR>/tests/data/zipped.txt"
+            Downloaded to: "<TEMP_DIR>/tests/data/zipped.zip"
             >>> delete_dir(test_output_dir, confirmation_required=False, verbose=True)
-            Deleting "<temp_dir>/" ... Done.
+            Deleting "<TEMP_DIR>/" ... Done.
         """
 
         # Update `api_url` if it is not specified
