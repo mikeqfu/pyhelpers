@@ -688,51 +688,114 @@ def _check_url_scheme(url, allowed_schemes=None):
     return parsed_url
 
 
-_ANSI_ESCAPE_CODES = json.loads(
-    pkgutil.get_data(__name__, "data/ansi-escape-codes.json").decode())
-
-
-def _get_ansi_colour_code(colours, show_valid_colours=False):
+def _load_ansi_escape_codes():
     """
-    Returns the ANSI escape code(s) for the given colour name(s).
+    Loads and filters ANSI escape codes from the package data file.
 
-    :param colours: A single colour name (str) or a sequence of colour names
-        (e.g. 'red', ['red', 'green']).
+    The function uses :py:mod:`pkgutil` to access the data file relative to the
+    current package (``__name__``), decodes the JSON content, and filters out
+    any key-value pairs used for comments (keys starting with ``'_comment_'``).
+
+    :return: A dictionary mapping colour/style names (e.g. ``'red'``, ``'bold'``) to their
+        full ANSI escape code strings (e.g. ``'\\u001b[31m'``). Returns an empty
+        dictionary on failure and prints a warning.
+    :rtype: dict[str, str]
+
+    :raises json.JSONDecodeError: If the data file is found but contains invalid JSON.
+    :raises FileNotFoundError: If the data file cannot be located by ``pkgutil``.
+    :raises Exception: Catches and handles other general exceptions related to
+        package data loading (e.g. decoding errors, ``pkgutil`` issues).
+
+    **Examples**::
+
+        >>> from pyhelpers._cache import _load_ansi_escape_codes
+        >>> ansi_escape_codes = _load_ansi_escape_codes()
+        >>> ansi_escape_codes.get('red')
+        '\\x1b[31m'
+        >>> ansi_escape_codes.get('_comment_styles')  # Should be filtered out and returns None
+
+    """
+
+    try:
+        data = pkgutil.get_data(__name__, "data/ansi-escape-codes.json").decode()
+        raw_data = json.loads(data)
+        return {k: v for k, v in raw_data.items() if not k.startswith('_comment_')}
+    except Exception as e:  # Fallback for e.g. environments where pkgutil may fail
+        print(f"Warning: Could not load data file. Error: {e}")
+        return {}
+
+
+def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True):
+    """
+    Returns the ANSI escape code(s) for the given colour name(s) and/or style(s).
+
+    The function handles both single attribute requests and compound sequences
+    (e.g. ``['red', 'blue']``) by concatenating the codes into a single escape sequence
+    string when appropriate.
+
+    :param colours: A single colour/style name (str) or a sequence of names
+        (e.g. ``'red'``, ``'bold'``, ``['red', 'bg_blue']``).
     :type colours: str | list[str] | tuple[str]
-    :param show_valid_colours: If ``True``, returns a tuple containing the ANSI code(s) and
-        a set of valid colour names.
+    :param show_valid_colours: If ``True``, returns a tuple containing the final
+        output (string or list) and a set of all valid colour/style names.
     :type show_valid_colours: bool
-    :return: The ANSI escape code(s) for the given colour(s), or an error message
-        if an invalid colour is provided.
-    :rtype: str | list[str] | tuple[str | list[str], set[str]]
+    :param concatenated: If ``True`` (default), multiple requested codes are
+        concatenated into a single string (e.g. ``'\\u001b[31m\\u001b[1m'``).
+        If ``False``, a list of individual escape code strings is returned
+        (e.g. ``['\\u001b[31m', '\\u001b[1m']``).
+    :type concatenated: bool
+    :return: The ANSI escape code(s). This is a single string if
+        ``concatenated=True``, a list of strings if ``concatenated=False``
+        and multiple items were requested, or a tuple if ``show_valid_colours=True``.
+    :rtype: str | list[str] | tuple[Union[str, list[str]], set[str]]
+
+    :raises ValueError: If an invalid colour or style name is provided.
 
     **Examples**::
 
         >>> from pyhelpers._cache import _get_ansi_colour_code
-        >>> _get_ansi_colour_code('red')
-        '\\033[31m'
-        >>> _get_ansi_colour_code(['red', 'blue'])
-        ['\\033[31m', '\\033[34m']
+        >>> _get_ansi_colour_code('red')  # \\u001b[31m
+        '\\x1b[31m'
+        >>> _get_ansi_colour_code(['red', 'blue'])  # \\u001b[31m\\u001b[34m
+        '\\x1b[31m\\x1b[34m'
+        >>> _get_ansi_colour_code(['red', 'blue'], concatenated=False)
+        >>> # ['\\u001b[31m', '\\u001b[34m']
+        ['\\x1b[31m', '\\x1b[34m']
         >>> _get_ansi_colour_code('invalid_colour')
         Traceback (most recent call last):
             ...
         ValueError: 'invalid_colour' is not a valid colour name.
-        >>> _get_ansi_colour_code('red', show_valid_colours=True)
-        ('\\033[31m', {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', ...})
+        >>> _get_ansi_colour_code('red', show_valid_colours=True)  # ('\\u001b[31m', ...
+        ('\\x1b[31m', {'bg_black', 'bg_blue', 'bg_bright_black', 'bg_bright_blue', ...
     """
 
+    # Handle single string input
     if isinstance(colours, str):
-        colours = [colours]  # Convert single string to list for uniform processing
+        names = [colours]  # Convert single string to list for uniform processing
+    else:
+        names = list(colours)
 
+    ansi_escape_codes = _load_ansi_escape_codes()
+
+    # Retrieve the raw numeric codes
     try:
-        color_codes = [_ANSI_ESCAPE_CODES[x.lower()] for x in colours]
+        escape_codes = [ansi_escape_codes[x.lower()] for x in names]
     except KeyError as e:
         raise ValueError(f"'{e.args[0]}' is not a valid colour name.") from None
 
-    if len(color_codes) == 1:
-        color_codes = color_codes[0]  # Return a single string instead of a list
+    # Create the final ANSI escape sequence
+    if concatenated:  # Concatenate all retrieved codes into a single string
+        final_code = "".join(escape_codes)
+    else:  # Return the list of individual code strings
+        final_code = escape_codes
 
-    return (color_codes, set(_ANSI_ESCAPE_CODES)) if show_valid_colours else color_codes
+    # If only one input was given, return the string itself, even if not concatenated
+    if len(names) == 1 and not concatenated:
+        final_code = escape_codes[0]
+
+    valid_names = set(ansi_escape_codes.keys())
+
+    return (final_code, valid_names) if show_valid_colours else final_code
 
 
 _ENGLISH_NUMERALS = json.loads(
