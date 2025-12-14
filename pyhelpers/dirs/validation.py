@@ -11,6 +11,50 @@ from .navigation import cd
 from .._cache import _check_relative_pathname, _normalise_pathname
 
 
+def normalise_pathname(pathname, sep="/", add_slash=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Converts a pathname to a consistent file path format for cross-platform compatibility.
+
+    This function formats a file (or an OS-specific) path to ensure compatibility across
+    Windows and Ubuntu (and other Unix-like systems).
+
+    :param pathname: A pathname.
+    :type pathname: str | bytes | pathlib.Path | os.PathLike
+    :param sep: File path separator used by the operating system; defaults to ``"/"``
+        (forward slash) for both Windows and Ubuntu (and other Unix-like systems).
+    :type sep: str
+    :param add_slash: If ``True``, adds a leading slash (and, if appropriate, a trailing slash)
+        to the returned pathname; defaults to ``False``.
+    :type add_slash: bool
+    :return: Pathname of a consistent file path format.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.dirs import normalise_pathname
+        >>> import os
+        >>> import pathlib
+        >>> normalise_pathname("tests\\data\\dat.csv")
+        'tests/data/dat.csv'
+        >>> normalise_pathname("tests\\data\\dat.csv", add_slash=True)  # on Windows
+        './tests/data/dat.csv'
+        >>> normalise_pathname("tests//data/dat.csv")
+        'tests/data/dat.csv'
+        >>> pathname = pathlib.Path("tests\\data/dat.csv")
+        >>> normalise_pathname(pathname, sep=os.path.sep)  # On Windows
+        'tests\\data\\dat.csv'
+        >>> normalise_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        '.\\tests\\data\\dat.csv'
+
+    .. note::
+        This function serves as an alternative to
+        :py:func:`~pyhelpers.dirs.normalize_pathname`.
+    """
+
+    return _normalise_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
+
+
 def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -46,6 +90,10 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         'tests\\data\\dat.csv'
         >>> normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
         '.\\tests\\data\\dat.csv'
+
+    .. note::
+        This function serves as an alternative to
+        :py:func:`~pyhelpers.dirs.normalise_pathname`.
     """
 
     return _normalise_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
