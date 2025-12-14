@@ -61,7 +61,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
-                    pbar_format=None, pbar_colour=None):
+                    pbar_format=None, pbar_color=None):
     file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
 
     total_records_ = int(total_records) if total_records else 0
@@ -69,7 +69,7 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     block_size = 1024 ** 2
     chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
-    colour_code, reset_colour = _get_ansi_colour_code([pbar_colour, 'reset']) if pbar_colour \
+    color_code, reset_color = _get_ansi_colour_code([pbar_color, 'reset']) if pbar_color \
         else ('', '')
 
     pbar_args = {
@@ -84,10 +84,10 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
             'total': file_size,  # total_iter = file_size // chunk_size
             'bar_format':
                 pbar_format or
-                f'{colour_code}'
+                f'{color_code}'
                 f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
                 f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
-                f'{reset_colour}'
+                f'{reset_color}'
         })
     elif total_records:  # 'Content-Length' is missing, but record count is known (Fallback)
         total_records_ = int(total_records)
@@ -97,19 +97,19 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
             'unit_scale': False,
             'bar_format':
                 pbar_format or
-                f'{colour_code}'
+                f'{color_code}'
                 f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
                 f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
-                f'{reset_colour}'
+                f'{reset_color}'
         })
     else:
         pbar_args.update({
             'total': None,
             'bar_format':
                 pbar_format or
-                f'{colour_code}'
+                f'{color_code}'
                 f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
-                f'{reset_colour}'
+                f'{reset_color}'
         })
 
     return file_size, chunk_size, total_records_, pbar_args
@@ -142,7 +142,7 @@ def _validate_downloaded_file(validate, file_size, written, total_records_, actu
 
 
 def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
-                            pbar_desc=None, pbar_format=None, pbar_colour=None, validate=True,
+                            pbar_desc=None, pbar_format=None, pbar_color=None, validate=True,
                             print_wrap_limit=None, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -174,9 +174,9 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
     :type pbar_desc: str | None
     :param pbar_format: Custom format for the progress bar.
     :type pbar_format: str | None
-    :param pbar_colour: Custom colour of the progress bar (e.g. 'green', 'yellow');
+    :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow');
         defaults to ``None``.
-    :type pbar_colour: str | None
+    :type pbar_color: str | None
     :param validate: Whether to validate if the downloaded file size matches the expected content
         length; defaults to ``True``.
     :type validate: bool
@@ -202,7 +202,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
         >>> path_to_img = cd("tests", "images", "ops-download_file_from_url-demo.png")
         >>> with requests.get(url, stream=True) as response:
-        ...     _download_file_from_url(response, path_to_img, pbar_colour='green')
+        ...     _download_file_from_url(response, path_to_img, pbar_color='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
             Updating "ops-download_file_from_url-demo.png" in "./tests/images/" ... Done.
     """
@@ -212,7 +212,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
     file_size, chunk_size, total_records_, pbar_args = _prep_pbar_args(
         response=response, path_to_file=path_to_file, total_records=total_records,
         chunk_multiplier=chunk_multiplier, pbar_desc=pbar_desc, pbar_format=pbar_format,
-        pbar_colour=pbar_colour)
+        pbar_color=pbar_color)
 
     kwargs.update(pbar_args)
 
@@ -290,7 +290,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
                            requests_session_args=None, requests_headers=None, verbose=False,
                            print_wrap_limit=None, total_records=None, chunk_multiplier=1,
-                           desc=None, bar_format=None, colour=None, validate=True,
+                           pbar_desc=None, pbar_format=None, pbar_color=None, validate=True,
                            stream_download=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -334,13 +334,13 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
         this can be adjusted to optimise download performance based on file size; defaults to ``1``.
     :type chunk_multiplier: int | float
-    :param desc: Custom description for the progress bar;
+    :param pbar_desc: Custom description for the progress bar;
         when ``desc=None``, it defaults to the filename.
-    :type desc: str | None
-    :param bar_format: Custom format for the progress bar.
-    :type bar_format: str | None
-    :param colour: Custom colour of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
-    :type colour: str | None
+    :type pbar_desc: str | None
+    :param pbar_format: Custom format for the progress bar.
+    :type pbar_format: str | None
+    :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
+    :type pbar_color: str | None
     :param validate: Whether to validate if the downloaded file is non-empty after download.
         Validation checks if the final file size is greater than 0; defaults to ``True``.
     :type validate: bool
@@ -371,7 +371,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> os.path.exists(path_to_img)
         False
         >>> # Download the .png file
-        >>> download_file_from_url(url, path_to_img, verbose=True, colour='green')
+        >>> download_file_from_url(url, path_to_img, verbose=True, pbar_color='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
             Saving "ops-download_file_from_url-demo.png" to "./tests/images/" ... Done.
         >>> # If download is successful, check again:
@@ -432,9 +432,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     path_to_file=path_to_file,
                     total_records=total_records,
                     chunk_multiplier=chunk_multiplier,
-                    pbar_desc=desc,
-                    pbar_format=bar_format,
-                    pbar_colour=colour,
+                    pbar_desc=pbar_desc,
+                    pbar_format=pbar_format,
+                    pbar_color=pbar_color,
                     validate=validate,
                     print_wrap_limit=print_wrap_limit,
                     **kwargs

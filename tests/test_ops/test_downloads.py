@@ -30,7 +30,7 @@ def test_download_file_from_url(verbose, stream_download, tmp_path, capfd):
     assert not os.path.isfile(path_to_file)
 
     download_file_from_url(
-        logo_url, path_to_file, verbose=verbose, colour='green', stream_download=stream_download)
+        logo_url, path_to_file, verbose=verbose, pbar_color='green', stream_download=stream_download)
     assert os.path.isfile(path_to_file)
 
     download_file_from_url(
