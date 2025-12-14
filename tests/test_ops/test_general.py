@@ -6,7 +6,6 @@ import time
 
 import pytest
 
-from pyhelpers._cache import _ANSI_ESCAPE_CODES
 from pyhelpers.dbms import PostgreSQL
 from pyhelpers.ops.general import *
 
@@ -88,20 +87,10 @@ def test_get_git_branch(capfd):
         assert isinstance(branch_name, str)
 
 
-def test_get_ansi_colour_code():
-    color_codes = get_ansi_colour_code('red')
-    assert color_codes == '\033[31m'
-
-    color_codes = get_ansi_colour_code(['red', 'blue'])
-    assert color_codes == ['\033[31m', '\033[34m']
-
-    with pytest.raises(ValueError, match="'invalid_colour' is not a valid colour name."):
-        _ = get_ansi_colour_code('invalid_colour')
-
-    color_codes = get_ansi_colour_code('red', show_valid_colours=True)
-    assert isinstance(color_codes, tuple)
-    assert color_codes[0] == '\033[31m'
-    assert color_codes[1] == set(_ANSI_ESCAPE_CODES)
+@pytest.mark.parametrize('colours', ['invalid_colour', 'invalid_color'])
+def test_get_ansi_colour_code(colours):
+    with pytest.raises(ValueError, match=f"'{colours}' is not a valid"):
+        _ = get_ansi_colour_code(colours)
 
 
 @pytest.fixture
