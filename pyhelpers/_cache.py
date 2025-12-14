@@ -493,14 +493,14 @@ def _check_file_pathname(name, options=None, target=None):
             file_exists, file_pathname = False, None
 
     else:
-        file_pathname = copy.copy(name)
+        file_pathname = str(name)
 
         if os.path.isfile(file_pathname):
             file_exists = True
 
         else:
             file_exists = False
-            alt_pathnames = [shutil.which(file_pathname)]
+            alt_pathnames = [shutil.which(file_pathname)]  # noqa
 
             if options:
                 alt_pathnames = list(options) + alt_pathnames
@@ -882,7 +882,7 @@ def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
     # Strip leading/trailing spaces
     text_ = text_.strip()
 
-    # Normalize whitespace by collapsing multiple spaces
+    # Normalise whitespace by collapsing multiple spaces
     if rm_whitespace:
         text_ = ' '.join(text_.split())
 
