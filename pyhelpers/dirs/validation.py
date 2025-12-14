@@ -8,7 +8,7 @@ import pathlib
 import re
 
 from .navigation import cd
-from .._cache import _check_relative_pathname, _normalize_pathname
+from .._cache import _check_relative_pathname, _normalise_pathname
 
 
 def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
@@ -48,7 +48,7 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         '.\\tests\\data\\dat.csv'
     """
 
-    return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
+    return _normalise_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
 
 
 def is_dir(path_to_dir):

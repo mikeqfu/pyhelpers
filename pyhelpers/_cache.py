@@ -293,7 +293,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
+def _normalise_pathname(pathname, sep="/", add_slash=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Converts a pathname to a consistent file path format for cross-platform compatibility.
@@ -314,19 +314,19 @@ def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _normalize_pathname
+        >>> from pyhelpers._cache import _normalise_pathname
         >>> import os
         >>> import pathlib
-        >>> _normalize_pathname("tests\\data\\dat.csv")
+        >>> _normalise_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-        >>> _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
+        >>> _normalise_pathname("tests\\data\\dat.csv", add_slash=True)
         './tests/data/dat.csv'
-        >>> _normalize_pathname("tests//data/dat.csv")
+        >>> _normalise_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
         >>> pathname = pathlib.Path("tests\\data/dat.csv")
-        >>> _normalize_pathname(pathname, sep=os.path.sep)  # On Windows
+        >>> _normalise_pathname(pathname, sep=os.path.sep)  # On Windows
         'tests\\data\\dat.csv'
-        >>> _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        >>> _normalise_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
         '.\\tests\\data\\dat.csv'
     """
 
@@ -378,7 +378,7 @@ def _add_slashes(pathname, normalized=True, surrounded_by='"'):
         path = path + os.path.sep
 
     if normalized:
-        path = _normalize_pathname(path)
+        path = _normalise_pathname(path)
 
     s = surrounded_by or ""
 
@@ -426,7 +426,7 @@ def _check_relative_pathname(pathname, normalized=True):
     if os.name == "nt":  # Handle different drive letters on Windows
         if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
             # Return absolute path if drives differ
-            return _normalize_pathname(abs_pathname) if normalized else abs_pathname
+            return _normalise_pathname(abs_pathname) if normalized else abs_pathname
 
     # Check if the pathname is inside the current working directory
     if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
@@ -438,7 +438,7 @@ def _check_relative_pathname(pathname, normalized=True):
     else:
         rel_path = abs_pathname  # Return original absolute path if outside CWD
 
-    return _normalize_pathname(rel_path) if normalized else rel_path
+    return _normalise_pathname(rel_path) if normalized else rel_path
 
 
 def _check_file_pathname(name, options=None, target=None):

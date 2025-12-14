@@ -53,21 +53,21 @@ def test__confirmed(monkeypatch, capfd):
 
 
 def test__normalize_pathname():
-    from pyhelpers._cache import _normalize_pathname
+    from pyhelpers._cache import _normalise_pathname
     import pathlib
 
-    pathname = _normalize_pathname("tests\\data\\dat.csv")
+    pathname = _normalise_pathname("tests\\data\\dat.csv")
     assert pathname == 'tests/data/dat.csv'
 
-    pathname = _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
+    pathname = _normalise_pathname("tests\\data\\dat.csv", add_slash=True)
     assert pathname == './tests/data/dat.csv'
 
-    pathname = _normalize_pathname("tests//data/dat.csv".encode('utf-8'))
+    pathname = _normalise_pathname("tests//data/dat.csv".encode('utf-8'))
     assert pathname == 'tests/data/dat.csv'
 
     pathname = pathlib.Path("tests\\data/dat.csv")
-    pathname_1 = _normalize_pathname(pathname, sep=os.path.sep)
-    pathname_2 = _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
+    pathname_1 = _normalise_pathname(pathname, sep=os.path.sep)
+    pathname_2 = _normalise_pathname(pathname, sep=os.path.sep, add_slash=True)
     if os.name == 'nt':
         assert pathname_1 == 'tests\\data\\dat.csv'
         assert pathname_2 == '.\\tests\\data\\dat.csv'
