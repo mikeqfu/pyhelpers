@@ -725,7 +725,7 @@ def _load_ansi_escape_codes():
         return {}
 
 
-def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True):
+def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True, _spelling='colour'):
     """
     Returns the ANSI escape code(s) for the given colour name(s) and/or style(s).
 
@@ -764,7 +764,7 @@ def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True):
         >>> _get_ansi_colour_code('invalid_colour')
         Traceback (most recent call last):
             ...
-        ValueError: 'invalid_colour' is not a valid colour name.
+        ValueError: 'invalid_colour' is not a valid name.
         >>> _get_ansi_colour_code('red', show_valid_colours=True)  # ('\\u001b[31m', ...
         ('\\x1b[31m', {'bg_black', 'bg_blue', 'bg_bright_black', 'bg_bright_blue', ...
     """
@@ -781,7 +781,7 @@ def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True):
     try:
         escape_codes = [ansi_escape_codes[x.lower()] for x in names]
     except KeyError as e:
-        raise ValueError(f"'{e.args[0]}' is not a valid colour name.") from None
+        raise ValueError(f"'{e.args[0]}' is not a valid {str(_spelling).lower()} name.") from None
 
     # Create the final ANSI escape sequence
     if concatenated:  # Concatenate all retrieved codes into a single string
