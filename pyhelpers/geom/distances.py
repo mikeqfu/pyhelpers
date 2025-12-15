@@ -236,8 +236,8 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     Finds the closest points from a list of reference points to a set of query points.
 
     This function computes the closest points from a list of reference points ``ref_pts``
-    to a set of query points ``pts``. Various options are available for customisation,
-    such as returning multiple nearest neighbours (``k``), removing duplicated points,
+    to a set of query points ``pts``. Various options are available for customization,
+    such as returning multiple nearest neighbors (``k``), removing duplicated points,
     returning points as Shapely Points (`shapely.geometry.Point`_), returning indices
     of the closest points, and returning distances between ``pts`` and the closest
     points in ``ref_pts``.
@@ -248,7 +248,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     :type pts: numpy.ndarray | list | tuple | typing.Iterable | shapely.geometry.base.BaseGeometry
     :param ref_pts: Array of reference points with shape (m, 2).
     :type ref_pts: numpy.ndarray | list | tuple | shapely.geometry.base.BaseGeometry
-    :param k: Number of closest neighbours to find; defaults to 1.
+    :param k: Number of closest neighbors to find; defaults to 1.
     :type k: int | list
     :param unique: Whether to remove duplicated points from the results; defaults to False.
     :type unique: bool
@@ -347,7 +347,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     """
     Finds the shortest path through a sequence of points.
 
-    This function constructs a graph where each point is connected to its two nearest neighbours
+    This function constructs a graph where each point is connected to its two nearest neighbors
     and then uses Depth-First Search (DFS) starting from every point to find the lowest-cost path
     among those traversals. The method is quick but yields only an approximate solution.
 
@@ -371,7 +371,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     .. _`sklearn.neighbors.NearestNeighbors`:
         https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html
 
-    The original method using 2-Nearest Neighbours and DFS is a **Greedy Heuristic**.
+    The original method using 2-Nearest Neighbors and DFS is a **Greedy Heuristic**.
     For $N > 4$ points, this method rarely finds the mathematically shortest path
     (optimal TSP-P solution) because the 2-NN graph may contain local cycles or may not be
     fully connected, preventing DFS from discovering the optimal global order.

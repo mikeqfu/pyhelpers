@@ -27,7 +27,6 @@ Directory validation
     :toctree: _generated/
     :template: function.rst
 
-    normalise_pathname
     normalize_pathname
     is_dir
     validate_dir

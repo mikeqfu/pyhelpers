@@ -129,7 +129,7 @@ def init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='
     # noinspection PyShadowingNames
     """
     Instantiates a `requests <https://docs.python-requests.org/en/latest/>`_ session
-    with configurable retry behaviour.
+    with configurable retry behavior.
 
     :param url: A valid URL to establish the session.
     :type url: str

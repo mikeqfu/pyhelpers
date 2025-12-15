@@ -6,7 +6,7 @@ import importlib.resources
 import os
 import re
 
-from .._cache import _add_slashes, _check_file_pathname, _normalise_pathname
+from .._cache import _add_slashes, _check_file_pathname, _normalize_pathname
 
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwargs):
@@ -76,7 +76,7 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
         else:
             os.makedirs(os.path.dirname(path_to_file), **kwargs)
 
-    return _normalise_pathname(path) if normalized else path
+    return _normalize_pathname(path) if normalized else path
 
 
 def cdd(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
@@ -179,7 +179,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
         else:
             os.makedirs(os.path.dirname(path_to_file), **kwargs)
 
-    return _normalise_pathname(path) if normalized else path
+    return _normalize_pathname(path) if normalized else path
 
 
 def find_executable(name, options=None, target=None, normalized=True):

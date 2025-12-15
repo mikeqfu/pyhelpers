@@ -53,21 +53,21 @@ def test__confirmed(monkeypatch, capfd):
 
 
 def test__normalize_pathname():
-    from pyhelpers._cache import _normalise_pathname
+    from pyhelpers._cache import _normalize_pathname
     import pathlib
 
-    pathname = _normalise_pathname("tests\\data\\dat.csv")
+    pathname = _normalize_pathname("tests\\data\\dat.csv")
     assert pathname == 'tests/data/dat.csv'
 
-    pathname = _normalise_pathname("tests\\data\\dat.csv", add_slash=True)
+    pathname = _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
     assert pathname == './tests/data/dat.csv'
 
-    pathname = _normalise_pathname("tests//data/dat.csv".encode('utf-8'))
+    pathname = _normalize_pathname("tests//data/dat.csv".encode('utf-8'))
     assert pathname == 'tests/data/dat.csv'
 
     pathname = pathlib.Path("tests\\data/dat.csv")
-    pathname_1 = _normalise_pathname(pathname, sep=os.path.sep)
-    pathname_2 = _normalise_pathname(pathname, sep=os.path.sep, add_slash=True)
+    pathname_1 = _normalize_pathname(pathname, sep=os.path.sep)
+    pathname_2 = _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
     if os.name == 'nt':
         assert pathname_1 == 'tests\\data\\dat.csv'
         assert pathname_2 == '.\\tests\\data\\dat.csv'
@@ -192,16 +192,16 @@ def test__init_requests_session(retry_status):
     assert isinstance(s, requests.sessions.Session)
 
 
-@pytest.mark.parametrize('colours', ['invalid_colour', 'red', ['red', 'blue']])
-@pytest.mark.parametrize('show_valid_colours', [False, True])
+@pytest.mark.parametrize("colors", ['invalid_color', 'red', ['red', 'blue']])
+@pytest.mark.parametrize("show_valid_colors", [False, True])
 @pytest.mark.parametrize('concatenated', [True, False])
-def test__get_ansi_colour_code(colours, show_valid_colours, concatenated):
-    from pyhelpers._cache import _get_ansi_colour_code, _load_ansi_escape_codes
+def test__get_ansi_color_code(colors, show_valid_colors, concatenated):
+    from pyhelpers._cache import _get_ansi_color_code, _load_ansi_escape_codes
 
-    if colours == 'invalid_colour':
-        with pytest.raises(ValueError, match="'invalid_colour' is not a valid colour name."):
-            _ = _get_ansi_colour_code(
-                colours=colours, show_valid_colours=show_valid_colours, concatenated=concatenated)
+    if colors == 'invalid_color':
+        with pytest.raises(ValueError, match=f"'{colors}' is not a valid color name."):
+            _ = _get_ansi_color_code(
+                colors=colors, show_valid_colors=show_valid_colors, concatenated=concatenated)
 
     else:
         red_code = '\033[31m'
@@ -209,7 +209,7 @@ def test__get_ansi_colour_code(colours, show_valid_colours, concatenated):
         red_blue_compound = f'{red_code}{blue_code}'
         red_blue_list = [red_code, blue_code]
 
-        is_single_input = colours == 'red'
+        is_single_input = colors == 'red'
         expected_set = set(_load_ansi_escape_codes())
 
         if concatenated:
@@ -217,10 +217,10 @@ def test__get_ansi_colour_code(colours, show_valid_colours, concatenated):
         else:
             expected_code = red_code if is_single_input else red_blue_list
 
-        color_codes = _get_ansi_colour_code(
-            colours=colours, show_valid_colours=show_valid_colours, concatenated=concatenated)
+        color_codes = _get_ansi_color_code(
+            colors=colors, show_valid_colors=show_valid_colors, concatenated=concatenated)
 
-        if show_valid_colours:
+        if show_valid_colors:
             assert isinstance(color_codes, tuple)
             assert color_codes[0] == expected_code, \
                 f"Code mismatch in tuple (concatenated={concatenated})"

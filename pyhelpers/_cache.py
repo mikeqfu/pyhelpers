@@ -293,7 +293,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def _normalise_pathname(pathname, sep="/", add_slash=False, **kwargs):
+def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Converts a pathname to a consistent file path format for cross-platform compatibility.
@@ -314,19 +314,19 @@ def _normalise_pathname(pathname, sep="/", add_slash=False, **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _normalise_pathname
+        >>> from pyhelpers._cache import _normalize_pathname
         >>> import os
         >>> import pathlib
-        >>> _normalise_pathname("tests\\data\\dat.csv")
+        >>> _normalize_pathname("tests\\data\\dat.csv")
         'tests/data/dat.csv'
-        >>> _normalise_pathname("tests\\data\\dat.csv", add_slash=True)
+        >>> _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
         './tests/data/dat.csv'
-        >>> _normalise_pathname("tests//data/dat.csv")
+        >>> _normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
         >>> pathname = pathlib.Path("tests\\data/dat.csv")
-        >>> _normalise_pathname(pathname, sep=os.path.sep)  # On Windows
+        >>> _normalize_pathname(pathname, sep=os.path.sep)  # On Windows
         'tests\\data\\dat.csv'
-        >>> _normalise_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        >>> _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
         '.\\tests\\data\\dat.csv'
     """
 
@@ -364,7 +364,7 @@ def _add_slashes(pathname, normalized=True, surrounded_by='"'):
         '"C:/Windows/"'
     """
 
-    # Normalise path separators for consistency
+    # Normalize path separators for consistency
     path = os.path.normpath(pathname.decode() if isinstance(pathname, bytes) else pathname)
 
     # Add a leading slash
@@ -378,7 +378,7 @@ def _add_slashes(pathname, normalized=True, surrounded_by='"'):
         path = path + os.path.sep
 
     if normalized:
-        path = _normalise_pathname(path)
+        path = _normalize_pathname(path)
 
     s = surrounded_by or ""
 
@@ -426,7 +426,7 @@ def _check_relative_pathname(pathname, normalized=True):
     if os.name == "nt":  # Handle different drive letters on Windows
         if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
             # Return absolute path if drives differ
-            return _normalise_pathname(abs_pathname) if normalized else abs_pathname
+            return _normalize_pathname(abs_pathname) if normalized else abs_pathname
 
     # Check if the pathname is inside the current working directory
     if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
@@ -438,7 +438,7 @@ def _check_relative_pathname(pathname, normalized=True):
     else:
         rel_path = abs_pathname  # Return original absolute path if outside CWD
 
-    return _normalise_pathname(rel_path) if normalized else rel_path
+    return _normalize_pathname(rel_path) if normalized else rel_path
 
 
 def _check_file_pathname(name, options=None, target=None):
@@ -608,7 +608,7 @@ def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status=
     # noinspection PyShadowingNames
     """
     Instantiates a `requests <https://docs.python-requests.org/en/latest/>`_ session
-    with configurable retry behaviour.
+    with configurable retry behavior.
 
     :param url: A valid URL to establish the session.
     :type url: str
@@ -696,7 +696,7 @@ def _load_ansi_escape_codes():
     current package (``__name__``), decodes the JSON content, and filters out
     any key-value pairs used for comments (keys starting with ``'_comment_'``).
 
-    :return: A dictionary mapping colour/style names (e.g. ``'red'``, ``'bold'``) to their
+    :return: A dictionary mapping color/style names (e.g. ``'red'``, ``'bold'``) to their
         full ANSI escape code strings (e.g. ``'\\u001b[31m'``). Returns an empty
         dictionary on failure and prints a warning.
     :rtype: dict[str, str]
@@ -725,20 +725,20 @@ def _load_ansi_escape_codes():
         return {}
 
 
-def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True, _spelling='colour'):
+def _get_ansi_color_code(colors, show_valid_colors=False, concatenated=True, _spelling='color'):
     """
-    Returns the ANSI escape code(s) for the given colour name(s) and/or style(s).
+    Returns the ANSI escape code(s) for the given color name(s) and/or style(s).
 
     The function handles both single attribute requests and compound sequences
     (e.g. ``['red', 'blue']``) by concatenating the codes into a single escape sequence
     string when appropriate.
 
-    :param colours: A single colour/style name (str) or a sequence of names
+    :param colors: A single color/style name (str) or a sequence of names
         (e.g. ``'red'``, ``'bold'``, ``['red', 'bg_blue']``).
-    :type colours: str | list[str] | tuple[str]
-    :param show_valid_colours: If ``True``, returns a tuple containing the final
-        output (string or list) and a set of all valid colour/style names.
-    :type show_valid_colours: bool
+    :type colors: str | list[str] | tuple[str]
+    :param show_valid_colors: If ``True``, returns a tuple containing the final
+        output (string or list) and a set of all valid color/style names.
+    :type show_valid_colors: bool
     :param concatenated: If ``True`` (default), multiple requested codes are
         concatenated into a single string (e.g. ``'\\u001b[31m\\u001b[1m'``).
         If ``False``, a list of individual escape code strings is returned
@@ -746,34 +746,34 @@ def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True, 
     :type concatenated: bool
     :return: The ANSI escape code(s). This is a single string if
         ``concatenated=True``, a list of strings if ``concatenated=False``
-        and multiple items were requested, or a tuple if ``show_valid_colours=True``.
+        and multiple items were requested, or a tuple if ``show_valid_colors=True``.
     :rtype: str | list[str] | tuple[Union[str, list[str]], set[str]]
 
-    :raises ValueError: If an invalid colour or style name is provided.
+    :raises ValueError: If an invalid color or style name is provided.
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _get_ansi_colour_code
-        >>> _get_ansi_colour_code('red')  # \\u001b[31m
+        >>> from pyhelpers._cache import _get_ansi_color_code
+        >>> _get_ansi_color_code('red')  # \\u001b[31m
         '\\x1b[31m'
-        >>> _get_ansi_colour_code(['red', 'blue'])  # \\u001b[31m\\u001b[34m
+        >>> _get_ansi_color_code(['red', 'blue'])  # \\u001b[31m\\u001b[34m
         '\\x1b[31m\\x1b[34m'
-        >>> _get_ansi_colour_code(['red', 'blue'], concatenated=False)
+        >>> _get_ansi_color_code(['red', 'blue'], concatenated=False)
         >>> # ['\\u001b[31m', '\\u001b[34m']
         ['\\x1b[31m', '\\x1b[34m']
-        >>> _get_ansi_colour_code('invalid_colour')
+        >>> _get_ansi_color_code('invalid_color')
         Traceback (most recent call last):
             ...
-        ValueError: 'invalid_colour' is not a valid name.
-        >>> _get_ansi_colour_code('red', show_valid_colours=True)  # ('\\u001b[31m', ...
+        ValueError: 'invalid_color' is not a valid name.
+        >>> _get_ansi_color_code('red', show_valid_colors=True)  # ('\\u001b[31m', ...
         ('\\x1b[31m', {'bg_black', 'bg_blue', 'bg_bright_black', 'bg_bright_blue', ...
     """
 
     # Handle single string input
-    if isinstance(colours, str):
-        names = [colours]  # Convert single string to list for uniform processing
+    if isinstance(colors, str):
+        names = [colors]  # Convert single string to list for uniform processing
     else:
-        names = list(colours)
+        names = list(colors)
 
     ansi_escape_codes = _load_ansi_escape_codes()
 
@@ -795,7 +795,7 @@ def _get_ansi_colour_code(colours, show_valid_colours=False, concatenated=True, 
 
     valid_names = set(ansi_escape_codes.keys())
 
-    return (final_code, valid_names) if show_valid_colours else final_code
+    return (final_code, valid_names) if show_valid_colors else final_code
 
 
 _ENGLISH_NUMERALS = json.loads(
@@ -945,7 +945,7 @@ def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
     # Strip leading/trailing spaces
     text_ = text_.strip()
 
-    # Normalise whitespace by collapsing multiple spaces
+    # Normalize whitespace by collapsing multiple spaces
     if rm_whitespace:
         text_ = ' '.join(text_.split())
 

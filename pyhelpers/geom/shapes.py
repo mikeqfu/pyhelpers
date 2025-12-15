@@ -15,7 +15,7 @@ from .._cache import _check_dependencies, _transform_point_type
 
 def get_midpoint(x1, y1, x2, y2, as_geom=False):
     """
-    Gets the midpoint between two points (applicable for vectorised computation).
+    Gets the midpoint between two points (applicable for vectorized computation).
 
     :param x1: Longitude(s) or easting(s) of a point (an array of points).
     :type x1: float | int | typing.Iterable | numpy.ndarray
@@ -229,13 +229,13 @@ def get_rectangle_centroid(rectangle, as_geom=False):
 
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    Gets the four vertices of a square given its centre and side length.
+    Gets the four vertices of a square given its center and side length.
 
     See also [`GEOM-GSV-1 <https://stackoverflow.com/questions/22361324/>`_].
 
-    :param ctr_x: X-coordinate of the square's centre.
+    :param ctr_x: X-coordinate of the square's center.
     :type ctr_x: int | float
-    :param ctr_y: Y-coordinate of the square's centre.
+    :param ctr_y: Y-coordinate of the square's center.
     :type ctr_y: int | float
     :param side_length: Side length of the square.
     :type side_length: int | float
@@ -284,13 +284,13 @@ def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
 
 def get_square_vertices_calc(ctr_x, ctr_y, side_length, rotation_theta=0):
     """
-    Gets the four vertices of a square given its centre and side length (by elementary calculation).
+    Gets the four vertices of a square given its center and side length (by elementary calculation).
 
     See also [`GEOM-GSVC-1 <https://math.stackexchange.com/questions/1490115>`_].
 
-    :param ctr_x: X-coordinate of the square's centre.
+    :param ctr_x: X-coordinate of the square's center.
     :type ctr_x: int | float
-    :param ctr_y: Y-coordinate of the square's centre.
+    :param ctr_y: Y-coordinate of the square's center.
     :type ctr_y: int | float
     :param side_length: Side length of the square.
     :type side_length: int | float
@@ -359,7 +359,7 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
     :type margin: float
     :param precision: Number of decimal places to display in the annotation text; defaults to ``2``.
     :type precision: int
-    :param kwargs: [Optional] Additional parameters for annotation customisation.
+    :param kwargs: [Optional] Additional parameters for annotation customization.
     :return: Updated ``kwargs`` dictionary containing annotation parameters.
     :rtype: dict
     """
@@ -381,14 +381,14 @@ def _sketch_square_annotate(x, y, fontsize, margin=0.025, precision=2, **kwargs)
 def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False, annot_font_size=12,
                   fig_size=(6.4, 4.8), ret_vertices=False, **kwargs):
     """
-    Sketches a square on a plot given its centre coordinates, side length and rotation angle.
+    Sketches a square on a plot given its center coordinates, side length and rotation angle.
 
-    This function plots a square with its centre at coordinates ``(ctr_x, ctr_y)``,
+    This function plots a square with its center at coordinates ``(ctr_x, ctr_y)``,
     side length ``side_length``, and rotated by `rotation_theta` degrees (anticlockwise).
 
-    :param ctr_x: X coordinate of the centre of the square.
+    :param ctr_x: X coordinate of the center of the square.
     :type ctr_x: int | float
-    :param ctr_y: Y coordinate of the centre of the square.
+    :param ctr_y: Y coordinate of the center of the square.
     :type ctr_y: int | float
     :param side_length: Side length of the square.
     :type side_length: int | float
@@ -448,7 +448,7 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         :align: center
         :width: 65%
 
-        An example of a sketch of a square rotated 75 degrees anticlockwise about the centre.
+        An example of a sketch of a square rotated 75 degrees anticlockwise about the center.
     """
 
     mpl_plt, mpl_ticker = _check_dependencies('matplotlib.pyplot', 'matplotlib.ticker')

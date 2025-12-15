@@ -88,9 +88,9 @@ def test_get_git_branch(capfd):
 
 
 @pytest.mark.parametrize('colours', ['invalid_colour', 'invalid_color'])
-def test_get_ansi_colour_code(colours):
+def test_get_ansi_color_code(colours):
     with pytest.raises(ValueError, match=f"'{colours}' is not a valid"):
-        _ = get_ansi_colour_code(colours)
+        _ = get_ansi_color_code(colours)
 
 
 @pytest.fixture

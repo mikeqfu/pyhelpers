@@ -8,7 +8,7 @@ import shutil
 
 import pytest
 
-from pyhelpers._cache import _add_slashes, _check_relative_pathname, _normalise_pathname, \
+from pyhelpers._cache import _add_slashes, _check_relative_pathname, _normalize_pathname, \
     example_dataframe
 from pyhelpers.store.converters import *
 from pyhelpers.store.loaders import load_csv
@@ -22,7 +22,7 @@ def test_unzip(capfd):
         unzip(path_to_zip_file=path_to_zip_file, output_dir=out_dir, verbose=True)
         out, _ = capfd.readouterr()
         assert f'Extracting {_add_slashes(os.path.relpath(path_to_zip_file_.__str__()))}' in out
-        assert f' to "{_normalise_pathname(out_dir)}' in out and "Done." in out
+        assert f' to "{_normalize_pathname(out_dir)}' in out and "Done." in out
 
 
 @pytest.mark.parametrize('verbose', [True, False])
