@@ -413,10 +413,10 @@ def fake_requests_headers(randomized=True, **kwargs):
         >>> from pyhelpers.ops import fake_requests_headers
         >>> fake_headers_1 = fake_requests_headers()
         >>> fake_headers_1
-        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.1...
+        {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; it-IT) AppleWebKit/525.1...
         >>> fake_headers_2 = fake_requests_headers(randomized=False)
         >>> fake_headers_2  # using a random Chrome user-agent string
-        {'user-agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1...
+        {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/532.1...
 
     .. note::
 
@@ -432,6 +432,6 @@ def fake_requests_headers(randomized=True, **kwargs):
 
     user_agent_string = get_user_agent_string(**kwargs)
 
-    fake_headers = {'user-agent': user_agent_string}
+    fake_headers = {'User-Agent': user_agent_string}
 
     return fake_headers
