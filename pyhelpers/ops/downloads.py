@@ -69,8 +69,10 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     block_size = 1024 ** 2
     chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
-    color_code, reset_color = _get_ansi_colour_code([pbar_color, 'reset']) if pbar_color \
-        else ('', '')
+    if pbar_color:
+        color_code, reset_color = _get_ansi_colour_code([pbar_color, 'reset'], concatenated=False)
+    else:
+        color_code, reset_color = ('', '')
 
     pbar_args = {
         'desc': pbar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
