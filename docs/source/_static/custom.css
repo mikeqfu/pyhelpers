@@ -171,6 +171,7 @@
         margin-top: 0;
         margin-bottom: -1.0em;
         font-size: var(--font-size--normal);
+        color: var(--color-content-foreground);
     }
 
     dd p.rubric {
