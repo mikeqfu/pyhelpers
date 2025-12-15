@@ -66,7 +66,7 @@ def test_get_user_agent_string(fancy):
 @pytest.mark.parametrize('randomized', [False, True])
 def test_fake_requests_headers(randomized):
     fake_headers_ = fake_requests_headers(randomized=randomized)
-    assert 'user-agent' in fake_headers_
+    assert 'User-Agent' in fake_headers_
 
 
 if __name__ == '__main__':
