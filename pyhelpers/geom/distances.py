@@ -36,7 +36,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
         (relative to the earth's radius).
     :rtype: float | None
 
-    **Examples**::
+    Examples:
 
         >>> from pyhelpers.geom import calc_distance_on_unit_sphere
         >>> from pyhelpers._cache import example_dataframe
@@ -125,7 +125,7 @@ def calc_hypotenuse_distance(pt1, pt2):
         - Calculated using the formula: ``sqrt((x2 - x1)^2 + (y2 - y1)^2)``
         - Equivalent to ``numpy.hypot(x, y)`` which computes ``sqrt(x*x + y*y)``.
 
-    **Examples**::
+    Examples:
 
         >>> from pyhelpers.geom import calc_hypotenuse_distance
         >>> from shapely.geometry import Point
@@ -174,7 +174,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
     .. _`numpy.ndarray`: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html
 
-    **Examples**::
+    Examples:
 
         >>> from pyhelpers.geom import find_closest_point
         >>> from pyhelpers._cache import example_dataframe
@@ -236,8 +236,8 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     Finds the closest points from a list of reference points to a set of query points.
 
     This function computes the closest points from a list of reference points ``ref_pts``
-    to a set of query points ``pts``. Various options are available for customisation,
-    such as returning multiple nearest neighbours (``k``), removing duplicated points,
+    to a set of query points ``pts``. Various options are available for customization,
+    such as returning multiple nearest neighbors (``k``), removing duplicated points,
     returning points as Shapely Points (`shapely.geometry.Point`_), returning indices
     of the closest points, and returning distances between ``pts`` and the closest
     points in ``ref_pts``.
@@ -248,7 +248,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     :type pts: numpy.ndarray | list | tuple | typing.Iterable | shapely.geometry.base.BaseGeometry
     :param ref_pts: Array of reference points with shape (m, 2).
     :type ref_pts: numpy.ndarray | list | tuple | shapely.geometry.base.BaseGeometry
-    :param k: Number of closest neighbours to find; defaults to 1.
+    :param k: Number of closest neighbors to find; defaults to 1.
     :type k: int | list
     :param unique: Whether to remove duplicated points from the results; defaults to False.
     :type unique: bool
@@ -270,7 +270,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     .. _`scipy.spatial.cKDTree`:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
 
-    **Examples**::
+    Examples:
 
         >>> from pyhelpers.geom import find_closest_points
         >>> from pyhelpers._cache import example_dataframe
@@ -347,22 +347,36 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     """
     Finds the shortest path through a sequence of points.
 
-    :param points_sequence: Sequence of points
+    This function constructs a graph where each point is connected to its two nearest neighbors
+    and then uses Depth-First Search (DFS) starting from every point to find the lowest-cost path
+    among those traversals. The method is quick but yields only an approximate solution.
+
+    :param points_sequence: Sequence of points, typically a 2D array or list of
+        coordinates (e.g. ``[[lon, lat], ...]``).
     :type points_sequence: numpy.ndarray | list | typing.Iterable
-    :param ret_dist: Whether to return the distance of the shortest path; defaults to ``False``.
+    :param ret_dist: Whether to return the path distance (sum of edge lengths)
+        as the second element of a tuple; defaults to ``False``.
     :type ret_dist: bool
-    :param as_geom: Whether to return the sorted path as a line geometry object;
-        defaults to ``False``.
+    :param as_geom: Whether to return the sorted path as a :py:class:`shapely.geometry.LineString`
+        object (requires `shapely`); defaults to ``False``.
     :type as_geom: bool
-    :param kwargs: [Optional] Additional parameters of the class
-        `sklearn.neighbors.NearestNeighbors`_.
-    :return: a sequence of sorted points given two-nearest neighbors
-    :rtype: numpy.ndarray | shapely.geometry.LineString | tuple
+    :param kwargs: [Optional] Additional parameters for the class
+        `sklearn.neighbors.NearestNeighbors`_, such as ``metric``
+        (e.g. ``'euclidean'``, ``'haversine'``).
+    :return: The sorted path sequence (numpy.ndarray), optionally wrapped in
+        a :py:class:`shapely.geometry.LineString` or a tuple with the distance.
+    :rtype: numpy.ndarray | shapely.geometry.LineString |
+        tuple[numpy.ndarray | shapely.geometry.LineString, float]
 
     .. _`sklearn.neighbors.NearestNeighbors`:
         https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.NearestNeighbors.html
 
-    **Examples**::
+    The original method using 2-Nearest Neighbors and DFS is a **Greedy Heuristic**.
+    For $N > 4$ points, this method rarely finds the mathematically shortest path
+    (optimal TSP-P solution) because the 2-NN graph may contain local cycles or may not be
+    fully connected, preventing DFS from discovering the optimal global order.
+
+    Examples:
 
         >>> from pyhelpers.geom import find_shortest_path
         >>> from pyhelpers._cache import example_dataframe
@@ -430,38 +444,49 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
         An example of sorting a sequence of points given the shortest path.
     """
 
-    if len(points_sequence) <= 2:
-        shortest_path = points_sequence
+    points_sequence_ = np.array(points_sequence)
+
+    if len(points_sequence_) <= 2:
+        shortest_path, min_dist = points_sequence_, 0.0
 
     else:
         nx, sklearn_neighbors = _check_dependencies('networkx', 'sklearn.neighbors')
 
-        nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence)
+        nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence_)
         kn_g = nn_clf.kneighbors_graph()
 
         nx_g = nx.from_scipy_sparse_array(kn_g)
 
+        # Get all possible path orders starting from every node using DFS
         possible_paths = [
-            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence))]
+            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence_))]
 
-        min_dist, idx = np.inf, 0
+        min_dist, idx = np.inf, -1  # Initialise idx to a sentinel value
 
-        for i in range(len(points_sequence)):
-            nodes_order = possible_paths[i]  # order of nodes
-            ordered_nodes = points_sequence[nodes_order]  # ordered nodes
+        for i in range(len(points_sequence_)):
+            nodes_order = possible_paths[i]
+
+            # Skip paths that don't visit all nodes (due to disconnected 2-NN graph)
+            if len(nodes_order) != len(points_sequence_):
+                continue
+
+            ordered_nodes = points_sequence_[nodes_order]
 
             # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
-            dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1)).sum()
-            if dist <= min_dist:
+            dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1) ** 0.5).sum()
+            if dist < min_dist:  # Use < instead of <= to guarantee determinism in case of ties
                 min_dist = dist
                 idx = i
 
-        shortest_path = points_sequence[possible_paths[idx]]
+        if idx == -1:  # Handle case where 2-NN graph is so disconnected no full path was found
+            shortest_path, min_dist = points_sequence_, 0.0
+        else:
+            shortest_path = points_sequence_[possible_paths[idx]]
 
         if as_geom:
             shortest_path = shapely.geometry.LineString(shortest_path)
 
         if ret_dist:
-            shortest_path = shortest_path, min_dist
+            return shortest_path, min_dist
 
     return shortest_path

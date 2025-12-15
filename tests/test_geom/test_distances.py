@@ -151,7 +151,7 @@ def test_find_shortest_path():
     cities_sorted_2, min_dist = find_shortest_path(
         points_sequence=cities, as_geom=True, ret_dist=True)
     assert 'LINESTRING' in cities_sorted_2.wkt
-    assert np.round(min_dist, 1) == 5.8
+    assert np.round(min_dist, 1) == 3.9
 
     cities_ = cities[:2]
     cities_sorted = find_shortest_path(points_sequence=cities_)

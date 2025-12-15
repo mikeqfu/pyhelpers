@@ -107,5 +107,5 @@ Misc general utilities
     verify_password
     func_running_time
     get_git_branch
-    get_ansi_colour_code
+    get_ansi_color_code
     get_project_structure

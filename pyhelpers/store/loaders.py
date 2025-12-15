@@ -44,7 +44,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
     .. note::
 
-        - Ensure that ``path_to_file`` comes from a trusted source to avoid deserialisation
+        - Ensure that ``path_to_file`` comes from a trusted source to avoid deserialization
           vulnerabilities.
         - Example data can be referred to the function :func:`~pyhelpers.store.svr.save_pickle`.
 
@@ -340,7 +340,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
 
     :param path_to_file: Path where the JSON file is saved.
     :type path_to_file: str | os.PathLike
-    :param engine: An open-source Python package for JSON serialisation;
+    :param engine: An open-source Python package for JSON serialization;
         valid options include ``None`` (default, for the built-in `json module`_),
         ``'ujson'`` (for `UltraJSON`_), ``'orjson'`` (for `orjson`_) and
         ``'rapidjson'`` (for `python-rapidjson`_); defaults to ``None``.

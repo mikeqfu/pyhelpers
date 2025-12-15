@@ -1,4 +1,16 @@
 {
+    "_comment_styles": "------ Text attributes (Styles) ------",
+    "reset": "\u001b[0m",
+    "bold": "\u001b[1m",
+    "dim": "\u001b[2m",
+    "italic": "\u001b[3m",
+    "underline": "\u001b[4m",
+    "blink": "\u001b[5m",
+    "reverse": "\u001b[7m",
+    "hidden": "\u001b[8m",
+    "strike": "\u001b[9m",
+
+    "_comment_fg_standard": "------ Foreground colours (Standard 30-37) ------",
     "black": "\u001b[30m",
     "red": "\u001b[31m",
     "green": "\u001b[32m",
@@ -7,6 +19,8 @@
     "magenta": "\u001b[35m",
     "cyan": "\u001b[36m",
     "white": "\u001b[37m",
+
+    "_comment_fg_bright": "------ Foreground colours (Bright 90-97) ------",
     "bright_black": "\u001b[90m",
     "bright_red": "\u001b[91m",
     "bright_green": "\u001b[92m",
@@ -15,6 +29,8 @@
     "bright_magenta": "\u001b[95m",
     "bright_cyan": "\u001b[96m",
     "bright_white": "\u001b[97m",
+
+    "_comment_bg_standard": "------ Background colours (Standard 40-47) ------",
     "bg_black": "\u001b[40m",
     "bg_red": "\u001b[41m",
     "bg_green": "\u001b[42m",
@@ -23,6 +39,8 @@
     "bg_magenta": "\u001b[45m",
     "bg_cyan": "\u001b[46m",
     "bg_white": "\u001b[47m",
+
+    "_comment_bg_bright": "------ Background colours (Bright 100-107) ------",
     "bg_bright_black": "\u001b[100m",
     "bg_bright_red": "\u001b[101m",
     "bg_bright_green": "\u001b[102m",
@@ -31,5 +49,17 @@
     "bg_bright_magenta": "\u001b[105m",
     "bg_bright_cyan": "\u001b[106m",
     "bg_bright_white": "\u001b[107m",
-    "reset": "\u001b[0m"
+
+    "_comment_style_off": "------ Reset/Turn off codes (Style/Attribute resets) ------",
+    "nobold": "\u001b[22m",
+    "noitalic": "\u001b[23m",
+    "nounderline": "\u001b[24m",
+    "noblink": "\u001b[25m",
+    "noreverse": "\u001b[27m",
+    "nohidden": "\u001b[28m",
+    "nostrike": "\u001b[29m",
+
+    "_comment_color_default": "------ Default colour resets ------",
+    "default_fg": "\u001b[39m",
+    "default_bg": "\u001b[49m"
 }

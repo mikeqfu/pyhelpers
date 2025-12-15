@@ -15,7 +15,7 @@ import urllib.request
 import requests.adapters
 
 from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, \
-    _check_url_scheme, _get_ansi_colour_code, _init_requests_session, _print_failure_message, \
+    _check_url_scheme, _get_ansi_color_code, _init_requests_session, _print_failure_message, \
     _USER_AGENT_STRINGS
 from ..store import _check_saving_path
 
@@ -69,8 +69,10 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     block_size = 1024 ** 2
     chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
-    color_code, reset_color = _get_ansi_colour_code([pbar_color, 'reset']) if pbar_color \
-        else ('', '')
+    if pbar_color:
+        color_code, reset_color = _get_ansi_color_code([pbar_color, 'reset'], concatenated=False)
+    else:
+        color_code, reset_color = ('', '')
 
     pbar_args = {
         'desc': pbar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
@@ -166,7 +168,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         used for progress tracking when ``Content-Length`` is unavailable; defaults to ``None``.
     :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
-        this can be adjusted to optimise download performance based on file size;
+        this can be adjusted to optimize download performance based on file size;
         defaults to ``1``.
     :type chunk_multiplier: int | float
     :param pbar_desc: Custom description for the progress bar;
@@ -186,7 +188,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         when printed.
     :type print_wrap_limit: int | None
     :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_,
-        allowing customisation of the progress bar
+        allowing customization of the progress bar
         (e.g. ``disable=True`` to hide the progress bar).
 
     :raises TypeError: If writing the downloaded data to a file fails due to encoding issues.
@@ -313,7 +315,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type if_exists: str
     :param max_retries: Maximum number of retries in case of download failures; defaults to ``5``.
     :type max_retries: int
-    :param requests_session_args: [Optional] Additional parameters for initialising
+    :param requests_session_args: [Optional] Additional parameters for initializing
         the requests session (e.g., `proxies`, `verify`); defaults to ``None``.
     :type requests_session_args: dict | None
     :param requests_headers: [Optional] Custom headers to be included in the HTTP request.
@@ -332,7 +334,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         defaults to ``None``.
     :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
-        this can be adjusted to optimise download performance based on file size; defaults to ``1``.
+        this can be adjusted to optimize download performance based on file size; defaults to ``1``.
     :type chunk_multiplier: int | float
     :param pbar_desc: Custom description for the progress bar;
         when ``desc=None``, it defaults to the filename.
@@ -556,7 +558,7 @@ class GitHubFileDownloader:
         # Create a URL that is compatible with GitHub's REST API
         self.api_url, self.download_path = self.create_url(self.repo_url)
 
-        # Initialise the total number of files under the given directory
+        # Initialize the total number of files under the given directory
         self.total_files = 0
 
         # Set user agent in default

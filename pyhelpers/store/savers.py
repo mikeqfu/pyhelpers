@@ -236,7 +236,7 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
     :type cur_sheet_names: list[str]
     :param writer: The pandas.ExcelWriter object used for writing to the file.
     :type writer: pandas.ExcelWriter
-    :param if_sheet_exists: Behaviour when writing to an existing sheet (None for prompt).
+    :param if_sheet_exists: Behavior when writing to an existing sheet (None for prompt).
     :type if_sheet_exists: None | str
     :param autofit_column_width: Whether to autofit column width after saving the sheet.
     :type autofit_column_width: bool
@@ -256,8 +256,8 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
     cur_sheet_names_list = list(cur_sheet_names)
 
     for sheet_data, sheet_name in zip(data, sheet_names):
-        # Reset to the default behaviour for the current sheet to be processed:
-        # This is the behaviour set by the ExcelWriter instantiation in the caller.
+        # Reset to the default behavior for the current sheet to be processed:
+        # This is the behavior set by the ExcelWriter instantiation in the caller.
         writer._if_sheet_exists = if_sheet_exists if if_sheet_exists is not None else 'error'
 
         if verbose:
@@ -331,7 +331,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
           OpenDocument (``.ods``) files; a write operation will be performed instead.
 
     :type mode: str
-    :param if_sheet_exists: Behaviour when trying to write a sheet that already exists:
+    :param if_sheet_exists: Behavior when trying to write a sheet that already exists:
 
         - ``None`` (default): Prompts the user for action: ``[pass]|new|replace``.
         - ``'error'``: Raises a ValueError (pandas default).
@@ -793,7 +793,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     """
     Saves a figure object to a file in a supported format.
 
-    This function utilises the `matplotlib.pyplot.savefig()`_ function and
+    This function utilizes the `matplotlib.pyplot.savefig()`_ function and
     optionally `Inkscape`_ for SVG to EMF conversion.
 
     :param path_to_file: The path where the figure file will be saved.
