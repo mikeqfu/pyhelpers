@@ -720,8 +720,7 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
     .. _`geopandas.GeoDataFrame.to_parquet()`:
         https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_parquet.html
     .. _`pyarrow.parquet.write_table()`:
-        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html#
-        pyarrow.parquet.write_table
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
 
     **Examples**::
 
