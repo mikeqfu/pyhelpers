@@ -9,6 +9,7 @@ import inspect
 import logging
 import lzma
 import operator
+import os.path
 import pickle  # nosec
 import sys
 
@@ -16,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from .utils import _check_loading_path, _set_index
-from .._cache import _check_dependencies, _print_failure_message
+from .._cache import _check_dependencies, _lazy_check_dependencies, _print_failure_message
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
@@ -545,6 +546,114 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
 
         if verbose:
             print("Done.")
+
+        return data
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'}, geopandas='gpd')
+def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
+                 **kwargs):
+    """
+    Loads data from a `Parquet`_ file.
+
+    This function provides a flexible interface for loading Parquet files.
+    It uses ``pandas.read_parquet`` or ``geopandas.read_parquet``. If the specified engine is
+    invalid or unavailable, it falls back to ``pyarrow.parquet.read_table``.
+
+    :param path_to_file: Path where the Parquet file is saved.
+    :type path_to_file: str | os.PathLike
+    :param engine: Parquet library to use; options are ``None`` (default), ``'auto'``,
+        ``'pyarrow'`` or ``'fastparquet'``.
+    :type engine: str | None
+    :param verbose: Whether to print progress information; defaults to ``False``.
+    :type verbose: bool | int
+    :param prt_kwargs: [Optional] Additional parameters for
+        :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
+    :type prt_kwargs: dict | None
+    :param raise_error: Whether to raise exceptions; if ``False`` (default),
+        errors are captured and printed via a failure message if ``verbose=True``.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for `pandas.read_parquet()`_,
+        `geopandas.read_parquet()`_ or `pyarrow.parquet.read_table()`_.
+    :return: Data retrieved from the specified path.
+    :rtype: pandas.DataFrame | geopandas.GeoDataFrame | pyarrow.Table
+
+    .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
+    .. _`pandas.read_parquet()`:
+        https://pandas.pydata.org/docs/reference/api/pandas.read_parquet.html
+    .. _`geopandas.read_parquet()`:
+        https://geopandas.org/en/stable/docs/reference/api/geopandas.read_parquet.html
+    .. _`pyarrow.parquet.read_table()`:
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.read_table.html
+
+    .. note::
+        If the primary loaders fail (e.g. due to an invalid ``engine``), the function
+        falls back to PyArrow and attempts to convert the resulting table back to a
+        DataFrame. If conversion fails, a ``pyarrow.Table`` is returned.
+
+    **Examples**::
+
+        >>> from pyhelpers.store import load_parquet
+        >>> from pyhelpers.dirs import cd
+        >>> parquet_pathname = cd("tests", "data", "dat.parquet")
+        >>> parquet_dat1 = load_parquet(parquet_pathname, verbose=True)
+        Loading "./tests/data/dat.parquet" ... Done.
+        >>> parquet_dat1
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+        >>> # Load with a specific engine
+        >>> parquet_dat2 = load_parquet(parquet_pathname, engine='fastparquet', verbose=True)
+        Loading "dat.parquet" from "./tests/data/" ... Done.
+        >>> parquet_dat2.equals(parquet_dat1)
+        True
+        >>> # Trigger fallback by providing an invalid engine
+        >>> parquet_dat = load_parquet(parquet_pathname, engine='invalid', verbose=True)
+        Loading "dat.parquet" from "./tests/data/" ... Done.
+            Warning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. Falling ...
+
+    .. seealso::
+        - Example data can be referred to in the function :func:`~pyhelpers.store.save_parquet`.
+    """
+
+    if prt_kwargs is None:
+        prt_kwargs = {}
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+
+    try:
+        file_ext = os.path.splitext(path_to_file)[1].lower()
+
+        warning_message = ""
+
+        try:
+            if file_ext == ".geoparquet":  # Use GeoPandas if the extension suggests spatial data
+                data = gpd.read_parquet(path_to_file, **kwargs)  # noqa
+            else:  # Use Pandas; engine can be None, 'auto', 'pyarrow' or 'fastparquet'
+                data = pd.read_parquet(
+                    path_to_file, engine='auto' if engine is None else engine, **kwargs)
+
+        except (ValueError, ImportError):
+            warning_message = \
+                ("\n\tWarning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. "
+                 "Falling back to `pyarrow.parquet.read_table()`.")
+
+            kwargs.pop('engine', None)
+            data = pq.read_table(path_to_file, **kwargs)  # noqa
+
+            try:
+                data = data.to_pandas()
+            except Exception:  # noqa
+                warning_message += (f"\n\tWarning: Conversion to DataFrame failed. "
+                                    f"Returning pyarrow.Table.")
+
+        if verbose:
+            print("Done.", end=f"{warning_message}\n")
 
         return data
 
