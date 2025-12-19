@@ -186,6 +186,38 @@ def test_save_feather(index, tmp_path, capfd):
         save_feather(dat, path_to_file=path_to_file, verbose=True, raise_error=True)
 
 
+@pytest.mark.parametrize('engine', [None, 'auto', 'pyarrow'])
+def test_save_parquet(engine, tmp_path, capfd):
+    import pyarrow as pa
+
+    filename = "test_save_parquet.parquet"
+    path_to_file = tmp_path / filename
+
+    # Test with standard pandas.DataFrame
+    dat_df = example_dataframe()
+
+    save_parquet(dat_df, path_to_file=path_to_file, engine=engine, verbose=True)
+    out, _ = capfd.readouterr()
+    assert f'Saving "{filename}"' in out and "Done." in out
+    assert path_to_file.is_file()
+
+    # noinspection PyArgumentList
+    dat_table = pa.Table.from_pandas(dat_df)  # Test with pyarrow.Table (Direct path)
+
+    # We use a new path to verify "Saving" again
+    path_to_file_arrow = tmp_path / "test_arrow.parquet"
+    save_parquet(dat_table, path_to_file=path_to_file_arrow, verbose=True)
+    out, _ = capfd.readouterr()
+    assert 'Saving "test_arrow.parquet"' in out and "Done." in out
+    assert path_to_file_arrow.is_file()
+
+    # Test failure case (e.g., passing something un-serializable)
+    unserializable_dat = threading.Thread(target=lambda: print("Hi"))  # Example object
+
+    with pytest.raises(Exception):
+        save_parquet(unserializable_dat, path_to_file=path_to_file, raise_error=True)  # noqa
+
+
 def test_save_svg_as_emf(tmp_path, capfd):
     x, y = (1, 1), (2, 2)
     plt.figure()
@@ -258,7 +290,7 @@ def test_save_html_as_pdf(tmp_path, capfd):
 
 
 @pytest.mark.parametrize(
-    'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".pdf", ".png", ".unknown"])
+    'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".parquet", ".pdf", ".png", ".bin"])
 def test_save_data(ext, tmp_path, capfd, caplog):
     filename = f"test_save_data{ext}"
     path_to_file = tmp_path / filename
@@ -281,10 +313,10 @@ def test_save_data(ext, tmp_path, capfd, caplog):
     else:
         assert f'Saving "{filename}"' in out and "Done." in out
 
-    if ext == ".unknown":
+    if ext == ".bin":
         # assert len(recwarn) == 1
         # w = recwarn.pop()
-        # assert str(w.message) == "The specified file format (extension) is not recognisable by " \
+        # assert str(w.message) == "The specified file format (extension) is not recognizable by " \
         #                          "`pyhelpers.store.save_data`."
         for record in caplog.records:
             assert record.levelname == 'WARNING'

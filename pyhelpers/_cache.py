@@ -151,30 +151,30 @@ def _lazy_check_dependencies(*args, **kwargs):
                 self._name = name
                 self._module = None
 
-            def __getattr__(self, attr):
+            def _load(self):
                 if self._module is None:
                     try:
-                        self._module = __import__(self._name)
+                        # Use import_module to handle 'a.b' correctly
+                        self._module = importlib.import_module(self._name)
                     except ImportError as e:
                         raise ImportError(
                             f"Required package '{self._name}' not found. "
                             f"Please install it to use '{func.__name__}'."
                         ) from e
+                return self._module
 
-                # Support 'from module import x' syntax
-                if attr == '__all__':
-                    return dir(self._module)
+            def __getattr__(self, attr):
+                return getattr(self._load(), attr)
 
-                return getattr(self._module, attr)
+            def __dir__(self):
+                return dir(self._load())  # Helps with IDE autocompletion once loaded
 
         @functools.wraps(func)
         def wrapper(*_args, **_kwargs):
-            # Add lazy modules to function globals
             for package_, alias_ in package_mapping.items():
+                # Inject the lazy proxy into the function's global namespace
                 func.__globals__[alias_] = LazyModule(package_)
-
             return func(*_args, **_kwargs)
-
         return wrapper
 
     return decorator
