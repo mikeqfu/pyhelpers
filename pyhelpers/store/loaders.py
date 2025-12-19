@@ -649,8 +649,8 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             try:
                 data = data.to_pandas()
             except Exception:  # noqa
-                warning_message += (f"\n\tWarning: Conversion to DataFrame failed. "
-                                    f"Returning pyarrow.Table.")
+                warning_message += ("\n\tWarning: Conversion to DataFrame failed. "
+                                    "Returning pyarrow.Table.")
 
         if verbose:
             print("Done.", end=f"{warning_message}\n")
