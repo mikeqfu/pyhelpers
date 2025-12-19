@@ -86,6 +86,7 @@ def test_get_file_pathnames():
         'dat.joblib',
         'dat.json',
         'dat.ods',
+        'dat.parquet',
         'dat.pickle',
         'dat.pickle.bz2',
         'dat.pickle.gz',
