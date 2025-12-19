@@ -691,6 +691,98 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'})
+def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
+    """
+    Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
+
+    This function supports saving via Pandas/GeoPandas (default) or directly using the
+    PyArrow engine.
+
+    :param data: The dataframe to be saved.
+    :type data: pandas.DataFrame | geopandas.GeoDataFrame | pyarrow.Table
+    :param path_to_file: The destination path for the Parquet file.
+    :type path_to_file: str | os.PathLike
+    :param engine: Parquet library to use; options are ``None``, ``'auto'``,
+        ``'pyarrow'`` or ``'fastparquet'``; when ``engine=None``, it defaults to ``'auto'``
+        if ``data`` is ``pandas.DataFrame``.
+    :type engine: str | None
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param raise_error: Whether to re-raise exceptions encountered during saving;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for `pandas.DataFrame.to_parquet()`_,
+        `geopandas.GeoDataFrame.to_parquet()`_ or `pyarrow.parquet.write_table()`_.
+
+    .. _`pandas.DataFrame.to_parquet()`:
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html
+    .. _`geopandas.GeoDataFrame.to_parquet()`:
+        https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_parquet.html
+    .. _`pyarrow.parquet.write_table()`:
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html#
+        pyarrow.parquet.write_table
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_parquet
+        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import pyarrow as pa
+        >>> parquet_dat = example_dataframe()  # Get an example dataframe
+        >>> parquet_dat
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+        >>> parquet_pathname = cd("tests/data", "dat.parquet")
+        >>> save_parquet(parquet_dat, parquet_pathname, verbose=True)
+        Saving "dat.parquet" to "./tests/data/" ... Done.
+        >>> # Save using an explicit engine (e.g. 'pyarrow')
+        >>> save_parquet(parquet_dat, parquet_pathname, engine='pyarrow', verbose=True)
+        Updating "dat.parquet" in "./tests/data/" ... Done.
+        >>> # Save a PyArrow Table directly
+        >>> parquet_tbl = pa.Table.from_pandas(parquet_dat)
+        >>> parquet_tbl
+        pyarrow.Table
+        Longitude: double
+        Latitude: double
+        City: string
+        ----
+        Longitude: [[-0.1276474,-1.9026911,-2.2451148,-1.5437941]]
+        Latitude: [[51.5073219,52.4796992,53.4794892,53.7974185]]
+        City: [["London","Birmingham","Manchester","Leeds"]]
+        >>> save_parquet(parquet_tbl, parquet_pathname, verbose=True)
+        Updating "dat.parquet" in "./tests/data/" ... Done.
+
+    .. seealso::
+
+        - Examples for the function :func:`pyhelpers.store.load_parquet`.
+    """
+
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+
+    try:
+        # Only use direct pyarrow writer if data is already an Arrow Table
+        if isinstance(data, pa.Table):  # noqa
+            pq.write_table(data, path_to_file, **kwargs)  # noqa
+
+        else:
+            if hasattr(data, 'has_sindex') and hasattr(data, 'geometry'):  # GeoDataFrames
+                data.to_parquet(path_to_file, **kwargs)
+
+            else:  # DataFrames
+                data.to_parquet(path_to_file, engine='auto' if engine is None else engine, **kwargs)
+
+        if verbose:
+            print("Done.")
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
 def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False):
     # noinspection PyShadowingNames
     """
@@ -1114,6 +1206,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         :func:`~pyhelpers.store.save_json`,
         :func:`~pyhelpers.store.save_joblib`,
         :func:`~pyhelpers.store.save_feather`,
+        :func:`~pyhelpers.store.save_parquet`,
         :func:`~pyhelpers.store.save_figure` or
         :func:`~pyhelpers.store.save_web_page_as_pdf`.
 
@@ -1123,6 +1216,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     .. _`JSON`: https://www.json.org/json-en.html
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
     .. _`HTML file`: https://fileinfo.com/extension/html
     .. _`Matplotlib`:
         https://matplotlib.org/stable/api/backend_bases_api.html#
@@ -1159,6 +1253,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
+        >>> dat_pathname = cd(data_dir, "dat.parquet")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.parquet" to "./tests/data/" ... Done.
         >>> # Convert `dat` to JSON format
         >>> import json
         >>> dat_ = json.loads(dat.to_json(orient='index'))
@@ -1201,6 +1298,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     elif path_to_file_.endswith((".fea", ".feather")):
         save_feather(**kwargs)
+
+    elif path_to_file_.endswith((".parquet", ".geoparquet")):
+        save_parquet(**kwargs)
 
     elif (path_to_file_.endswith(".pdf") and
           all(x not in data.__class__.__module__ for x in {'seaborn', 'matplotlib'})):
