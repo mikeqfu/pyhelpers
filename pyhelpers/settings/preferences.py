@@ -158,7 +158,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     Alters some default parameters for displaying
     `NumPy arrays <https://numpy.org/doc/stable/reference/generated/numpy.array.html>`_.
 
-    This function allows customising the display options for NumPy arrays, including
+    This function allows customizing the display options for NumPy arrays, including
     decimal precision, summary at the beginning and end of each dimension, line width for
     inserting line breaks and optional custom formatting.
 
@@ -171,7 +171,7 @@ def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatt
     :param line_char: Number of characters per line for inserting line breaks, corresponding to
         ``linewidth`` of the function `numpy.set_printoptions()`_; defaults to ``120``.
     :type line_char: int
-    :param head_tail: Number of array items to summarise at the beginning (head) and end (tail)
+    :param head_tail: Number of array items to summarize at the beginning (head) and end (tail)
         of each dimension, corresponding to ``edgeitems`` of the function
         `numpy.set_printoptions()`_; defaults to ``5``.
     :type head_tail: int
@@ -263,7 +263,7 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     <https://matplotlib.org/stable/api/matplotlib_configuration_api.html#matplotlib.rcParams>`_
     for plotting.
 
-    This function allows customising various Matplotlib parameters such as backend, font settings,
+    This function allows customizing various Matplotlib parameters such as backend, font settings,
     legend spacing and figure style.
 
     :param reset: Whether to reset all parameters to their default settings; defaults to ``False``.

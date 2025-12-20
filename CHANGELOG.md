@@ -1,6 +1,26 @@
 # Changelog / Release notes
 
 
+## [2.3.2](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.2)
+
+(*20 December 2025*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.1...2.3.2) since [2.3.1](https://pypi.org/project/pyhelpers/2.3.1/):
+
+- **New features:**
+  * Refactored `download_file_from_url()` with improved validation and progress bar handling (#94).
+  * Added Parquet support with `save_parquet()` and `load_parquet()` (#97).
+- **Improvements & standardization:**
+  * Standardized naming conventions and spelling across functions, tests, and tutorials for better consistency (#95).
+  * Updated HTTP headers to use standard Title-Case (e.g. `'User-Agent'`) in `fake_requests_headers()` (#96).
+  * Refactored `find_shortest_path()` for improved performance (#95).
+- **Maintenance & documentation:**
+  * Updated project metadata, affiliation details, and Sphinx documentation configuration (#93).
+  * Expanded test suites to cover project structure and Parquet utilities (#94, #97).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.3.2 documentation](https://pyhelpers.readthedocs.io/en/2.3.2/).**
+
+
 ## [2.3.1](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.1)
 
 (*27 November 2025*)

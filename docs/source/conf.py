@@ -256,8 +256,6 @@ latex_documents = [
      ),
 ]
 
-affil_dept, affil_univ = __affil__.split(', ')
-
 # Custom title page:
 latex_maketitle = r'''
     \newgeometry{top=1.1in,bottom=1.1in,right=1.0in,left=1.0in}
@@ -275,9 +273,8 @@ latex_maketitle = r'''
         \vspace{5mm}
         \LARGE \textbf{\textit{{Release %s}}} \par
 
-        \vspace{45mm}
+        \vspace{50mm}
         \LARGE \textbf{{%s}} \par
-        \Large \textit{{%s}} \par
         \Large \textit{{%s}} \par
 
         \vspace{50mm}
@@ -316,8 +313,7 @@ latex_maketitle = r'''
            __desc__,
            __version__,
            __author__,
-           affil_dept,
-           affil_univ,
+           __affil__,
            __first_release__,
            __copyright__)
 

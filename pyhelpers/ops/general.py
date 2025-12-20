@@ -12,7 +12,7 @@ import subprocess  # nosec
 
 import pandas as pd
 
-from .._cache import _confirmed, _get_ansi_colour_code
+from .._cache import _confirmed, _get_ansi_color_code
 
 
 def confirmed(prompt=None, confirmation_required=True, resp=False):
@@ -315,36 +315,52 @@ def get_git_branch(verbose=False):
             print("Not in a Git repository")
 
 
-def get_ansi_colour_code(colours, show_valid_colours=False):
+def get_ansi_color_code(colors, show_valid_colors=False, concatenated=True):
     """
-    Returns the ANSI escape code(s) for the given colour name(s).
+    Returns the ANSI escape code(s) for the given color name(s) and/or style(s).
 
-    :param colours: A single colour name (str) or a sequence of colour names
-        (e.g. 'red', ['red', 'green']).
-    :type colours: str | list[str] | tuple[str]
-    :param show_valid_colours: If ``True``, returns a tuple containing the ANSI code(s) and
-        a set of valid colour names.
-    :type show_valid_colours: bool
-    :return: The ANSI escape code(s) for the given colour(s), or an error message
-        if an invalid colour is provided.
-    :rtype: str | list[str] | tuple[str | list[str], set[str]]
+    The function handles both single attribute requests and compound sequences
+    (e.g. ``['red', 'blue']``) by concatenating the codes into a single escape sequence
+    string when appropriate.
+
+    :param colors: A single color/style name (str) or a sequence of names
+        (e.g. ``'red'``, ``'bold'``, ``['red', 'bg_blue']``).
+    :type colors: str | list[str] | tuple[str]
+    :param show_valid_colors: If ``True``, returns a tuple containing the final
+        output (string or list) and a set of all valid color/style names.
+    :type show_valid_colors: bool
+    :param concatenated: If ``True`` (default), multiple requested codes are
+        concatenated into a single string (e.g. ``'\\u001b[31m\\u001b[1m'``).
+        If ``False``, a list of individual escape code strings is returned
+        (e.g. ``['\\u001b[31m', '\\u001b[1m']``).
+    :type concatenated: bool
+    :return: The ANSI escape code(s). This is a single string if
+        ``concatenated=True``, a list of strings if ``concatenated=False``
+        and multiple items were requested, or a tuple if ``show_valid_colors=True``.
+    :rtype: str | list[str] | tuple[Union[str, list[str]], set[str]]
+
+    :raises ValueError: If an invalid color or style name is provided.
 
     **Examples**::
 
-        >>> from pyhelpers.ops import get_ansi_colour_code
-        >>> get_ansi_colour_code('red')
+        >>> from pyhelpers.ops import get_ansi_color_code
+        >>> get_ansi_color_code('red')  # \\u001b[31m
         '\\033[31m'
-        >>> get_ansi_colour_code(['red', 'blue'])
+        >>> get_ansi_color_code(['red', 'blue'])  # \\u001b[31m\\u001b[34m
         ['\\033[31m', '\\033[34m']
-        >>> get_ansi_colour_code('invalid_colour')
+        >>> get_ansi_color_code(['red', 'blue'], concatenated=False)
+        '\\033[31m\\033[34m'
+        >>> get_ansi_color_code('invalid_color')
         Traceback (most recent call last):
             ...
-        ValueError: 'invalid_colour' is not a valid colour name.
-        >>> get_ansi_colour_code('red', show_valid_colours=True)
-        ('\\033[31m', {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', ...})
+        ValueError: 'invalid_color' is not a valid color name.
+        >>> get_ansi_color_code('red', show_valid_colors=True)  # ('\\u001b[31m', ...
+        ('\\033[31m', {'bg_black', 'bg_blue', 'bg_bright_black', 'bg_bright_blue', ...
     """
 
-    return _get_ansi_colour_code(colours=colours, show_valid_colours=show_valid_colours)
+    return _get_ansi_color_code(
+        colors=colors, show_valid_colors=show_valid_colors, concatenated=concatenated,
+        _spelling='color')
 
 
 def get_project_structure(start_path, ignore_dirs=None, out_file=None, encoding='utf-8',

@@ -49,7 +49,7 @@ def cmap_discretization(cmap, n_colors):
         >>> ax.axis('off')
         >>> fig.show()
         >>> # from pyhelpers.store import save_figure
-        >>> # path_to_fig_ = "docs/source/_images/viz-cmap_discretisation-demo"
+        >>> # path_to_fig_ = "docs/source/_images/viz-cmap_discretization-demo"
         >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
         >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
@@ -60,7 +60,7 @@ def cmap_discretization(cmap, n_colors):
         :align: center
         :width: 60%
 
-        An example of discrete colour ramp, created by the function
+        An example of discrete color ramp, created by the function
         :func:`~pyhelpers.viz.cmap_discretization`.
     """
 
@@ -139,7 +139,7 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
         :align: center
         :width: 32%
 
-        An example of colour bar with numerical index.
+        An example of color bar with numerical index.
 
     .. code-block:: python
 
@@ -162,7 +162,7 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
         :align: center
         :width: 32%
 
-        An example of colour bar with textual index.
+        An example of color bar with textual index.
     """
 
     mpl_cm, mpl_plt = _check_dependencies('matplotlib.cm', 'matplotlib.pyplot')

@@ -192,22 +192,42 @@ def test__init_requests_session(retry_status):
     assert isinstance(s, requests.sessions.Session)
 
 
-def test__get_ansi_colour_code():
-    from pyhelpers._cache import _get_ansi_colour_code, _ANSI_ESCAPE_CODES
+@pytest.mark.parametrize("colors", ['invalid_color', 'red', ['red', 'blue']])
+@pytest.mark.parametrize("show_valid_colors", [False, True])
+@pytest.mark.parametrize('concatenated', [True, False])
+def test__get_ansi_color_code(colors, show_valid_colors, concatenated):
+    from pyhelpers._cache import _get_ansi_color_code, _load_ansi_escape_codes
 
-    color_codes = _get_ansi_colour_code('red')
-    assert color_codes == '\033[31m'
+    if colors == 'invalid_color':
+        with pytest.raises(ValueError, match=f"'{colors}' is not a valid color name."):
+            _ = _get_ansi_color_code(
+                colors=colors, show_valid_colors=show_valid_colors, concatenated=concatenated)
 
-    color_codes = _get_ansi_colour_code(['red', 'blue'])
-    assert color_codes == ['\033[31m', '\033[34m']
+    else:
+        red_code = '\033[31m'
+        blue_code = '\033[34m'
+        red_blue_compound = f'{red_code}{blue_code}'
+        red_blue_list = [red_code, blue_code]
 
-    with pytest.raises(ValueError, match="'invalid_colour' is not a valid colour name."):
-        _ = _get_ansi_colour_code('invalid_colour')
+        is_single_input = colors == 'red'
+        expected_set = set(_load_ansi_escape_codes())
 
-    color_codes = _get_ansi_colour_code('red', show_valid_colours=True)
-    assert isinstance(color_codes, tuple)
-    assert color_codes[0] == '\033[31m'
-    assert color_codes[1] == set(_ANSI_ESCAPE_CODES)
+        if concatenated:
+            expected_code = red_code if is_single_input else red_blue_compound
+        else:
+            expected_code = red_code if is_single_input else red_blue_list
+
+        color_codes = _get_ansi_color_code(
+            colors=colors, show_valid_colors=show_valid_colors, concatenated=concatenated)
+
+        if show_valid_colors:
+            assert isinstance(color_codes, tuple)
+            assert color_codes[0] == expected_code, \
+                f"Code mismatch in tuple (concatenated={concatenated})"
+            assert color_codes[1] == expected_set, "Set mismatch in tuple"
+        else:
+            assert color_codes == expected_code, \
+                f"Direct output mismatch (concatenated={concatenated})"
 
 
 def test__transform_point_type():

@@ -30,7 +30,29 @@ def test_load_spreadsheets(capfd):
         assert all(isinstance(x, pd.DataFrame) for x in wb_data)
 
 
-def test_parse_csr_matrix(capfd):
+@pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
+def test_load_parquet(engine, capfd):
+    path_to_parquet_ = importlib.resources.files("tests").joinpath("data", "dat.parquet")
+
+    with importlib.resources.as_file(path_to_parquet_) as path_to_parquet:
+        result = load_parquet(path_to_parquet, engine=engine, verbose=True)
+        out, _ = capfd.readouterr()
+
+        if engine == 'not-an-engine':
+            # Test invalid engine fallback
+            # Should trigger ValueError -> pq.read_table -> to_pandas()
+            assert "Warning" in out
+            assert "Falling back to `pyarrow.parquet.read_table()`" in out
+            assert isinstance(result, pd.DataFrame)  # Successfully converted back
+
+        else:
+            # Test successful loading
+            out, _ = capfd.readouterr()
+            assert "Warning" not in out
+            assert isinstance(result, pd.DataFrame)
+
+
+def test_load_csr_matrix(capfd):
     data_ = [1, 2, 3, 4, 5, 6]
     indices_ = [0, 2, 2, 0, 1, 2]
     indptr_ = [0, 2, 3, 6]
