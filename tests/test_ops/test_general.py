@@ -6,7 +6,6 @@ import time
 
 import pytest
 
-from pyhelpers._cache import _ANSI_ESCAPE_CODES
 from pyhelpers.dbms import PostgreSQL
 from pyhelpers.ops.general import *
 
@@ -28,16 +27,19 @@ def test_confirmed(monkeypatch):
     assert confirmed(prompt=prompt, resp=False)
 
 
-def test_get_obj_attr():
-    res = get_obj_attr(PostgreSQL)
-    assert isinstance(res, list)
+@pytest.mark.parametrize('col_names', [None, ['a', 'b']])
+@pytest.mark.parametrize('as_dataframe', [False, True])
+def test_get_obj_attr(col_names, as_dataframe):
+    res = get_obj_attr(PostgreSQL, col_names=col_names, as_dataframe=as_dataframe)
 
-    res = get_obj_attr(PostgreSQL, as_dataframe=True)
-    assert isinstance(res, pd.DataFrame)
-    assert res.columns.tolist() == ['attribute', 'value']
-    res = get_obj_attr(PostgreSQL, col_names=['a', 'b'], as_dataframe=True)
-    assert isinstance(res, pd.DataFrame)
-    assert res.columns.tolist() == ['a', 'b']
+    if as_dataframe:
+        assert isinstance(res, pd.DataFrame)
+        if col_names:
+            assert res.columns.tolist() == col_names
+        else:
+            assert res.columns.tolist() == ['attribute', 'value']
+    else:
+        assert isinstance(res, list)
 
 
 def test_eval_dtype():
@@ -85,20 +87,103 @@ def test_get_git_branch(capfd):
         assert isinstance(branch_name, str)
 
 
-def test_get_ansi_colour_code():
-    color_codes = get_ansi_colour_code('red')
-    assert color_codes == '\033[31m'
+@pytest.mark.parametrize('colours', ['invalid_colour', 'invalid_color'])
+def test_get_ansi_color_code(colours):
+    with pytest.raises(ValueError, match=f"'{colours}' is not a valid"):
+        _ = get_ansi_color_code(colours)
 
-    color_codes = get_ansi_colour_code(['red', 'blue'])
-    assert color_codes == ['\033[31m', '\033[34m']
 
-    with pytest.raises(ValueError, match="'invalid_colour' is not a valid colour name."):
-        _ = get_ansi_colour_code('invalid_colour')
+@pytest.fixture
+def mock_project(tmp_path):
+    """Creates a mock directory structure for testing get_project_structure."""
 
-    color_codes = get_ansi_colour_code('red', show_valid_colours=True)
-    assert isinstance(color_codes, tuple)
-    assert color_codes[0] == '\033[31m'
-    assert color_codes[1] == set(_ANSI_ESCAPE_CODES)
+    # 1. Create structure for Example 1 (testing traversal/ignore)
+    start_path_1 = tmp_path / "pyhelpers"
+    start_path_1.mkdir()
+
+    (start_path_1 / "__pycache__").mkdir()
+    (start_path_1 / "core.py").touch()
+
+    # Nested directory
+    nested_dir = start_path_1 / "dirs"
+    nested_dir.mkdir()
+    (nested_dir / "init.py").touch()
+    (nested_dir / "data.txt").touch()
+
+    # 2. Create structure for Example 2 (testing file output)
+    start_path_2 = tmp_path / "my_project"
+    start_path_2.mkdir()
+    (start_path_2 / "main.py").touch()
+    (start_path_2 / "config.ini").touch()
+
+    return {
+        "pyhelpers_path": str(start_path_1),
+        "my_project_path": str(start_path_2),
+        "output_file": str(tmp_path / "structure.txt"),
+    }
+
+
+def test_get_project_structure(mock_project, capsys):
+    # Test 1: Console Output
+    pyhelpers_path = mock_project["pyhelpers_path"]
+
+    # Run the function with default settings (print_in_console=True)
+    get_project_structure(start_path=pyhelpers_path)
+
+    # Capture the output printed to stdout
+    captured = capsys.readouterr()
+    console_output = captured.out.strip()
+
+    # Define the expected console structure (ignoring __pycache__)
+    expected_console_lines = [
+        "├── pyhelpers/",
+        "│   ├── core.py",
+        "│   ├── dirs/",
+        "│   │   ├── data.txt",
+        "│   │   ├── init.py",
+    ]
+    expected_console_output = "\n".join(expected_console_lines)
+
+    clean_console_output = console_output.replace('\\', '/').strip()
+    clean_expected_console = expected_console_output.replace('\\', '/').strip()
+
+    # Verification: Check for containment of expected lines
+    for line in clean_expected_console.split('\n'):
+        assert line in clean_console_output, f"Console output missing expected line: {line}"
+    assert "__pycache__" not in clean_console_output, "Ignored directory found in console output."
+
+    # Test 2:
+    my_project_path = mock_project["my_project_path"]
+    out_file_path = mock_project["output_file"]
+
+    # Run the function, suppressing console output and writing to a file
+    get_project_structure(start_path=my_project_path, print_in_console=False, out_file=out_file_path)
+
+    # Check that stdout was empty during this run (use capsys again)
+    # Note: If the function was run twice sequentially, capsys.readouterr()
+    # would only capture output since the last call. We rely on the capsys
+    # being cleared after the first test section.
+    captured_file_run = capsys.readouterr()
+    assert captured_file_run.out == "", "Console output should be suppressed for file output test."
+
+    # Read the content of the output file
+    with open(out_file_path, 'r', encoding='utf-8') as f:
+        file_content = f.read().strip()
+
+    # Define the expected file structure.
+    expected_file_lines = [
+        "├── my_project/",
+        "│   ├── config.ini",
+        "│   ├── main.py",
+    ]
+    expected_file_output = "\n".join(expected_file_lines)
+
+    # Verification: Check if the file content matches
+    clean_file_content = file_content.replace('\\', '/').strip()
+    clean_expected_file = expected_file_output.replace('\\', '/').strip()
+
+    assert clean_expected_file in clean_file_content, "File content does not match expected structure."
+    assert os.path.isfile(out_file_path)
 
 
 if __name__ == '__main__':

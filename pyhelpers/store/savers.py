@@ -223,21 +223,60 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
 def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exists,
                        autofit_column_width, writer_kwargs, verbose, raise_error, **kwargs):
+    """
+    Helper function to iterate through the list of DataFrames and save each one to a sheet
+    in the provided ExcelWriter object, handling existing sheets, autofitting and error suppression.
+
+    :param data: Sequence of pandas DataFrames to be saved.
+    :type data: list[pandas.DataFrame]
+    :param sheet_names: Names corresponding to the DataFrames in ``data``.
+    :type sheet_names: list[str]
+    :param cur_sheet_names: List of sheet names currently existing in the workbook
+        (used for ``'a'`` mode).
+    :type cur_sheet_names: list[str]
+    :param writer: The pandas.ExcelWriter object used for writing to the file.
+    :type writer: pandas.ExcelWriter
+    :param if_sheet_exists: Behavior when writing to an existing sheet (None for prompt).
+    :type if_sheet_exists: None | str
+    :param autofit_column_width: Whether to autofit column width after saving the sheet.
+    :type autofit_column_width: bool
+    :param writer_kwargs: Arguments originally passed to pandas.ExcelWriter
+        (needed for autofit helper).
+    :type writer_kwargs: dict | None
+    :param verbose: Whether to print progress messages.
+    :type verbose: bool | int
+    :param raise_error: Whether to raise an error if sheet writing fails.
+    :type raise_error: bool
+    :param kwargs: Additional arguments for ``pandas.DataFrame.to_excel()``.
+    :return: None
+    :rtype: None
+    """
+
+    # Ensure a mutable list of current sheet names to update if 'new' is used
+    cur_sheet_names_list = list(cur_sheet_names)
+
     for sheet_data, sheet_name in zip(data, sheet_names):
-        # sheet_data, sheet_name = spreadsheets_data[0], sheet_names[0]
+        # Reset to the default behavior for the current sheet to be processed:
+        # This is the behavior set by the ExcelWriter instantiation in the caller.
+        writer._if_sheet_exists = if_sheet_exists if if_sheet_exists is not None else 'error'
+
         if verbose:
             print(f"\t'{sheet_name}'", end=" ... ")
 
-        if sheet_name in cur_sheet_names:
-            if if_sheet_exists is None:
-                if_sheet_exists_ = input("This sheet already exists; [pass]|new|replace: ")
-            else:
-                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay'}, \
+        if sheet_name in cur_sheet_names_list:
+            if if_sheet_exists is None:  # Use a local variable for the user choice
+                user_choice = input("This sheet already exists; [pass]|new|replace: ")
+            else:  # Use a local variable for the chosen action
+                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay', 'pass'}, \
                     "Invalid option for `if_sheet_exists`."
-                if_sheet_exists_ = copy.copy(if_sheet_exists)
+                user_choice = copy.copy(if_sheet_exists)
 
-            if if_sheet_exists_ != 'pass':
-                writer._if_sheet_exists = if_sheet_exists_
+            if user_choice != 'pass':  # Set the writer's internal state for pandas to use
+                writer._if_sheet_exists = user_choice
+            else:
+                if verbose:
+                    print("Skipped.")
+                continue  # Skip this sheet entirely
 
         try:
             kwargs.update({'excel_writer': writer, 'sheet_name': sheet_name})
@@ -246,58 +285,85 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
             if autofit_column_width:
                 _autofit_column_width(writer, writer_kwargs, **kwargs)
 
+            # Check the state of the writer after to_excel to see if a new sheet was created
             if writer._if_sheet_exists == 'new':
-                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names][0]
+                # Find the newly created sheet name (must be a new key in writer.sheets)
+                new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names_list][0]
                 prefix = "\t\t" if if_sheet_exists is None else ""
                 add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
+                cur_sheet_names_list = list(writer.sheets.keys())  # Update the list of existing sheets
             else:
                 add_msg = "Done."
 
             if verbose:
                 print(add_msg)
 
-            cur_sheet_names = list(writer.sheets.keys())
-
         except Exception as e:
             _print_failure_message(
                 e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
                 raise_error=raise_error)
+
+    return None
 
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
                       autofit_column_width=True, writer_kwargs=None, verbose=False,
                       raise_error=False, **kwargs):
     """
-    Saves multiple dataframes to a multi-sheet `Microsoft Excel`_ or `OpenDocument`_ format file.
+    Saves multiple dataframes to a multi-sheet `Microsoft Excel`_ (.xlsx, .xls) or
+    `OpenDocument`_ (.ods) format file.
 
-    The file extension can be ``.xlsx`` (or ``.xls``) for `Microsoft Excel`_ files or
-    ``.ods`` for `OpenDocument`_ files.
+    The function wraps ``pandas.ExcelWriter`` and ``pandas.DataFrame.to_excel``, adding features
+    like error suppression, progress output, column autofit and interactive handling
+    of existing sheets in append mode.
 
-    :param data: Sequence of dataframes to be saved as sheets in the workbook.
-    :type data: list | tuple | iterable
-    :param path_to_file: File path where the spreadsheet will be saved.
+    :param data: Sequence of pandas DataFrames to be saved as sheets in the workbook.
+    :type data: list[pandas.DataFrame] | tuple[pandas.DataFrame] | iterable[pandas.DataFrame]
+    :param path_to_file: File path where the spreadsheet will be saved. Must end with
+        ``.xlsx``, ``.xls`` or ``.ods``.
     :type path_to_file: str | os.PathLike
-    :param sheet_names: Names of all sheets in the workbook.
-    :type sheet_names: list | tuple | iterable
+    :param sheet_names: Names of all sheets in the workbook. Must match the length of `data`.
+    :type sheet_names: list[str] | tuple[str] | iterable[str]
     :param mode: Mode for writing to the spreadsheet file:
 
-        - `'w'` (default): Write mode, creates a new file or overwrites existing.
-        - `'a'`: Append mode, adds sheets to an existing file (not supported for `OpenDocument`_).
+        - ``'w'`` (default): Write mode. Creates a new file or overwrites existing.
+        - ``'a'``: Append mode. Adds sheets to an existing file. **Note:** Not supported for
+          OpenDocument (``.ods``) files; a write operation will be performed instead.
 
     :type mode: str
-    :param if_sheet_exists: Behaviour when trying to write to an existing sheet;
-        defaults to ``None``; see also the parameter ``if_sheet_exists`` of `pandas.ExcelWriter()`_.
+    :param if_sheet_exists: Behavior when trying to write a sheet that already exists:
+
+        - ``None`` (default): Prompts the user for action: ``[pass]|new|replace``.
+        - ``'error'``: Raises a ValueError (pandas default).
+        - ``'new'``: Creates a new sheet with an incremented name (e.g. 'Sheet11').
+        - ``'replace'``: Overwrites the existing sheet.
+        - ``'overlay'``: Writes data on top of existing data (only available with ``openpyxl``).
+        - ``'pass'``: Skips saving the sheet.
+
     :type if_sheet_exists: None | str
-    :param autofit_column_width: Whether to autofit column width; defaults to ``True``.
+    :param autofit_column_width: Whether to adjust column width to fit content automatically;
+        defaults to ``True``. Requires the ``openpyxl`` or ``odfpy`` engine.
     :type autofit_column_width: bool
-    :param writer_kwargs: [Optional] Additional parameters for the class `pandas.ExcelWriter()`_.
+    :param writer_kwargs: [Optional] Additional parameters for the class `pandas.ExcelWriter()`_,
+        such as `date_format` or `datetime_format`; defaults to ``None``.
     :type writer_kwargs: dict | None
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
-    :type raise_error: bool
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print relevant information and sheet saving progress to the console;
+        defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_.
+    :param raise_error: Whether to raise the exception if saving a specific sheet fails;
+        if ``raise_error=False`` (default), the error will be suppressed, and the process
+        will continue with the next sheet.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_,
+        e.g. ``index=False``, ``header=True``.
+
+    :return: ``None``. The function's main effect is the side effect of saving the file.
+    :rtype: None
+
+    :raises AssertionError: If `path_to_file` does not end with a supported file extension
+        (``.xlsx``, ``.xls``, ``.ods``).
+    :raises ValueError: If an invalid option is provided for ``if_sheet_exists`` when not ``None``.
+    :raises Exception: Any exception raised during saving if ``raise_error=True``.
 
     .. _`Microsoft Excel`:
         https://en.wikipedia.org/wiki/Microsoft_Excel
@@ -328,11 +394,13 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         Latitude   51.507322   52.479699   53.479489  53.797418
         >>> dat = [dat1, dat2]
         >>> sheets = ['TestSheet1', 'TestSheet2']
+        >>> # Save to ODS format (write mode)
         >>> pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.ods" to "./tests/data/" ...
             'TestSheet1' ... Done.
             'TestSheet2' ... Done.
+        >>> # Save to XLSX format (append mode with interactive prompt)
         >>> pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.xlsx" to "./tests/data/" ...
@@ -344,6 +412,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                 saved as 'TestSheet11' ... Done.
             'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
                 saved as 'TestSheet21' ... Done.
+        >>> # Save with automatic replacement
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='replace', verbose=True)
         Updating "dat.xlsx" at "./tests/data/" ...
             'TestSheet1' ... Done.
@@ -354,7 +423,8 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert path_to_file.endswith((".xlsx", ".xls", ".ods")), "File must be an Excel or ODS file."
+    assert str(path_to_file).endswith((".xlsx", ".xls", ".ods")), \
+        "File must be an Excel or ODS file."
 
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
@@ -366,7 +436,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         if mode == 'a':
             pd.DataFrame().to_excel(path_to_file, sheet_name=sheet_names[0])
 
-    engine = 'openpyxl' if path_to_file.endswith((".xlsx", ".xls")) else 'odf'
+    engine = 'openpyxl' if str(path_to_file).endswith((".xlsx", ".xls")) else 'odf'
 
     if writer_kwargs is None:
         writer_kwargs = {}
@@ -387,7 +457,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
     """
     Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
-    :param data: Data to be serialised and
+    :param data: Data to be serialized and
         saved as a `JSON <https://www.json.org/json-en.html>`_ file.
     :type data: typing.Any
     :param path_to_file: File path
@@ -397,9 +467,9 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
 
         - ``None`` (default): Use the built-in
           `json module <https://docs.python.org/3/library/json.html>`_.
-        - ``'ujson'``: Use `UltraJSON`_ for faster serialisation.
-        - ``'orjson'``: Use `orjson`_ for faster and more efficient serialisation.
-        - ``'rapidjson'``: Use `python-rapidjson`_ for fast and efficient serialisation.
+        - ``'ujson'``: Use `UltraJSON`_ for faster serialization.
+        - ``'orjson'``: Use `orjson`_ for faster and more efficient serialization.
+        - ``'rapidjson'``: Use `python-rapidjson`_ for fast and efficient serialization.
 
     :type engine: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
@@ -492,7 +562,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
     Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
-    :param data: The data to be serialised and saved using `joblib.dump()`_.
+    :param data: The data to be serialized and saved using `joblib.dump()`_.
     :type data: typing.Any
     :param path_to_file: The file path where the Joblib file will be saved.
     :type path_to_file: str | os.PathLike
@@ -621,6 +691,97 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'})
+def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
+    """
+    Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
+
+    This function supports saving via Pandas/GeoPandas (default) or directly using the
+    PyArrow engine.
+
+    :param data: The dataframe to be saved.
+    :type data: pandas.DataFrame | geopandas.GeoDataFrame | pyarrow.Table
+    :param path_to_file: The destination path for the Parquet file.
+    :type path_to_file: str | os.PathLike
+    :param engine: Parquet library to use; options are ``None``, ``'auto'``,
+        ``'pyarrow'`` or ``'fastparquet'``; when ``engine=None``, it defaults to ``'auto'``
+        if ``data`` is ``pandas.DataFrame``.
+    :type engine: str | None
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param raise_error: Whether to re-raise exceptions encountered during saving;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for `pandas.DataFrame.to_parquet()`_,
+        `geopandas.GeoDataFrame.to_parquet()`_ or `pyarrow.parquet.write_table()`_.
+
+    .. _`pandas.DataFrame.to_parquet()`:
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html
+    .. _`geopandas.GeoDataFrame.to_parquet()`:
+        https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_parquet.html
+    .. _`pyarrow.parquet.write_table()`:
+        https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_parquet
+        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import pyarrow as pa
+        >>> parquet_dat = example_dataframe()  # Get an example dataframe
+        >>> parquet_dat
+                    Longitude   Latitude
+        City
+        London      -0.127647  51.507322
+        Birmingham  -1.902691  52.479699
+        Manchester  -2.245115  53.479489
+        Leeds       -1.543794  53.797418
+        >>> parquet_pathname = cd("tests/data", "dat.parquet")
+        >>> save_parquet(parquet_dat, parquet_pathname, verbose=True)
+        Saving "dat.parquet" to "./tests/data/" ... Done.
+        >>> # Save using an explicit engine (e.g. 'pyarrow')
+        >>> save_parquet(parquet_dat, parquet_pathname, engine='pyarrow', verbose=True)
+        Updating "dat.parquet" in "./tests/data/" ... Done.
+        >>> # Save a PyArrow Table directly
+        >>> parquet_tbl = pa.Table.from_pandas(parquet_dat)
+        >>> parquet_tbl
+        pyarrow.Table
+        Longitude: double
+        Latitude: double
+        City: string
+        ----
+        Longitude: [[-0.1276474,-1.9026911,-2.2451148,-1.5437941]]
+        Latitude: [[51.5073219,52.4796992,53.4794892,53.7974185]]
+        City: [["London","Birmingham","Manchester","Leeds"]]
+        >>> save_parquet(parquet_tbl, parquet_pathname, verbose=True)
+        Updating "dat.parquet" in "./tests/data/" ... Done.
+
+    .. seealso::
+
+        - Examples for the function :func:`pyhelpers.store.load_parquet`.
+    """
+
+    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+
+    try:
+        # Only use direct pyarrow writer if data is already an Arrow Table
+        if isinstance(data, pa.Table):  # noqa
+            pq.write_table(data, path_to_file, **kwargs)  # noqa
+
+        else:
+            if hasattr(data, 'has_sindex') and hasattr(data, 'geometry'):  # GeoDataFrames
+                data.to_parquet(path_to_file, **kwargs)
+
+            else:  # DataFrames
+                data.to_parquet(path_to_file, engine='auto' if engine is None else engine, **kwargs)
+
+        if verbose:
+            print("Done.")
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
 def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False):
     # noinspection PyShadowingNames
     """
@@ -628,9 +789,9 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
 
     :param path_to_svg: The path where the SVG file is located.
-    :type path_to_svg: str
+    :type path_to_svg: str | os.PathLike
     :param path_to_emf: The path where the EMF file will be saved.
-    :type path_to_emf: str
+    :type path_to_emf: str | os.PathLike
     :param inkscape_exe: The path to the executable "*inkscape.exe*";
         if ``inkscape_exe=None`` (default), the default installation path will be used, e.g.
         (on Windows) "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*" or
@@ -687,20 +848,19 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
 
-    abs_svg_path, abs_emf_path = map(pathlib.Path, (path_to_svg, path_to_emf))
-    assert abs_svg_path.suffix.lower() == ".svg"
+    path_to_svg_, path_to_emf_ = map(str, (path_to_svg, path_to_emf))
 
     if inkscape_exists:
-        _check_saving_path(abs_emf_path, verbose=verbose)
+        _check_saving_path(path_to_emf_, verbose=verbose)
 
         ret_code = 1
 
         try:
-            abs_emf_path.parent.mkdir(exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_emf_), exist_ok=True)
 
             result = subprocess.run(
-                [inkscape_exe_, '-z', path_to_svg, '--export-filename', path_to_emf],
-                # [inkscape_exe_, '-z', path_to_svg, '-M', path_to_emf],  # Old
+                [inkscape_exe_, '-z', path_to_svg_, '--export-filename', path_to_emf_],
+                # [inkscape_exe_, '-z', path_to_svg_, '-M', path_to_emf_],  # Old
                 check=True,
             )  # nosec
             ret_code = result.returncode
@@ -724,7 +884,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     """
     Saves a figure object to a file in a supported format.
 
-    This function utilises the `matplotlib.pyplot.savefig()`_ function and
+    This function utilizes the `matplotlib.pyplot.savefig()`_ function and
     optionally `Inkscape`_ for SVG to EMF conversion.
 
     :param path_to_file: The path where the figure file will be saved.
@@ -793,7 +953,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     file_ext = pathlib.Path(path_to_file).suffix
     if file_ext == ".svg" and conv_svg_to_emf:
         save_svg_as_emf(
-            path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose,
+            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
             raise_error=raise_error)
 
 
@@ -879,7 +1039,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
             save_figure(data, path_to_file.replace(file_ext, ".svg"), **kwargs)
 
         save_svg_as_emf(
-            path_to_file, path_to_file.replace(file_ext, ".emf"), verbose=verbose,
+            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
             raise_error=raise_error)
 
 
@@ -893,7 +1053,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     :param data: The URL of a web page or the pathname of an HTML file.
     :type data: str
     :param path_to_file: The path where the PDF file will be saved.
-    :type path_to_file: str
+    :type path_to_file: str | os.PathLike
     :param if_exists: Action to take if the .pdf file already exists;
         options are ``'replace'`` (default), ``'pass'`` and ``'append'``.
     :type if_exists: str
@@ -965,7 +1125,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
 
         if wkhtmltopdf_exists:
-            pdfkit = _check_dependencies('pdfkit')
+            pdfkit_ = _check_dependencies('pdfkit')
 
             if os.path.dirname(path_to_file):
                 os.makedirs(os.path.dirname(path_to_file), exist_ok=True)
@@ -987,14 +1147,14 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             }
             if isinstance(wkhtmltopdf_options, dict):
                 options.update(wkhtmltopdf_options)
-            configuration = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_exe)
+            configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
             kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
 
             try:
                 if is_url(data):
-                    status = pdfkit.from_url(data, path_to_file, **kwargs)
+                    status = pdfkit_.from_url(data, path_to_file, **kwargs)
                 elif os.path.isfile(data):
-                    status = pdfkit.from_file(data, path_to_file, **kwargs)
+                    status = pdfkit_.from_file(data, path_to_file, **kwargs)
                 else:
                     status = None
 
@@ -1045,6 +1205,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         :func:`~pyhelpers.store.save_json`,
         :func:`~pyhelpers.store.save_joblib`,
         :func:`~pyhelpers.store.save_feather`,
+        :func:`~pyhelpers.store.save_parquet`,
         :func:`~pyhelpers.store.save_figure` or
         :func:`~pyhelpers.store.save_web_page_as_pdf`.
 
@@ -1054,6 +1215,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
     .. _`JSON`: https://www.json.org/json-en.html
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
     .. _`HTML file`: https://fileinfo.com/extension/html
     .. _`Matplotlib`:
         https://matplotlib.org/stable/api/backend_bases_api.html#
@@ -1090,6 +1252,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> dat_pathname = cd(data_dir, "dat.feather")
         >>> save_data(dat, dat_pathname, index=True, verbose=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
+        >>> dat_pathname = cd(data_dir, "dat.parquet")
+        >>> save_data(dat, dat_pathname, verbose=True)
+        Saving "dat.parquet" to "./tests/data/" ... Done.
         >>> # Convert `dat` to JSON format
         >>> import json
         >>> dat_ = json.loads(dat.to_json(orient='index'))
@@ -1132,6 +1297,9 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
 
     elif path_to_file_.endswith((".fea", ".feather")):
         save_feather(**kwargs)
+
+    elif path_to_file_.endswith((".parquet", ".geoparquet")):
+        save_parquet(**kwargs)
 
     elif (path_to_file_.endswith(".pdf") and
           all(x not in data.__class__.__module__ for x in {'seaborn', 'matplotlib'})):

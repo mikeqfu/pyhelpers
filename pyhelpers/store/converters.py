@@ -282,7 +282,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
     :param reverse: Specifies whether to convert an .rst file to a .md file; defaults to ``False``.
     :type reverse: bool
     :param engine: The engine/module used for performing the conversion;
-        if ``engine=None`` (default), the function utilises `Pandoc <https://pandoc.org/>`_,
+        if ``engine=None`` (default), the function utilizes `Pandoc <https://pandoc.org/>`_,
         ``'pypandoc'`` otherwise.
     :type engine: None | str
     :param pandoc_exe: The path to the executable "*pandoc.exe*";

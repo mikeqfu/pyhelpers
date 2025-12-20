@@ -21,11 +21,11 @@ def clean_html_text(input_text):
         - Decoding HTML entities (including double-encoded entities)
         - Converting non-breaking spaces to regular spaces
         - Removing all HTML tags
-        - Normalising whitespace and trimming the result
+        - Normalizing whitespace and trimming the result
 
     :param input_text: Raw text containing HTML markup and entities.
     :type input_text: str
-    :return: Cleaned text with all HTML artifacts removed and normalised whitespace.
+    :return: Cleaned text with all HTML artifacts removed and normalized whitespace.
     :rtype: str
 
     **Examples**::

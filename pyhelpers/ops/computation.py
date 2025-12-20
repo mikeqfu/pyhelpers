@@ -183,7 +183,7 @@ def parse_size(size, binary=True, precision=1):
     :param size: Size to be parsed, either in human-readable format (e.g. ``'10 MB'``) or
         as an integer.
     :type size: str | int | float
-    :param binary: Whether to use binary (factorised by 1024) or decimal (factorised by 10 ** 3)
+    :param binary: Whether to use binary (factorized by 1024) or decimal (factorized by 10 ** 3)
         representation; defaults to ``True`` for binary representation.
     :type binary: bool
     :param precision: Number of decimal places when converting ``size`` to human-readable format;
@@ -250,7 +250,7 @@ def get_number_of_chunks(file_or_obj, chunk_size_limit=50, binary=True):
     :param chunk_size_limit: Minimum limit of chunk size in megabytes (MB) or mebibytes (MiB)
         above which the function counts the number of chunks; defaults to ``50``.
     :type chunk_size_limit: int | float | None
-    :param binary: Whether to use binary (factorised by 1024) or decimal (factorised by 10 ** 3)
+    :param binary: Whether to use binary (factorized by 1024) or decimal (factorized by 10 ** 3)
         representation for size calculations; defaults to ``True`` for binary representation.
     :type binary: bool
     :return: Number of chunks, or ``None`` if ``file_or_obj`` is invalid

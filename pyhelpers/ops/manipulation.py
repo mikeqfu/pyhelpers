@@ -746,7 +746,7 @@ def downcast_numeric_columns(*dataframes):
         - Floating-point columns to the smallest floating dtype (float32 or float64)
           that can safely represent their values.
 
-    :param dataframes: One or more pandas DataFrames to optimize
+    :param dataframes: One or more pandas DataFrames to optimize.
     :type dataframes: pandas.DataFrame | polars.DataFrame
     :return: New DataFrame(s) with downcasted numeric columns.
     :rtype: None | pandas.DataFrame | polars.DataFrame | tuple[pandas.DataFrame | polars.DataFrame]
@@ -755,7 +755,7 @@ def downcast_numeric_columns(*dataframes):
 
         - Modifies DataFrames in place for memory efficiency.
         - Skips non-numeric columns automatically.
-        - Uses pandas' built-in optimisations for batch processing.
+        - Uses pandas' built-in optimizations for batch processing.
 
     **Examples**::
 

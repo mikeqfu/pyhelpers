@@ -165,11 +165,12 @@ The :mod:`pyhelpers.dirs` module aids in manipulating directories. For instance,
 .. code-block:: python
 
     >>> from pyhelpers.dirs import cd
+    >>> from pyhelpers.dirs import normalize_pathname  # Optional, for printing uniform pathnames
     >>> import os
     >>> cwd = cd()  # The current working directory
     >>> # Relative path of `cwd` to the current working directory
     >>> rel_path_cwd = os.path.relpath(cwd)
-    >>> print(rel_path_cwd)  # (on Windows)
+    >>> print(rel_path_cwd)
     .
 
 To specify a path to a temporary folder named ``"pyhelpers_tutorial"``:
@@ -182,15 +183,15 @@ To specify a path to a temporary folder named ``"pyhelpers_tutorial"``:
     >>> path_to_dir = cd(dir_name)
     >>> # Relative path of the directory
     >>> rel_dir_path = os.path.relpath(path_to_dir)
-    >>> print(rel_dir_path)  # (on Windows)
+    >>> print(rel_dir_path)
     pyhelpers_tutorial
 
-Check whether the directory ``"pyhelpers_tutorial\"`` exists:
+Check whether the directory ``"pyhelpers_tutorial"`` exists:
 
 .. code-block:: python
 
-    >>> print(f'Does the directory "{rel_dir_path}\\" exist? {os.path.exists(path_to_dir)}')
-    Does the directory "pyhelpers_tutorial\" exist? False
+    >>> print(f'Does the directory "{rel_dir_path}" exist? {os.path.isdir(path_to_dir)}')
+    Does the directory "pyhelpers_tutorial" exist? False
 
 If the directory ``"pyhelpers_tutorial"`` does not exist, set the parameter ``mkdir=True`` to create it:
 
@@ -199,8 +200,8 @@ If the directory ``"pyhelpers_tutorial"`` does not exist, set the parameter ``mk
     >>> # Set `mkdir` to `True` to create the "pyhelpers_tutorial" folder
     >>> path_to_dir = cd(dir_name, mkdir=True)
     >>> # Check again whether the directory "pyhelpers_tutorial" exists
-    >>> print(f'Does the directory "{rel_dir_path}\\" exist? {os.path.exists(path_to_dir)}')
-    Does the directory "pyhelpers_tutorial\" exist? True
+    >>> print(f'Does the directory "{rel_dir_path}" exist? {os.path.isdir(path_to_dir)}')
+    Does the directory "pyhelpers_tutorial" exist? True
 
 When we specify a sequence of names (in order with a filename being the last), the :func:`~pyhelpers.dirs.cd` function would assume that all the names prior to the filename are folder names, which specify a path to the file. For example, to specify a path to a file named ``"quick_start.dat"`` within the ``"pyhelpers_tutorial"`` folder:
 
@@ -212,8 +213,10 @@ When we specify a sequence of names (in order with a filename being the last), t
     >>> path_to_file = cd(dir_name, filename)  # path_to_file = cd(path_to_dir, filename)
     >>> # Relative path of the file "quick_start.dat"
     >>> rel_file_path = os.path.relpath(path_to_file)
-    >>> print(rel_file_path)  # (on Windows)
-    pyhelpers_tutorial\quick_start.dat
+    >>> # [Optional]
+    >>> rel_file_path = normalize_pathname(os.path.relpath(path_to_file))
+    >>> print(rel_file_path)
+    pyhelpers_tutorial/quick_start.dat
 
 If any directories in the specified path do not exist, setting ``mkdir=True`` will create them. For example, to specify a data directory named ``"data"`` within the ``"pyhelpers_tutorial"`` folder:
 
@@ -223,8 +226,10 @@ If any directories in the specified path do not exist, setting ``mkdir=True`` wi
     >>> data_dir = cd(dir_name, "data")  # equivalent to `cd(path_to_dir, "data")`
     >>> # Relative path of the data directory
     >>> rel_data_dir = os.path.relpath(data_dir)
-    >>> print(rel_data_dir)  # (on Windows)
-    pyhelpers_tutorial\data
+    >>> # [Optional]
+    >>> rel_data_dir = normalize_pathname(os.path.relpath(data_dir))
+    >>> print(rel_data_dir)
+    pyhelpers_tutorial/data
 
 We can then use the :func:`~pyhelpers.dirs.is_dir` function to check if ``data_dir`` (or ``rel_data_dir``) is a directory:
 
@@ -235,12 +240,12 @@ We can then use the :func:`~pyhelpers.dirs.is_dir` function to check if ``data_d
     >>> print(f'Does `rel_data_dir` specify a directory path? {is_dir(rel_data_dir)}')
     Does `rel_data_dir` specify a directory path? True
     >>> # Check if the data directory exists
-    >>> print(f'Does the directory "{rel_data_dir}\\" exist? {os.path.exists(rel_data_dir)}')
-    Does the directory "pyhelpers_tutorial\data\" exist? False
+    >>> print(f'Does the directory "{rel_data_dir}" exist? {os.path.isdir(rel_data_dir)}')
+    Does the directory "pyhelpers_tutorial/data" exist? False
 
 .. _quickstart-dirs-pickle-pathname:
 
-For another example, to specify a path to a Pickle file, named ``"dat.pkl"``, in the directory ``"pyhelpers_tutorial\data\"``:
+For another example, to specify a path to a Pickle file, named ``"dat.pkl"``, in the directory ``"pyhelpers_tutorial/data"``:
 
 .. code-block:: python
 
@@ -250,8 +255,10 @@ For another example, to specify a path to a Pickle file, named ``"dat.pkl"``, in
     >>> path_to_pickle = cd(data_dir, pickle_filename)
     >>> # Relative path of the Pickle file
     >>> rel_pickle_path = os.path.relpath(path_to_pickle)
-    >>> print(rel_pickle_path)  # (on Windows)
-    pyhelpers_tutorial\data\dat.pkl
+    >>> # [Optional]
+    >>> rel_pickle_path = normalize_pathname(os.path.relpath(path_to_pickle))
+    >>> print(rel_pickle_path)
+    pyhelpers_tutorial/data/dat.pkl
 
 Check ``rel_pickle_path`` (or ``path_to_pickle``):
 
@@ -261,8 +268,8 @@ Check ``rel_pickle_path`` (or ``path_to_pickle``):
     >>> print(f'Is `rel_pickle_path` a directory? {os.path.isdir(rel_pickle_path)}')
     Is `rel_pickle_path` a directory? False
     >>> # Check if the file "dat.pkl" exists
-    >>> print(f'Does the file "{rel_pickle_path}" exist? {os.path.exists(rel_pickle_path)}')
-    Does the file "pyhelpers_tutorial\data\dat.pkl" exist? False
+    >>> print(f'Does the file "{rel_pickle_path}" exist? {os.path.isfile(rel_pickle_path)}')
+    Does the file "pyhelpers_tutorial/data/dat.pkl" exist? False
 
 Let's now set ``mkdir=True`` to create any missing directories:
 
@@ -270,16 +277,18 @@ Let's now set ``mkdir=True`` to create any missing directories:
 
     >>> path_to_pickle = cd(data_dir, pickle_filename, mkdir=True)
     >>> rel_data_dir = os.path.relpath(data_dir)
+    >>> # [Optional]
+    >>> rel_data_dir = normalize_pathname(os.path.relpath(data_dir))
     >>> # Check again if the data directory exists
-    >>> print(f'Does the directory "{rel_data_dir}" exist? {os.path.exists(rel_data_dir)}')
-    Does the directory "pyhelpers_tutorial\data" exist? True
+    >>> print(f'Does the directory "{rel_data_dir}" exist? {os.path.isdir(rel_data_dir)}')
+    Does the directory "pyhelpers_tutorial/data" exist? True
     >>> # Check again if the file "dat.pkl" exists
-    >>> print(f'Does the file "{rel_pickle_path}" exist? {os.path.exists(rel_pickle_path)}')
-    Does the file "pyhelpers_tutorial\data\dat.pkl" exist? False
+    >>> print(f'Does the file "{rel_pickle_path}" exist? {os.path.isfile(rel_pickle_path)}')
+    Does the file "pyhelpers_tutorial/data/dat.pkl" exist? False
 
 [See also the example of `saving data as a Pickle file <#quickstart-store-saving-dataframe>`_.]
 
-To delete the directory ``"pyhelpers_tutorial\"`` (including all its contents), we can use the :func:`~pyhelpers.dirs.delete_dir` function:
+To delete the directory ``"pyhelpers_tutorial"`` (including all its contents), we can use the :func:`~pyhelpers.dirs.delete_dir` function:
 
 .. code-block:: python
 
@@ -461,7 +470,7 @@ Let's now try to download the `Python logo`_ image from its `official page <http
     >>> # URL of a .png file of the Python logo
     >>> url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
 
-Then, we need to specify a directory where we'd like to save the image file, and a filename for it; let's say we want to name the file ``"python-logo.png"`` and save it to the directory ``"pyhelpers_tutorial\images\"``:
+Then, we need to specify a directory where we'd like to save the image file, and a filename for it; let's say we want to name the file ``"python-logo.png"`` and save it to the directory ``"pyhelpers_tutorial/images"``:
 
 .. code-block:: python
 
@@ -482,7 +491,13 @@ If we set ``verbose=True`` (given that `tqdm`_ is available in our working envir
 
     >>> download_file_from_url(url, python_logo_file_path, if_exists='replace', verbose=True)
     Downloading "python-logo.png" 100%|██████████| 83.6k/83.6k | 403kB/s | ETA: 00:00
-        Saving "python-logo.png" to "./pyhelpers_tutorial/images/" ... Done.
+        Updating "python-logo.png" in "./pyhelpers_tutorial/images/" ... Done.
+
+    >>> # Use a different progress bar color
+    >>> download_file_from_url(
+    ...     url, python_logo_file_path, if_exists='replace', pbar_color='green', verbose=True)
+    Downloading "python-logo.png" 100%|██████████| 83.6k/83.6k | 760kB/s | ETA: 00:00
+	    Updating "python-logo.png" in "./pyhelpers_tutorial/images/" ... Done.
 
 .. note::
 
@@ -508,7 +523,7 @@ Now let's have a look at the downloaded image file using `Pillow`_:
 
     - In `Jupyter Notebook`_, we can use `IPython.display.Image`_ to display the image in the notebook by running ``IPython.display.Image(python_logo_file_path)``.
 
-To delete ``"pyhelpers_tutorial\"`` and its subdirectories (including ``"pyhelpers_tutorial\images\"``), we can use the :func:`~pyhelpers.dirs.delete_dir` function again:
+To delete ``"pyhelpers_tutorial"`` and its subdirectories (including ``"pyhelpers_tutorial/images"``), we can use the :func:`~pyhelpers.dirs.delete_dir` function again:
 
 .. code-block:: python
 
