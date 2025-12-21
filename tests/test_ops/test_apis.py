@@ -2,7 +2,6 @@
 Tests the :mod:`~pyhelpers.ops.apis` submodule.
 """
 
-import tempfile
 import time
 
 import pytest
@@ -71,18 +70,15 @@ class TestCrossRefOrcid:
         time.sleep(2)
         assert any(f'**{co.my_name[:5]}' in ref for ref in references)
 
-    def test_update_references(self, co, orcid_id, monkeypatch, capfd):
-        with tempfile.NamedTemporaryFile() as f:
-            temp_file = f.name + '.md'
+    @pytest.mark.parametrize('max_entries', [100, 2])
+    def test_update_references(self, co, orcid_id, max_entries, tmp_path, monkeypatch, capfd):
+        file_path = tmp_path / "README.md"
 
-            monkeypatch.setattr('builtins.input', lambda _: "Yes")
+        monkeypatch.setattr('builtins.input', lambda _: "Yes")
+        co.update_references(orcid_id, file_path=file_path, max_entries=max_entries, verbose=True)
 
-            co.update_references(orcid_id, file_path=temp_file, verbose=True)
-
-            out, _ = capfd.readouterr()
-            assert "Updating" in out and "Done." in out
-
-        os.remove(temp_file)
+        out, _ = capfd.readouterr()
+        assert '"Recent publications"' in out and "README.md" in out and "Done." in out
 
 
 if __name__ == '__main__':

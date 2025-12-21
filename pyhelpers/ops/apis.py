@@ -521,8 +521,9 @@ class CrossRefOrcid:
         return references
 
     @classmethod
-    def _update_references(cls, references, limit=3, file_path="README.md", heading_level=3,
-                           heading="Recent publications", heading_suffix=":"):
+    def _update_references(cls, references, file_path="tests/README.md",
+                           heading="Recent publications", heading_level=3, heading_suffix=":",
+                           max_entries=100):
         # noinspection PyShadowingNames
         """
         Updates the "Recent publications" section in a Markdown file with a new list of citations.
@@ -530,10 +531,8 @@ class CrossRefOrcid:
         :param references: A list of reference strings to add to the
             ``"Recent publications"`` section.
         :type references: list[str]
-        :param limit: The maximum number of the references to be included; defaults to ``3``.
-        :type limit: int | None
         :param file_path: Path to the Markdown file; defaults to ``"README.md"``.
-        :type file_path: str
+        :type file_path: str | os.PathLike
         :param heading_level: The level of the heading under which the contents are to be updated;
             defaults to ``3``.
         :type heading_level: int
@@ -541,6 +540,8 @@ class CrossRefOrcid:
             defaults to ``"Recent publications"``.
         :param heading_suffix: Suffix to the ``heading``; defaults to ``":"``.
         :type heading_suffix: str | None
+        :param max_entries: The maximum number of references to be included; defaults to ``100``.
+        :type max_entries: int | None
         :type heading: str
 
         **Examples**::
@@ -549,36 +550,54 @@ class CrossRefOrcid:
             >>> co = CrossRefOrcid()
             >>> orcid_id = '0000-0002-6502-9934'
             >>> references = co.fetch_references(orcid_id)
-            >>> co._update_references(references, verbose=True)
-            Updating "Recent publications" in README.md ... Done.
+            >>> co._update_references(references)
             >>> references = co.fetch_references(orcid_id, recent_years=5)
-            >>> co._update_references(references, verbose=True)
-            Updating "Recent publications" in README.md ... Done.
+            >>> co._update_references(references, max_entries=10)
         """
 
-        heading_ = f"{'#' * heading_level} {heading}{heading_suffix or ''}"
+        full_heading = f"{'#' * heading_level} {heading}{heading_suffix or ''}"
 
-        with open(file_path, "r") as file:  # Read the existing content of the file
-            content = file.read()
+        # Read existing content
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding='utf-8') as f:
+                content = f.read()
+        else:
+            content = ""
 
-        if heading_ in content:  # Remove the existing "References" section (if it exists)
-            content = content.split(heading_)[0].strip()
+        # Identify boundaries
+        if full_heading in content:
+            # Split into: [everything before] and [the heading + everything after]
+            before_section, rest = content.split(full_heading, 1)
+            # Find a newline followed by 1-6 '#' characters at the start of a line
+            next_heading_match = re.search(r'\n#{1,6}\s', rest)  # Look for the start of heading
+
+            if next_heading_match:  # Everything from the next heading onwards is saved
+                after_section = rest[next_heading_match.start():]
+            else:  # No subsequent heading found; the rest of the file was just the old list
+                after_section = ""
+            before_section = before_section.rstrip()
+
+        else:  # Heading doesn't exist yet; append to the end of the file
+            before_section = content.rstrip()
+            after_section = ""
 
         # Write the updated content (excluding the old "References" section)
-        with open(file_path, "w") as file:
-            file.write(content)
+        limit_val = max_entries if max_entries is not None else len(references)
+        formatted_refs = "\n".join([f"- {ref}" for ref in references[:limit_val]])
 
-            file.write(f"\n\n{heading_}\n\n")  # Add the new "Recent publications" section
-            for reference in references[:(limit if limit else len(references))]:
-                file.write(f"- {reference}\n")
+        # Reassemble: [Before] + [Heading] + [New List] + [Rest of Document]
+        new_content = f"{before_section}\n\n{full_heading}\n\n{formatted_refs}\n{after_section}"
+
+        with open(file_path, "w", encoding='utf-8') as f:
+            f.write(new_content.strip() + "\n")
 
     def update_references(self, orcid_id, work_types=None, recent_years=2, style='APA',
-                          file_path="README.md", heading="Recent publications", heading_level=3,
-                          heading_suffix=":", confirmation_required=True, verbose=False,
-                          raise_error=False):
+                          file_path="tests/README.md", heading="Recent publications",
+                          heading_level=3, heading_suffix=":", max_entries=100,
+                          confirmation_required=True, verbose=False, raise_error=False):
         # noinspection PyShadowingNames
         """
-        Updates the "Recent publications" section in a Markdown file with a new list of citations.
+        Orchestrates the fetching and writing of references to a Markdown file.
 
         :param orcid_id: ORCID iD of the researcher.
         :type orcid_id: str
@@ -589,7 +608,7 @@ class CrossRefOrcid:
         :param style: The citation style to use; defaults to ``'APA'``.
         :type style: str
         :param file_path: Path to the Markdown file; defaults to ``"README.md"``.
-        :type file_path: str
+        :type file_path: str | os.PathLike
         :param heading_level: The level of the heading under which the contents are to be updated;
             defaults to ``3``.
         :type heading_level: int
@@ -598,6 +617,8 @@ class CrossRefOrcid:
         :type heading: str
         :param heading_suffix: Suffix to the ``heading``; defaults to ``":"``.
         :type heading_suffix: str | None
+        :param max_entries: The maximum number of references to be included; defaults to ``100``.
+        :type max_entries: int | None
         :param confirmation_required: Whether to prompt for confirmation before proceeding;
             defaults to ``True``.
         :type confirmation_required: bool
@@ -610,39 +631,57 @@ class CrossRefOrcid:
         **Examples**::
 
             >>> from pyhelpers.ops import CrossRefOrcid
+            >>> import os
             >>> co = CrossRefOrcid()
             >>> orcid_id = '0000-0002-6502-9934'
             >>> co.update_references(orcid_id, verbose=True)
-            To write/update references in README.md
+            To write references in "./tests/README.md"
             ? [No]|Yes: yes
-            Updating "Recent publications" in README.md ... Done.
-            >>> co.update_references(orcid_id, recent_years=5, verbose=True)
-            To write/update references in README.md
+            Writing "Recent publications" in "./tests/README.md" ... Done.
+            >>> co.update_references(orcid_id, recent_years=5, max_entries=5, verbose=True)
+            To update references in "./tests/README.md"
             ? [No]|Yes: yes
-            Updating "Recent publications" in README.md ... Done.
+            Updating "Recent publications" in "./tests/README.md" ... Done.
+            >>> os.remove("./tests/README.md")
         """
 
+        # Standardize path and handle confirmation
+        action_ = "update" if os.path.isfile(file_path) else "write"
         file_path_ = _add_slashes(file_path)
-        if _confirmed(f"To write/update references in {file_path_}\n?", confirmation_required):
-            if verbose:
-                print(f'Updating "{heading}" in {file_path_}', end=" ... ")
 
-            try:
-                references = self.fetch_references(
-                    orcid_id=orcid_id, work_types=work_types, recent_years=recent_years,
-                    style=style)
+        if not _confirmed(f"To {action_} references in {file_path_}\n?", confirmation_required):
+            return None
 
-                if not os.path.exists(file_path):
-                    with open(file_path, "w"):  # Create the file if it doesn't exist
-                        pass
+        if verbose:
+            print(f'{action_.rstrip("e").title()}ing "{heading}" in {file_path_}', end=" ... ")
 
-                self._update_references(
-                    references=references, file_path=file_path, heading=heading,
-                    heading_level=heading_level, heading_suffix=heading_suffix)
+        try:  # Fetch data
+            references = self.fetch_references(
+                orcid_id=orcid_id, work_types=work_types, recent_years=recent_years,
+                style=style)
 
+            if not references:
                 if verbose:
-                    print("Done.")
+                    print("No recent publications found. Skipping update.")
+                return None
 
-            except Exception as e:
-                _print_failure_message(
-                    e, prefix="Failed. Error:", verbose=verbose, raise_error=raise_error)
+            # Environment preparation - Ensure the directory exists
+            if not os.path.isfile(file_path):
+                dir_name = os.path.dirname(os.path.abspath(file_path))
+                if dir_name and not os.path.isdir(dir_name):
+                    os.makedirs(dir_name, exist_ok=True)
+                with open(file_path, "w", encoding='utf-8'):  # Create file if it doesn't exist
+                    pass
+
+            # Delegate to the writing logic
+            self._update_references(
+                references=references, file_path=file_path,
+                heading=heading, heading_level=heading_level, heading_suffix=heading_suffix,
+                max_entries=max_entries)
+
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            # noinspection PyUnboundLocalVariable
+            _print_failure_message(e, "Failed. Error:", verbose=verbose, raise_error=raise_error)
