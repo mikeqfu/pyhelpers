@@ -14,9 +14,13 @@
   * Standardized naming conventions and spelling across functions, tests, and tutorials for better consistency (#95).
   * Updated HTTP headers to use standard Title-Case (e.g. `'User-Agent'`) in `fake_requests_headers()` (#96).
   * Refactored `find_shortest_path()` for improved performance (#95).
+  * Refactored `CrossRefOrcid.update_references()` with non-destructive file-writing logic, improved error handling, and renamed the `limit` parameter to `max_entries` for better clarity (#100).
+- **Fixes & robustness:**
+  * Resolved a static type warning in `get_rectangle_centroid()` (#100).
+  * Fixed IDE "unbound variable" warnings in reference management utilities (#100).
 - **Maintenance & documentation:**
-  * Updated project metadata, affiliation details, and Sphinx documentation configuration (#93).
-  * Expanded test suites to cover project structure and Parquet utilities (#94, #97).
+  * Updated project metadata, affiliation details, and Sphinx configuration (#93).
+  * Expanded test suites to cover project structure, Parquet utilities, and `CrossRefOrcid` (#94, #97, #100).
 
 **For more information and detailed specifications, check out the [PyHelpers 2.3.2 documentation](https://pyhelpers.readthedocs.io/en/2.3.2/).**
 
