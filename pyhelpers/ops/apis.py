@@ -521,7 +521,7 @@ class CrossRefOrcid:
         return references
 
     @classmethod
-    def _update_references(cls, references, limit=3, file_path="README.md", heading_level=3,
+    def _update_references(cls, references, limit=3, file_path="tests/README.md", heading_level=3,
                            heading="Recent publications", heading_suffix=":"):
         # noinspection PyShadowingNames
         """
@@ -549,28 +549,46 @@ class CrossRefOrcid:
             >>> co = CrossRefOrcid()
             >>> orcid_id = '0000-0002-6502-9934'
             >>> references = co.fetch_references(orcid_id)
-            >>> co._update_references(references, verbose=True)
-            Updating "Recent publications" in README.md ... Done.
+            >>> co._update_references(references)
             >>> references = co.fetch_references(orcid_id, recent_years=5)
-            >>> co._update_references(references, verbose=True)
-            Updating "Recent publications" in README.md ... Done.
+            >>> co._update_references(references, limit=10)
         """
 
-        heading_ = f"{'#' * heading_level} {heading}{heading_suffix or ''}"
+        full_heading = f"{'#' * heading_level} {heading}{heading_suffix or ''}"
 
-        with open(file_path, "r") as file:  # Read the existing content of the file
-            content = file.read()
+        # Read existing content
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding='utf-8') as f:
+                content = f.read()
+        else:
+            content = ""
 
-        if heading_ in content:  # Remove the existing "References" section (if it exists)
-            content = content.split(heading_)[0].strip()
+        # Identify boundaries
+        if full_heading in content:
+            # Split into: [everything before] and [the heading + everything after]
+            before_section, rest = content.split(full_heading, 1)
+            # Find a newline followed by 1-6 '#' characters at the start of a line
+            next_heading_match = re.search(r'\n#{1,6}\s', rest)  # Look for the start of heading
+
+            if next_heading_match:  # Everything from the next heading onwards is saved
+                after_section = rest[next_heading_match.start():]
+            else:  # No subsequent heading found; the rest of the file was just the old list
+                after_section = ""
+            before_section = before_section.rstrip()
+
+        else:  # Heading doesn't exist yet; append to the end of the file
+            before_section = content.rstrip()
+            after_section = ""
 
         # Write the updated content (excluding the old "References" section)
-        with open(file_path, "w") as file:
-            file.write(content)
+        limit_val = limit if limit is not None else len(references)
+        formatted_refs = "\n".join([f"- {ref}" for ref in references[:limit_val]])
 
-            file.write(f"\n\n{heading_}\n\n")  # Add the new "Recent publications" section
-            for reference in references[:(limit if limit else len(references))]:
-                file.write(f"- {reference}\n")
+        # Reassemble: [Before] + [Heading] + [New List] + [Rest of Document]
+        new_content = f"{before_section}\n\n{full_heading}\n\n{formatted_refs}\n{after_section}"
+
+        with open(file_path, "w", encoding='utf-8') as f:
+            f.write(new_content.strip() + "\n")
 
     def update_references(self, orcid_id, work_types=None, recent_years=2, style='APA',
                           file_path="README.md", heading="Recent publications", heading_level=3,
