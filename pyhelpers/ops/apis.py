@@ -591,12 +591,12 @@ class CrossRefOrcid:
             f.write(new_content.strip() + "\n")
 
     def update_references(self, orcid_id, work_types=None, recent_years=2, style='APA',
-                          file_path="README.md", heading="Recent publications", heading_level=3,
-                          heading_suffix=":", confirmation_required=True, verbose=False,
-                          raise_error=False):
+                          file_path="tests/README.md", heading="Recent publications",
+                          heading_level=3, heading_suffix=":", confirmation_required=True,
+                          verbose=False, raise_error=False):
         # noinspection PyShadowingNames
         """
-        Updates the "Recent publications" section in a Markdown file with a new list of citations.
+        Orchestrates the fetching and writing of references to a Markdown file.
 
         :param orcid_id: ORCID iD of the researcher.
         :type orcid_id: str
