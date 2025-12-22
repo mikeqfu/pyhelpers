@@ -3,7 +3,7 @@
 
 ## [2.3.2](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.2)
 
-(*20 December 2025*)
+(*22 December 2025*)
 
 ### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.1...2.3.2) since [2.3.1](https://pypi.org/project/pyhelpers/2.3.1/):
 
