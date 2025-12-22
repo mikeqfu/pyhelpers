@@ -214,7 +214,7 @@ def get_rectangle_centroid(rectangle, as_geom=False):
             rectangle_ = shapely.geometry.Polygon(rectangle)
         except (TypeError, ValueError, AttributeError):
             rectangle_ = shapely.geometry.MultiPolygon(
-                shapely.geometry.Polygon(x) for x in rectangle)
+                [shapely.geometry.Polygon(x) for x in rectangle])
             rectangle_ = rectangle_.convex_hull
     else:
         rectangle_ = copy.copy(rectangle)
