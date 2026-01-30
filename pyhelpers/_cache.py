@@ -605,12 +605,6 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
         raise e
 
 
-_USER_AGENT_STRINGS = json.loads(
-    importlib.resources.files(__name__).joinpath("data/user-agent-strings.json")
-    .read_text(encoding='utf-8')
-)
-
-
 def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
                            **kwargs):
     # noinspection PyShadowingNames

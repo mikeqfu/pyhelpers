@@ -9,8 +9,8 @@ import re
 import secrets
 import string
 
-from .._cache import _add_slashes, _confirmed, _init_requests_session, _print_failure_message, \
-    _USER_AGENT_STRINGS
+from .._cache import _add_slashes, _confirmed, _init_requests_session, _load_package_data, \
+    _print_failure_message
 
 
 class CrossRefOrcid:
@@ -61,10 +61,12 @@ class CrossRefOrcid:
 
         self.my_name = my_name
 
+        user_agent_strings = _load_package_data("user-agent-strings.json")
+
         self.requests_headers = requests_headers or {
             'accept': 'application/json',
             'user-agent': secrets.choice(
-                _USER_AGENT_STRINGS.get(secrets.choice(list(_USER_AGENT_STRINGS)))),
+                user_agent_strings.get(secrets.choice(list(user_agent_strings)))),
         }
 
     def get_orcid_profile(self, orcid_id, section=None, verbose=False):
