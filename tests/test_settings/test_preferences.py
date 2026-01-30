@@ -26,6 +26,7 @@ def test_np_preferences(reset):
 @pytest.mark.parametrize('reset', [False, True, 'all'])
 @pytest.mark.parametrize('east_asian_text', [False, True])
 @pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore::pandas.errors.Pandas4Warning")
 def test_pd_preferences(reset, east_asian_text):
     pd_preferences(reset=reset, east_asian_text=east_asian_text)
 

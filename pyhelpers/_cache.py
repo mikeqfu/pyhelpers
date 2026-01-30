@@ -5,11 +5,10 @@ Cached functions and constants.
 import collections.abc
 import copy
 import functools
-import importlib
+import importlib.resources
 import importlib.util
 import json
 import os
-import pkgutil
 import re
 import shutil
 import sys
@@ -19,9 +18,13 @@ import requests.adapters
 import shapely.geometry
 import urllib3
 
-# import name: (package/module name, install name)
-_OPTIONAL_DEPENDENCY = json.loads(
-    pkgutil.get_data(__name__, "data/optional-dependency.json").decode())
+
+@functools.lru_cache(maxsize=None)
+def _load_package_data(filename):
+    filepath = importlib.resources.files(__name__).joinpath(f"data/{filename}")
+    if filepath.suffix == ".json":  # noqa
+        return json.loads(filepath.read_text(encoding='utf-8'))
+    return {}
 
 
 def _check_dependencies(*names):
@@ -99,13 +102,16 @@ def _check_dependencies(*names):
 
             raise ModuleNotFoundError(
                 f"\n  Possibly the optional dependency '{display_name}' has not been installed.\n"
-                f"\tInstead of `import gdal`, try `import osgeo.gdal` or `from osgeo import gdal`.\n"
+                f"\tTry `import osgeo.gdal` or `from osgeo import gdal`.\n"
                 f"\t  If the error remains, try `pip install {pip_name}` or "
                 f"`pip install <wheel_file>`.")
 
         else:
-            if import_name in _OPTIONAL_DEPENDENCY:
-                display_name, pip_name = _OPTIONAL_DEPENDENCY.get(import_name)
+            optional_dependencies = _load_package_data("optional-dependency.json")
+            # Returns: {import name: (package/module name, install name)}
+
+            if import_name in optional_dependencies:
+                display_name, pip_name = optional_dependencies.get(import_name)
 
             else:
                 display_name = pip_name = import_name.split('.')[0]
@@ -599,10 +605,6 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
         raise e
 
 
-_USER_AGENT_STRINGS = json.loads(
-    pkgutil.get_data(__name__, "data/user-agent-strings.json").decode())
-
-
 def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
                            **kwargs):
     # noinspection PyShadowingNames
@@ -717,10 +719,10 @@ def _load_ansi_escape_codes():
     """
 
     try:
-        data = pkgutil.get_data(__name__, "data/ansi-escape-codes.json").decode()
-        raw_data = json.loads(data)
+        filepath = importlib.resources.files(__name__).joinpath("data/ansi-escape-codes.json")
+        raw_data = json.loads(filepath.read_text(encoding='utf-8'))
         return {k: v for k, v in raw_data.items() if not k.startswith('_comment_')}
-    except Exception as e:  # Fallback for e.g. environments where pkgutil may fail
+    except Exception as e:  # Fallback
         print(f"Warning: Could not load data file. Error: {e}")
         return {}
 
@@ -796,10 +798,6 @@ def _get_ansi_color_code(colors, show_valid_colors=False, concatenated=True, _sp
     valid_names = set(ansi_escape_codes.keys())
 
     return (final_code, valid_names) if show_valid_colors else final_code
-
-
-_ENGLISH_NUMERALS = json.loads(
-    pkgutil.get_data(__name__, "data/english-numerals.json").decode())
 
 
 def _transform_point_type(*pts, as_geom=True):
