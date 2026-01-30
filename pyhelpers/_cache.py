@@ -800,12 +800,6 @@ def _get_ansi_color_code(colors, show_valid_colors=False, concatenated=True, _sp
     return (final_code, valid_names) if show_valid_colors else final_code
 
 
-_ENGLISH_NUMERALS = json.loads(
-    importlib.resources.files(__name__).joinpath("data/english-numerals.json")
-    .read_text(encoding='utf-8')
-)
-
-
 def _transform_point_type(*pts, as_geom=True):
     """
     Transforms iterable data to geometric type or vice versa.
