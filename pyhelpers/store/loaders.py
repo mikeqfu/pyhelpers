@@ -10,15 +10,14 @@ import logging
 import lzma
 import operator
 import pickle  # nosec
-import sys
 import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .utils import _check_loading_path, _set_index
-from .._cache import _check_dependencies, _lazy_check_dependencies, _print_failure_message
+from .utils import _check_loading_path, _resolve_json_engine, _set_index
+from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
@@ -329,6 +328,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     return data
 
 
+@_resolve_json_engine
 def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
@@ -383,23 +383,18 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
     """
 
-    if engine is not None:
-        valid_engines = {'ujson', 'orjson', 'rapidjson'}
-        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
-        mod = _check_dependencies(engine)
-    else:
-        mod = sys.modules.get('json')
+    json_mod = kwargs.pop('json_mod')
 
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         if engine == 'orjson':
             with open(path_to_file, mode='rb') as json_in:
-                data = mod.loads(json_in.read(), **kwargs)
+                data = json_mod.loads(json_in.read(), **kwargs)
 
         else:
             with open(path_to_file, mode='r') as json_in:
-                data = mod.load(json_in, **kwargs)
+                data = json_mod.load(json_in, **kwargs)
 
         if verbose:
             print("Done.")
@@ -670,7 +665,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies('scipy.sparse')
+@_lazy_check_dependencies(**{'scipy.sparse': 'sp'})
 def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -725,7 +720,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         indptr = csr_loader['indptr']
         shape = csr_loader['shape']
 
-        csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)  # noqa
+        csr_mat = sp.csr_matrix((data, indices, indptr), shape)  # noqa
 
         if verbose:
             print("Done.")
