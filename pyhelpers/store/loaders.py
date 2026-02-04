@@ -9,10 +9,10 @@ import inspect
 import logging
 import lzma
 import operator
-import os.path
 import pickle  # nosec
 import sys
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -66,9 +66,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         path_to_file_ = str(path_to_file).lower()
@@ -172,9 +170,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         2       Leeds  582044   152953
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         with open(path_to_file, mode='r') as csv_file:
@@ -305,10 +301,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         if verbose:
             print(msg)
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
     _check_loading_path(
-        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **prt_kwargs)
+        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **(prt_kwargs or {}))
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -396,9 +390,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
     else:
         mod = sys.modules.get('json')
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         if engine == 'orjson':
@@ -418,6 +410,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('joblib')
 def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
     Loads data from a `Joblib`_ file.
@@ -466,14 +459,10 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
                 0.81357508]])
     """
 
-    joblib = _check_dependencies('joblib')
-
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        data = joblib.load(filename=path_to_file, **kwargs)
+        data = joblib.load(filename=path_to_file, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -633,7 +622,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
                 is_geospatial = True
         except Exception:  # noqa
             # Fallback to extension check if metadata is unreadable/corrupt
-            file_ext = os.path.splitext(path_to_file)[1].lower()
+            file_ext = "".join(Path(path_to_file).suffixes).lower()
             is_geospatial = (file_ext == ".geoparquet")
 
         warn_message = ""
@@ -681,6 +670,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('scipy.sparse')
 def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -725,11 +715,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         True
     """
 
-    scipy_sparse = _check_dependencies('scipy.sparse')
-
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         csr_loader = np.load(path_to_file, **kwargs)
@@ -739,7 +725,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         indptr = csr_loader['indptr']
         shape = csr_loader['shape']
 
-        csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
+        csr_mat = scipy.sparse.csr_matrix((data, indices, indptr), shape)  # noqa
 
         if verbose:
             print("Done.")
@@ -750,16 +736,21 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False, **kwargs):
+def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise_error=False,
+              **kwargs):
     """
     Loads data from a file.
 
     :param path_to_file: Pathname of the file; supported formats include
-        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_.
+        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_ and
+        `Parquet`_.
     :type path_to_file: str | os.PathLike
-    :param err_warning: Whether to show a warning message if an unknown error occurs;
+    :param verbose: Whether to print relevant information in console as the function runs;
+        defaults to ``False``.
+    :type verbose: bool | int
+    :param warn_err: Whether to show a warning message if an unknown error occurs;
         defaults to ``True``.
-    :type err_warning: bool
+    :type warn_err: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -767,12 +758,13 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for one of the following functions:
-        :func:`~pyhelpers.store.ldr.load_pickle`,
-        :func:`~pyhelpers.store.ldr.load_csv`,
-        :func:`~pyhelpers.store.ldr.load_multiple_spreadsheets`,
-        :func:`~pyhelpers.store.ldr.load_json`,
-        :func:`~pyhelpers.store.ldr.load_joblib` or
-        :func:`~pyhelpers.store.ldr.load_feather`.
+        :func:`~pyhelpers.store.load_pickle`,
+        :func:`~pyhelpers.store.load_csv`,
+        :func:`~pyhelpers.store.load_spreadsheets`,
+        :func:`~pyhelpers.store.load_json`,
+        :func:`~pyhelpers.store.load_joblib`,
+        :func:`~pyhelpers.store.load_feather`, or
+        :func:`~pyhelpers.store.load_parquet`.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
 
@@ -782,6 +774,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
     .. _`JSON`: https://www.json.org/json-en.html
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
 
     .. note::
 
@@ -849,39 +842,43 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
                 0.81357508]])
     """
 
-    path_to_file_ = str(path_to_file).lower()
+    ext = "".join(Path(path_to_file).suffixes).lower()
 
     kwargs.update(
-        {'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs, 'raise_error': raise_error})
+        {'path_to_file': path_to_file,
+         'verbose': verbose,
+         'prt_kwargs': prt_kwargs,
+         'raise_error': raise_error}
+    )
 
-    if path_to_file_.endswith(
-            (".pkl", ".pickle",
-             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
-             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
-        data = load_pickle(**kwargs)
+    if ext in {'.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
+               '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz'}:
+        return load_pickle(**kwargs)
 
-    elif path_to_file_.endswith((".csv", ".txt")):
-        data = load_csv(**kwargs)
+    if ext in {".csv", ".txt"}:
+        return load_csv(**kwargs)
 
-    elif path_to_file_.endswith((".xlsx", ".xls")):
-        data = load_spreadsheets(**kwargs)
+    if ext in {".xlsx", ".xls"}:
+        return load_spreadsheets(**kwargs)
 
-    elif path_to_file_.endswith(".json"):
-        data = load_json(**kwargs)
+    if ext == ".json":
+        return load_json(**kwargs)
 
-    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        data = load_joblib(**kwargs)
+    if ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
+        return load_joblib(**kwargs)
 
-    elif path_to_file_.endswith((".fea", ".feather")):
-        data = load_feather(**kwargs)
+    if ext in {".fea", ".feather"}:
+        return load_feather(**kwargs)
 
-    else:
-        data = None
+    if ext == ".npz":
+        return load_csr_matrix(**kwargs)
 
-        if err_warning:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                "\n  The specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.load_data()`.")
+    if ext in {".parquet", ".geoparquet"}:
+        return load_parquet(**kwargs)
 
-    return data
+    if warn_err:
+        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        logging.warning(
+            "\n  The specified file format (extension) is not recognisable by `load_data()`.")
+
+    return None
