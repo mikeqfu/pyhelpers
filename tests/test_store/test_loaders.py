@@ -95,7 +95,7 @@ def test_load_csr_matrix(capfd):
 @pytest.mark.parametrize(
     'ext', [
         ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2",
-        ".csv", ".xlsx", ".json", ".feather", ".joblib"])
+        ".csv", ".xlsx", ".json", ".feather", ".joblib", ".parquet"])
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
 def test_load_data(ext, engine, capfd, caplog):
     path_to_file = importlib.resources.files("tests").joinpath("data", f"dat{ext}")
@@ -103,7 +103,7 @@ def test_load_data(ext, engine, capfd, caplog):
     with importlib.resources.as_file(path_to_file) as f:
         if ext in {".csv", ".xlsx", ".feather"}:
             idx_arg = {'path_to_file': f, 'verbose': True, 'index': 0}
-        elif ext == ".json":
+        elif ext in {".json", ".parquet"}:
             idx_arg = {'path_to_file': f, 'verbose': True, 'engine': engine}
         else:
             idx_arg = {'path_to_file': f, 'verbose': True}
