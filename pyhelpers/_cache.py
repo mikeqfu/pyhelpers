@@ -133,6 +133,7 @@ def _lazy_check_dependencies(*args, **kwargs):
         >>> @_lazy_check_dependencies('numpy', 'pandas')  # no aliases
         >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # with aliases
         >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # mixed
+        >>> @_lazy_check_dependencies(**{'scipy.sparse': 'sp'})
     """
 
     # Convert all arguments to package:alias mapping
