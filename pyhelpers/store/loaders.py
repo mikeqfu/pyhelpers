@@ -12,6 +12,7 @@ import operator
 import os.path
 import pickle  # nosec
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -315,7 +316,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 
         for sheet_name in sheet_names:
             if verbose:
-                print(f"\t'{sheet_name}'.", end=" ... ")
+                print(f"  '{sheet_name}'.", end=" ... ")
 
             try:
                 sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
@@ -535,9 +536,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         Leeds       -1.543794  53.797418
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = pd.read_feather(path_to_file, **kwargs)
@@ -610,50 +609,71 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         Leeds       -1.543794  53.797418
         >>> # Load with a specific engine
         >>> parquet_dat2 = load_parquet(parquet_pathname, engine='fastparquet', verbose=True)
-        Loading "dat.parquet" from "./tests/data/" ... Done.
+        Loading "./tests/data/dat.parquet" ... Done.
+        /pyhelpers/store/loaders.py:679: UserWarning: `engine='fastparquet'` failed to decode t...
         >>> parquet_dat2.equals(parquet_dat1)
         True
         >>> # Trigger fallback by providing an invalid engine
         >>> parquet_dat = load_parquet(parquet_pathname, engine='invalid', verbose=True)
-        Loading "dat.parquet" from "./tests/data/" ... Done.
-            Warning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. Falling ...
+        Loading "./tests/data/dat.parquet" ... Done.
+        /pyhelpers/store/loaders.py:677: UserWarning: Primary loader failed (engine must be one...
 
     .. seealso::
         - Example data can be referred to in the function :func:`~pyhelpers.store.save_parquet`.
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        file_ext = os.path.splitext(path_to_file)[1].lower()
+        is_geospatial = False
 
-        warning_message = ""
+        try:  # Check Parquet metadata for 'geo' key
+            parquet_meta = pq.read_metadata(path_to_file)  # noqa
+            if parquet_meta.metadata and b'geo' in parquet_meta.metadata:
+                is_geospatial = True
+        except Exception:  # noqa
+            # Fallback to extension check if metadata is unreadable/corrupt
+            file_ext = os.path.splitext(path_to_file)[1].lower()
+            is_geospatial = (file_ext == ".geoparquet")
 
+        warn_message = ""
         try:
-            if file_ext == ".geoparquet":  # Use GeoPandas if the extension suggests spatial data
+            actual_engine = engine or 'auto'
+
+            if is_geospatial:
                 data = gpd.read_parquet(path_to_file, **kwargs)  # noqa
-            else:  # Use Pandas; engine can be None, 'auto', 'pyarrow' or 'fastparquet'
-                data = pd.read_parquet(
-                    path_to_file, engine='auto' if engine is None else engine, **kwargs)
+            else:
+                data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
 
-        except (ValueError, ImportError):
-            warning_message = \
-                ("\n\tWarning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. "
-                 "Falling back to `pyarrow.parquet.read_table()`.")
+            if actual_engine == 'fastparquet' and not is_geospatial:
+                if data.index.get_level_values(0).isnull().all():
+                    index_name = data.index.name
 
-            kwargs.pop('engine', None)
-            data = pq.read_table(path_to_file, **kwargs)  # noqa
+                    if index_name and index_name in data.columns:  # Check edge cases
+                        data.set_index(index_name, inplace=True)
+                    else:  # Fallback to pyarrow
+                        warn_message = \
+                            (f"`engine='fastparquet'` failed to decode the index "
+                             f"'{index_name}'; retried and resolved using `pyarrow`.")
+                        kwargs['engine'] = 'pyarrow'
+                        data = pd.read_parquet(path_to_file, **kwargs)
+
+        except Exception as e:
+            warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
+
+            pq_kwargs = kwargs.copy()
+            pq_kwargs.pop('engine', None)
+            data = pq.read_table(path_to_file, **pq_kwargs)  # noqa
 
             try:
                 data = data.to_pandas()
             except Exception:  # noqa
-                warning_message += ("\n\tWarning: Conversion to DataFrame failed. "
-                                    "Returning pyarrow.Table.")
+                warn_message += "\nDataFrame conversion also failed. Returning a `pyarrow.Table`."
 
         if verbose:
-            print("Done.", end=f"{warning_message}\n")
+            print("Done.")
+            if warn_message:
+                warnings.warn(warn_message, UserWarning)
 
         return data
 
@@ -861,7 +881,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         if err_warning:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
             logging.warning(
-                "\n\tThe specified file format (extension) is not recognisable by "
+                "\n  The specified file format (extension) is not recognisable by "
                 "`pyhelpers.store.load_data()`.")
 
     return data
