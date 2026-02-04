@@ -16,13 +16,13 @@ def test_load_spreadsheets(capfd):
     with importlib.resources.as_file(path_to_xlsx_) as path_to_xlsx:
         wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
         out, _ = capfd.readouterr()
-        assert f'Loading {_add_slashes(_check_relative_pathname(path_to_xlsx_.__str__()))} ... \n' \
-               '\t\'TestSheet1\'. ... Done.\n' \
-               '\t\'TestSheet2\'. ... Done.\n' \
-               '\t\'TestSheet11\'. ... Done.\n' \
-               '\t\'TestSheet21\'. ... Done.\n' \
-               '\t\'TestSheet12\'. ... Done.\n' \
-               '\t\'TestSheet22\'. ... Done.\n' in out
+        assert f'Loading {_add_slashes(_check_relative_pathname(str(path_to_xlsx_)))} ... \n' \
+               '  \'TestSheet1\'. ... Done.\n' \
+               '  \'TestSheet2\'. ... Done.\n' \
+               '  \'TestSheet11\'. ... Done.\n' \
+               '  \'TestSheet21\'. ... Done.\n' \
+               '  \'TestSheet12\'. ... Done.\n' \
+               '  \'TestSheet22\'. ... Done.\n' in out
         assert isinstance(wb_data, dict)
 
         wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
@@ -31,25 +31,36 @@ def test_load_spreadsheets(capfd):
 
 
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
-def test_load_parquet(engine, capfd):
-    path_to_parquet_ = importlib.resources.files("tests").joinpath("data", "dat.parquet")
+@pytest.mark.parametrize('extension', ['.parquet', '.geoparquet'])
+@pytest.mark.parametrize('data_type', ['df', 'gdf'])
+def test_load_parquet(engine, extension, data_type, tmp_path, capfd):
+    original_data = example_dataframe()
+    path_to_parquet = tmp_path / f"test_data{extension}"
 
-    with importlib.resources.as_file(path_to_parquet_) as path_to_parquet:
-        result = load_parquet(path_to_parquet, engine=engine, verbose=True)
+    if data_type == 'df':
+        original_data.to_parquet(path_to_parquet, index=True)
+
+    elif data_type == 'gdf':
+        import geopandas as gpd
+
+        original_data['geometry'] = gpd.points_from_xy(
+            original_data['Longitude'], original_data['Latitude'])
+        original_data = gpd.GeoDataFrame(original_data, crs="EPSG:4326")
+        original_data.to_parquet(path_to_parquet)
+
+    if engine == 'not-an-engine' and data_type != 'gdf':  # Test invalid engine fallback
+        # Should trigger ValueError -> pq.read_table -> to_pandas()
+        with pytest.warns(UserWarning, match="Falling back to PyArrow"):
+            retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
+    elif engine == 'fastparquet' and data_type == 'df':
+        with pytest.warns(UserWarning, match="retried and resolved using `pyarrow`"):
+            retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
+    else:
+        retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
         out, _ = capfd.readouterr()
+        assert "Loading" in out and "Done." in out
 
-        if engine == 'not-an-engine':
-            # Test invalid engine fallback
-            # Should trigger ValueError -> pq.read_table -> to_pandas()
-            assert "Warning" in out
-            assert "Falling back to `pyarrow.parquet.read_table()`" in out
-            assert isinstance(result, pd.DataFrame)  # Successfully converted back
-
-        else:
-            # Test successful loading
-            out, _ = capfd.readouterr()
-            assert "Warning" not in out
-            assert isinstance(result, pd.DataFrame)
+    assert retrieved_data.equals(original_data)
 
 
 def test_load_csr_matrix(capfd):
