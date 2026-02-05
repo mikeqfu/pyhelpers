@@ -691,7 +691,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'})
+@_lazy_check_dependencies(pyarrow='pa', pyarrow_parquet='pq')
 def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
