@@ -3,11 +3,13 @@ Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
 import copy
+import functools
 import logging
 import os
 import pathlib
+import sys
 
-from .._cache import _add_slashes, _check_relative_pathname
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
 
 
 def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
@@ -234,16 +236,16 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         print(prt_msg, end=print_end)
 
 
-def _set_index(data, index=None):
+def _set_index(data, index_col=None):
     """
     Sets the index of a dataframe.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame
-    :param index: Column index or a list of column indices to set as the index;
+    :param index_col: Column index or a list of column indices to set as the index;
         when ``index=None`` (default), the function sets the first column as the index
         if its column name is an empty string.
-    :type index: int | list | None
+    :type index_col: int | list | None
     :return: The dataframe with the updated index.
     :rtype: pandas.DataFrame
 
@@ -262,7 +264,7 @@ def _set_index(data, index=None):
         Leeds       -1.543794  53.797418
         >>> example_df.equals(_set_index(example_df))
         True
-        >>> example_df_1 = _set_index(example_df, index=0)
+        >>> example_df_1 = _set_index(example_df, index_col=0)
         >>> example_df_1
                     Latitude
         Longitude
@@ -275,22 +277,78 @@ def _set_index(data, index=None):
         >>> example_df_2 = example_df.copy()
         >>> example_df_2.index.name = ''
         >>> example_df_2.reset_index(inplace=True)
-        >>> example_df_2 = _set_index(example_df_2, index=None)
+        >>> example_df_2 = _set_index(example_df_2, index_col=None)
         >>> np.array_equal(example_df_2.values, example_df.values)
         True
     """
 
     data_ = data.copy()
 
-    if index is None:
+    if index_col is None:
         idx_col = data.columns[0]
         if idx_col == '':
             data_ = data.set_index(idx_col)
             data_.index.name = None
 
     else:
-        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
+        idx_keys_ = [index_col] if isinstance(index_col, (int, list)) else copy.copy(index_col)
         idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
         data_ = data.set_index(keys=idx_keys)
 
     return data_
+
+
+def _resolve_json_engine(func):
+    """
+    Decorator to dynamically resolve and inject a JSON engine module.
+
+    This decorator inspects the ``engine`` argument of the decorated function.
+    It validates the engine selection, ensures the required dependency is
+    available via :func:`~pyhelpers._cache._check_dependencies`, and injects
+    the resulting module into the function's keyword arguments as ``json_mod``.
+
+    :param func: The function to be decorated.
+    :type func: callable
+    :return: A wrapped version of the function with ``json_mod`` injected.
+    :rtype: callable
+
+    .. note::
+
+        - Supported engines include: ``'ujson'``, ``'orjson'``, and ``'rapidjson'``.
+        - If ``engine=None``, the standard library
+          `json <https://docs.python.org/3/library/json.html>`_ module is used.
+        - The decorated function must be able to accept ``json_mod`` via its
+          ``**kwargs`` or have a specific parameter named ``json_mod``.
+
+    **Example**::
+
+        >>> from pyhelpers.store.utils import _resolve_json_engine
+
+        >>> @_resolve_json_engine
+        ... def load_my_json(path, engine=None, **kwargs):
+        ...     json_mod = kwargs.pop('json_mod')
+        ...     print(f"Using engine: {json_mod.__name__}")
+
+        >>> load_my_json("data.json", engine='ujson')
+        Using engine: ujson
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Determine the engine (check kwargs first, then positional args)
+        engine = kwargs.get('engine')
+        if engine is None and len(args) > 1:
+            engine = args[1]  # Assuming engine is the second positional argument
+
+        # Resolve the module
+        if engine is not None:
+            valid_engines = {'ujson', 'orjson', 'rapidjson'}
+            if engine not in valid_engines:
+                raise ValueError(f"`engine` must be one of {valid_engines}")
+            kwargs['json_mod'] = _check_dependencies(engine)
+        else:
+            kwargs['json_mod'] = sys.modules.get('json')
+
+        return func(*args, **kwargs)
+
+    return wrapper

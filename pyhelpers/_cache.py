@@ -130,9 +130,11 @@ def _lazy_check_dependencies(*args, **kwargs):
     **Examples**::
 
         >>> from pyhelpers._cache import _lazy_check_dependencies
-        >>> @_lazy_check_dependencies('numpy', 'pandas')  # no aliases
-        >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # with aliases
-        >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # mixed
+        >>> @_lazy_check_dependencies('numpy', 'pandas')  # No aliases
+        >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # Aliases
+        >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # Mixed
+        >>> @_lazy_check_dependencies(scipy_sparse='sp')  # Module or submodule of a package
+        >>> @_lazy_check_dependencies(**{'scipy.sparse': 'sp'})  # (Alternative)
     """
 
     # Convert all arguments to package:alias mapping
@@ -146,7 +148,9 @@ def _lazy_check_dependencies(*args, **kwargs):
             raise TypeError("Package names must be strings.")
 
     # Handle keyword arguments (with aliases)
-    package_mapping.update(kwargs)
+    for k, v in kwargs.items():
+        package_name = k.replace('_', '.')  # If any, take the 'dot' version as the primary guess
+        package_mapping[package_name] = v
 
     def decorator(func):
         # Create proxy class that handles the lazy loading
@@ -160,13 +164,18 @@ def _lazy_check_dependencies(*args, **kwargs):
             def _load(self):
                 if self._module is None:
                     try:
-                        # Use import_module to handle 'a.b' correctly
+                        # Attempt 1: Try the name as resolved (dots)
                         self._module = importlib.import_module(self._name)
-                    except ImportError as e:
-                        raise ImportError(
-                            f"Required package '{self._name}' not found. "
-                            f"Please install it to use '{func.__name__}'."
-                        ) from e
+                    except ImportError:
+                        # Attempt 2: Fallback for names that actually have underscores
+                        try:
+                            alt_name = self._name.replace('.', '_')
+                            self._module = importlib.import_module(alt_name)
+                        except ImportError:
+                            raise ImportError(
+                                f"Required package '{self._name}' not found. "
+                                f"Please install it to use '{func.__name__}'."
+                            )
                 return self._module
 
             def __getattr__(self, attr):
