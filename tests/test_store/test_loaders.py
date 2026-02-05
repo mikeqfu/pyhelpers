@@ -1,10 +1,8 @@
 """Test the module :mod:`~pyhelpers.store`."""
 
 import importlib.resources
-import os
 
 import pytest
-from scipy.sparse import csr_matrix
 
 from pyhelpers._cache import _add_slashes, _check_relative_pathname, example_dataframe
 from pyhelpers.store.loaders import *
@@ -31,11 +29,11 @@ def test_load_spreadsheets(capfd):
 
 
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
-@pytest.mark.parametrize('extension', ['.parquet', '.geoparquet'])
+@pytest.mark.parametrize('file_ext', ['.parquet', '.geoparquet'])
 @pytest.mark.parametrize('data_type', ['df', 'gdf'])
-def test_load_parquet(engine, extension, data_type, tmp_path, capfd):
+def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd):
     original_data = example_dataframe()
-    path_to_parquet = tmp_path / f"test_data{extension}"
+    path_to_parquet = tmp_path / f"test_data{file_ext}"
 
     if data_type == 'df':
         original_data.to_parquet(path_to_parquet, index=True)
@@ -64,11 +62,13 @@ def test_load_parquet(engine, extension, data_type, tmp_path, capfd):
 
 
 def test_load_csr_matrix(capfd):
+    import scipy.sparse
+
     data_ = [1, 2, 3, 4, 5, 6]
     indices_ = [0, 2, 2, 0, 1, 2]
     indptr_ = [0, 2, 3, 6]
 
-    csr_mat = csr_matrix((data_, indices_, indptr_), shape=(3, 3))
+    csr_mat = scipy.sparse.csr_matrix((data_, indices_, indptr_), shape=(3, 3))
 
     assert list(csr_mat.data) == data_
     assert list(csr_mat.indices) == indices_
@@ -79,11 +79,11 @@ def test_load_csr_matrix(capfd):
     with importlib.resources.as_file(path_to_csr_npz_) as path_to_csr_npz:
         csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
         out, _ = capfd.readouterr()
-        assert "Loading " in out and \
-               f'{_add_slashes(os.path.relpath(path_to_csr_npz_.__str__()))} ... Done.\n' in out
+        assert f"Loading {_add_slashes(_check_relative_pathname(path_to_csr_npz))}" in out
+        assert "Done." in out
 
     rslt = csr_mat != csr_mat_
-    assert isinstance(rslt, csr_matrix)
+    assert isinstance(rslt, scipy.sparse.csr_matrix)
     assert rslt.count_nonzero() == 0
     assert rslt.nnz == 0
 
@@ -93,47 +93,55 @@ def test_load_csr_matrix(capfd):
 
 
 @pytest.mark.parametrize(
-    'ext', [
+    'file_ext', [
         ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2",
-        ".csv", ".xlsx", ".json", ".feather", ".joblib", ".parquet"])
+        ".csv", ".xlsx", ".ods", ".json", ".feather", ".joblib", ".parquet"])
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
-def test_load_data(ext, engine, capfd, caplog):
-    path_to_file = importlib.resources.files("tests").joinpath("data", f"dat{ext}")
+def test_load_data(file_ext, engine, capfd, caplog):
+    original_data = example_dataframe()
 
-    with importlib.resources.as_file(path_to_file) as f:
-        if ext in {".csv", ".xlsx", ".feather"}:
-            idx_arg = {'path_to_file': f, 'verbose': True, 'index': 0}
-        elif ext in {".json", ".parquet"}:
-            idx_arg = {'path_to_file': f, 'verbose': True, 'engine': engine}
+    path_to_file_ = importlib.resources.files("tests").joinpath("data", f"dat{file_ext}")
+
+    with importlib.resources.as_file(path_to_file_) as path_to_file:
+        args = {'path_to_file': path_to_file, 'verbose': True}
+        if file_ext in {".csv", ".xlsx", ".ods", ".feather"}:
+            args.update({'index_col': 0})  # noqa
+        elif file_ext in {".json", ".parquet"}:
+            args.update({'engine': engine})  # noqa
+
+        if file_ext == ".parquet" and engine is not None:
+            with pytest.warns(UserWarning):
+                retrieved_data = load_data(**args)
         else:
-            idx_arg = {'path_to_file': f, 'verbose': True}
+            retrieved_data = load_data(**args)
 
-        dat = load_data(**idx_arg)
         out, _ = capfd.readouterr()
-        assert "Loading " in out and "Done." in out and \
-               f"{_add_slashes(os.path.relpath(path_to_file.__str__()))} ... " in out
 
-    if ext == ".xlsx":
-        assert isinstance(dat, dict)
-        assert dat['TestSheet1'].set_index('City').equals(example_dataframe())
-    elif ext == ".json":
-        assert list(dat.keys()) == example_dataframe().index.to_list()
-    elif ext == ".joblib":
+        assert f"Loading {_add_slashes(_check_relative_pathname(path_to_file))} ... " in out
+        assert "Done." in out
+
+    if file_ext in {".xlsx", ".ods"}:
+        assert isinstance(retrieved_data, dict)
+        assert retrieved_data['TestSheet1'].equals(original_data)
+    elif file_ext == ".json":
+        assert list(retrieved_data.keys()) == original_data.index.to_list()
+    elif file_ext == ".joblib":
         np.random.seed(0)
-        assert np.array_equal(dat, np.random.rand(100, 100))
-    else:  # ext in {".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2", ".csv", ".feather"}
-        assert dat.astype(float).equals(example_dataframe())
+        assert np.array_equal(retrieved_data, np.random.rand(100, 100))
+    else:  # file_ext in {".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2", ".csv", ".feather"}
+        assert retrieved_data.astype(float).equals(original_data)
 
-    with importlib.resources.as_file(path_to_file) as f:
-        _ = load_data(path_to_file=f, verbose=True, test_arg=True)
+    with importlib.resources.as_file(path_to_file_) as path_to_file:
+        _ = load_data(path_to_file=path_to_file, verbose=True, test_arg=True)
+
         out, _ = capfd.readouterr()
         assert "'test_arg'" in out
         assert "invalid keyword argument" in out or "unexpected keyword argument" in out
 
     # with pytest.warns(UserWarning):
     with caplog.at_level(logging.WARNING):
-        dat = load_data(path_to_file='none.test', verbose=True)
-        assert dat is None
+        retrieved_data = load_data(path_to_file='none.test', verbose=True)
+        assert retrieved_data is None
 
 
 if __name__ == '__main__':
