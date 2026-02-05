@@ -46,7 +46,7 @@ def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
             print(first_part + " ... ")
 
             # Print second part with increased indentation (original + 1 extra tab)
-            print("\t" * (leading_tabs + 1) + second_part, end=end)
+            print("  " * (leading_tabs + 1) + second_part, end=end)
 
     else:
         print(message, end=end)
@@ -92,66 +92,73 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> _check_saving_path(path_to_file, verbose=True)
         Traceback (most recent call last):
             ...
-        AssertionError: The input for <path_to_file> may not be a file path.
-        >>> path_to_file = "pyhelpers.pdf"
+        ValueError: The input for '<path_to_file>' may not be a file path.
+        >>> path_to_file = "pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" ... Passed.
-        >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
+        Saving "pyhelpers.txt" ... Passed.
+        >>> path_to_file = cd("tests", "documents", "pyhelpers.txt")
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" in "./tests/documents/" ... Passed.
+        Saving "pyhelpers.txt" to "./tests/documents/" ... Passed.
         >>> _check_saving_path(path_to_file, verbose=True, print_wrap_limit=10); print("Passed.")
-        Updating "pyhelpers.pdf" ...
-            in "./tests/documents/" ... Passed.
-        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
+        Saving "pyhelpers.txt" ...
+          to "./tests/documents/" ... Passed.
+        >>> path_to_file = "C:\\Windows\\pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:/Windows/" ... Passed.
-        >>> path_to_file = "C:\\pyhelpers.pdf"
+        Saving "pyhelpers.txt" to "C:/Windows/" ... Passed.
+        >>> path_to_file = "C:\\pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:/" ... Passed.
+        Saving "pyhelpers.txt" to "C:/" ... Passed.
     """
 
-    abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    if abs_path_to_file.is_dir():
+    file_path = pathlib.Path(path_to_file).resolve()
+    cwd = pathlib.Path.cwd()
+
+    if file_path.is_dir():
         raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
 
     try:
-        rel_dir_path = abs_path_to_file.parent.relative_to(pathlib.Path.cwd())
-
-        if rel_dir_path.is_relative_to(".") and rel_dir_path == rel_dir_path.parent:
-            rel_dir_path = abs_path_to_file.parent
-
-    except ValueError:
+        # Attempt to get path relative to current working directory
+        rel_dir_path = file_path.parent.relative_to(cwd)
+    except ValueError:  # If outside CWD (common on Linux mounts or different Windows drives)
         if verbose == 2:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
             logging.warning(
-                f'\n\t"{abs_path_to_file.parent}" is outside the current working directory.')
+                f'\n  "{file_path.parent}" is outside the current working directory.')
+        rel_dir_path = file_path.parent
 
-        rel_dir_path = abs_path_to_file.parent
+    # Ensure the directory exists
+    rel_dir_path.mkdir(parents=True, exist_ok=True)
 
-    rel_dir_path.mkdir(parents=True, exist_ok=True)  # In case the specified path does not exist
-
-    filename = abs_path_to_file.name if abs_path_to_file.suffix else ""
+    filename = file_path.name if file_path.suffix else ""
 
     if verbose:
-        if os.path.isfile(abs_path_to_file) and not belated:
+        # Flip verb to 'Updating' if file exists, unless 'belated' is flagged
+        if os.path.isfile(file_path) and not belated:
             state_verb, state_prep = "Updating", "in"
 
-        end = print_end if print_end else "\n"
+        prt_end = print_end or "\n"
 
-        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == abs_path_to_file.parent) and (
-                rel_dir_path.absolute().drive == pathlib.Path.cwd().drive):
+        # Cross-platform check: Is the file in the CWD or its immediate root?
+        # On Linux, .anchor is '/', on Windows it is 'C:\\'
+        is_internal = file_path.is_relative_to(cwd)
+
+        # If the directory is effectively the "base" or on the same local drive/anchor
+        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == file_path.parent) and \
+                (file_path.anchor == cwd.anchor):
             message = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
-            print(message, end=end)
-
+            print(message, end=prt_end)
         else:
+            # Use relative path if internal, otherwise absolute
+            display_path = rel_dir_path if is_internal else file_path.parent
             message = (f'{print_prefix}{state_verb} "{filename}" '
-                       f'{state_prep} {_add_slashes(rel_dir_path)}{print_suffix}')
+                       f'{state_prep} {_add_slashes(display_path)}{print_suffix}')
 
             _print_wrapped_string(
-                message=message, filename=filename, end=end, print_wrap_limit=print_wrap_limit)
+                message=message, filename=filename, end=prt_end, print_wrap_limit=print_wrap_limit)
 
     if ret_info:
-        return rel_dir_path, filename
+        file_ext = file_path.suffix.lower()
+        return file_path, rel_dir_path, file_ext
 
     return None
 
