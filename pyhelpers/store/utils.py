@@ -236,16 +236,16 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         print(prt_msg, end=print_end)
 
 
-def _set_index(data, index=None):
+def _set_index(data, index_col=None):
     """
     Sets the index of a dataframe.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame
-    :param index: Column index or a list of column indices to set as the index;
+    :param index_col: Column index or a list of column indices to set as the index;
         when ``index=None`` (default), the function sets the first column as the index
         if its column name is an empty string.
-    :type index: int | list | None
+    :type index_col: int | list | None
     :return: The dataframe with the updated index.
     :rtype: pandas.DataFrame
 
@@ -264,7 +264,7 @@ def _set_index(data, index=None):
         Leeds       -1.543794  53.797418
         >>> example_df.equals(_set_index(example_df))
         True
-        >>> example_df_1 = _set_index(example_df, index=0)
+        >>> example_df_1 = _set_index(example_df, index_col=0)
         >>> example_df_1
                     Latitude
         Longitude
@@ -277,21 +277,21 @@ def _set_index(data, index=None):
         >>> example_df_2 = example_df.copy()
         >>> example_df_2.index.name = ''
         >>> example_df_2.reset_index(inplace=True)
-        >>> example_df_2 = _set_index(example_df_2, index=None)
+        >>> example_df_2 = _set_index(example_df_2, index_col=None)
         >>> np.array_equal(example_df_2.values, example_df.values)
         True
     """
 
     data_ = data.copy()
 
-    if index is None:
+    if index_col is None:
         idx_col = data.columns[0]
         if idx_col == '':
             data_ = data.set_index(idx_col)
             data_.index.name = None
 
     else:
-        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
+        idx_keys_ = [index_col] if isinstance(index_col, (int, list)) else copy.copy(index_col)
         idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
         data_ = data.set_index(keys=idx_keys)
 

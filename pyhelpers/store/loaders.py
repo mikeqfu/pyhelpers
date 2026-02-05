@@ -100,7 +100,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
+def load_csv(path_to_file, delimiter=',', header=0, index_col=None, verbose=False, prt_kwargs=None,
              raise_error=False, **kwargs):
     """
     Loads data from a `CSV`_ file.
@@ -111,9 +111,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
     :type delimiter: str
     :param header: Index number of the row(s) used as column names; defaults to ``0``.
     :type header: int | typing.List[int] | None
-    :param index: Index number of the column(s) to use as the row labels of the dataframe;
+    :param index_col: Index number of the column(s) to use as the row labels of the dataframe;
         defaults to ``None``.
-    :type index: str | int | list | None
+    :type index_col: str | int | list | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
@@ -140,7 +140,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         >>> from pyhelpers.store import load_csv
         >>> from pyhelpers.dirs import cd
         >>> csv_pathname = cd("tests", "data", "dat.csv")
-        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                      Longitude    Latitude
@@ -150,7 +150,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
         >>> csv_pathname = cd("tests", "data", "dat.txt")
-        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.txt" ... Done.
         >>> csv_dat
                      Longitude    Latitude
@@ -184,7 +184,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         else:
             data = pd.DataFrame(csv_rows)
 
-        data = _set_index(data, index=index)
+        data = _set_index(data, index_col=index_col)
 
         if verbose:
             print("Done.")
@@ -193,7 +193,8 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 
     except TypeError:
         try:
-            data = pd.read_csv(path_to_file, index_col=index, **kwargs)
+            kwargs.update({'index_col': index_col})
+            data = pd.read_csv(path_to_file, **kwargs)
             if verbose:
                 print("Done.")
             return data
@@ -468,16 +469,16 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise_error=False,
+def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
     Loads a dataframe from a `Feather`_ file.
 
     :param path_to_file: Path where the feather file is saved.
     :type path_to_file: str | os.PathLike
-    :param index: Index number or name of the column(s) to use as the row labels of the dataframe;
+    :param index_col: Index number or name of the column(s) to use as the row labels of the dataframe;
         defaults to ``None``.
-    :type index: str | int | list | None
+    :type index_col: str | int | list | None
     :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
@@ -509,7 +510,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         >>> from pyhelpers.store import load_feather
         >>> from pyhelpers.dirs import cd
         >>> feather_path = cd("tests", "data", "dat.feather")
-        >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
+        >>> feather_dat = load_feather(feather_path, index_col=0, verbose=True)
         Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
@@ -525,7 +526,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
     try:
         data = pd.read_feather(path_to_file, **kwargs)
 
-        data = _set_index(data, index=index)
+        data = _set_index(data, index_col=index_col)
 
         if verbose:
             print("Done.")
@@ -536,7 +537,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'}, geopandas='gpd')
+@_lazy_check_dependencies(pyarrow='pa', pyarrow_parquet='pq', geopandas='gpd')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
@@ -665,7 +666,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(**{'scipy.sparse': 'sp'})
+@_lazy_check_dependencies(scipy_sparse='sp')
 def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -705,7 +706,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         Loading "./tests/data/csr_mat.npz" ... Done.
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
         >>> (csr_mat != csr_mat_).count_nonzero() == 0
-        True
+        np.True_
         >>> (csr_mat != csr_mat_).nnz == 0
         True
     """
@@ -791,7 +792,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.csv")
-        >>> csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        >>> csv_dat = load_data(path_to_file=dat_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                     Longitude   Latitude
@@ -809,7 +810,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
          'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.feather")
-        >>> feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        >>> feather_dat = load_data(path_to_file=dat_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
@@ -853,7 +854,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     if ext in {".csv", ".txt"}:
         return load_csv(**kwargs)
 
-    if ext in {".xlsx", ".xls"}:
+    if ext in {".xlsx", ".xls", ".ods"}:
         return load_spreadsheets(**kwargs)
 
     if ext == ".json":
