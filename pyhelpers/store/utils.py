@@ -2,7 +2,6 @@
 Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
-import copy
 import functools
 import logging
 import os
@@ -245,14 +244,14 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
 
 def _set_index(data, index_col=None):
     """
-    Sets the index of a dataframe.
+    Sets the index of a dataframe using column names or integer positions.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame
-    :param index_col: Column index or a list of column indices to set as the index;
-        when ``index=None`` (default), the function sets the first column as the index
-        if its column name is an empty string.
-    :type index_col: int | list | None
+    :param index_col: Column name(s) or integer index/indices to set as the index.
+        If ``None`` (default), the function sets the first column as the index
+        only if its name is an empty string (``''``) or starts with ``'Unnamed:'``.
+    :type index_col: str | int | list | None
     :return: The dataframe with the updated index.
     :rtype: pandas.DataFrame
 
@@ -289,20 +288,48 @@ def _set_index(data, index_col=None):
         True
     """
 
-    data_ = data.copy()
+    dat = data.copy()
 
     if index_col is None:
-        idx_col = data.columns[0]
-        if idx_col == '':
-            data_ = data.set_index(idx_col)
-            data_.index.name = None
+        # Check if the first column looks like a saved index (empty name or 'Unnamed: 0')
+        first_col = dat.columns[0]
+        if str(first_col) == '' or str(first_col).startswith('Unnamed:'):
+            dat = dat.set_index(first_col)
+            dat.index.name = None
 
     else:
-        idx_keys_ = [index_col] if isinstance(index_col, (int, list)) else copy.copy(index_col)
-        idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
-        data_ = data.set_index(keys=idx_keys)
+        # Normalize to list (handles scalars and iterables)
+        if isinstance(index_col, (str, int)):
+            idx_keys_raw = [index_col]
+        else:
+            idx_keys_raw = list(index_col)
 
-    return data_
+        # Resolve integers and validate existence
+        idx_keys = []
+        for x in idx_keys_raw:
+            # Resolve integer positions to names
+            if isinstance(x, int):
+                if x >= len(dat.columns):
+                    raise IndexError(f"Column index {x} is out of bounds.")
+                col_name = dat.columns[x]
+            else:
+                col_name = x
+
+            # Validate existence
+            if col_name not in dat.columns:
+                if col_name == dat.index.name:
+                    continue  # Already the index, skip
+                raise KeyError(f"Column '{col_name}' not found in DataFrame.")
+
+            # Prevent duplication (the fix)
+            if col_name not in idx_keys:
+                idx_keys.append(col_name)
+
+        # Set the index, only if valid columns are found
+        if idx_keys:
+            dat = dat.set_index(keys=idx_keys)
+
+    return dat
 
 
 def _resolve_json_engine(func):
