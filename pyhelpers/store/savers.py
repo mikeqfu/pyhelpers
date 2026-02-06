@@ -1007,7 +1007,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> ax.plot(x, y)
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_figure-demo-3`:
+    The above example is illustrated in :numref:`store-save_figure-demo-3`:
 
     .. figure:: ../_images/store-save_figure-demo.*
         :name: store-save_figure-demo-3
@@ -1030,28 +1030,32 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> plt.close()
     """
 
-    assert 'savefig' in dir(data), \
-        ("The `fig` object does not have attribute `.savefig`. \n"
-         "Check `fig`, or try `save_fig()` instead.")
+    if not hasattr(data, 'savefig') and raise_error:
+        raise AttributeError(
+            "The input `data` does not have attribute `.savefig`."
+            "\n  Check `data`, or try `save_fig()` instead.")
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, file_ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
-        data.savefig(path_to_file, **kwargs)
+        data.savefig(file_path, **kwargs)
         if verbose:
             print("Done.")
     except Exception as e:
-        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e=e, prefix="Failed.", **common_args)
 
+    # EMF conversion
     if conv_svg_to_emf:
-        file_ext = pathlib.Path(path_to_file).suffix
-        if file_ext != ".svg":
-            kwargs.update({'conv_svg_to_emf': False, 'raise_error': raise_error})
-            save_figure(data, path_to_file.replace(file_ext, ".svg"), **kwargs)
+        if file_ext == ".svg":
+            svg_path = file_path
+        else:
+            svg_path = file_path.with_suffix(".svg")
+            kwargs.update({'conv_svg_to_emf': False} | common_args)
+            save_figure(data, path_to_file=svg_path, **kwargs)
 
-        save_svg_as_emf(
-            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
-            raise_error=raise_error)
+        emf_path = svg_path.with_suffix(".emf")
+        save_svg_as_emf(path_to_svg=svg_path, path_to_emf=emf_path, **common_args)
 
 
 @_lazy_check_dependencies('pdfkit')
