@@ -757,19 +757,19 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_parquet`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
         # Only use direct pyarrow writer if data is already an Arrow Table
         if isinstance(data, pa.Table):  # noqa
-            pq.write_table(data, path_to_file, **kwargs)  # noqa
+            pq.write_table(data, file_path, **kwargs)  # noqa
 
         else:
             if hasattr(data, 'has_sindex') and hasattr(data, 'geometry'):  # GeoDataFrames
-                data.to_parquet(path_to_file, **kwargs)
+                data.to_parquet(file_path, **kwargs)
 
             else:  # DataFrames
-                data.to_parquet(path_to_file, engine='auto' if engine is None else engine, **kwargs)
+                data.to_parquet(file_path, engine='auto' if engine is None else engine, **kwargs)
 
         if verbose:
             print("Done.")
