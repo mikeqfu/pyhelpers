@@ -9,6 +9,7 @@ import importlib.resources
 import importlib.util
 import json
 import os
+import pathlib
 import re
 import shutil
 import sys
@@ -461,16 +462,19 @@ def _check_file_pathname(name, options=None, target=None):
     """
     Checks the pathname of a specified file given its name or filename.
 
-    This function determines whether the specified executable file exists and returns its pathname.
+    This function determines if a specified executable exists by checking a target path,
+    searching through provided options, or looking in the system's PATH.
 
     :param name: Name or filename of the executable file.
     :type name: str
     :param options: Possible pathnames or directories to search for ``name``; defaults to ``None``.
     :type options: list | set | None
-    :param target: Specific pathname that may already be known; defaults to ``None``.
+    :param target: Specific pathname that may already be known and is to validate first;
+        defaults to ``None``.
     :type target: str | None
-    :return: Tuple containing a boolean indicating if the file exists and its pathname.
-    :rtype: tuple[bool, str]
+    :return: Tuple containing: a boolean variable indicating whether the file exists and
+        a Path object of file's the absolute path (if it exists).
+    :rtype: tuple[bool, pathlib.Path]
 
     **Tests**::
 
@@ -501,33 +505,51 @@ def _check_file_pathname(name, options=None, target=None):
         'pyhelpers.exe'
     """
 
-    if target:
-        if os.path.isfile(target) and os.path.splitext(name)[0] in os.path.basename(target):
-            file_exists, file_pathname = True, target
+    if target:  # Check `target` if provided
+        target_path = pathlib.Path(target).resolve()
+
+        # Verify it's a file and the name matches (case-insensitive for safety)
+        if target_path.is_file() and name.lower() in target_path.name.lower():
+            file_exists, pathname = True, target_path
         else:
-            file_exists, file_pathname = False, None
+            file_exists, pathname = False, pathlib.Path(name)
 
-    else:
-        file_pathname = str(name)
-
-        if os.path.isfile(file_pathname):
+    else:  # Check if `name` itself is already a valid direct path
+        pathname = pathlib.Path(name).resolve()
+        if pathname.is_file():
             file_exists = True
 
-        else:
+        else:  # Build search list (Options + System PATH)
             file_exists = False
-            alt_pathnames = [shutil.which(file_pathname)]  # noqa
 
-            if options:
-                alt_pathnames = list(options) + alt_pathnames
+            search_paths = []
+            if options:  # Flatten options into a list of strings/paths
+                search_paths.extend(list(options))
 
-            for x in [x_ for x_ in alt_pathnames if x_]:
-                file_pathname_ = os.path.join(x, file_pathname) if os.path.isdir(x) else x
+            filename = str(name)
 
-                if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
-                    file_exists, file_pathname = True, file_pathname_
-                    break
+            # Add system PATH lookup
+            system_match = shutil.which(filename)  # noqa
+            if system_match:
+                search_paths.append(system_match)
 
-    return file_exists, file_pathname
+            # Iterate and validate
+            for p in search_paths:
+                if p is None:
+                    continue
+
+                p_obj = pathlib.Path(p).resolve()
+                # If the option is a directory, look for 'name' inside it
+                potential_file = (p_obj / filename) if p_obj.is_dir() else p_obj
+
+                # Final validation
+                if potential_file.is_file():
+                    # Check for name overlap to ensure we didn't find a random file
+                    if filename.lower() in potential_file.name.lower():
+                        file_exists, pathname = True, potential_file
+                        break  # Stop at the first valid match found
+
+    return file_exists, pathname
 
 
 def _format_error_message(e=None, prefix=""):
