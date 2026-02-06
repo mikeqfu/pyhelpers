@@ -782,21 +782,20 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     # noinspection PyShadowingNames
     """
     Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
-    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
+    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf)
+    using `Inkscape <https://inkscape.org/>`_.
 
-    :param path_to_svg: The path where the SVG file is located.
+    :param path_to_svg: The path to the source SVG file.
     :type path_to_svg: str | os.PathLike
     :param path_to_emf: The path where the EMF file will be saved.
     :type path_to_emf: str | os.PathLike
-    :param inkscape_exe: The path to the executable "*inkscape.exe*";
-        if ``inkscape_exe=None`` (default), the default installation path will be used, e.g.
-        (on Windows) "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*" or
-        "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*".
+    :param inkscape_exe: The path to the Inkscape executable.
+        If ``inkscape_exe=None`` (default), uses the standard installation path.
     :type inkscape_exe: str | None
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print progress to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+    :param raise_error: Whether to raise FileNotFoundError if the Inkscape executable is not found;
+        defaults to ``False``.
     :type raise_error: bool
 
     **Examples**::
@@ -835,44 +834,62 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     """
 
     exe_name = "inkscape"
+
+    # Comprehensive list of standard installation paths across OSs
     optional_pathnames = {
         exe_name,
-        f"{exe_name}.exe"
-        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        f"{exe_name}.exe",
+        # Windows standard locations
         f"C:/Program Files/Inkscape/bin/{exe_name}.exe",
+        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        # Linux / macOS standard locations
+        f"/usr/bin/{exe_name}",
+        f"/usr/local/bin/{exe_name}",
+        f"/bin/{exe_name}",
+        "/Applications/Inkscape.app/Contents/MacOS/inkscape",
     }
+
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
 
-    path_to_svg_, path_to_emf_ = map(str, (path_to_svg, path_to_emf))
-
-    if inkscape_exists:
-        _check_saving_path(path_to_emf_, verbose=verbose)
-
-        ret_code = 1
-
-        try:
-            os.makedirs(os.path.dirname(path_to_emf_), exist_ok=True)
-
-            result = subprocess.run(
-                [inkscape_exe_, '-z', path_to_svg_, '--export-filename', path_to_emf_],
-                # [inkscape_exe_, '-z', path_to_svg_, '-M', path_to_emf_],  # Old
-                check=True,
-            )  # nosec
-            ret_code = result.returncode
-
-        except Exception as e:
-            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
-
-        if verbose and ret_code == 0:
-            print("Done.")
-
-    else:
+    if not inkscape_exists:
         if raise_error:
             raise FileNotFoundError(
-                '"Inkscape" (https://inkscape.org) is required to '
-                'convert a SVG file to an EMF file; however, it is not found on this device.'
-                '\nInstall it and then try again.')
+                '"Inkscape" (https://inkscape.org) is required to convert SVG to EMF, '
+                'but was not found.\n  Install "Inkscape" or provide a valid path.')
+        return None
+
+    svg_file_path = pathlib.Path(path_to_svg).resolve()
+    emf_file_path = pathlib.Path(path_to_emf).resolve()
+
+    # Validate extensions (Essential for subprocess reliability)
+    if svg_file_path.suffix.lower() != '.svg':
+        raise ValueError(f"Source file must be .svg, got '{svg_file_path.suffix}'")
+    if emf_file_path.suffix.lower() != '.emf':
+        raise ValueError(f"Target file must be .emf, got '{emf_file_path.suffix}'")
+
+    _check_saving_path(emf_file_path, verbose=verbose)
+
+    ret_code = 1
+    try:
+        # Inkscape CLI: -z is for older versions; --export-filename is for 1.0+
+        # nosec: inkscape_exe_ is validated by _check_file_pathname
+        result = subprocess.run(
+            [str(inkscape_exe_), str(svg_file_path), '--export-filename', str(emf_file_path)],
+            check=True,
+            capture_output=True,
+            text=True
+        )  # nosec
+        ret_code = result.returncode
+
+    except Exception as e:
+        _print_failure_message(
+            e, prefix="Failed. Errors occurred:", verbose=verbose, raise_error=raise_error)
+
+    if verbose and ret_code == 0:
+        print("Done.")
+
+    return None
 
 
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
