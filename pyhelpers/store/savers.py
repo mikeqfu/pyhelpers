@@ -614,22 +614,29 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_feather(data, path_to_file, index=False, verbose=False, raise_error=False, **kwargs):
+def save_feather(data, path_to_file, index=True, verbose=False, raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
-    :param data: The dataframe to be saved as a Feather-formatted file.
+    .. note::
+
+        The Feather format may require the index to be the default integer index.
+        If the index is not a standard range, or if ``index=True``, it will be
+        automatically reset and saved as a column.
+
+    :param data: The dataframe to be saved.
     :type data: pandas.DataFrame
     :param path_to_file: The path where the Feather file will be saved.
-    :type path_to_file: str | os.PathLike
-    :param index: Whether to include the index as a column; defaults to ``False``.
-    :type index: bool
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
-    :type raise_error: bool
+    :type path_to_file: str | pathlib.Path
+    :param index: Whether to include the index as a column.
+        If ``None``, the index is included only if it is not the default range;
+        defaults to ``True``.
+    :type index: bool | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_feather()`_.
+    :param raise_error: Whether to raise an exception if saving fails; defaults to ``False``.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for `pandas.DataFrame.to_feather()`_.
 
     .. _`pandas.DataFrame.to_feather()`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_feather.html
@@ -647,7 +654,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
-        >>> feather_pathname = cd("tests\\data", "dat.feather")
+        >>> feather_pathname = cd("tests/data", "dat.feather")
         >>> save_feather(feather_dat, feather_pathname, verbose=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
         >>> save_feather(feather_dat, feather_pathname, index=True, verbose=True)
@@ -658,15 +665,20 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_feather`.
     """
 
-    # assert isinstance(data, pd.DataFrame)
-
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        if list(data.index) != range(len(data)) or index is True:
-            data.reset_index().to_feather(path_to_file, **kwargs)
+        # Check if index is the default integer range [0, 1, ..., n-1]
+        is_default_index = (list(data.index) == list(range(len(data))) and data.index.name is None)
+
+        # Decide whether to reset (keep as column), drop, or leave as is
+        if index is True or (index is None and not is_default_index):
+            data.reset_index().to_feather(file_path, **kwargs)
+        elif index is False and not is_default_index:
+            # Discard the non-default index
+            data.reset_index(drop=True).to_feather(file_path, **kwargs)
         else:
-            data.to_feather(path_to_file, **kwargs)
+            data.to_feather(file_path, **kwargs)
 
         if verbose:
             print("Done.")
