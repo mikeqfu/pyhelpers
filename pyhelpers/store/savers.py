@@ -420,34 +420,37 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert str(path_to_file).endswith((".xlsx", ".xls", ".ods")), \
-        "File must be an Excel or ODS file."
+    file_path = pathlib.Path(path_to_file).resolve()
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    supported_ext_set = {".xlsx", ".xls", ".ods"}
+    if file_path.suffix not in supported_ext_set:
+        raise ValueError(f"Unsupported file format '{file_path.suffix}'. "
+                         f"Must be one of {supported_ext_set}")
 
-    if os.path.isfile(path_to_file) and mode == 'a':
-        with pd.ExcelFile(path_to_file) as f:
+    _check_saving_path(file_path, verbose=verbose, ret_info=False)
+
+    if file_path.is_file() and mode == 'a':
+        with pd.ExcelFile(file_path) as f:
             cur_sheet_names = f.sheet_names
     else:
         cur_sheet_names = []
         if mode == 'a':
-            pd.DataFrame().to_excel(path_to_file, sheet_name=sheet_names[0])
+            pd.DataFrame().to_excel(file_path, sheet_name=sheet_names[0])
 
     engine = 'openpyxl' if str(path_to_file).endswith((".xlsx", ".xls")) else 'odf'
 
-    if writer_kwargs is None:
-        writer_kwargs = {}
-    writer_kwargs.update(
+    write_args = writer_kwargs or {}
+    write_args.update(
         {'path': path_to_file, 'engine': engine, 'mode': mode, 'if_sheet_exists': if_sheet_exists})
 
-    with pd.ExcelWriter(**writer_kwargs) as writer:
+    with pd.ExcelWriter(**write_args) as writer:
         if verbose:
             print("")
 
         _save_spreadsheets(
             data=data, sheet_names=sheet_names, cur_sheet_names=cur_sheet_names, writer=writer,
             if_sheet_exists=if_sheet_exists, autofit_column_width=autofit_column_width,
-            writer_kwargs=writer_kwargs, verbose=verbose, raise_error=raise_error, **kwargs)
+            writer_kwargs=write_args, verbose=verbose, raise_error=raise_error, **kwargs)
 
 
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
