@@ -32,9 +32,9 @@ def test__check_saving_path(print_wrap_limit, tmp_path, capfd):
     out, _ = capfd.readouterr()
 
     if print_wrap_limit in {None, 1000}:
-        assert "Updating " in out and "\t" not in out
+        assert "Updating " in out and "\n" not in out
     else:
-        assert "Updating " in out and "\t" in out
+        assert "Updating " in out and "\n" in out
 
 
 def test__check_loading_path(tmp_path, capfd):
