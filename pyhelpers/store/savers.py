@@ -74,23 +74,21 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`~pyhelpers.store.load_pickle`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        path_to_file_ = str(path_to_file).lower()
-
-        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
-            with gzip.open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
-        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
-            with lzma.open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
-        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
-            with bz2.BZ2File(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
+        if ext in {".pkl.gz", ".pickle.gz"}:
+            with gzip.open(path_to_file, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
+        elif ext in {".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma"}:
+            with lzma.open(path_to_file, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
+        elif ext in {".pkl.bz2", ".pickle.bz2"}:
+            with bz2.BZ2File(path_to_file, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
         else:
-            with open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
+            with open(path_to_file, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -180,8 +178,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Saving "dat.ods" to "./tests/data/" ... Done.
     """
 
-    _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
-    _, ext = os.path.splitext(filename)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
     if raise_error:
@@ -198,7 +195,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
             else:
                 writer_kwargs.update({'path': path_to_file})
 
-            if ext.startswith(".xls"):  # a .xlsx file or a .xls file
+            if ext in {".xls", ".xlsx"}:  # a .xlsx file or a .xls file
                 _ = _check_dependencies('openpyxl')
                 writer_kwargs.update({'engine': 'openpyxl'})
             elif ext == ".ods":
