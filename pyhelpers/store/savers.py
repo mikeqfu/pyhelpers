@@ -552,6 +552,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('joblib')
 def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
     Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
@@ -574,7 +575,6 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> from pyhelpers.store import save_joblib
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
-        >>> import numpy as np
         >>> joblib_pathname = cd("tests", "data", "dat.joblib")
         >>> # Example 1:
         >>> joblib_dat = example_dataframe().to_numpy()
@@ -586,23 +586,15 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
         Saving "dat.joblib" to "./tests/data/" ... Done.
         >>> # Example 2:
+        >>> import numpy as np
+        >>> from sklearn.linear_model import LinearRegression
         >>> np.random.seed(0)
-        >>> joblib_dat = np.random.rand(100, 100)
-        >>> joblib_dat
-        array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
-                0.00469548],
-               [0.67781654, 0.27000797, 0.73519402, ..., 0.25435648, 0.05802916,
-                0.43441663],
-               [0.31179588, 0.69634349, 0.37775184, ..., 0.86219152, 0.97291949,
-                0.96083466],
-               ...,
-               [0.89111234, 0.26867428, 0.84028499, ..., 0.5736796 , 0.73729114,
-                0.22519844],
-               [0.26969792, 0.73882539, 0.80714479, ..., 0.94836806, 0.88130699,
-                0.1419334 ],
-               [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
-                0.81357508]])
-        >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
+        >>> x = example_dataframe().to_numpy()
+        >>> y = np.random.rand(*x.shape)
+        >>> reg = LinearRegression().fit(x, y)
+        >>> reg
+        LinearRegression()
+        >>> save_joblib(reg, joblib_pathname, verbose=True)
         Updating "dat.joblib" in "./tests/data/" ... Done.
 
     .. seealso::
@@ -610,12 +602,10 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`pyhelpers.store.load_joblib`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        joblib = _check_dependencies('joblib')
-
-        joblib.dump(value=data, filename=path_to_file, **kwargs)
+        joblib.dump(data, file_path, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
