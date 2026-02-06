@@ -11,11 +11,10 @@ import os
 import pathlib
 import pickle  # nosec
 import subprocess  # nosec
-import sys
 
 import pandas as pd
 
-from .utils import _autofit_column_width, _check_saving_path
+from .utils import _autofit_column_width, _check_saving_path, _resolve_json_engine
 from .._cache import _check_dependencies, _check_file_pathname, _confirmed, \
     _lazy_check_dependencies, _print_failure_message
 from ..ops.web import is_url
@@ -453,6 +452,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             writer_kwargs=write_args, verbose=verbose, raise_error=raise_error, **kwargs)
 
 
+@_resolve_json_engine
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -533,23 +533,17 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         - Examples for the function :func:`~pyhelpers.store.load_json`.
     """
 
-    if engine is not None:
-        valid_engines = {'ujson', 'orjson', 'rapidjson'}
-        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}."
-        mod = _check_dependencies(engine)
-    else:
-        mod = sys.modules.get('json')
+    json_mod = kwargs.pop('json_mod')
 
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
         if engine == 'orjson':
-            with open(path_to_file, mode='wb') as json_out:
-                json_out.write(mod.dumps(data, **kwargs))
-
+            with open(path_to_file, mode='wb') as f:
+                f.write(json_mod.dumps(data, **kwargs))
         else:
-            with open(path_to_file, mode='w') as json_out:
-                mod.dump(data, json_out, **kwargs)
+            with open(path_to_file, mode='w') as f:
+                json_mod.dump(data, f, **kwargs)
 
         if verbose:
             print("Done.")
