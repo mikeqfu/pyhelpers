@@ -360,8 +360,7 @@ def test_save_data(ext, tmp_path, capfd, caplog):
         #                          "`pyhelpers.store.save_data`."
         for record in caplog.records:
             assert record.levelname == 'WARNING'
-        assert ("The specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.save_data`.") in caplog.text
+        assert "The file format (extension) is not explicitly recognized." in caplog.text
 
     save_data(dat, path_to_file=path_to_file, verbose=True, confirmation_required=False)
     out, _ = capfd.readouterr()
