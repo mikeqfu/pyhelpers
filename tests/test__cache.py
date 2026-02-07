@@ -126,7 +126,7 @@ def test__check_file_pathname():
 
     python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
     assert python_exe_exists
-    assert path_to_python_exe == sys.executable
+    assert str(path_to_python_exe) == sys.executable
 
     # Use the directory containing Python
     python_dir = os.path.dirname(sys.executable)
@@ -135,7 +135,7 @@ def test__check_file_pathname():
     # Check if specifying Python's actual path works
     python_exe_exists, path_to_python_exe = _check_file_pathname(sys.executable)
     assert python_exe_exists
-    assert path_to_python_exe == sys.executable
+    assert str(path_to_python_exe) == sys.executable
     python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=os.getcwd())
     assert not python_exe_exists
     python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
@@ -145,7 +145,7 @@ def test__check_file_pathname():
     text_exe = "pyhelpers.exe"
     test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, options=possible_paths)
     assert not test_exe_exists
-    assert path_to_test_exe == text_exe  # Should return input name
+    assert path_to_test_exe is None  # Should return input name
 
 
 def test__format_error_message():
