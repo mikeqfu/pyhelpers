@@ -474,7 +474,7 @@ def _check_file_pathname(name, options=None, target=None):
     :type target: str | None
     :return: Tuple containing: a boolean variable indicating whether the file exists and
         a Path object of file's the absolute path (if it exists).
-    :rtype: tuple[bool, pathlib.Path]
+    :rtype: tuple[bool, pathlib.Path | None]
 
     **Tests**::
 
@@ -501,8 +501,6 @@ def _check_file_pathname(name, options=None, target=None):
         >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
         >>> test_exe_exists
         False
-        >>> os.path.relpath(path_to_test_exe)
-        'pyhelpers.exe'
     """
 
     if target:  # Check `target` if provided
@@ -512,7 +510,7 @@ def _check_file_pathname(name, options=None, target=None):
         if target_path.is_file() and name.lower() in target_path.name.lower():
             file_exists, pathname = True, target_path
         else:
-            file_exists, pathname = False, pathlib.Path(name)
+            file_exists, pathname = False, None
 
     else:  # Check if `name` itself is already a valid direct path
         pathname = pathlib.Path(name).resolve()
@@ -520,7 +518,7 @@ def _check_file_pathname(name, options=None, target=None):
             file_exists = True
 
         else:  # Build search list (Options + System PATH)
-            file_exists = False
+            file_exists, pathname = False, None
 
             search_paths = []
             if options:  # Flatten options into a list of strings/paths
