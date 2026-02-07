@@ -778,7 +778,8 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False):
+def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False,
+                    print_kwargs=None):
     # noinspection PyShadowingNames
     """
     Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
@@ -797,6 +798,9 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     :param raise_error: Whether to raise FileNotFoundError if the Inkscape executable is not found;
         defaults to ``False``.
     :type raise_error: bool
+    :param print_kwargs: [Optional] Additional parameters passed to
+        `pyhelpers.store._check_saving_path()`_; defaults to ``None``.
+    :type print_kwargs: dict | None
 
     **Examples**::
 
@@ -813,7 +817,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         >>> # save_figure(fig, "docs/source/_images/store-save_fig-demo.pdf", verbose=True)
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_fig-demo-1`:
+    The above example is illustrated in :numref:`store-save_fig-demo-1`:
 
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-1
@@ -866,7 +870,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     if emf_file_path.suffix.lower() != '.emf':
         raise ValueError(f"Target file must be .emf, got '{emf_file_path.suffix}'")
 
-    _check_saving_path(emf_file_path, verbose=verbose)
+    _check_saving_path(emf_file_path, verbose=verbose, **(print_kwargs or {}))
 
     ret_code = 1
     try:
@@ -890,6 +894,22 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     return None
 
 
+def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args, print_kwargs=None,
+                        *args, **kwargs):
+    if conv_svg_to_emf:
+        if file_ext == ".svg":
+            svg_path = file_path
+        else:
+            svg_path = file_path.with_suffix(".svg")
+            kwargs.update({'conv_svg_to_emf': False} | common_args)
+            func(path_to_file=svg_path, *args, **kwargs)
+
+        emf_path = svg_path.with_suffix(".emf")
+        save_svg_as_emf(
+            path_to_svg=svg_path, path_to_emf=emf_path, print_kwargs=print_kwargs, **common_args)
+
+
+@_lazy_check_dependencies(matplotlib_pyplot='plt')
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
              **kwargs):
     """
@@ -910,12 +930,11 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
+    :param kwargs: [Optional] Additional parameters passed to `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
         https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
-    .. _`Inkscape`:
-        https://inkscape.org
+    .. _`Inkscape`: https://inkscape.org
 
     **Examples**::
 
@@ -930,7 +949,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
         >>> ax.plot([x[0], y[0]], [x[1], y[1]])
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_fig-demo-2`:
+    The above example is illustrated in :numref:`store-save_fig-demo-2`:
 
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-2
@@ -944,28 +963,42 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> save_fig(svg_file_pathname, verbose=True)
-        Saving "store-save_fig-demo.png" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_fig-demo.png" in "./tests/images/" ... Done.
         >>> save_fig(svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_fig-demo.svg" in "./tests/images/" ... Done.
-        Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
+        [Figure 1] Updating "store-save_fig-demo.svg" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    # Check if an active figure exists
+    if not plt.get_fignums() and raise_error:  # noqa
+        raise RuntimeError("No active figure found to save.")
+
+    # Identify the specific figure being saved
+    current_fig = plt.gcf()  # noqa
+    fig_id = current_fig.get_label() or f"Figure {current_fig.number}"
+
+    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    file_path, _, file_ext = _check_saving_path(
+        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
+    common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
-        mpl_plt = _check_dependencies('matplotlib.pyplot')
-        mpl_plt.savefig(path_to_file, dpi=dpi, **kwargs)
+        plt.savefig(file_path, dpi=dpi, **kwargs)  # noqa
         if verbose:
             print("Done.")
     except Exception as e:
-        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e=e, prefix="Failed.", **common_args)
 
-    file_ext = pathlib.Path(path_to_file).suffix
-    if file_ext == ".svg" and conv_svg_to_emf:
-        save_svg_as_emf(
-            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
-            raise_error=raise_error)
+    _convert_svg_to_emf(
+        conv_svg_to_emf=conv_svg_to_emf,
+        func=save_fig,
+        file_ext=file_ext,
+        file_path=file_path,
+        common_args=common_args,
+        print_kwargs=print_kwargs,
+        **kwargs
+    )
 
 
 def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_error=False,
@@ -987,7 +1020,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
+    :param kwargs: [Optional] Additional parameters passed to `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
         https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
@@ -1021,12 +1054,12 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_figure-demo.svg")
         >>> save_figure(fig, svg_file_pathname, verbose=True)
-        Saving "store-save_figure-demo.png" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_figure-demo.png" in "./tests/images/" ... Done.
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.svg", verbose=True)
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.pdf", verbose=True)
         >>> save_figure(fig, svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_figure-demo.svg" in "./tests/images/" ... Done.
-        Saving "store-save_figure-demo.emf" to "./tests/images/" ... Done.
+        [Figure 1] Updating "store-save_figure-demo.svg" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_figure-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
@@ -1035,7 +1068,11 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
             "The input `data` does not have attribute `.savefig`."
             "\n  Check `data`, or try `save_fig()` instead.")
 
-    file_path, _, file_ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    fig_id = data.get_label() or f"Figure {data.number}"
+
+    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    file_path, _, file_ext = _check_saving_path(
+        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
     common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
@@ -1046,16 +1083,15 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         _print_failure_message(e=e, prefix="Failed.", **common_args)
 
     # EMF conversion
-    if conv_svg_to_emf:
-        if file_ext == ".svg":
-            svg_path = file_path
-        else:
-            svg_path = file_path.with_suffix(".svg")
-            kwargs.update({'conv_svg_to_emf': False} | common_args)
-            save_figure(data, path_to_file=svg_path, **kwargs)
-
-        emf_path = svg_path.with_suffix(".emf")
-        save_svg_as_emf(path_to_svg=svg_path, path_to_emf=emf_path, **common_args)
+    _convert_svg_to_emf(
+        conv_svg_to_emf=conv_svg_to_emf,
+        func=save_figure,
+        file_ext=file_ext,
+        file_path=file_path,
+        common_args=common_args,
+        print_kwargs=print_kwargs,
+        data=data, **kwargs
+    )
 
 
 @_lazy_check_dependencies('pdfkit')
