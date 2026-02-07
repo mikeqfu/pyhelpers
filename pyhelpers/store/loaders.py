@@ -537,7 +537,7 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', pyarrow_parquet='pq', geopandas='gpd')
+@_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
@@ -666,7 +666,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(scipy_sparse='sp')
+@_lazy_check_dependencies(sp='scipy.sparse')
 def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """

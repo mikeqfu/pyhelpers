@@ -15,8 +15,8 @@ import subprocess  # nosec
 import pandas as pd
 
 from .utils import _autofit_column_width, _check_saving_path, _resolve_json_engine
-from .._cache import _check_dependencies, _check_file_pathname, _confirmed, \
-    _lazy_check_dependencies, _print_failure_message
+from .._cache import _check_file_pathname, _confirmed, _lazy_check_dependencies, \
+    _print_failure_message
 from ..ops.web import is_url
 
 
@@ -195,10 +195,8 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
                 writer_kwargs.update({'path': path_to_file})
 
             if ext in {".xls", ".xlsx"}:  # a .xlsx file or a .xls file
-                _ = _check_dependencies('openpyxl')
                 writer_kwargs.update({'engine': 'openpyxl'})
             elif ext == ".ods":
-                _ = _check_dependencies('odf')
                 writer_kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
             else:
                 writer_kwargs.update({'engine': engine})
@@ -687,7 +685,7 @@ def save_feather(data, path_to_file, index=True, verbose=False, raise_error=Fals
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', pyarrow_parquet='pq')
+@_lazy_check_dependencies(pa='pyarrow', pq='pyarrow_parquet')
 def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
@@ -909,7 +907,7 @@ def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args,
             path_to_svg=svg_path, path_to_emf=emf_path, print_kwargs=print_kwargs, **common_args)
 
 
-@_lazy_check_dependencies(matplotlib_pyplot='plt')
+@_lazy_check_dependencies(plt='matplotlib.pyplot')
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
              **kwargs):
     """

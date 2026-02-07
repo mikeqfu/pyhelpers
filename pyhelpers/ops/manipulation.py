@@ -735,7 +735,7 @@ def np_shift(array, step, fill_value=np.nan):
     return result
 
 
-@_lazy_check_dependencies(polars='pl')
+@_lazy_check_dependencies(pl='polars')
 def downcast_numeric_columns(*dataframes):
     # noinspection PyShadowingNames
     """
