@@ -1104,7 +1104,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
     :param data: The URL of a web page or the pathname of an HTML file.
-    :type data: str
+    :type data: str | os.PathLike
     :param path_to_file: The path where the PDF file will be saved.
     :type path_to_file: str | os.PathLike
     :param if_exists: Action to take if the .pdf file already exists;
