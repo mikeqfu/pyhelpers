@@ -799,7 +799,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         defaults to ``False``.
     :type raise_error: bool
     :param print_kwargs: [Optional] Additional parameters passed to
-        `pyhelpers.store._check_saving_path()`_; defaults to ``None``.
+        `pyhelpers.store._check_saving_path()`; defaults to ``None``.
     :type print_kwargs: dict | None
 
     **Examples**::
