@@ -243,38 +243,55 @@ def test_save_svg_as_emf(tmp_path, capfd):
 
 
 def test_save_fig_and_figure(tmp_path, capfd):
-    x, y = (1, 1), (2, 2)
+    plt.switch_backend('Agg')
 
-    fig = plt.figure()
-    plt.plot([x[0], y[0]], [x[1], y[1]])
+    x, y = [1, 2], [1, 2]
+    fig = plt.figure(label="TestFig")
+    plt.plot(x, y)
 
-    # img_dir = cd("tests/images")
-    # path_to_png = cd(img_dir, "store-save_fig-demo.png")
-    png_filename = "test_save_fig_and_figure.png"
-    path_to_png = tmp_path / png_filename
+    # File names
+    png_name = "test_plot.png"
+    svg_name = "test_plot.svg"
+    emf_name = "test_plot.emf"
 
-    save_fig(path_to_file=path_to_png, verbose=True)
+    path_png = tmp_path / png_name
+    path_svg = tmp_path / svg_name
+
+    # --- 1. Test save_fig (Standard PNG) ---
+    save_fig(path_to_file=path_png, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Saving "{png_filename}"' in out and "Done." in out
+    # Expecting: [TestFig] Saving "test_plot.png" ... Done.
+    assert "[TestFig]" in out
+    assert f'Saving "{png_name}"' in out
+    assert "Done." in out
+    assert path_png.exists()
 
-    save_figure(fig, path_to_file=path_to_png, verbose=True)
+    # --- 2. Test save_figure (Updating PNG) ---
+    # Re-saving to the same path should trigger the "Updating" prefix
+    save_figure(fig, path_to_file=path_png, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Updating "{png_filename}"' in out and "Done." in out
+    assert f'Updating "{png_name}"' in out
+    assert "Done." in out
 
-    # path_to_svg = cd(img_dir, "store-save_fig-demo.svg")
-    svg_filename, emf_filename = "test_save_fig_and_figure.svg", "test_save_fig_and_figure.emf"
-    path_to_svg, path_to_emf = map(lambda f: tmp_path / f, [svg_filename, emf_filename])
-    save_fig(path_to_file=path_to_svg, verbose=True, conv_svg_to_emf=True)
+    # --- 3. Test EMF Conversion Workflow ---
+    # This checks the recursive logic and the helper _convert_svg_to_emf
+    # Scenario A: save_fig from SVG path
+    save_fig(path_to_file=path_svg, verbose=True, conv_svg_to_emf=True)
     out, _ = capfd.readouterr()
-    assert (f'Saving "{svg_filename}"' in out and
-            f'Saving "{emf_filename}"' in out and "Done." in out)
+    assert f'Saving "{svg_name}"' in out
+    assert f'Saving "{emf_name}"' in out  # Triggered by the helper
 
-    save_figure(fig, path_to_file=path_to_svg, verbose=True, conv_svg_to_emf=True)
+    # Scenario B: save_figure from PNG path with conversion
+    # This triggers the "Triple Save": PNG -> intermediate SVG -> EMF
+    path_alt = tmp_path / "alt_plot.png"
+    save_figure(fig, path_to_file=path_alt, verbose=True, conv_svg_to_emf=True)
     out, _ = capfd.readouterr()
-    assert (f'Updating "{svg_filename}"' in out and
-            f'Updating "{emf_filename}"' in out and "Done." in out)
 
-    plt.close()
+    assert f'Saving "alt_plot.png"' in out
+    assert f'Saving "alt_plot.svg"' in out  # Intermediate save
+    assert f'Saving "alt_plot.emf"' in out  # Final conversion
+
+    plt.close(fig)
 
 
 def test_save_html_as_pdf(tmp_path, capfd):
