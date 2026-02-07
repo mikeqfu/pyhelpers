@@ -298,12 +298,35 @@ def test_save_html_as_pdf(tmp_path, capfd):
     filename = "test_save_html_as_pdf.pdf"
     path_to_file = tmp_path / filename
     web_page_url = 'https://github.com/mikeqfu/pyhelpers#readme'
-    # web_page_url = 'https://www.python.org/'
 
-    # noinspection PyBroadException
+    # # Check for dependency to avoid hard failure
+    # if not shutil.which("wkhtmltopdf"):
+    #     pytest.skip("wkhtmltopdf not found; skipping PDF conversion test.")
+
+    # Execute save
     save_html_as_pdf(web_page_url, path_to_file=path_to_file, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Saving "{filename}"' in out
+    assert f'Saving "{filename}"' in out and "Done." in out
+
+    # Verify physical file creation
+    assert path_to_file.exists()
+    assert path_to_file.stat().st_size > 0  # Ensure the PDF isn't empty
+
+    # Test 'if_exists=pass' logic (Optional but recommended)
+    save_html_as_pdf(web_page_url, path_to_file=path_to_file, if_exists='pass', verbose=True)
+    out_skip, _ = capfd.readouterr()
+    assert f'Updating "{filename}"' not in out_skip  # Should have skipped
+
+    save_html_as_pdf(web_page_url, path_to_file=path_to_file, verbose=True)
+    out_skip, _ = capfd.readouterr()
+    assert f'Updating "{filename}"' in out_skip
+
+    # Create a dummy local HTML file
+    local_html = tmp_path / "test.html"
+    local_html.write_text("<h1>Hello World</h1>", encoding='utf-8')
+    save_html_as_pdf(local_html, path_to_file=path_to_file, verbose=2)
+    out, _ = capfd.readouterr()
+    assert f'Updating "{filename}"' in out and "Done" in out
 
 
 @pytest.mark.parametrize(
