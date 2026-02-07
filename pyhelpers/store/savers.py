@@ -1243,20 +1243,23 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,
-              **kwargs):
+def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_required=True,
+              raise_error=False, **kwargs):
     """
     Saves data to a file in a specific format.
 
     :param data: The data to be saved, which can be:
 
-        - a file in `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_ or `Feather`_ format;
+        - a file in `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_, `Feather`_ or
+          `Parquet`_ format;
         - a URL of a web page or an `HTML file`_;
         - an image file in a `Matplotlib`_-supported format.
 
     :type data: typing.Any
     :param path_to_file: The path of the file where the ``data`` will be stored.
     :type path_to_file: str | os.PathLike
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
     :param err_warning: Whether to display a warning message if an unknown error occurs;
         defaults to ``True``.
     :type err_warning: bool
@@ -1309,16 +1312,16 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> save_data(dat, dat_pathname, verbose=True)
         Saving "dat.pickle" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.csv")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.csv" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.xlsx")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.xlsx" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.txt")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.txt" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.feather")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.parquet")
         >>> save_data(dat, dat_pathname, verbose=True)
@@ -1332,7 +1335,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
          'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.json")
-        >>> save_data(dat_, dat_pathname, indent=4, verbose=True)
+        >>> save_data(dat_, dat_pathname, verbose=True, indent=4)
         Saving "dat.json" to "./tests/data/" ... Done.
 
     .. seealso::
@@ -1340,55 +1343,53 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         - Examples for the function :func:`~pyhelpers.store.load_data`.
     """
 
-    path_to_file_ = str(path_to_file).lower()
+    ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    kwargs.update({'data': data, 'path_to_file': path_to_file, 'raise_error': raise_error})
+    params = {
+        'data': data,
+        'path_to_file': path_to_file,
+        'verbose': verbose,
+        'raise_error': raise_error,
+        **kwargs
+    }
 
-    if path_to_file_.endswith(
-            (".pkl", ".pickle",
-             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
-             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
-        save_pickle(**kwargs)
+    if ext in {".pkl", ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
+               ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2"}:
+        save_pickle(**params)
 
-    elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        # noinspection PyBroadException
+    elif ext in {".csv", ".xlsx", ".xls", ".txt", ".ods"}:
         try:
-            save_spreadsheet(**kwargs)
-        except Exception:
-            save_spreadsheets(**kwargs)
+            save_spreadsheet(**params)
+        except Exception:  # noqa
+            save_spreadsheets(**params)
 
-    elif path_to_file_.endswith(".json"):
-        save_json(**kwargs)
+    elif ext == ".json":
+        save_json(**params)
 
-    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        save_joblib(**kwargs)
+    elif ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
+        save_joblib(**params)
 
-    elif path_to_file_.endswith((".fea", ".feather")):
-        save_feather(**kwargs)
+    elif ext in {".fea", ".feather"}:
+        save_feather(**params)
 
-    elif path_to_file_.endswith((".parquet", ".geoparquet")):
-        save_parquet(**kwargs)
+    elif ext in {".parquet", ".geoparquet"}:
+        save_parquet(**params)
 
-    elif (path_to_file_.endswith(".pdf") and
-          all(x not in data.__class__.__module__ for x in {'seaborn', 'matplotlib'})):
-        # noinspection PyBroadException
-        save_html_as_pdf(**kwargs)
+    elif ext == ".pdf":
+        data_module = getattr(getattr(data, '__class__', {}), '__module__', '')
+        if any(m in data_module for m in ('matplotlib', 'seaborn')):
+            save_figure(**params)
+        else:
+            save_html_as_pdf(**params)
 
-    elif path_to_file_.endswith(
-            ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
-             '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
-        # noinspection PyBroadException
-        try:
-            save_figure(**kwargs)
-        except Exception:
-            save_fig(path_to_file=path_to_file, **kwargs)
+    elif ext in {'.eps', '.jpeg', '.jpg', '.pgf', '.png', '.ps',
+                 '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff'}:
+        save_figure(**params)
 
     else:
         if err_warning:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                "\n\tThe specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.save_data`.")
+            logging.warning("\n  The file format (extension) is not explicitly recognized.")
 
-        if _confirmed("To save the data as a pickle file\n?", confirmation_required):
-            save_pickle(**kwargs)
+        if _confirmed("Save the data as a pickle file instead\n?", confirmation_required):
+            save_pickle(**params)
