@@ -175,9 +175,9 @@ def _check_dependencies(*names):
                 # Specific rich error for GDAL
                 if 'gdal' in query_name.lower():
                     raise ModuleNotFoundError(
-                        f"'GDAL' not found. Try: `import osgeo.gdal`.\n"
-                        f"  If that fails, install via: `conda install -c conda-forge gdal` "
-                        f"(or `pip install <gdal-wheel-file>`)."
+                        "'GDAL' not found. Try: `import osgeo.gdal`.\n  "
+                        "If that fails, install via: `conda install -c conda-forge gdal` "
+                        "(or `pip install <gdal-wheel-file>`)."
                     ) from None
 
                 raise ModuleNotFoundError(
