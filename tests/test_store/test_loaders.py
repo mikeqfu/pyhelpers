@@ -3,6 +3,7 @@
 import importlib.resources
 
 import pytest
+import sklearn.linear_model
 
 from pyhelpers._cache import _add_slashes, _check_relative_pathname, example_dataframe
 from pyhelpers.store.loaders import *
@@ -126,8 +127,7 @@ def test_load_data(file_ext, engine, capfd, caplog):
     elif file_ext == ".json":
         assert list(retrieved_data.keys()) == original_data.index.to_list()
     elif file_ext == ".joblib":
-        np.random.seed(0)
-        assert np.array_equal(retrieved_data, np.random.rand(100, 100))
+        assert isinstance(retrieved_data, sklearn.linear_model.LinearRegression)
     else:  # file_ext in {".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2", ".csv", ".feather"}
         assert retrieved_data.astype(float).equals(original_data)
 

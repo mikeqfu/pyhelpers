@@ -11,13 +11,12 @@ import os
 import pathlib
 import pickle  # nosec
 import subprocess  # nosec
-import sys
 
 import pandas as pd
 
-from .utils import _autofit_column_width, _check_saving_path
-from .._cache import _check_dependencies, _check_file_pathname, _confirmed, \
-    _lazy_check_dependencies, _print_failure_message
+from .utils import _autofit_column_width, _check_saving_path, _resolve_json_engine
+from .._cache import _check_file_pathname, _confirmed, _lazy_check_dependencies, \
+    _print_failure_message
 from ..ops.web import is_url
 
 
@@ -74,23 +73,21 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`~pyhelpers.store.load_pickle`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        path_to_file_ = str(path_to_file).lower()
-
-        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
-            with gzip.open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
-        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
-            with lzma.open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
-        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
-            with bz2.BZ2File(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
+        if ext in {".pkl.gz", ".pickle.gz"}:
+            with gzip.open(file_path, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
+        elif ext in {".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma"}:
+            with lzma.open(file_path, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
+        elif ext in {".pkl.bz2", ".pickle.bz2"}:
+            with bz2.BZ2File(file_path, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
         else:
-            with open(path_to_file, mode='wb') as pickle_out:
-                pickle.dump(data, pickle_out, **kwargs)  # noqa
+            with open(file_path, mode='wb') as f:
+                pickle.dump(data, f, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -180,8 +177,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Saving "dat.ods" to "./tests/data/" ... Done.
     """
 
-    _, filename = _check_saving_path(path_to_file=path_to_file, verbose=verbose, ret_info=True)
-    _, ext = os.path.splitext(filename)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
     if raise_error:
@@ -189,20 +185,18 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
     try:  # to save the data
         if ext in {".csv", ".txt", ".odt"}:  # a .csv file
-            kwargs.update({'path_or_buf': path_to_file, 'sep': delimiter, 'index': index})
+            kwargs.update({'path_or_buf': file_path, 'sep': delimiter, 'index': index})
             data.to_csv(**kwargs)
 
         else:
             if writer_kwargs is None:
-                writer_kwargs = {'path': path_to_file}
+                writer_kwargs = {'path': file_path}
             else:
-                writer_kwargs.update({'path': path_to_file})
+                writer_kwargs.update({'path': file_path})
 
-            if ext.startswith(".xls"):  # a .xlsx file or a .xls file
-                _ = _check_dependencies('openpyxl')
+            if ext in {".xls", ".xlsx"}:  # a .xlsx file or a .xls file
                 writer_kwargs.update({'engine': 'openpyxl'})
             elif ext == ".ods":
-                _ = _check_dependencies('odf')
                 writer_kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
             else:
                 writer_kwargs.update({'engine': engine})
@@ -423,36 +417,40 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
             'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
-    assert str(path_to_file).endswith((".xlsx", ".xls", ".ods")), \
-        "File must be an Excel or ODS file."
+    file_path = pathlib.Path(path_to_file).resolve()
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    supported_ext_set = {".xlsx", ".xls", ".ods"}
+    if file_path.suffix not in supported_ext_set:
+        raise ValueError(f"Unsupported file format '{file_path.suffix}'. "
+                         f"Must be one of {supported_ext_set}")
 
-    if os.path.isfile(path_to_file) and mode == 'a':
-        with pd.ExcelFile(path_to_file) as f:
+    _check_saving_path(file_path, verbose=verbose, ret_info=False)
+
+    if file_path.is_file() and mode == 'a':
+        with pd.ExcelFile(file_path) as f:
             cur_sheet_names = f.sheet_names
     else:
         cur_sheet_names = []
         if mode == 'a':
-            pd.DataFrame().to_excel(path_to_file, sheet_name=sheet_names[0])
+            pd.DataFrame().to_excel(file_path, sheet_name=sheet_names[0])
 
     engine = 'openpyxl' if str(path_to_file).endswith((".xlsx", ".xls")) else 'odf'
 
-    if writer_kwargs is None:
-        writer_kwargs = {}
-    writer_kwargs.update(
+    write_args = writer_kwargs or {}
+    write_args.update(
         {'path': path_to_file, 'engine': engine, 'mode': mode, 'if_sheet_exists': if_sheet_exists})
 
-    with pd.ExcelWriter(**writer_kwargs) as writer:
+    with pd.ExcelWriter(**write_args) as writer:
         if verbose:
             print("")
 
         _save_spreadsheets(
             data=data, sheet_names=sheet_names, cur_sheet_names=cur_sheet_names, writer=writer,
             if_sheet_exists=if_sheet_exists, autofit_column_width=autofit_column_width,
-            writer_kwargs=writer_kwargs, verbose=verbose, raise_error=raise_error, **kwargs)
+            writer_kwargs=write_args, verbose=verbose, raise_error=raise_error, **kwargs)
 
 
+@_resolve_json_engine
 def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -533,23 +531,17 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         - Examples for the function :func:`~pyhelpers.store.load_json`.
     """
 
-    if engine is not None:
-        valid_engines = {'ujson', 'orjson', 'rapidjson'}
-        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}."
-        mod = _check_dependencies(engine)
-    else:
-        mod = sys.modules.get('json')
+    json_mod = kwargs.pop('json_mod')
 
     _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
 
     try:
         if engine == 'orjson':
-            with open(path_to_file, mode='wb') as json_out:
-                json_out.write(mod.dumps(data, **kwargs))
-
+            with open(path_to_file, mode='wb') as f:
+                f.write(json_mod.dumps(data, **kwargs))
         else:
-            with open(path_to_file, mode='w') as json_out:
-                mod.dump(data, json_out, **kwargs)
+            with open(path_to_file, mode='w') as f:
+                json_mod.dump(data, f, **kwargs)
 
         if verbose:
             print("Done.")
@@ -558,6 +550,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('joblib')
 def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     """
     Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
@@ -580,7 +573,6 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> from pyhelpers.store import save_joblib
         >>> from pyhelpers.dirs import cd
         >>> from pyhelpers._cache import example_dataframe
-        >>> import numpy as np
         >>> joblib_pathname = cd("tests", "data", "dat.joblib")
         >>> # Example 1:
         >>> joblib_dat = example_dataframe().to_numpy()
@@ -592,23 +584,15 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
         Saving "dat.joblib" to "./tests/data/" ... Done.
         >>> # Example 2:
+        >>> import numpy as np
+        >>> from sklearn.linear_model import LinearRegression
         >>> np.random.seed(0)
-        >>> joblib_dat = np.random.rand(100, 100)
-        >>> joblib_dat
-        array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
-                0.00469548],
-               [0.67781654, 0.27000797, 0.73519402, ..., 0.25435648, 0.05802916,
-                0.43441663],
-               [0.31179588, 0.69634349, 0.37775184, ..., 0.86219152, 0.97291949,
-                0.96083466],
-               ...,
-               [0.89111234, 0.26867428, 0.84028499, ..., 0.5736796 , 0.73729114,
-                0.22519844],
-               [0.26969792, 0.73882539, 0.80714479, ..., 0.94836806, 0.88130699,
-                0.1419334 ],
-               [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
-                0.81357508]])
-        >>> save_joblib(joblib_dat, joblib_pathname, verbose=True)
+        >>> x = example_dataframe().to_numpy()
+        >>> y = np.random.rand(*x.shape)
+        >>> reg = LinearRegression().fit(x, y)
+        >>> reg
+        LinearRegression()
+        >>> save_joblib(reg, joblib_pathname, verbose=True)
         Updating "dat.joblib" in "./tests/data/" ... Done.
 
     .. seealso::
@@ -616,12 +600,10 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`pyhelpers.store.load_joblib`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        joblib = _check_dependencies('joblib')
-
-        joblib.dump(value=data, filename=path_to_file, **kwargs)
+        joblib.dump(data, file_path, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -630,22 +612,29 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_feather(data, path_to_file, index=False, verbose=False, raise_error=False, **kwargs):
+def save_feather(data, path_to_file, index=True, verbose=False, raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
-    :param data: The dataframe to be saved as a Feather-formatted file.
+    .. note::
+
+        The Feather format may require the index to be the default integer index.
+        If the index is not a standard range, or if ``index=True``, it will be
+        automatically reset and saved as a column.
+
+    :param data: The dataframe to be saved.
     :type data: pandas.DataFrame
     :param path_to_file: The path where the Feather file will be saved.
-    :type path_to_file: str | os.PathLike
-    :param index: Whether to include the index as a column; defaults to ``False``.
-    :type index: bool
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
-    :type raise_error: bool
+    :type path_to_file: str | pathlib.Path
+    :param index: Whether to include the index as a column.
+        If ``None``, the index is included only if it is not the default range;
+        defaults to ``True``.
+    :type index: bool | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_feather()`_.
+    :param raise_error: Whether to raise an exception if saving fails; defaults to ``False``.
+    :type raise_error: bool
+    :param kwargs: [Optional] Additional parameters for `pandas.DataFrame.to_feather()`_.
 
     .. _`pandas.DataFrame.to_feather()`:
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_feather.html
@@ -663,7 +652,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
-        >>> feather_pathname = cd("tests\\data", "dat.feather")
+        >>> feather_pathname = cd("tests/data", "dat.feather")
         >>> save_feather(feather_dat, feather_pathname, verbose=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
         >>> save_feather(feather_dat, feather_pathname, index=True, verbose=True)
@@ -674,15 +663,20 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_feather`.
     """
 
-    # assert isinstance(data, pd.DataFrame)
-
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        if list(data.index) != range(len(data)) or index is True:
-            data.reset_index().to_feather(path_to_file, **kwargs)
+        # Check if index is the default integer range [0, 1, ..., n-1]
+        is_default_index = (list(data.index) == list(range(len(data))) and data.index.name is None)
+
+        # Decide whether to reset (keep as column), drop, or leave as is
+        if index is True or (index is None and not is_default_index):
+            data.reset_index().to_feather(file_path, **kwargs)
+        elif index is False and not is_default_index:
+            # Discard the non-default index
+            data.reset_index(drop=True).to_feather(file_path, **kwargs)
         else:
-            data.to_feather(path_to_file, **kwargs)
+            data.to_feather(file_path, **kwargs)
 
         if verbose:
             print("Done.")
@@ -691,7 +685,7 @@ def save_feather(data, path_to_file, index=False, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', pyarrow_parquet='pq')
+@_lazy_check_dependencies(pa='pyarrow', pq='pyarrow_parquet')
 def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
@@ -761,19 +755,19 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_parquet`.
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
         # Only use direct pyarrow writer if data is already an Arrow Table
         if isinstance(data, pa.Table):  # noqa
-            pq.write_table(data, path_to_file, **kwargs)  # noqa
+            pq.write_table(data, file_path, **kwargs)  # noqa
 
         else:
             if hasattr(data, 'has_sindex') and hasattr(data, 'geometry'):  # GeoDataFrames
-                data.to_parquet(path_to_file, **kwargs)
+                data.to_parquet(file_path, **kwargs)
 
             else:  # DataFrames
-                data.to_parquet(path_to_file, engine='auto' if engine is None else engine, **kwargs)
+                data.to_parquet(file_path, engine='auto' if engine is None else engine, **kwargs)
 
         if verbose:
             print("Done.")
@@ -782,26 +776,29 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False):
+def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False,
+                    print_kwargs=None):
     # noinspection PyShadowingNames
     """
     Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
-    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf).
+    a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf)
+    using `Inkscape <https://inkscape.org/>`_.
 
-    :param path_to_svg: The path where the SVG file is located.
+    :param path_to_svg: The path to the source SVG file.
     :type path_to_svg: str | os.PathLike
     :param path_to_emf: The path where the EMF file will be saved.
     :type path_to_emf: str | os.PathLike
-    :param inkscape_exe: The path to the executable "*inkscape.exe*";
-        if ``inkscape_exe=None`` (default), the default installation path will be used, e.g.
-        (on Windows) "*C:\\\\Program Files\\\\Inkscape\\\\bin\\\\inkscape.exe*" or
-        "*C:\\\\Program Files\\\\Inkscape\\\\inkscape.exe*".
+    :param inkscape_exe: The path to the Inkscape executable.
+        If ``inkscape_exe=None`` (default), uses the standard installation path.
     :type inkscape_exe: str | None
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print progress to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+    :param raise_error: Whether to raise FileNotFoundError if the Inkscape executable is not found;
+        defaults to ``False``.
     :type raise_error: bool
+    :param print_kwargs: [Optional] Additional parameters passed to
+        `pyhelpers.store._check_saving_path()`; defaults to ``None``.
+    :type print_kwargs: dict | None
 
     **Examples**::
 
@@ -818,7 +815,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         >>> # save_figure(fig, "docs/source/_images/store-save_fig-demo.pdf", verbose=True)
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_fig-demo-1`:
+    The above example is illustrated in :numref:`store-save_fig-demo-1`:
 
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-1
@@ -839,46 +836,78 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     """
 
     exe_name = "inkscape"
+
+    # Comprehensive list of standard installation paths across OSs
     optional_pathnames = {
         exe_name,
-        f"{exe_name}.exe"
-        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        f"{exe_name}.exe",
+        # Windows standard locations
         f"C:/Program Files/Inkscape/bin/{exe_name}.exe",
+        f"C:/Program Files/Inkscape/{exe_name}.exe",
+        # Linux / macOS standard locations
+        f"/usr/bin/{exe_name}",
+        f"/usr/local/bin/{exe_name}",
+        f"/bin/{exe_name}",
+        "/Applications/Inkscape.app/Contents/MacOS/inkscape",
     }
+
     inkscape_exists, inkscape_exe_ = _check_file_pathname(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
 
-    path_to_svg_, path_to_emf_ = map(str, (path_to_svg, path_to_emf))
+    if not inkscape_exists and raise_error:
+        raise FileNotFoundError(
+            '"Inkscape" (https://inkscape.org) is required to convert SVG to EMF, '
+            'but was not found.\n  Install "Inkscape" or provide a valid path.')
 
-    if inkscape_exists:
-        _check_saving_path(path_to_emf_, verbose=verbose)
+    svg_file_path = pathlib.Path(path_to_svg).resolve()
+    emf_file_path = pathlib.Path(path_to_emf).resolve()
 
-        ret_code = 1
+    # Validate extensions (Essential for subprocess reliability)
+    if svg_file_path.suffix.lower() != '.svg':
+        raise ValueError(f"Source file must be .svg, got '{svg_file_path.suffix}'")
+    if emf_file_path.suffix.lower() != '.emf':
+        raise ValueError(f"Target file must be .emf, got '{emf_file_path.suffix}'")
 
-        try:
-            os.makedirs(os.path.dirname(path_to_emf_), exist_ok=True)
+    _check_saving_path(emf_file_path, verbose=verbose, **(print_kwargs or {}))
 
-            result = subprocess.run(
-                [inkscape_exe_, '-z', path_to_svg_, '--export-filename', path_to_emf_],
-                # [inkscape_exe_, '-z', path_to_svg_, '-M', path_to_emf_],  # Old
-                check=True,
-            )  # nosec
-            ret_code = result.returncode
+    ret_code = 1
+    try:
+        # Inkscape CLI: -z is for older versions; --export-filename is for 1.0+
+        # nosec: inkscape_exe_ is validated by _check_file_pathname
+        result = subprocess.run(
+            [str(inkscape_exe_), str(svg_file_path), '--export-filename', str(emf_file_path)],
+            check=True,
+            capture_output=True,
+            text=True
+        )  # nosec
+        ret_code = result.returncode
 
-        except Exception as e:
-            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+    except Exception as e:
+        _print_failure_message(
+            e, prefix="Failed. Errors occurred:", verbose=verbose, raise_error=raise_error)
 
-        if verbose and ret_code == 0:
-            print("Done.")
+    if verbose and ret_code == 0:
+        print("Done.")
 
-    else:
-        if raise_error:
-            raise FileNotFoundError(
-                '"Inkscape" (https://inkscape.org) is required to '
-                'convert a SVG file to an EMF file; however, it is not found on this device.'
-                '\nInstall it and then try again.')
+    return None
 
 
+def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args, print_kwargs=None,
+                        *args, **kwargs):
+    if conv_svg_to_emf:
+        if file_ext == ".svg":
+            svg_path = file_path
+        else:
+            svg_path = file_path.with_suffix(".svg")
+            kwargs.update({'conv_svg_to_emf': False} | common_args)
+            func(path_to_file=svg_path, *args, **kwargs)
+
+        emf_path = svg_path.with_suffix(".emf")
+        save_svg_as_emf(
+            path_to_svg=svg_path, path_to_emf=emf_path, print_kwargs=print_kwargs, **common_args)
+
+
+@_lazy_check_dependencies(plt='matplotlib.pyplot')
 def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
              **kwargs):
     """
@@ -899,12 +928,11 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
+    :param kwargs: [Optional] Additional parameters passed to `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
         https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
-    .. _`Inkscape`:
-        https://inkscape.org
+    .. _`Inkscape`: https://inkscape.org
 
     **Examples**::
 
@@ -919,7 +947,7 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
         >>> ax.plot([x[0], y[0]], [x[1], y[1]])
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_fig-demo-2`:
+    The above example is illustrated in :numref:`store-save_fig-demo-2`:
 
     .. figure:: ../_images/store-save_fig-demo.*
         :name: store-save_fig-demo-2
@@ -933,28 +961,42 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_fig-demo.svg")
         >>> save_fig(svg_file_pathname, verbose=True)
-        Saving "store-save_fig-demo.png" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_fig-demo.png" in "./tests/images/" ... Done.
         >>> save_fig(svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_fig-demo.svg" in "./tests/images/" ... Done.
-        Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
+        [Figure 1] Updating "store-save_fig-demo.svg" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_fig-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    # Check if an active figure exists
+    if not plt.get_fignums() and raise_error:  # noqa
+        raise RuntimeError("No active figure found to save.")
+
+    # Identify the specific figure being saved
+    current_fig = plt.gcf()  # noqa
+    fig_id = current_fig.get_label() or f"Figure {current_fig.number}"
+
+    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    file_path, _, file_ext = _check_saving_path(
+        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
+    common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
-        mpl_plt = _check_dependencies('matplotlib.pyplot')
-        mpl_plt.savefig(path_to_file, dpi=dpi, **kwargs)
+        plt.savefig(file_path, dpi=dpi, **kwargs)  # noqa
         if verbose:
             print("Done.")
     except Exception as e:
-        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e=e, prefix="Failed.", **common_args)
 
-    file_ext = pathlib.Path(path_to_file).suffix
-    if file_ext == ".svg" and conv_svg_to_emf:
-        save_svg_as_emf(
-            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
-            raise_error=raise_error)
+    _convert_svg_to_emf(
+        conv_svg_to_emf=conv_svg_to_emf,
+        func=save_fig,
+        file_ext=file_ext,
+        file_path=file_path,
+        common_args=common_args,
+        print_kwargs=print_kwargs,
+        **kwargs
+    )
 
 
 def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_error=False,
@@ -976,7 +1018,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `matplotlib.pyplot.savefig()`_.
+    :param kwargs: [Optional] Additional parameters passed to `matplotlib.pyplot.savefig()`_.
 
     .. _`matplotlib.pyplot.savefig()`:
         https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
@@ -996,7 +1038,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> ax.plot(x, y)
         >>> fig.show()
 
-    The above exmaple is illustrated in :numref:`store-save_figure-demo-3`:
+    The above example is illustrated in :numref:`store-save_figure-demo-3`:
 
     .. figure:: ../_images/store-save_figure-demo.*
         :name: store-save_figure-demo-3
@@ -1010,52 +1052,61 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
         >>> img_dir = cd("tests", "images")
         >>> svg_file_pathname = cd(img_dir, "store-save_figure-demo.svg")
         >>> save_figure(fig, svg_file_pathname, verbose=True)
-        Saving "store-save_figure-demo.png" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_figure-demo.png" in "./tests/images/" ... Done.
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.svg", verbose=True)
         >>> # save_figure(fig, "docs/source/_images/store-save_figure-demo.pdf", verbose=True)
         >>> save_figure(fig, svg_file_pathname, verbose=True, conv_svg_to_emf=True)
-        Updating "store-save_figure-demo.svg" in "./tests/images/" ... Done.
-        Saving "store-save_figure-demo.emf" to "./tests/images/" ... Done.
+        [Figure 1] Updating "store-save_figure-demo.svg" in "./tests/images/" ... Done.
+        [Figure 1] Saving "store-save_figure-demo.emf" to "./tests/images/" ... Done.
         >>> plt.close()
     """
 
-    assert 'savefig' in dir(data), \
-        ("The `fig` object does not have attribute `.savefig`. \n"
-         "Check `fig`, or try `save_fig()` instead.")
+    if not hasattr(data, 'savefig') and raise_error:
+        raise AttributeError(
+            "The input `data` does not have attribute `.savefig`."
+            "\n  Check `data`, or try `save_fig()` instead.")
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    fig_id = data.get_label() or f"Figure {data.number}"
+
+    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    file_path, _, file_ext = _check_saving_path(
+        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
+    common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
-        data.savefig(path_to_file, **kwargs)
+        data.savefig(file_path, **kwargs)
         if verbose:
             print("Done.")
     except Exception as e:
-        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e=e, prefix="Failed.", **common_args)
 
-    if conv_svg_to_emf:
-        file_ext = pathlib.Path(path_to_file).suffix
-        if file_ext != ".svg":
-            kwargs.update({'conv_svg_to_emf': False, 'raise_error': raise_error})
-            save_figure(data, path_to_file.replace(file_ext, ".svg"), **kwargs)
+    # EMF conversion
+    _convert_svg_to_emf(
+        conv_svg_to_emf=conv_svg_to_emf,
+        func=save_figure,
+        file_ext=file_ext,
+        file_path=file_path,
+        common_args=common_args,
+        print_kwargs=print_kwargs,
+        data=data, **kwargs
+    )
 
-        save_svg_as_emf(
-            path_to_file, str(path_to_file).replace(file_ext, ".emf"), verbose=verbose,
-            raise_error=raise_error)
 
-
+@_lazy_check_dependencies('pdfkit')
 def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zoom=1.0,
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
                      verbose=False, raise_error=False, **kwargs):
+    # noinspection PyShadowingNames
     """
     Saves a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
     :param data: The URL of a web page or the pathname of an HTML file.
-    :type data: str
+    :type data: str | os.PathLike
     :param path_to_file: The path where the PDF file will be saved.
     :type path_to_file: str | os.PathLike
     :param if_exists: Action to take if the .pdf file already exists;
-        options are ``'replace'`` (default), ``'pass'`` and ``'append'``.
+        options are ``'replace'`` (default) and ``'pass'``.
     :type if_exists: str
     :param page_size: The page size; defaults to ``'A4'``.
     :type page_size: str
@@ -1068,18 +1119,22 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     :type wkhtmltopdf_options: dict | None
     :param wkhtmltopdf_path: The path to "*wkhtmltopdf.exe*";
         when ``wkhtmltopdf_path=None`` (default), the default installation path will be used, e.g.
-        "*C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe*" (on Windows).
+        "*C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe*" (on Windows).
+    :param wkhtmltopdf_path: The path to the wkhtmltopdf executable;
+        if ``None`` (default), searches standard installation paths.
     :type wkhtmltopdf_path: str | None
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print progress to the console; defaults to ``False``.
+        Set ``verbose=2`` to see full output from wkhtmltopdf.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+    :param raise_error: Whether to raise exceptions on failure; defaults to ``False``.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for the function `pdfkit.from_url()`_.
+    :param kwargs: [Optional] Additional parameters for `pdfkit.from_url()`_ or
+        `pdfkit.from_file()`_.
 
     .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
     .. _`pdfkit`: https://pypi.org/project/pdfkit/
     .. _`pdfkit.from_url()`: https://pypi.org/project/pdfkit/
+    .. _`pdfkit.from_file()`: https://pypi.org/project/pdfkit/
 
     **Examples**::
 
@@ -1089,9 +1144,14 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> pdf_pathname = cd("tests", "documents", "pyhelpers.pdf")
         >>> web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
         >>> save_html_as_pdf(web_page_url, pdf_pathname)
-        >>> # Open the PDF file using the system's default application
-        >>> subprocess.Popen(pdf_pathname, shell=True)
+        >>> subprocess.Popen(pdf_pathname, shell=True)  # Open the PDF file
         >>> # Close the PDF file (if opened with Foxit Reader)
+        >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
+        >>> wkhtmltopdf_options = {'margin-top': '0', 'orientation': 'Landscape'}
+        >>> # Using custom options for margins and orientation
+        >>> save_html_as_pdf(
+        ...     web_page_url, pdf_pathname, wkhtmltopdf_options=wkhtmltopdf_options, verbose=True)
+        >>> subprocess.Popen(pdf_pathname, shell=True)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> web_page_file = cd("docs", "build", "html", "index.html")
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=2)
@@ -1110,85 +1170,94 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
     """
 
-    if os.path.isfile(path_to_file) and if_exists == 'pass':
+    file_path = pathlib.Path(path_to_file).resolve()
+
+    if file_path.is_file() and if_exists == 'pass':
         return None
 
-    else:
-        exe_name = "wkhtmltopdf"
-        optional_pathnames = {
-            exe_name,
-            f"{exe_name}.exe"
-            f"C:/Program Files/wkhtmltopdf/{exe_name}.exe",
-            f"C:/Program Files/wkhtmltopdf/bin/{exe_name}.exe",
-        }
-        wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
-            name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
+    exe_name = "wkhtmltopdf"
+    optional_pathnames = {
+        exe_name,
+        f"{exe_name}.exe",
+        f"C:/Program Files/wkhtmltopdf/bin/{exe_name}.exe",
+        f"C:/Program Files/wkhtmltopdf/{exe_name}.exe",
+        f"/usr/bin/{exe_name}",
+        f"/usr/local/bin/{exe_name}",
+    }
 
-        if wkhtmltopdf_exists:
-            pdfkit_ = _check_dependencies('pdfkit')
+    wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
+        name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
 
-            if os.path.dirname(path_to_file):
-                os.makedirs(os.path.dirname(path_to_file), exist_ok=True)
+    if not wkhtmltopdf_exists and raise_error:
+        raise FileNotFoundError(
+            '"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function, '
+            'but was not found.\n  Install "wkhtmltopdf" and then try again.')
 
-            verbose_, print_end = (True, " ... \n") if verbose == 2 else (False, " ... ")
+    # Handle verbosity levels
+    verbose_level = 2 if verbose == 2 else (1 if verbose else 0)
+    print_end = " ... \n" if verbose_level == 2 else " ... "
 
-            _check_saving_path(
-                path_to_file=path_to_file, verbose=verbose, print_end=print_end, ret_info=False)
+    _check_saving_path(
+        path_to_file=path_to_file, verbose=verbose, print_end=print_end, ret_info=False)
 
-            options = {
-                'enable-local-file-access': None,
-                'page-size': page_size,
-                'zoom': str(float(zoom)),
-                'encoding': encoding,
-                # 'margin-top': '0',
-                # 'margin-right': '0',
-                # 'margin-left': '0',
-                # 'margin-bottom': '0',
-            }
-            if isinstance(wkhtmltopdf_options, dict):
-                options.update(wkhtmltopdf_options)
-            configuration = pdfkit_.configuration(wkhtmltopdf=wkhtmltopdf_exe)
-            kwargs.update({'configuration': configuration, 'options': options, 'verbose': verbose_})
+    # Base options
+    options = {
+        'enable-local-file-access': None,  # Crucial for modern versions to load local CSS/images
+        'page-size': page_size,
+        'zoom': str(float(zoom)),
+        'encoding': encoding,
+        # 'margin-top': '0',
+        # 'margin-right': '0',
+        # 'margin-left': '0',
+        # 'margin-bottom': '0',
+    }
+    extra_options = wkhtmltopdf_options or {}
+    options.update(extra_options)
 
-            try:
-                if is_url(data):
-                    status = pdfkit_.from_url(data, path_to_file, **kwargs)
-                elif os.path.isfile(data):
-                    status = pdfkit_.from_file(data, path_to_file, **kwargs)
-                else:
-                    status = None
+    # Prepare pdfkit configuration
+    configuration = pdfkit.configuration(wkhtmltopdf=str(wkhtmltopdf_exe))  # noqa
+    # pdfkit internal verbose is a bool; verbose_level 2 shows wkhtmltopdf internal progress
+    pdfkit_verbose = True if verbose_level == 2 else False
 
-                if verbose:
-                    if not status:
-                        print("Failed. Check if the URL is available.")
-                    elif not verbose_:
-                        print("Done.")
+    kwargs.update({'configuration': configuration, 'options': options, 'verbose': pdfkit_verbose})
 
-            except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
-
+    try:
+        if is_url(data):
+            status = pdfkit.from_url(data, path_to_file, **kwargs)  # noqa
         else:
-            print('"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function; '
-                  'however, it is not found on this device.\nInstall it and then try again.')
+            data_path = pathlib.Path(data)
+            if data_path.is_file():
+                status = pdfkit.from_file(str(data_path), str(file_path), **kwargs)  # noqa
+            else:
+                status = False
+                if verbose:
+                    print("Failed. Input is not a valid URL or file.")
 
-            return None
+        if status and verbose and verbose_level != 2:
+            print("Done.")
+
+    except Exception as e:
+        _print_failure_message(
+            e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_data(data, path_to_file, err_warning=True, confirmation_required=True, raise_error=False,
-              **kwargs):
+def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_required=True,
+              raise_error=False, **kwargs):
     """
     Saves data to a file in a specific format.
 
     :param data: The data to be saved, which can be:
 
-        - a file in `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_ or `Feather`_ format;
+        - a file in `Pickle`_, `CSV`_, `Microsoft Excel`_, `JSON`_, `Joblib`_, `Feather`_ or
+          `Parquet`_ format;
         - a URL of a web page or an `HTML file`_;
         - an image file in a `Matplotlib`_-supported format.
 
     :type data: typing.Any
     :param path_to_file: The path of the file where the ``data`` will be stored.
     :type path_to_file: str | os.PathLike
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
     :param err_warning: Whether to display a warning message if an unknown error occurs;
         defaults to ``True``.
     :type err_warning: bool
@@ -1241,16 +1310,16 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         >>> save_data(dat, dat_pathname, verbose=True)
         Saving "dat.pickle" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.csv")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.csv" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.xlsx")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.xlsx" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.txt")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.txt" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.feather")
-        >>> save_data(dat, dat_pathname, index=True, verbose=True)
+        >>> save_data(dat, dat_pathname, verbose=True, index=True)
         Saving "dat.feather" to "./tests/data/" ... Done.
         >>> dat_pathname = cd(data_dir, "dat.parquet")
         >>> save_data(dat, dat_pathname, verbose=True)
@@ -1264,7 +1333,7 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
          'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.json")
-        >>> save_data(dat_, dat_pathname, indent=4, verbose=True)
+        >>> save_data(dat_, dat_pathname, verbose=True, indent=4)
         Saving "dat.json" to "./tests/data/" ... Done.
 
     .. seealso::
@@ -1272,55 +1341,53 @@ def save_data(data, path_to_file, err_warning=True, confirmation_required=True, 
         - Examples for the function :func:`~pyhelpers.store.load_data`.
     """
 
-    path_to_file_ = str(path_to_file).lower()
+    ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    kwargs.update({'data': data, 'path_to_file': path_to_file, 'raise_error': raise_error})
+    params = {
+        'data': data,
+        'path_to_file': path_to_file,
+        'verbose': verbose,
+        'raise_error': raise_error,
+        **kwargs
+    }
 
-    if path_to_file_.endswith(
-            (".pkl", ".pickle",
-             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
-             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
-        save_pickle(**kwargs)
+    if ext in {".pkl", ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
+               ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2"}:
+        save_pickle(**params)
 
-    elif path_to_file_.endswith((".csv", ".xlsx", ".xls", ".txt")):
-        # noinspection PyBroadException
+    elif ext in {".csv", ".xlsx", ".xls", ".txt", ".ods"}:
         try:
-            save_spreadsheet(**kwargs)
-        except Exception:
-            save_spreadsheets(**kwargs)
+            save_spreadsheet(**params)
+        except Exception:  # noqa
+            save_spreadsheets(**params)
 
-    elif path_to_file_.endswith(".json"):
-        save_json(**kwargs)
+    elif ext == ".json":
+        save_json(**params)
 
-    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        save_joblib(**kwargs)
+    elif ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
+        save_joblib(**params)
 
-    elif path_to_file_.endswith((".fea", ".feather")):
-        save_feather(**kwargs)
+    elif ext in {".fea", ".feather"}:
+        save_feather(**params)
 
-    elif path_to_file_.endswith((".parquet", ".geoparquet")):
-        save_parquet(**kwargs)
+    elif ext in {".parquet", ".geoparquet"}:
+        save_parquet(**params)
 
-    elif (path_to_file_.endswith(".pdf") and
-          all(x not in data.__class__.__module__ for x in {'seaborn', 'matplotlib'})):
-        # noinspection PyBroadException
-        save_html_as_pdf(**kwargs)
+    elif ext == ".pdf":
+        data_module = getattr(getattr(data, '__class__', {}), '__module__', '')
+        if any(m in data_module for m in ('matplotlib', 'seaborn')):
+            save_figure(**params)
+        else:
+            save_html_as_pdf(**params)
 
-    elif path_to_file_.endswith(
-            ('.eps', '.jpeg', '.jpg', '.pdf', '.pgf', '.png', '.ps',
-             '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff')):
-        # noinspection PyBroadException
-        try:
-            save_figure(**kwargs)
-        except Exception:
-            save_fig(path_to_file=path_to_file, **kwargs)
+    elif ext in {'.eps', '.jpeg', '.jpg', '.pgf', '.png', '.ps',
+                 '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff'}:
+        save_figure(**params)
 
     else:
         if err_warning:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                "\n\tThe specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.save_data`.")
+            logging.warning("\n  The file format (extension) is not explicitly recognized.")
 
-        if _confirmed("To save the data as a pickle file\n?", confirmation_required):
-            save_pickle(**kwargs)
+        if _confirmed("Save the data as a pickle file instead\n?", confirmation_required):
+            save_pickle(**params)

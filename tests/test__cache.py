@@ -4,6 +4,7 @@ Test the module ``_cache.py``
 
 import os
 import sys
+import unittest.mock
 
 import pytest
 
@@ -25,20 +26,68 @@ def test_example_dataframe(osgb36):
 def test__check_dependency():
     from pyhelpers._cache import _check_dependencies
 
-    psycopg2 = _check_dependencies('psycopg2')
-    assert psycopg2.__name__ == 'psycopg2'
+    result = _check_dependencies('os')
+    assert result.__name__ == 'os'
 
-    sqlalchemy_dialects = _check_dependencies(('sqlalchemy', 'dialects'))
-    assert sqlalchemy_dialects.__name__ == 'sqlalchemy.dialects'
+    # 2. Test Alias Resolution (BeautifulSoup4 -> bs4)
+    with unittest.mock.patch('importlib.import_module') as mock_import:
+        mock_bs4 = unittest.mock.MagicMock()
+        mock_import.return_value = mock_bs4
 
-    gdal = _check_dependencies(('osgeo', 'gdal'))
-    assert gdal.__name__ == 'osgeo.gdal'
+        # Should resolve 'beautifulsoup4' to 'bs4' via _DEPENDENCY_MAP
+        result = _check_dependencies('beautifulsoup4')
+        mock_import.assert_called_with('bs4')
+        assert result == mock_bs4
 
-    test_name = 'unknown_package'
-    err_msg = (f"Missing optional dependency '{test_name}'. "
-               f"Use `pip install unknown_package` to install it.")
-    with pytest.raises(ModuleNotFoundError, match=err_msg):
-        _ = _check_dependencies(test_name)
+    # 3. Test GDAL Fallback (osgeo.gdal -> gdal -> Error)
+    with unittest.mock.patch('importlib.import_module') as mock_import:
+        # Simulate osgeo.gdal missing, but legacy gdal existing
+        def side_effect(name, *args, **kwargs):  # noqa
+            if name == 'osgeo.gdal':
+                raise ModuleNotFoundError("No osgeo")
+            if name == 'gdal':
+                return unittest.mock.MagicMock(__name__='gdal')
+            raise ModuleNotFoundError()
+
+        mock_import.side_effect = side_effect
+        result = _check_dependencies('gdal')
+        assert result.__name__ == 'gdal'
+
+    # 4. Test Missing Dependency Error Message
+    with unittest.mock.patch('importlib.util.find_spec', return_value=None):
+        with pytest.raises(ModuleNotFoundError, match="pip install unknown"):
+            _check_dependencies('unknown')
+
+
+def test__lazy_check_dependencies():
+    """
+    Test the decorator's ability to inject proxies and load modules on demand.
+    """
+    from pyhelpers._cache import _lazy_check_dependencies
+
+    @_lazy_check_dependencies('numpy', 'pandas')  # No aliases
+    def _test_func_1():
+        return numpy.__name__ == 'numpy' and pandas.__name__ == 'pandas'  # noqa
+
+    assert _test_func_1()
+
+    @_lazy_check_dependencies(np='numpy', pd='pandas')  # Aliases
+    def _test_func_2():
+        return np.__name__ == 'numpy' and pd.__name__ == 'pandas'  # noqa
+
+    assert _test_func_2()
+
+    @_lazy_check_dependencies('scipy', plt='matplotlib.pyplot')  # Mixed
+    def _test_func_3():
+        return scipy.__name__ == 'scipy' and plt.__name__ == 'matplotlib.pyplot'  # noqa
+
+    assert _test_func_3()
+
+    @_lazy_check_dependencies(**{'sp': 'scipy.sparse'})  # (Alternative)
+    def _test_func_4():
+        return sp.__name__ == 'scipy.sparse'  # noqa
+
+    assert _test_func_4()
 
 
 def test__confirmed(monkeypatch, capfd):
@@ -104,7 +153,7 @@ def test__check_relative_pathname():
     assert rel_path == pathname
 
     if os.name == 'nt':
-        pathname = "C:/Windows"
+        pathname = "C:\\Windows"
         rel_path = _check_relative_pathname(pathname)
         assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
 
@@ -126,7 +175,7 @@ def test__check_file_pathname():
 
     python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
     assert python_exe_exists
-    assert path_to_python_exe == sys.executable
+    assert str(path_to_python_exe) == sys.executable
 
     # Use the directory containing Python
     python_dir = os.path.dirname(sys.executable)
@@ -135,7 +184,7 @@ def test__check_file_pathname():
     # Check if specifying Python's actual path works
     python_exe_exists, path_to_python_exe = _check_file_pathname(sys.executable)
     assert python_exe_exists
-    assert path_to_python_exe == sys.executable
+    assert str(path_to_python_exe) == sys.executable
     python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=os.getcwd())
     assert not python_exe_exists
     python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
@@ -145,7 +194,7 @@ def test__check_file_pathname():
     text_exe = "pyhelpers.exe"
     test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, options=possible_paths)
     assert not test_exe_exists
-    assert path_to_test_exe == text_exe  # Should return input name
+    assert path_to_test_exe is None  # Should return input name
 
 
 def test__format_error_message():

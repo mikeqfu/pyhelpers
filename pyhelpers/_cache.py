@@ -5,10 +5,12 @@ Cached functions and constants.
 import collections.abc
 import copy
 import functools
+import importlib.metadata
 import importlib.resources
 import importlib.util
 import json
 import os
+import pathlib
 import re
 import shutil
 import sys
@@ -21,27 +23,98 @@ import urllib3
 
 @functools.lru_cache(maxsize=None)
 def _load_package_data(filename):
+    """
+    Loads data from the package's internal data directory.
+
+    Supported formats are primarily JSON. Returns an empty dictionary if the file
+    cannot be parsed or the extension is unsupported.
+
+    :param filename: Name of the data file.
+    :type filename: str
+    :return: Parsed data from the file.
+    :rtype: dict
+    """
+
     filepath = importlib.resources.files(__name__).joinpath(f"data/{filename}")
     if filepath.suffix == ".json":  # noqa
         return json.loads(filepath.read_text(encoding='utf-8'))
+
     return {}
+
+
+def _resolve_dependency_info(name):
+    """
+    Resolves the actual import path and the corresponding PyPI package name.
+
+    This helper maps common user-friendly package names (e.g. 'beautifulsoup4')
+    to their actual top-level import names (e.g. 'bs4') to prevent ``ModuleNotFoundError``
+    due to naming discrepancies.
+
+    :param name: Required package or module name.
+    :type name: str
+    :return: A tuple of ``(<actual_import_path>, <pip_install_name>)``.
+    :rtype: tuple[str, str]
+
+    **Tests**::
+
+        >>> from pyhelpers._cache import _resolve_dependency_info
+        >>> _resolve_dependency_info('beautifulsoup4')
+        ('bs4', 'beautifulsoup4')
+        >>> _resolve_dependency_info('pillow')
+        ('PIL', 'Pillow')
+        >>> _resolve_dependency_info('gdal')
+        ('osgeo', 'gdal')
+    """
+
+    _install_name_mapping = {
+        # Data Science & Arrays
+        "beautifulsoup4": ("bs4", "beautifulsoup4"),
+        "bs4": ("bs4", "beautifulsoup4"),
+        "scikit-learn": ("sklearn", "scikit-learn"),
+        "sklearn": ("sklearn", "scikit-learn"),
+
+        # Images & CV
+        "cv2": ("cv2", "opencv-python"),
+        "opencv-python": ("cv2", "opencv-python"),
+        "opencv": ("cv2", "opencv-python"),
+        "pil": ("PIL", "Pillow"),
+        "pillow": ("PIL", "Pillow"),
+
+        # File Formats
+        "odfpy": ("odf", "odfpy"),
+        "odf": ("odf", "odfpy"),
+        "python-rapidjson": ("rapidjson", "python-rapidjson"),
+        "pyyaml": ("yaml", "PyYAML"),
+        "rapidjson": ("rapidjson", "python-rapidjson"),
+        "yaml": ("yaml", "PyYAML"),
+
+        # Geospatial
+        "gdal": ("osgeo.gdal", "gdal"),
+    }
+
+    name_ = name.lower()
+    if name_ in _install_name_mapping:
+        return _install_name_mapping[name_]
+
+    # Default heuristic for standard packages
+    return name.replace('-', '_'), name
 
 
 def _check_dependencies(*names):
     """
     Imports one or multiple optional dependency packages/modules.
 
-    This function attempts to import the module specified its name as an optional dependency.
-    If a tuple (i.e. ``(package, name)``) is provided, it attempts to perform
-    `from package import name`.
+    This function attempts to import modules by their resolved names.
+    It provides descriptive error messages upon failure.
 
-    :param name: One or multiple names of the packages/modules as optional dependencies.
-    :type name: str
-    :param package: Name of the package that contains ``name``; defaults to ``None``.
-    :type package: str | None
-    :return: A module object if one dependency is passed, or a dict of ``{import_path: module}``
-        if multiple.
-    :rtype: module
+    :param names: Names of packages/modules; can be strings (e.g. ``'pandas'``)
+        or tuples for submodules (e.g. ``('osgeo', 'gdal')``).
+    :type names: str | tuple[str, str]
+    :return: Module object(s). Returns a single object if one name is passed,
+        else a tuple.
+    :rtype: Any | tuple[Any, ...]
+    :raises ModuleNotFoundError: If the package is not installed.
+    :raises ImportError: If the package exists but fails to load correctly.
 
     **Tests**::
 
@@ -49,148 +122,154 @@ def _check_dependencies(*names):
         >>> psycopg2 = _check_dependencies('psycopg2')
         >>> psycopg2.__name__
         'psycopg2'
-        >>> psycopg2_, pyodbc_ = _check_dependencies('pyodbc', 'psycopg2')
-        >>> (psycopg2_.__name__, pyodbc_.__name__)
+        >>> psycopg2, pyodbc = _check_dependencies('pyodbc', 'psycopg2')
+        >>> (psycopg2.__name__, pyodbc.__name__)
         ('pyodbc', 'psycopg2')
         >>> sqlalchemy_dialects = _check_dependencies(('sqlalchemy', 'dialects'))
         >>> sqlalchemy_dialects.__name__
         'sqlalchemy.dialects'
-        >>> gdal = _check_dependencies('gdal')
-        ModuleNotFoundError:
-          Possibly the optional dependency 'GDAL' has not been installed.
-            Instead of `import gdal`, try `import osgeo.gdal` or `from osgeo import gdal`.
-              If the error remains, try `pip install gdal` or `pip install <wheel_file>`.
-        >>> gdal = _check_dependencies(('osgeo', 'gdal'))
-        >>> gdal.__name__
-        'osgeo.gdal'
-        >>> gdal_ = _check_dependencies('osgeo.gdal')
+        >>> pd, plt = _check_dependencies('pandas', 'matplotlib.pyplot')
+        >>> (pd.__name__, plt.__name__)
+        ('pandas', 'matplotlib.pyplot')
+        >>> # Handling GDAL specifically
+        >>> gdal = _check_dependencies('gdal')  # Tries osgeo first, then legacy gdal
         >>> gdal.__name__
         'osgeo.gdal'
     """
 
     results = []
 
-    for name in names:
-        if isinstance(name, str):
-            package = None
-        elif isinstance(name, (tuple, list)) and len(name) == 2:
-            package, name = name
+    for item in names:
+        # Normalize name
+        if isinstance(item, str):
+            query_name = item
+        elif isinstance(item, (tuple, list)) and len(item) == 2:
+            query_name = f"{item[0]}.{item[1]}"
         else:
-            raise TypeError("Each dependency must be a str or a (name, package) tuple.")
+            raise TypeError("Dependency must be a string or (package, name) tuple.")
 
-        import_name = name.replace('-', '_')
-        if package:
-            pkg_name = package.replace('-', '_')
-            import_name = f'{pkg_name}.{import_name}'
-        else:
-            pkg_name = import_name.split('.', 1)[0] if '.' in import_name else None
+        import_path, pip_name = _resolve_dependency_info(query_name)
 
-        if import_name in sys.modules:  # The optional dependency has already been imported
-            results.append(sys.modules.get(import_name))
+        # 1. Fast path: Cache check
+        if import_path in sys.modules:
+            results.append(sys.modules[import_path])
             continue
 
-        if importlib.util.find_spec(name=import_name, package=pkg_name):
-            try:
-                results.append(importlib.import_module(name=import_name, package=pkg_name))
-                continue
-            except ModuleNotFoundError:
-                pass  # Fall back to checking optional mapping
+        # 2. Attempt import
+        try:
+            # We use import_module on the full path (e.g. 'osgeo.gdal')
+            module = importlib.import_module(import_path)
+            results.append(module)
+        except (ModuleNotFoundError, ImportError) as e:
+            # Handle GDAL legacy fallback: try 'import gdal' if 'osgeo.gdal' fails
+            if query_name.lower() == 'gdal':
+                try:
+                    legacy_gdal = importlib.import_module('gdal')
+                    results.append(legacy_gdal)
+                    continue
+                except ImportError:
+                    pass
 
-        # Check `_OPTIONAL_DEPENDENCY` mapping
-        if name.startswith('osgeo') or 'gdal' in import_name:
-            display_name, pip_name = 'GDAL', 'gdal'
+            # If the module is actually missing from the environment
+            if isinstance(e, ModuleNotFoundError):
+                # Specific rich error for GDAL
+                if 'gdal' in query_name.lower():
+                    raise ModuleNotFoundError(
+                        "'GDAL' not found. Try: `import osgeo.gdal`.\n  "
+                        "If that fails, install via: `conda install -c conda-forge gdal` "
+                        "(or `pip install <gdal-wheel-file>`)."
+                    ) from None
 
-            raise ModuleNotFoundError(
-                f"\n  Possibly the optional dependency '{display_name}' has not been installed.\n"
-                f"\tTry `import osgeo.gdal` or `from osgeo import gdal`.\n"
-                f"\t  If the error remains, try `pip install {pip_name}` or "
-                f"`pip install <wheel_file>`.")
+                raise ModuleNotFoundError(
+                    f"Missing optional dependency '{query_name}' (import as '{import_path}').\n"
+                    f"  Install it via: `pip install {pip_name}` "
+                    f"(or `pip install <{pip_name}-wheel-file>`)."
+                ) from None
 
-        else:
-            optional_dependencies = _load_package_data("optional-dependency.json")
-            # Returns: {import name: (package/module name, install name)}
+            # If the module exists but failed to load (e.g. DLL issues, syntax errors)
+            raise ImportError(
+                f"Failed to import '{import_path}' from installed package '{pip_name}': {e}"
+            ) from e
 
-            if import_name in optional_dependencies:
-                display_name, pip_name = optional_dependencies.get(import_name)
+    return results[0] if len(results) == 1 else tuple(results)
 
-            else:
-                display_name = pip_name = import_name.split('.')[0]
 
-            raise ModuleNotFoundError(
-                f"Missing optional dependency '{display_name}'. "
-                f"Use `pip install {pip_name}` to install it.")
+class _LazyModule:
+    """
+    Proxy object that defers module importation until an attribute is accessed.
 
-    return results[0] if len(results) == 1 else results
+    This reduces overhead for optional dependencies that may not be used in
+    every session.
+    """
+
+    __slots__ = ['_name', '_module']
+
+    def __init__(self, name):
+        """
+        :param name: The name of the module to load lazily.
+        :type name: str
+        """
+        self._name = name
+        self._module = None
+
+    def _load(self):
+        if self._module is None:
+            # Delegate to the robust checker function
+            self._module = _check_dependencies(self._name)
+        return self._module
+
+    def __getattr__(self, attr):
+        return getattr(self._load(), attr)
+
+    def __dir__(self):
+        return dir(self._load())
 
 
 def _lazy_check_dependencies(*args, **kwargs):
     """
-    Decorator for lazy imports supporting both package names and aliases.
+    Decorator to inject lazy-loading modules into a function's global namespace.
+
+    This allows functions to use optional dependencies internally without triggering top-level
+    imports. The actual import occurs only when the injected variable is accessed inside the
+    function.
+
+    :param args: Package names where the variable name equals the package name.
+    :type args: str
+    :param kwargs: Mapping of ``alias='package_name'``. Submodules can be represented using
+        dots in the string or underscores in the key.
+    :type kwargs: str
+    :return: A decorated function with lazy modules injected into its globals.
+    :rtype: typing.Callable
 
     **Examples**::
 
         >>> from pyhelpers._cache import _lazy_check_dependencies
         >>> @_lazy_check_dependencies('numpy', 'pandas')  # No aliases
-        >>> @_lazy_check_dependencies(numpy='np', pandas='pd')  # Aliases
-        >>> @_lazy_check_dependencies('scipy', matplotlib='plt')  # Mixed
-        >>> @_lazy_check_dependencies(scipy_sparse='sp')  # Module or submodule of a package
-        >>> @_lazy_check_dependencies(**{'scipy.sparse': 'sp'})  # (Alternative)
+        >>> @_lazy_check_dependencies(np='numpy', pd='pandas')  # Aliases
+        >>> @_lazy_check_dependencies('scipy', plt='matplotlib.pyplot')  # Mixed
+        >>> @_lazy_check_dependencies(**{'sp': 'scipy.sparse'})  # (Alternative)
     """
 
-    # Convert all arguments to package:alias mapping
+    # Build mapping: {'alias': 'package_name'}
     package_mapping = {}
 
-    # Handle positional arguments (no aliases)
+    # Handle positional arguments (no alias, so alias == package_name)
     for package in args:
         if isinstance(package, str):
             package_mapping[package] = package
         else:
             raise TypeError("Package names must be strings.")
 
-    # Handle keyword arguments (with aliases)
-    for k, v in kwargs.items():
-        package_name = k.replace('_', '.')  # If any, take the 'dot' version as the primary guess
-        package_mapping[package_name] = v
+    # Handle keyword arguments (alias provided)
+    for alias, import_name in kwargs.items():
+        # If any, take the 'dot' version as the primary guess
+        package_mapping[alias] = import_name.replace('_', '.')
 
     def decorator(func):
-        # Create proxy class that handles the lazy loading
-        class LazyModule:
-            __slots__ = ['_name', '_module']
-
-            def __init__(self, name):
-                self._name = name
-                self._module = None
-
-            def _load(self):
-                if self._module is None:
-                    try:
-                        # Attempt 1: Try the name as resolved (dots)
-                        self._module = importlib.import_module(self._name)
-                    except ImportError:
-                        # Attempt 2: Fallback for names that actually have underscores
-                        try:
-                            alt_name = self._name.replace('.', '_')
-                            self._module = importlib.import_module(alt_name)
-                        except ImportError:
-                            raise ImportError(
-                                f"Required package '{self._name}' not found. "
-                                f"Please install it to use '{func.__name__}'."
-                            )
-                return self._module
-
-            def __getattr__(self, attr):
-                return getattr(self._load(), attr)
-
-            def __dir__(self):
-                return dir(self._load())  # Helps with IDE autocompletion once loaded
-
-        @functools.wraps(func)
-        def wrapper(*_args, **_kwargs):
-            for package_, alias_ in package_mapping.items():
-                # Inject the lazy proxy into the function's global namespace
-                func.__globals__[alias_] = LazyModule(package_)
-            return func(*_args, **_kwargs)
-        return wrapper
+        # Inject the LazyModule into the function's global namespace
+        for pkg_alias, pkg_name in package_mapping.items():
+            func.__globals__[pkg_alias] = _LazyModule(pkg_name)
+        return func
 
     return decorator
 
@@ -461,16 +540,19 @@ def _check_file_pathname(name, options=None, target=None):
     """
     Checks the pathname of a specified file given its name or filename.
 
-    This function determines whether the specified executable file exists and returns its pathname.
+    This function determines if a specified executable exists by checking a target path,
+    searching through provided options, or looking in the system's PATH.
 
     :param name: Name or filename of the executable file.
     :type name: str
     :param options: Possible pathnames or directories to search for ``name``; defaults to ``None``.
     :type options: list | set | None
-    :param target: Specific pathname that may already be known; defaults to ``None``.
+    :param target: Specific pathname that may already be known and is to validate first;
+        defaults to ``None``.
     :type target: str | None
-    :return: Tuple containing a boolean indicating if the file exists and its pathname.
-    :rtype: tuple[bool, str]
+    :return: Tuple containing: a boolean variable indicating whether the file exists and
+        a Path object of file's the absolute path (if it exists).
+    :rtype: tuple[bool, pathlib.Path | None]
 
     **Tests**::
 
@@ -497,37 +579,53 @@ def _check_file_pathname(name, options=None, target=None):
         >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
         >>> test_exe_exists
         False
-        >>> os.path.relpath(path_to_test_exe)
-        'pyhelpers.exe'
     """
 
-    if target:
-        if os.path.isfile(target) and os.path.splitext(name)[0] in os.path.basename(target):
-            file_exists, file_pathname = True, target
+    if target:  # Check `target` if provided
+        target_path = pathlib.Path(target).resolve()
+
+        # Verify it's a file and the name matches (case-insensitive for safety)
+        if target_path.is_file() and name.lower() in target_path.name.lower():
+            file_exists, pathname = True, target_path
         else:
-            file_exists, file_pathname = False, None
+            file_exists, pathname = False, None
 
-    else:
-        file_pathname = str(name)
-
-        if os.path.isfile(file_pathname):
+    else:  # Check if `name` itself is already a valid direct path
+        pathname = pathlib.Path(name).resolve()
+        if pathname.is_file():
             file_exists = True
 
-        else:
-            file_exists = False
-            alt_pathnames = [shutil.which(file_pathname)]  # noqa
+        else:  # Build search list (Options + System PATH)
+            file_exists, pathname = False, None
 
-            if options:
-                alt_pathnames = list(options) + alt_pathnames
+            search_paths = []
+            if options:  # Flatten options into a list of strings/paths
+                search_paths.extend(list(options))
 
-            for x in [x_ for x_ in alt_pathnames if x_]:
-                file_pathname_ = os.path.join(x, file_pathname) if os.path.isdir(x) else x
+            filename = str(name)
 
-                if os.path.isfile(file_pathname_) and file_pathname in file_pathname_:
-                    file_exists, file_pathname = True, file_pathname_
-                    break
+            # Add system PATH lookup
+            system_match = shutil.which(filename)  # noqa
+            if system_match:
+                search_paths.append(system_match)
 
-    return file_exists, file_pathname
+            # Iterate and validate
+            for p in search_paths:
+                if p is None:
+                    continue
+
+                p_obj = pathlib.Path(p).resolve()
+                # If the option is a directory, look for 'name' inside it
+                potential_file = (p_obj / filename) if p_obj.is_dir() else p_obj
+
+                # Final validation
+                if potential_file.is_file():
+                    # Check for name overlap to ensure we didn't find a random file
+                    if filename.lower() in potential_file.name.lower():
+                        file_exists, pathname = True, potential_file
+                        break  # Stop at the first valid match found
+
+    return file_exists, pathname
 
 
 def _format_error_message(e=None, prefix=""):
