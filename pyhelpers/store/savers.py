@@ -77,16 +77,16 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
 
     try:
         if ext in {".pkl.gz", ".pickle.gz"}:
-            with gzip.open(path_to_file, mode='wb') as f:
+            with gzip.open(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
         elif ext in {".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma"}:
-            with lzma.open(path_to_file, mode='wb') as f:
+            with lzma.open(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
         elif ext in {".pkl.bz2", ".pickle.bz2"}:
-            with bz2.BZ2File(path_to_file, mode='wb') as f:
+            with bz2.BZ2File(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
         else:
-            with open(path_to_file, mode='wb') as f:
+            with open(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
 
         if verbose:
