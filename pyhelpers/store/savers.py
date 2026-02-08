@@ -185,14 +185,14 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
     try:  # to save the data
         if ext in {".csv", ".txt", ".odt"}:  # a .csv file
-            kwargs.update({'path_or_buf': path_to_file, 'sep': delimiter, 'index': index})
+            kwargs.update({'path_or_buf': file_path, 'sep': delimiter, 'index': index})
             data.to_csv(**kwargs)
 
         else:
             if writer_kwargs is None:
-                writer_kwargs = {'path': path_to_file}
+                writer_kwargs = {'path': file_path}
             else:
-                writer_kwargs.update({'path': path_to_file})
+                writer_kwargs.update({'path': file_path})
 
             if ext in {".xls", ".xlsx"}:  # a .xlsx file or a .xls file
                 writer_kwargs.update({'engine': 'openpyxl'})
