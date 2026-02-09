@@ -537,6 +537,19 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+def _is_parquet_geospatial(file_path, pq_module):
+    """
+    Detects if a file is GeoParquet via metadata or extension.
+    """
+
+    try:
+        parquet_meta = pq_module.read_metadata(file_path)
+        return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
+    except Exception:  # noqa
+        file_ext = "".join(pathlib.Path(file_path).suffixes).lower()
+        return bool(file_ext == ".geoparquet")
+
+
 @_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
