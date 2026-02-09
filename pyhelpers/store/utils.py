@@ -250,14 +250,14 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         'C:/Windows'
     """
 
-    file_path = pathlib.Path(path_to_file).resolve()
-    rel_dir_path = _check_relative_pathname(file_path)
+    rel_dir_path = _check_relative_pathname(path_to_file)
 
     if verbose:
         prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_dir_path)}{print_suffix}'
         print(prt_msg, end=print_end)
 
     if ret_info:
+        file_path = pathlib.Path(path_to_file).resolve()
         return file_path, pathlib.Path(rel_dir_path).parent
 
     return None
