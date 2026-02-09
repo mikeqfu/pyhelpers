@@ -15,7 +15,7 @@ import urllib.parse
 
 import requests
 
-from .._cache import _init_requests_session, _print_failure_message, _USER_AGENT_STRINGS
+from .._cache import _init_requests_session, _load_package_data, _print_failure_message
 
 
 def is_network_connected():
@@ -312,7 +312,7 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
     """
 
     if not update:
-        user_agent_strings = _USER_AGENT_STRINGS.copy()
+        user_agent_strings = _load_package_data("user-agent-strings.json")
 
     else:
         if verbose:

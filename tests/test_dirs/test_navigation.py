@@ -117,11 +117,11 @@ def test_find_executable():
     # Case 1: Check for non-existent executable in a specific directory
     test_exe_exists, path_to_test_exe = find_executable(test_exe, options=[python_dir])
     assert not test_exe_exists
-    assert path_to_test_exe == test_exe
+    assert path_to_test_exe is None
     # Case 2: Check for non-existent executable in system paths
     test_exe_exists, path_to_test_exe = find_executable(test_exe, system_paths)
     assert not test_exe_exists
-    assert path_to_test_exe == test_exe  # Should return unchanged
+    assert path_to_test_exe is None
     # Case 3: Check for non-existent executable with `options=None`
     test_exe_exists, path_to_test_exe = find_executable(test_exe, target=sys.executable)
     assert not test_exe_exists

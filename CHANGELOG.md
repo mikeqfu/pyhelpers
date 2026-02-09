@@ -1,6 +1,37 @@
 # Changelog / Release notes
 
 
+## [2.3.3](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.3)
+
+(*9 February 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.2...2.3.3) since [2.3.2](https://pypi.org/project/pyhelpers/2.3.2/):
+
+- **New features & Parquet integration:**
+  * Integrated full Parquet and GeoParquet support into the `store` subpackage with metadata-based detection (#110).
+  * Implemented internal loaders and fallbacks for data dispatching (#114).
+- **Pandas 3.0+ compatibility & future-proofing:**
+  * Resolved `TypeError` in `pd_preferences()` and suppressed `Pandas4Warning` for future compatibility (#106, #108).
+  * Renamed the `index` parameter to `index_col` across the `store` subpackage to align with Pandas conventions (#110).
+- **Architectural modernization:**
+  * Migrated from `os.path` to `pathlib` for robust, cross-platform POSIX path handling (#111).
+  * Transitioned from legacy `pkgutil` to `importlib.resources` for package data access (#108).
+  * Introduced `@_resolve_json_engine` decorator for dynamic dependency injection of `ujson`, `orjson` and `rapidjson` (#110).
+- **Improvements & robustness:**
+  * Overhauled `_lazy_check_dependencies()` with an improved alias-mapping system to resolve PyPI/Import name discrepancies (#111).
+  * Refactored `save_data()` and `load_data()` with unified dispatching and extension matching logic (#111).
+  * Standardized forward-slash path resolution across Windows and Unix-based environments (#111).
+- **Fixes:**
+  * Fixed a critical bug in `_resolve_json_engine` using `inspect.signature` to correctly handle positional arguments (#116).
+  * Resolved path concatenation issues in PDF/EMF export logic (#111).
+  * Fixed ORCID reference fetching in `TestCrossRefOrcid` (#104).
+- **Maintenance & infrastructure:**
+  * Synchronized `pyproject.toml` and `MANIFEST.in` to ensure clean distribution builds (#112).
+  * Refreshed project requirements (#112).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.3.3 documentation](https://pyhelpers.readthedocs.io/en/2.3.3/).**
+
+
 ## [2.3.2](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.2)
 
 (*22 December 2025*)

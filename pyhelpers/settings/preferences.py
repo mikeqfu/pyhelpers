@@ -5,11 +5,13 @@ Preferences.
 import copy
 import os
 
+import packaging.version
+
 from .._cache import _check_dependencies
 
 
 def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, precision=4,
-                   east_asian_text=False, ignore_future_warning=True, **kwargs):
+                   east_asian_text=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Alters parameters of some frequently-used
@@ -39,9 +41,6 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
     :param east_asian_text: Whether to adjust the display for East Asian text;
         defaults to ``False``.
     :type east_asian_text: bool
-    :param ignore_future_warning: Whether to ignore or suppress future warnings;
-        defaults to ``True``.
-    :type ignore_future_warning: bool
     :param kwargs: [Optional] Additional parameters for the function `pandas.set_option()`_. 
 
     .. _`pandas.set_option()`:
@@ -149,7 +148,10 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
             pd.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
-        pd.reset_option('all', silent=ignore_future_warning)
+        if packaging.version.parse(pd.__version__) >= packaging.version.parse("3.0.0"):
+            pd.reset_option('all')
+        else:
+            pd.reset_option('all', silent=True)
 
 
 def np_preferences(reset=False, precision=4, head_tail=5, line_char=120, formatter=None, **kwargs):

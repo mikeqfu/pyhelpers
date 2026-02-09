@@ -9,7 +9,7 @@ import math
 import re
 import string
 
-from .._cache import _check_dependencies, _ENGLISH_NUMERALS, _remove_punctuation, _vectorize_text
+from .._cache import _check_dependencies, _load_package_data, _remove_punctuation, _vectorize_text
 
 
 def clean_html_text(input_text):
@@ -294,23 +294,21 @@ def numeral_english_to_arabic(input_text):
         >>> numeral_english_to_arabic('200 and five')
         205
         >>> numeral_english_to_arabic('Two hundred and fivety')  # Two hundred and fifty
-        Exception: Illegal word: "fivety"
+        ValueError: Illegal word: "fivety"
     """
 
     current = result = 0
 
+    english_numerals = _load_package_data("english-numerals.json")
+
     for word in input_text.lower().replace('-', ' ').split():
-        if word not in _ENGLISH_NUMERALS and not word.isdigit():
-            # word_ = find_similar_str(word, ENGLISH_WRITTEN_NUMBERS)
-            # if word_ is None:
-            raise Exception(f"Illegal word: \"{word}\"")
-            # else:
-            #     word = word_
+        if word not in english_numerals and not word.isdigit():
+            raise ValueError(f'Illegal word: "{word}"')
 
         if word.isdigit():
             scale, increment = (1, int(word))
         else:
-            scale, increment = _ENGLISH_NUMERALS[word]
+            scale, increment = english_numerals.get(word)
         current = current * scale + increment
 
         if scale > 100:

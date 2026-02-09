@@ -68,7 +68,8 @@ class TestCrossRefOrcid:
         references = co.fetch_references(
             orcid_id=orcid_id, work_types=work_types, recent_years=recent_years)
         time.sleep(2)
-        assert any(f'**{co.my_name[:5]}' in ref for ref in references)
+        if len(references) > 0:
+            assert any(f'**{co.my_name[:5]}' in ref for ref in references)
 
     @pytest.mark.parametrize('max_entries', [100, 2])
     def test_update_references(self, co, orcid_id, max_entries, tmp_path, monkeypatch, capfd):

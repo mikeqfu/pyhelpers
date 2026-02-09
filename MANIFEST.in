@@ -1,9 +1,20 @@
-# Include data
+# Include metadata
+include CHANGELOG.md
+include CITATION.cff
 include LICENSE
+include README.md
+
+# Include package data in pyhelpers/data
 recursive-include pyhelpers/data *
 
-# Exclude tests
+# Exclude development and build directories
+prune .venv
+prune *.egg-info
+prune dist
+prune docs
 prune tests
 prune tutorials
 prune venv
-prune dist
+
+# Global exclusions (optional but good)
+global-exclude __pycache__
