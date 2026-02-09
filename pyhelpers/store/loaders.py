@@ -550,6 +550,38 @@ def _is_parquet_geospatial(file_path, pq_module):
         return bool(file_ext == ".geoparquet")
 
 
+def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
+    """
+    Attempts to load data using the preferred high-level library (Pandas/GeoPandas).
+    Handles specific edge cases for the 'fastparquet' engine.
+    """
+
+    actual_engine = engine or 'auto'
+    warn_message = ""
+
+    if is_geospatial:
+        return gpd_module.read_parquet(file_path, **kwargs), warn_message
+
+    data = pd.read_parquet(file_path, engine=actual_engine, **kwargs)
+
+    # Fix for potential 'fastparquet' issue where index is loaded as a column with nulls
+    if actual_engine == 'fastparquet' and data.index.get_level_values(0).isnull().all():
+        index_name = data.index.name
+
+        if index_name in data.columns:
+            data = data.set_index(index_name)
+        else:
+            # If the index cannot be resolved
+            warn_message = (
+                f"`engine='fastparquet'` failed to decode the index '{index_name}'; "
+                f"retried and resolved using `pyarrow`.")
+            kwargs_copy = kwargs.copy()
+            kwargs_copy['engine'] = 'pyarrow'
+            data = pd.read_parquet(file_path, **kwargs_copy)
+
+    return data, warn_message
+
+
 @_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
@@ -623,38 +655,17 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        is_geospatial = False
+        is_geospatial = _is_parquet_geospatial(path_to_file, pq)  # noqa
 
-        try:  # Check Parquet metadata for 'geo' key
-            parquet_meta = pq.read_metadata(path_to_file)  # noqa
-            if parquet_meta.metadata and b'geo' in parquet_meta.metadata:
-                is_geospatial = True
-        except Exception:  # noqa
-            # Fallback to extension check if metadata is unreadable/corrupt
-            file_ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
-            is_geospatial = (file_ext == ".geoparquet")
-
-        warn_message = ""
         try:
-            actual_engine = engine or 'auto'
-
-            if is_geospatial:
-                data = gpd.read_parquet(path_to_file, **kwargs)  # noqa
-            else:
-                data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
-
-            if actual_engine == 'fastparquet' and not is_geospatial:
-                if data.index.get_level_values(0).isnull().all():
-                    index_name = data.index.name
-
-                    if index_name and index_name in data.columns:  # Check edge cases
-                        data.set_index(index_name, inplace=True)
-                    else:  # Fallback to pyarrow
-                        warn_message = \
-                            (f"`engine='fastparquet'` failed to decode the index "
-                             f"'{index_name}'; retried and resolved using `pyarrow`.")
-                        kwargs['engine'] = 'pyarrow'
-                        data = pd.read_parquet(path_to_file, **kwargs)
+            # Try the high-level loaders (includes the internal fastparquet fix)
+            data, warn_message = _load_parquet(
+                path_to_file=path_to_file,
+                is_geospatial=is_geospatial,
+                engine=engine,
+                gpd_module=gpd,  # noqa
+                **kwargs
+            )
 
         except Exception as e:
             warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
