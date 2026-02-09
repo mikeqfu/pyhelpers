@@ -582,6 +582,23 @@ def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
     return data, warn_message
 
 
+def _load_parquet_fallback(file_path, pq_module, kwargs):
+    """
+    Last-resort loader using PyArrow directly.
+    Returns a DataFrame if possible, otherwise a PyArrow Table.
+    """
+
+    # Remove 'engine' from kwargs as read_table doesn't accept it
+    fallback_kwargs = kwargs.copy()
+    fallback_kwargs.pop('engine', None)
+
+    table = pq_module.read_table(file_path, **fallback_kwargs)
+    try:
+        return table.to_pandas()
+    except Exception:  # noqa
+        return table
+
+
 @_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
@@ -660,7 +677,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         try:
             # Try the high-level loaders (includes the internal fastparquet fix)
             data, warn_message = _load_parquet(
-                path_to_file=path_to_file,
+                file_path=path_to_file,
                 is_geospatial=is_geospatial,
                 engine=engine,
                 gpd_module=gpd,  # noqa
@@ -670,13 +687,13 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         except Exception as e:
             warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
 
-            pq_kwargs = kwargs.copy()
-            pq_kwargs.pop('engine', None)
-            data = pq.read_table(path_to_file, **pq_kwargs)  # noqa
+            data = _load_parquet_fallback(
+                file_path=path_to_file,
+                pq_module=pq,  # noqa
+                kwargs=kwargs
+            )  # noqa
 
-            try:
-                data = data.to_pandas()
-            except Exception:  # noqa
+            if not isinstance(data, (pd.DataFrame, gpd.GeoDataFrame)):  # noqa
                 warn_message += "\nDataFrame conversion also failed. Returning a `pyarrow.Table`."
 
         if verbose:
