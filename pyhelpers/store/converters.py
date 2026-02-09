@@ -499,7 +499,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> os.path.isfile(path_to_temp_csv)
         True
-        >>> data = load_csv(path_to_temp_csv, index=0)
+        >>> data = load_csv(path_to_temp_csv, index_col=0)
         >>> data
                      Longitude    Latitude
         City
@@ -511,7 +511,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
         Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
-        >>> data_ = load_csv(temp_csv_buffer, index=0)
+        >>> data_ = load_csv(temp_csv_buffer, index_col=0)
         >>> data_
                     Longitude   Latitude
         City

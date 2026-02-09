@@ -9,15 +9,15 @@ import inspect
 import logging
 import lzma
 import operator
-import os.path
 import pickle  # nosec
-import sys
+import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .utils import _check_loading_path, _set_index
-from .._cache import _check_dependencies, _lazy_check_dependencies, _print_failure_message
+from .utils import _check_loading_path, _resolve_json_engine, _set_index
+from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
 def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
@@ -65,9 +65,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         path_to_file_ = str(path_to_file).lower()
@@ -102,7 +100,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, prt_kwargs=None,
+def load_csv(path_to_file, delimiter=',', header=0, index_col=None, verbose=False, prt_kwargs=None,
              raise_error=False, **kwargs):
     """
     Loads data from a `CSV`_ file.
@@ -113,9 +111,9 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
     :type delimiter: str
     :param header: Index number of the row(s) used as column names; defaults to ``0``.
     :type header: int | typing.List[int] | None
-    :param index: Index number of the column(s) to use as the row labels of the dataframe;
+    :param index_col: Index number of the column(s) to use as the row labels of the dataframe;
         defaults to ``None``.
-    :type index: str | int | list | None
+    :type index_col: str | int | list | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
@@ -142,7 +140,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         >>> from pyhelpers.store import load_csv
         >>> from pyhelpers.dirs import cd
         >>> csv_pathname = cd("tests", "data", "dat.csv")
-        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                      Longitude    Latitude
@@ -152,7 +150,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
         >>> csv_pathname = cd("tests", "data", "dat.txt")
-        >>> csv_dat = load_csv(csv_pathname, index=0, verbose=True)
+        >>> csv_dat = load_csv(csv_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.txt" ... Done.
         >>> csv_dat
                      Longitude    Latitude
@@ -171,9 +169,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         2       Leeds  582044   152953
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         with open(path_to_file, mode='r') as csv_file:
@@ -188,7 +184,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
         else:
             data = pd.DataFrame(csv_rows)
 
-        data = _set_index(data, index=index)
+        data = _set_index(data, index_col=index_col)
 
         if verbose:
             print("Done.")
@@ -197,7 +193,8 @@ def load_csv(path_to_file, delimiter=',', header=0, index=None, verbose=False, p
 
     except TypeError:
         try:
-            data = pd.read_csv(path_to_file, index_col=index, **kwargs)
+            kwargs.update({'index_col': index_col})
+            data = pd.read_csv(path_to_file, **kwargs)
             if verbose:
                 print("Done.")
             return data
@@ -304,10 +301,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         if verbose:
             print(msg)
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
     _check_loading_path(
-        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **prt_kwargs)
+        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **(prt_kwargs or {}))
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -315,7 +310,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
 
         for sheet_name in sheet_names:
             if verbose:
-                print(f"\t'{sheet_name}'.", end=" ... ")
+                print(f"  '{sheet_name}'.", end=" ... ")
 
             try:
                 sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
@@ -334,6 +329,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     return data
 
 
+@_resolve_json_engine
 def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
@@ -388,25 +384,18 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
     """
 
-    if engine is not None:
-        valid_engines = {'ujson', 'orjson', 'rapidjson'}
-        assert engine in valid_engines, f"`engine` must be on one of {valid_engines}"
-        mod = _check_dependencies(engine)
-    else:
-        mod = sys.modules.get('json')
+    json_mod = kwargs.pop('json_mod')
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         if engine == 'orjson':
             with open(path_to_file, mode='rb') as json_in:
-                data = mod.loads(json_in.read(), **kwargs)
+                data = json_mod.loads(json_in.read(), **kwargs)
 
         else:
             with open(path_to_file, mode='r') as json_in:
-                data = mod.load(json_in, **kwargs)
+                data = json_mod.load(json_in, **kwargs)
 
         if verbose:
             print("Done.")
@@ -417,6 +406,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies('joblib')
 def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     """
     Loads data from a `Joblib`_ file.
@@ -465,14 +455,10 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
                 0.81357508]])
     """
 
-    joblib = _check_dependencies('joblib')
-
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        data = joblib.load(filename=path_to_file, **kwargs)
+        data = joblib.load(filename=path_to_file, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -483,16 +469,16 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise_error=False,
+def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
     Loads a dataframe from a `Feather`_ file.
 
     :param path_to_file: Path where the feather file is saved.
     :type path_to_file: str | os.PathLike
-    :param index: Index number or name of the column(s) to use as the row labels of the dataframe;
+    :param index_col: Index number or name of the column(s) to use as the row labels of the dataframe;
         defaults to ``None``.
-    :type index: str | int | list | None
+    :type index_col: str | int | list | None
     :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for the function
@@ -524,7 +510,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         >>> from pyhelpers.store import load_feather
         >>> from pyhelpers.dirs import cd
         >>> feather_path = cd("tests", "data", "dat.feather")
-        >>> feather_dat = load_feather(feather_path, index=0, verbose=True)
+        >>> feather_dat = load_feather(feather_path, index_col=0, verbose=True)
         Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
@@ -535,14 +521,12 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         Leeds       -1.543794  53.797418
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = pd.read_feather(path_to_file, **kwargs)
 
-        data = _set_index(data, index=index)
+        data = _set_index(data, index_col=index_col)
 
         if verbose:
             print("Done.")
@@ -553,7 +537,7 @@ def load_feather(path_to_file, index=None, verbose=False, prt_kwargs=None, raise
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-@_lazy_check_dependencies(pyarrow='pa', **{'pyarrow.parquet': 'pq'}, geopandas='gpd')
+@_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
     """
@@ -610,50 +594,71 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         Leeds       -1.543794  53.797418
         >>> # Load with a specific engine
         >>> parquet_dat2 = load_parquet(parquet_pathname, engine='fastparquet', verbose=True)
-        Loading "dat.parquet" from "./tests/data/" ... Done.
+        Loading "./tests/data/dat.parquet" ... Done.
+        /pyhelpers/store/loaders.py:679: UserWarning: `engine='fastparquet'` failed to decode t...
         >>> parquet_dat2.equals(parquet_dat1)
         True
         >>> # Trigger fallback by providing an invalid engine
         >>> parquet_dat = load_parquet(parquet_pathname, engine='invalid', verbose=True)
-        Loading "dat.parquet" from "./tests/data/" ... Done.
-            Warning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. Falling ...
+        Loading "./tests/data/dat.parquet" ... Done.
+        /pyhelpers/store/loaders.py:677: UserWarning: Primary loader failed (engine must be one...
 
     .. seealso::
         - Example data can be referred to in the function :func:`~pyhelpers.store.save_parquet`.
     """
 
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        file_ext = os.path.splitext(path_to_file)[1].lower()
+        is_geospatial = False
 
-        warning_message = ""
+        try:  # Check Parquet metadata for 'geo' key
+            parquet_meta = pq.read_metadata(path_to_file)  # noqa
+            if parquet_meta.metadata and b'geo' in parquet_meta.metadata:
+                is_geospatial = True
+        except Exception:  # noqa
+            # Fallback to extension check if metadata is unreadable/corrupt
+            file_ext = "".join(Path(path_to_file).suffixes).lower()
+            is_geospatial = (file_ext == ".geoparquet")
 
+        warn_message = ""
         try:
-            if file_ext == ".geoparquet":  # Use GeoPandas if the extension suggests spatial data
+            actual_engine = engine or 'auto'
+
+            if is_geospatial:
                 data = gpd.read_parquet(path_to_file, **kwargs)  # noqa
-            else:  # Use Pandas; engine can be None, 'auto', 'pyarrow' or 'fastparquet'
-                data = pd.read_parquet(
-                    path_to_file, engine='auto' if engine is None else engine, **kwargs)
+            else:
+                data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
 
-        except (ValueError, ImportError):
-            warning_message = \
-                ("\n\tWarning: `engine` must be one of {None, 'auto', 'pyarrow', 'fastparquet'}. "
-                 "Falling back to `pyarrow.parquet.read_table()`.")
+            if actual_engine == 'fastparquet' and not is_geospatial:
+                if data.index.get_level_values(0).isnull().all():
+                    index_name = data.index.name
 
-            kwargs.pop('engine', None)
-            data = pq.read_table(path_to_file, **kwargs)  # noqa
+                    if index_name and index_name in data.columns:  # Check edge cases
+                        data.set_index(index_name, inplace=True)
+                    else:  # Fallback to pyarrow
+                        warn_message = \
+                            (f"`engine='fastparquet'` failed to decode the index "
+                             f"'{index_name}'; retried and resolved using `pyarrow`.")
+                        kwargs['engine'] = 'pyarrow'
+                        data = pd.read_parquet(path_to_file, **kwargs)
+
+        except Exception as e:
+            warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
+
+            pq_kwargs = kwargs.copy()
+            pq_kwargs.pop('engine', None)
+            data = pq.read_table(path_to_file, **pq_kwargs)  # noqa
 
             try:
                 data = data.to_pandas()
             except Exception:  # noqa
-                warning_message += ("\n\tWarning: Conversion to DataFrame failed. "
-                                    "Returning pyarrow.Table.")
+                warn_message += "\nDataFrame conversion also failed. Returning a `pyarrow.Table`."
 
         if verbose:
-            print("Done.", end=f"{warning_message}\n")
+            print("Done.")
+            if warn_message:
+                warnings.warn(warn_message, UserWarning)
 
         return data
 
@@ -661,6 +666,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@_lazy_check_dependencies(sp='scipy.sparse')
 def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -700,16 +706,12 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         Loading "./tests/data/csr_mat.npz" ... Done.
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
         >>> (csr_mat != csr_mat_).count_nonzero() == 0
-        True
+        np.True_
         >>> (csr_mat != csr_mat_).nnz == 0
         True
     """
 
-    scipy_sparse = _check_dependencies('scipy.sparse')
-
-    if prt_kwargs is None:
-        prt_kwargs = {}
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **prt_kwargs)
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         csr_loader = np.load(path_to_file, **kwargs)
@@ -719,7 +721,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         indptr = csr_loader['indptr']
         shape = csr_loader['shape']
 
-        csr_mat = scipy_sparse.csr_matrix((data, indices, indptr), shape)
+        csr_mat = sp.csr_matrix((data, indices, indptr), shape)  # noqa
 
         if verbose:
             print("Done.")
@@ -730,16 +732,21 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False, **kwargs):
+def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise_error=False,
+              **kwargs):
     """
     Loads data from a file.
 
     :param path_to_file: Pathname of the file; supported formats include
-        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_ and `Feather`_.
+        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_ and
+        `Parquet`_.
     :type path_to_file: str | os.PathLike
-    :param err_warning: Whether to show a warning message if an unknown error occurs;
+    :param verbose: Whether to print relevant information in console as the function runs;
+        defaults to ``False``.
+    :type verbose: bool | int
+    :param warn_err: Whether to show a warning message if an unknown error occurs;
         defaults to ``True``.
-    :type err_warning: bool
+    :type warn_err: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -747,12 +754,13 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for one of the following functions:
-        :func:`~pyhelpers.store.ldr.load_pickle`,
-        :func:`~pyhelpers.store.ldr.load_csv`,
-        :func:`~pyhelpers.store.ldr.load_multiple_spreadsheets`,
-        :func:`~pyhelpers.store.ldr.load_json`,
-        :func:`~pyhelpers.store.ldr.load_joblib` or
-        :func:`~pyhelpers.store.ldr.load_feather`.
+        :func:`~pyhelpers.store.load_pickle`,
+        :func:`~pyhelpers.store.load_csv`,
+        :func:`~pyhelpers.store.load_spreadsheets`,
+        :func:`~pyhelpers.store.load_json`,
+        :func:`~pyhelpers.store.load_joblib`,
+        :func:`~pyhelpers.store.load_feather`, or
+        :func:`~pyhelpers.store.load_parquet`.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
 
@@ -762,6 +770,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
     .. _`JSON`: https://www.json.org/json-en.html
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
+    .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
 
     .. note::
 
@@ -783,7 +792,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
         >>> dat_pathname = cd(data_dir, "dat.csv")
-        >>> csv_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        >>> csv_dat = load_data(path_to_file=dat_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.csv" ... Done.
         >>> csv_dat
                     Longitude   Latitude
@@ -801,7 +810,7 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
          'Manchester': {'Longitude': -2.2451148, 'Latitude': 53.4794892},
          'Leeds': {'Longitude': -1.5437941, 'Latitude': 53.7974185}}
         >>> dat_pathname = cd(data_dir, "dat.feather")
-        >>> feather_dat = load_data(path_to_file=dat_pathname, index=0, verbose=True)
+        >>> feather_dat = load_data(path_to_file=dat_pathname, index_col=0, verbose=True)
         Loading "./tests/data/dat.feather" ... Done.
         >>> feather_dat
                     Longitude   Latitude
@@ -829,39 +838,43 @@ def load_data(path_to_file, err_warning=True, prt_kwargs=None, raise_error=False
                 0.81357508]])
     """
 
-    path_to_file_ = str(path_to_file).lower()
+    ext = "".join(Path(path_to_file).suffixes).lower()
 
     kwargs.update(
-        {'path_to_file': path_to_file, 'prt_kwargs': prt_kwargs, 'raise_error': raise_error})
+        {'path_to_file': path_to_file,
+         'verbose': verbose,
+         'prt_kwargs': prt_kwargs,
+         'raise_error': raise_error}
+    )
 
-    if path_to_file_.endswith(
-            (".pkl", ".pickle",
-             ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
-             ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
-        data = load_pickle(**kwargs)
+    if ext in {'.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
+               '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz'}:
+        return load_pickle(**kwargs)
 
-    elif path_to_file_.endswith((".csv", ".txt")):
-        data = load_csv(**kwargs)
+    if ext in {".csv", ".txt"}:
+        return load_csv(**kwargs)
 
-    elif path_to_file_.endswith((".xlsx", ".xls")):
-        data = load_spreadsheets(**kwargs)
+    if ext in {".xlsx", ".xls", ".ods"}:
+        return load_spreadsheets(**kwargs)
 
-    elif path_to_file_.endswith(".json"):
-        data = load_json(**kwargs)
+    if ext == ".json":
+        return load_json(**kwargs)
 
-    elif path_to_file_.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        data = load_joblib(**kwargs)
+    if ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
+        return load_joblib(**kwargs)
 
-    elif path_to_file_.endswith((".fea", ".feather")):
-        data = load_feather(**kwargs)
+    if ext in {".fea", ".feather"}:
+        return load_feather(**kwargs)
 
-    else:
-        data = None
+    if ext == ".npz":
+        return load_csr_matrix(**kwargs)
 
-        if err_warning:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                "\n\tThe specified file format (extension) is not recognisable by "
-                "`pyhelpers.store.load_data()`.")
+    if ext in {".parquet", ".geoparquet"}:
+        return load_parquet(**kwargs)
 
-    return data
+    if warn_err:
+        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        logging.warning(
+            "\n  The specified file format (extension) is not recognisable by `load_data()`.")
+
+    return None

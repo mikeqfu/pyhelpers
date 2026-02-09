@@ -221,7 +221,7 @@ def test_np_shift():
     assert np.array_equal(rslt3, arr)
 
 
-@_lazy_check_dependencies(polars='pl')
+@_lazy_check_dependencies(pl='polars')
 def test_downcast_numeric_columns():
     df1 = example_dataframe().copy()
     df2 = example_dataframe().T.copy()

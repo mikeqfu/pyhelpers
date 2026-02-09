@@ -3,12 +3,13 @@ Package initialisation.
 """
 
 import datetime
+import importlib.resources
 import json
-import pkgutil
 
 from . import dbms, dirs, geom, ops, settings, store, text, viz
 
-metadata = json.loads(pkgutil.get_data(__name__, "data/.metadata").decode())
+metadata = json.loads(
+    importlib.resources.files(__name__).joinpath("data/.metadata").read_text(encoding="utf-8"))
 
 __project__ = metadata['Project']
 __pkgname__ = metadata['Package']

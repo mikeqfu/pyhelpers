@@ -21,7 +21,7 @@ def test_unzip(capfd):
     with importlib.resources.as_file(path_to_zip_file_) as path_to_zip_file:
         unzip(path_to_zip_file=path_to_zip_file, output_dir=out_dir, verbose=True)
         out, _ = capfd.readouterr()
-        assert f'Extracting {_add_slashes(os.path.relpath(path_to_zip_file_.__str__()))}' in out
+        assert f'Extracting {_add_slashes(_check_relative_pathname(path_to_zip_file))}' in out
         assert f' to "{_normalize_pathname(out_dir)}' in out and "Done." in out
 
 
@@ -104,7 +104,7 @@ def test_xlsx_to_csv(engine, header, capfd):
             out, _ = capfd.readouterr()
             assert out.startswith("Converting") and "Cancelled." in out
 
-        data = load_csv(temp_csv, index=0, header=header)
+        data = load_csv(temp_csv, index_col=0, header=header)
 
         if engine is None and header is None:
             data.columns = data.iloc[0]

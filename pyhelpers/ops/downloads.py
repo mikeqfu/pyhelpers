@@ -14,9 +14,8 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, \
-    _check_url_scheme, _get_ansi_color_code, _init_requests_session, _print_failure_message, \
-    _USER_AGENT_STRINGS
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _check_url_scheme, \
+    _get_ansi_color_code, _init_requests_session, _load_package_data, _print_failure_message
 from ..store import _check_saving_path
 
 
@@ -412,9 +411,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         requests_session_args = requests_session_args or {}
         session = _init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
+        user_agent_strings = _load_package_data("user-agent-strings.json")
         headers = {
             'user-agent': secrets.choice(
-                _USER_AGENT_STRINGS.get(secrets.choice(list(_USER_AGENT_STRINGS))))}
+                user_agent_strings.get(secrets.choice(list(user_agent_strings))))}
         if requests_headers:
             headers.update(requests_headers)
 
@@ -562,10 +562,11 @@ class GitHubFileDownloader:
         self.total_files = 0
 
         # Set user agent in default
+        user_agent_strings = _load_package_data("user-agent-strings.json")
         opener = urllib.request.build_opener()
         opener.addheaders = [(
             'user-agent',
-            secrets.choice(_USER_AGENT_STRINGS.get(secrets.choice(list(_USER_AGENT_STRINGS)))))]
+            secrets.choice(user_agent_strings.get(secrets.choice(list(user_agent_strings)))))]
 
         urllib.request.install_opener(opener)
 

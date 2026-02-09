@@ -2,12 +2,13 @@
 Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
-import copy
+import functools
 import logging
 import os
 import pathlib
+import sys
 
-from .._cache import _add_slashes, _check_relative_pathname
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
 
 
 def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
@@ -44,7 +45,7 @@ def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
             print(first_part + " ... ")
 
             # Print second part with increased indentation (original + 1 extra tab)
-            print("\t" * (leading_tabs + 1) + second_part, end=end)
+            print("  " * (leading_tabs + 1) + second_part, end=end)
 
     else:
         print(message, end=end)
@@ -90,66 +91,73 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         >>> _check_saving_path(path_to_file, verbose=True)
         Traceback (most recent call last):
             ...
-        AssertionError: The input for <path_to_file> may not be a file path.
-        >>> path_to_file = "pyhelpers.pdf"
+        ValueError: The input for '<path_to_file>' may not be a file path.
+        >>> path_to_file = "pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" ... Passed.
-        >>> path_to_file = cd("tests", "documents", "pyhelpers.pdf")
+        Saving "pyhelpers.txt" ... Passed.
+        >>> path_to_file = cd("tests", "documents", "pyhelpers.txt")
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" in "./tests/documents/" ... Passed.
+        Saving "pyhelpers.txt" to "./tests/documents/" ... Passed.
         >>> _check_saving_path(path_to_file, verbose=True, print_wrap_limit=10); print("Passed.")
-        Updating "pyhelpers.pdf" ...
-            in "./tests/documents/" ... Passed.
-        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
+        Saving "pyhelpers.txt" ...
+          to "./tests/documents/" ... Passed.
+        >>> path_to_file = "C:\\Windows\\pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:/Windows/" ... Passed.
-        >>> path_to_file = "C:\\pyhelpers.pdf"
+        Saving "pyhelpers.txt" to "C:/Windows/" ... Passed.
+        >>> path_to_file = "C:\\pyhelpers.txt"
         >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
-        Saving "pyhelpers.pdf" to "C:/" ... Passed.
+        Saving "pyhelpers.txt" to "C:/" ... Passed.
     """
 
-    abs_path_to_file = pathlib.Path(path_to_file).absolute()
-    if abs_path_to_file.is_dir():
+    file_path = pathlib.Path(path_to_file).resolve()
+    cwd = pathlib.Path.cwd()
+
+    if file_path.is_dir():
         raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
 
     try:
-        rel_dir_path = abs_path_to_file.parent.relative_to(pathlib.Path.cwd())
-
-        if rel_dir_path.is_relative_to(".") and rel_dir_path == rel_dir_path.parent:
-            rel_dir_path = abs_path_to_file.parent
-
-    except ValueError:
+        # Attempt to get path relative to current working directory
+        rel_dir_path = file_path.parent.relative_to(cwd)
+    except ValueError:  # If outside CWD (common on Linux mounts or different Windows drives)
         if verbose == 2:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
             logging.warning(
-                f'\n\t"{abs_path_to_file.parent}" is outside the current working directory.')
+                f'\n  "{file_path.parent}" is outside the current working directory.')
+        rel_dir_path = file_path.parent
 
-        rel_dir_path = abs_path_to_file.parent
+    # Ensure the directory exists
+    rel_dir_path.mkdir(parents=True, exist_ok=True)
 
-    rel_dir_path.mkdir(parents=True, exist_ok=True)  # In case the specified path does not exist
-
-    filename = abs_path_to_file.name if abs_path_to_file.suffix else ""
+    filename = file_path.name if file_path.suffix else ""
 
     if verbose:
-        if os.path.isfile(abs_path_to_file) and not belated:
+        # Flip verb to 'Updating' if file exists, unless 'belated' is flagged
+        if os.path.isfile(file_path) and not belated:
             state_verb, state_prep = "Updating", "in"
 
-        end = print_end if print_end else "\n"
+        prt_end = print_end or "\n"
 
-        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == abs_path_to_file.parent) and (
-                rel_dir_path.absolute().drive == pathlib.Path.cwd().drive):
+        # Cross-platform check: Is the file in the CWD or its immediate root?
+        # On Linux, .anchor is '/', on Windows it is 'C:\\'
+        is_internal = file_path.is_relative_to(cwd)
+
+        # If the directory is effectively the "base" or on the same local drive/anchor
+        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == file_path.parent) and \
+                (file_path.anchor == cwd.anchor):
             message = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
-            print(message, end=end)
-
+            print(message, end=prt_end)
         else:
+            # Use relative path if internal, otherwise absolute
+            display_path = rel_dir_path if is_internal else file_path.parent
             message = (f'{print_prefix}{state_verb} "{filename}" '
-                       f'{state_prep} {_add_slashes(rel_dir_path)}{print_suffix}')
+                       f'{state_prep} {_add_slashes(display_path)}{print_suffix}')
 
             _print_wrapped_string(
-                message=message, filename=filename, end=end, print_wrap_limit=print_wrap_limit)
+                message=message, filename=filename, end=prt_end, print_wrap_limit=print_wrap_limit)
 
     if ret_info:
-        return rel_dir_path, filename
+        file_ext = file_path.suffix.lower()
+        return file_path, rel_dir_path, file_ext
 
     return None
 
@@ -234,16 +242,16 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         print(prt_msg, end=print_end)
 
 
-def _set_index(data, index=None):
+def _set_index(data, index_col=None):
     """
-    Sets the index of a dataframe.
+    Sets the index of a dataframe using column names or integer positions.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame
-    :param index: Column index or a list of column indices to set as the index;
-        when ``index=None`` (default), the function sets the first column as the index
-        if its column name is an empty string.
-    :type index: int | list | None
+    :param index_col: Column name(s) or integer index/indices to set as the index.
+        If ``None`` (default), the function sets the first column as the index
+        only if its name is an empty string (``''``) or starts with ``'Unnamed:'``.
+    :type index_col: str | int | list | None
     :return: The dataframe with the updated index.
     :rtype: pandas.DataFrame
 
@@ -262,7 +270,7 @@ def _set_index(data, index=None):
         Leeds       -1.543794  53.797418
         >>> example_df.equals(_set_index(example_df))
         True
-        >>> example_df_1 = _set_index(example_df, index=0)
+        >>> example_df_1 = _set_index(example_df, index_col=0)
         >>> example_df_1
                     Latitude
         Longitude
@@ -275,22 +283,106 @@ def _set_index(data, index=None):
         >>> example_df_2 = example_df.copy()
         >>> example_df_2.index.name = ''
         >>> example_df_2.reset_index(inplace=True)
-        >>> example_df_2 = _set_index(example_df_2, index=None)
+        >>> example_df_2 = _set_index(example_df_2, index_col=None)
         >>> np.array_equal(example_df_2.values, example_df.values)
         True
     """
 
-    data_ = data.copy()
+    dat = data.copy()
 
-    if index is None:
-        idx_col = data.columns[0]
-        if idx_col == '':
-            data_ = data.set_index(idx_col)
-            data_.index.name = None
+    if index_col is None:
+        # Check if the first column looks like a saved index (empty name or 'Unnamed: 0')
+        first_col = dat.columns[0]
+        if str(first_col) == '' or str(first_col).startswith('Unnamed:'):
+            dat = dat.set_index(first_col)
+            dat.index.name = None
 
     else:
-        idx_keys_ = [index] if isinstance(index, (int, list)) else copy.copy(index)
-        idx_keys = [data.columns[x] if isinstance(x, int) else x for x in idx_keys_]
-        data_ = data.set_index(keys=idx_keys)
+        # Normalize to list (handles scalars and iterables)
+        if isinstance(index_col, (str, int)):
+            idx_keys_raw = [index_col]
+        else:
+            idx_keys_raw = list(index_col)
 
-    return data_
+        # Resolve integers and validate existence
+        idx_keys = []
+        for x in idx_keys_raw:
+            # Resolve integer positions to names
+            if isinstance(x, int):
+                if x >= len(dat.columns):
+                    raise IndexError(f"Column index {x} is out of bounds.")
+                col_name = dat.columns[x]
+            else:
+                col_name = x
+
+            # Validate existence
+            if col_name not in dat.columns:
+                if col_name == dat.index.name:
+                    continue  # Already the index, skip
+                raise KeyError(f"Column '{col_name}' not found in DataFrame.")
+
+            # Prevent duplication (the fix)
+            if col_name not in idx_keys:
+                idx_keys.append(col_name)
+
+        # Set the index, only if valid columns are found
+        if idx_keys:
+            dat = dat.set_index(keys=idx_keys)
+
+    return dat
+
+
+def _resolve_json_engine(func):
+    """
+    Decorator to dynamically resolve and inject a JSON engine module.
+
+    This decorator inspects the ``engine`` argument of the decorated function.
+    It validates the engine selection, ensures the required dependency is
+    available via :func:`~pyhelpers._cache._check_dependencies`, and injects
+    the resulting module into the function's keyword arguments as ``json_mod``.
+
+    :param func: The function to be decorated.
+    :type func: callable
+    :return: A wrapped version of the function with ``json_mod`` injected.
+    :rtype: callable
+
+    .. note::
+
+        - Supported engines include: ``'ujson'``, ``'orjson'``, and ``'rapidjson'``.
+        - If ``engine=None``, the standard library
+          `json <https://docs.python.org/3/library/json.html>`_ module is used.
+        - The decorated function must be able to accept ``json_mod`` via its
+          ``**kwargs`` or have a specific parameter named ``json_mod``.
+
+    **Example**::
+
+        >>> from pyhelpers.store.utils import _resolve_json_engine
+
+        >>> @_resolve_json_engine
+        ... def load_my_json(path, engine=None, **kwargs):
+        ...     json_mod = kwargs.pop('json_mod')
+        ...     print(f"Using engine: {json_mod.__name__}")
+
+        >>> load_my_json("data.json", engine='ujson')
+        Using engine: ujson
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Determine the engine (check kwargs first, then positional args)
+        engine = kwargs.get('engine')
+        if engine is None and len(args) > 1:
+            engine = args[1]  # Assuming engine is the second positional argument
+
+        # Resolve the module
+        if engine is not None:
+            valid_engines = {'ujson', 'orjson', 'rapidjson'}
+            if engine not in valid_engines:
+                raise ValueError(f"`engine` must be one of {valid_engines}")
+            kwargs['json_mod'] = _check_dependencies(engine)
+        else:
+            kwargs['json_mod'] = sys.modules.get('json')
+
+        return func(*args, **kwargs)
+
+    return wrapper

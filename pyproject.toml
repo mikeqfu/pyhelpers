@@ -45,4 +45,9 @@ classifiers = [
 ]
 
 [tool.setuptools]
-packages = { find = {} }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyhelpers*"]
+exclude = ["build*", "dist*", "docs*", "tests*", "tutorials*", "venv*", ".venv*"]
