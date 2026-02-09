@@ -122,13 +122,13 @@ def test_save_json(engine, tmp_path, capfd):
 
     dat = {'a': 1, 'b': 2, 'c': 3, 'd': ['a', 'b', 'c']}
 
-    save_json(dat, path_to_file=path_to_file, indent=4, verbose=True)
+    save_json(dat, path_to_file, indent=4, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Saving "{filename}"' in out and "Done." in out
 
     dat = json.loads(example_dataframe().to_json(orient='index'))
 
-    save_json(dat, path_to_file=path_to_file, engine=engine, indent=4, verbose=True)
+    save_json(dat, path_to_file, engine=engine, indent=4, verbose=True)
     out, _ = capfd.readouterr()
     if engine == 'orjson':
         assert all(

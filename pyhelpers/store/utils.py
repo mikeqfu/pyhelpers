@@ -3,6 +3,7 @@ Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
 import functools
+import inspect
 import logging
 import os
 import pathlib
@@ -390,10 +391,16 @@ def _resolve_json_engine(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Determine the engine (check kwargs first, then positional args)
-        engine = kwargs.get('engine')
-        if engine is None and len(args) > 1:
-            engine = args[1]  # Assuming engine is the second positional argument
+        # Bind args and kwargs to the function's signature
+        sig = inspect.signature(func)
+        bound_args = sig.bind_partial(*args, **kwargs)
+
+        # Extract 'engine' from bound arguments or get the default value
+        engine = bound_args.arguments.get('engine', sig.parameters['engine'].default)
+
+        # Handle cases where default is inspect.Parameter.empty
+        if engine is inspect.Parameter.empty:
+            engine = None
 
         # Resolve the module
         if engine is not None:
@@ -402,7 +409,7 @@ def _resolve_json_engine(func):
                 raise ValueError(f"`engine` must be one of {valid_engines}")
             kwargs['json_mod'] = _check_dependencies(engine)
         else:
-            kwargs['json_mod'] = sys.modules.get('json')
+            kwargs['json_mod'] = sys.modules.get('json') or __import__('json')
 
         return func(*args, **kwargs)
 
