@@ -7,7 +7,6 @@ import copy
 import gzip
 import logging
 import lzma
-import os
 import pathlib
 import pickle  # nosec
 import subprocess  # nosec

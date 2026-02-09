@@ -4,6 +4,7 @@ Tests the :mod:`~pyhelpers.store.savers` submodule.
 
 import gc
 import json
+import os
 import tempfile
 import threading
 

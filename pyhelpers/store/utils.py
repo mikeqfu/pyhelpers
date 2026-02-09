@@ -205,7 +205,7 @@ def _autofit_column_width(writer, writer_kwargs, **kwargs):
 
 
 def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb="Loading",
-                        print_suffix="", print_end=" ... "):
+                        print_suffix="", print_end=" ... ", ret_info=False):
     # noinspection PyShadowingNames
     """
     Checks the status of loading a file from a specified path.
@@ -223,23 +223,44 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
     :type print_suffix: str
     :param print_end: String passed to ``end`` parameter for ``print()``; defaults to ``" ... "``.
     :type print_end: str
+    :param ret_info: Whether to return file path information; defaults to ``False``.
+    :type ret_info: bool
 
     **Tests**::
 
         >>> from pyhelpers.store import _check_loading_path
+        >>> from pyhelpers._cache import _check_relative_pathname
         >>> from pyhelpers.dirs import cd
+        >>> from pathlib import Path
         >>> path_to_file = cd("test_func.py")
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
         Loading "./test_func.py" ... Passed.
-        >>> path_to_file = "C:\\Windows\\pyhelpers.pdf"
+        >>> file_path, rel_dir_path = _check_loading_path(path_to_file, ret_info=True)
+        >>> _check_relative_pathname(file_path)
+        'test_func.py'
+        >>> _check_relative_pathname(rel_dir_path)
+        '.'
+        >>> path_to_file = Path("C:\\Windows\\pyhelpers.pkg")
         >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
-        Loading "C:/Windows/pyhelpers.pdf" ... Passed.
+        Loading "C:/Windows/pyhelpers.pkg" ... Passed.
+        >>> file_path, rel_dir_path = _check_loading_path(path_to_file, ret_info=True)
+        >>> _check_relative_pathname(file_path)
+        'C:/Windows/pyhelpers.pkg'
+        >>> _check_relative_pathname(rel_dir_path)
+        'C:/Windows'
     """
 
+    rel_dir_path = _check_relative_pathname(path_to_file)
+
     if verbose:
-        rel_pathname = _check_relative_pathname(path_to_file)
-        prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_pathname)}{print_suffix}'
+        prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_dir_path)}{print_suffix}'
         print(prt_msg, end=print_end)
+
+    if ret_info:
+        file_path = pathlib.Path(path_to_file).resolve()
+        return file_path, pathlib.Path(rel_dir_path).parent
+
+    return None
 
 
 def _set_index(data, index_col=None):
