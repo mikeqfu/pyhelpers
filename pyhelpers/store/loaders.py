@@ -9,9 +9,9 @@ import inspect
 import logging
 import lzma
 import operator
+import pathlib
 import pickle  # nosec
 import warnings
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -618,7 +618,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
                 is_geospatial = True
         except Exception:  # noqa
             # Fallback to extension check if metadata is unreadable/corrupt
-            file_ext = "".join(Path(path_to_file).suffixes).lower()
+            file_ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
             is_geospatial = (file_ext == ".geoparquet")
 
         warn_message = ""
@@ -838,7 +838,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
                 0.81357508]])
     """
 
-    ext = "".join(Path(path_to_file).suffixes).lower()
+    ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
     kwargs.update(
         {'path_to_file': path_to_file,
