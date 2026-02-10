@@ -59,35 +59,67 @@ def test__check_dependency():
             _check_dependencies('unknown')
 
 
-def test__lazy_check_dependencies():
+def test__lazy_check_dependencies(monkeypatch):
     """
     Test the decorator's ability to inject proxies and load modules on demand.
     """
     from pyhelpers._cache import _lazy_check_dependencies
 
     @_lazy_check_dependencies('numpy', 'pandas')  # No aliases
-    def _test_func_1():
+    def _test_import_numpy_pandas():
         return numpy.__name__ == 'numpy' and pandas.__name__ == 'pandas'  # noqa
 
-    assert _test_func_1()
+    assert _test_import_numpy_pandas()
 
     @_lazy_check_dependencies(np='numpy', pd='pandas')  # Aliases
-    def _test_func_2():
+    def _test_import_np_pd():
         return np.__name__ == 'numpy' and pd.__name__ == 'pandas'  # noqa
 
-    assert _test_func_2()
+    assert _test_import_np_pd()
 
-    @_lazy_check_dependencies('scipy', plt='matplotlib.pyplot')  # Mixed
-    def _test_func_3():
-        return scipy.__name__ == 'scipy' and plt.__name__ == 'matplotlib.pyplot'  # noqa
+    @_lazy_check_dependencies('geopandas', plt='matplotlib.pyplot')  # Mixed
+    def _test_import_geopandas_plt():
+        return geopandas.__name__ == 'geopandas' and plt.__name__ == 'matplotlib.pyplot'  # noqa
 
-    assert _test_func_3()
+    assert _test_import_geopandas_plt()
+
+    @_lazy_check_dependencies('scipy')
+    def _test_import_scipy():
+        return (scipy.__name__ == 'scipy') & (scipy.sparse.__name__ == 'scipy.sparse')  # noqa
+
+    assert _test_import_scipy()
 
     @_lazy_check_dependencies(**{'sp': 'scipy.sparse'})  # (Alternative)
-    def _test_func_4():
+    def _test_import_sp():
         return sp.__name__ == 'scipy.sparse'  # noqa
 
-    assert _test_func_4()
+    assert _test_import_sp()
+
+    # Test actual laziness (Verification that it's not preloading)
+    target_mod = 'pandas'  # or any optional dependency you have
+    # Temporarily remove it from sys.modules for this test only
+    monkeypatch.delitem(sys.modules, target_mod, raising=False)
+
+    @_lazy_check_dependencies(target_mod)
+    def _test_laziness():
+        # Before accessing, it shouldn't be in sys.modules
+        assert target_mod not in sys.modules
+        # Trigger the lazy load
+        name = pandas.__name__  # noqa
+        assert target_mod in sys.modules
+        return name
+
+    assert _test_laziness() == target_mod
+
+    # 7. Test failure mode (AttributeError)
+    @_lazy_check_dependencies('numpy')
+    def _test_invalid_attribute():
+        try:
+            return numpy.this_attribute_does_not_exist  # noqa
+        except AttributeError as e:
+            return str(e)
+
+    assert "has no attribute 'this_attribute_does_not_exist'" in _test_invalid_attribute()
 
 
 def test__confirmed(monkeypatch, capfd):
