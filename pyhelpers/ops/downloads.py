@@ -64,7 +64,26 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
                     pbar_format=None, pbar_color=None, indent=None):
     """
-    Prepares arguments for the tqdm progress bar.
+    Prepare arguments for the ``tqdm`` progress bar based on the response headers.
+
+    :param response: HTTP response object.
+    :type response: requests.Response
+    :param path_to_file: Destination path of the file.
+    :type path_to_file: str | os.PathLike
+    :param total_records: Expected number of records (fallback for missing Content-Length).
+    :type total_records: int | None
+    :param chunk_multiplier: Factor to scale the default 1MB chunk size.
+    :type chunk_multiplier: int | float
+    :param pbar_desc: Custom description for the progress bar.
+    :type pbar_desc: str | None
+    :param pbar_format: Custom ``tqdm`` format string.
+    :type pbar_format: str | None
+    :param pbar_color: ANSI color name for the bar.
+    :type pbar_color: str | None
+    :param indent: Base indentation level.
+    :type indent: int | str | None
+    :return: A tuple of (file_size, chunk_size, total_rec, pbar_args, pbar_indent).
+    :rtype: tuple
     """
 
     file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
@@ -79,7 +98,7 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
         color_code, reset_color = ('', '')
 
     # Resolve the base indentation string
-    pbar_indent = " " * indent if isinstance(indent, int) else ("" if indent is None else indent)
+    pbar_indent = " " * indent if isinstance(indent, int) else (indent or "")
 
     pbar_args = {
         'desc': pbar_desc or f'{pbar_indent}Downloading "{os.path.basename(path_to_file)}"',
@@ -128,6 +147,24 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
 
 
 def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent):
+    """
+    Validate the integrity of the downloaded file against expected metrics.
+
+    :param validate: Whether to perform validation.
+    :type validate: bool
+    :param file_size: Expected file size in bytes (from Content-Length).
+    :type file_size: int
+    :param written: Actual bytes written to disk.
+    :type written: int
+    :param total_rec: Expected record count.
+    :type total_rec: int
+    :param actual_records: Actual line/record count detected during stream.
+    :type actual_records: int
+    :param indent: Formatted indentation string for messages.
+    :type indent: str
+    :raises ValueError: If byte counts do not match when ``file_size > 0``.
+    """
+
     if not validate:
         print("Done.")
         return
@@ -157,6 +194,24 @@ def _validate_downloaded_file(validate, file_size, written, total_rec, actual_re
 
 @_lazy_check_dependencies('tqdm')
 def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs):
+    """
+    Core download loop that writes chunks to disk and updates the progress bar.
+
+    :param response: The streaming HTTP response object.
+    :type response: requests.Response
+    :param path_to_file: Resolved path to save the file.
+    :type path_to_file: pathlib.Path | str
+    :param chunk_size: Size of chunks to read from the stream.
+    :type chunk_size: int
+    :param file_size: Total bytes to be downloaded (if known).
+    :type file_size: int
+    :param total_rec: Expected record count (if known).
+    :type total_rec: int
+    :param kwargs: Additional parameters passed to ``tqdm.tqdm``.
+    :return: A tuple containing (total_bytes_written, actual_record_count).
+    :rtype: tuple[int, int]
+    """
+
     # Variables for Validation Tracking
     written = 0  # Total bytes written
     buffer = b''
@@ -218,20 +273,20 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
                             print_wrap_limit=None, indent=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Internal wrapper for downloading with progress bar.
+    Internal wrapper for downloading with an adaptive hierarchical progress bar.
 
-    This function reads the content of the response in chunks and writes it to a file while
-    displaying a progress bar using `tqdm`_. It supports a fallback progress bar based on
-    record counts for streams where ``Content-Length`` is missing.
+    This function reads content in chunks from the ``response`` and writes it to a file,
+    while displaying a progress bar using `tqdm`_.
+    It supports a fallback progress bar based on record counts for streams where
+    ``Content-Length`` is missing.
 
     .. _`tqdm`: https://tqdm.github.io/
 
     :param response: The HTTP response object with streaming enabled
         (e.g. `requests.get(url, stream=True)`).
     :type response: requests.Response
-    :param path_to_file: The destination path where the downloaded file will be saved;
-        this can be either a full path including the filename,
-        or just a filename, in which case it will be saved in the current working directory.
+    :param path_to_file: Path where the downloaded file will be saved;
+        if it is a filename only, data will be saved in the current working directory.
     :type path_to_file: str | os.PathLike
     :param total_records: The expected number of records (rows) in the dataset,
         used for progress tracking when ``Content-Length`` is unavailable; defaults to ``None``.
@@ -248,9 +303,9 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
     :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow');
         defaults to ``None``.
     :type pbar_color: str | None
-
-    :param validate: Whether to validate if the downloaded file size matches the expected content
-        length; defaults to ``True``.
+    :param validate: Whether to validate the download integrity
+        (check whether the downloaded file size matches the expected content length);
+        defaults to ``True``.
     :type validate: bool
     :param print_wrap_limit: Maximum length of the string before splitting into two lines;
         defaults to ``None``, which disables splitting. If the string exceeds this value,
@@ -332,9 +387,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                            validate=True, stream_download=False, indent=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Downloads a file from a valid URL.
+    Downloads a file from a valid URL with optional progress tracking and validation.
 
-    The function uses the `requests` library and optionally `tqdm` for progress bar display.
+    The function uses the ``requests`` library for the download and ``tqdm`` for progress.
+    It supports memory-efficient streaming and handles HTTP retries internally.
 
     See also [`OPS-DFFU-1 <https://stackoverflow.com/questions/37573483/>`_] and
     [`OPS-DFFU-2 <https://stackoverflow.com/questions/15431044/>`_].
@@ -342,17 +398,16 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param url: Valid URL pointing to a web resource.
     :type url: str
     :param path_to_file: Path where the downloaded file will be saved;
-        it can be either a full path with filename or just a filename,
-        in which case it will be saved in the current working directory.
-    :type path_to_file: str | os.PathLike[str]
-    :param if_exists: Action to take if the specified file already exists;
-        options include ``'replace'`` (default - download and replace the existing file) and
-        ``'pass'`` (cancel the download and return ``None``).
+        if it is a filename only, data will be saved in the current working directory.
+    :type path_to_file: str | os.PathLike
+    :param if_exists: Action if the file already exists;
+        options include ``'replace'`` (default - downloads and replaces the existing file) and
+        ``'pass'`` (cancels the download and returns ``None``).
     :type if_exists: str
     :param max_retries: Maximum number of retries in case of download failures; defaults to ``5``.
     :type max_retries: int
     :param requests_session_args: [Optional] Additional parameters for initializing
-        the requests session (e.g., `proxies`, `verify`); defaults to ``None``.
+        the requests session (e.g. `proxies`, `verify`); defaults to ``None``.
     :type requests_session_args: dict | None
     :param requests_headers: [Optional] Custom headers to be included in the HTTP request.
         A default 'User-Agent' is automatically generated unless overridden.
@@ -379,8 +434,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type pbar_format: str | None
     :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
     :type pbar_color: str | None
-    :param validate: Whether to validate if the downloaded file is non-empty after download.
-        Validation checks if the final file size is greater than 0; defaults to ``True``.
+    :param validate: Whether to validate the download integrity
+        (check whether the downloaded file size matches the expected content length);
+        defaults to ``True``.
     :type validate: bool
     :param stream_download: When `stream_download=True`, use streaming download
         (memory-efficient, preferred for large files or when `verbose=False`);
@@ -389,13 +445,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :type stream_download: bool
     :param indent: Indentation level for the progress bar.
         Status messages (``"Saving..."``, ``"Done"``) will be automatically indented further
-        (2 spaces) to indicate hierarchy. Defaults to ``2``.
+        (2 spaces) to indicate hierarchy. Defaults to ``None``.
     :param kwargs: [Optional] Additional parameters passed to the method `tqdm.tqdm()`_.
-
-    :return: ``None`` upon successful completion or if the download is skipped (i.e., when
-        ``if_exists='pass'`` and the file already exists).
-    :rtype: None
-
+    :return: ``None`` upon successful completion or
+        if the download is skipped (i.e. when ``if_exists='pass'`` and the file already exists).
     :raises ValueError: If ``validate=True`` and the downloaded file size is zero.
 
     .. _`tqdm.tqdm()`: https://tqdm.github.io/docs/tqdm/
@@ -414,7 +467,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         >>> # Download the .png file
         >>> download_file_from_url(url, path_to_img, verbose=True, pbar_color='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
-            Saving "ops-download_file_from_url-demo.png" to "./tests/images/" ... Done.
+          Saving "ops-download_file_from_url-demo.png" to "./tests/images/" ... Done.
         >>> # If download is successful, check again:
         >>> os.path.exists(path_to_img)
         True
@@ -620,8 +673,8 @@ class GitHubFileDownloader:
 
         :param url: URL.
         :type url: str
-        :return: Tuple containing the URL of the GitHub repository and the pathname for downloading
-            a file.
+        :return: Tuple containing the URL of the GitHub repository and the pathname
+            for downloading a file.
         :rtype: tuple
 
         **Examples**::
@@ -675,8 +728,8 @@ class GitHubFileDownloader:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+            - Examples for :meth:`GitHubFileDownloader.download()
+              <pyhelpers.ops.GitHubFileDownloader.download>`.
         """
 
         parsed_url = _check_url_scheme(url, allowed_schemes=['https'])
@@ -696,8 +749,8 @@ class GitHubFileDownloader:
 
         .. seealso::
 
-            - Examples for the method
-              :meth:`GitHubFileDownloader.download()<pyhelpers.ops.GitHubFileDownloader.download>`.
+            - Examples for :meth:`GitHubFileDownloader.download()
+              <pyhelpers.ops.GitHubFileDownloader.download>`.
         """
 
         self.check_url(file_url)
