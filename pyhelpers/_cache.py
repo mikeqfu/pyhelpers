@@ -219,7 +219,21 @@ class _LazyModule:
         return self._module
 
     def __getattr__(self, attr):
-        return getattr(self._load(), attr)
+        module = self._load()
+        try:
+            return getattr(module, attr)
+        except AttributeError:
+            # Check if 'attr' is a submodule that needs explicit loading
+            submodule_path = f"{self._name}.{attr}"
+            try:
+                # Attempt to import the subpackage dynamically
+                submodule = importlib.import_module(submodule_path)
+                # Cache the submodule on the parent to avoid repeated imports
+                setattr(module, attr, submodule)
+                return submodule
+            except (ImportError, ModuleNotFoundError):
+                # Re-raise the original error if it's truly not a submodule
+                raise AttributeError(f"module '{self._name}' has no attribute '{attr}'") from None
 
     def __dir__(self):
         return dir(self._load())
@@ -248,6 +262,7 @@ def _lazy_check_dependencies(*args, **kwargs):
         >>> @_lazy_check_dependencies(np='numpy', pd='pandas')  # Aliases
         >>> @_lazy_check_dependencies('scipy', plt='matplotlib.pyplot')  # Mixed
         >>> @_lazy_check_dependencies(**{'sp': 'scipy.sparse'})  # (Alternative)
+        >>> @_lazy_check_dependencies('scipy', 'scipy.sparse')  # Both package and its subpackage
     """
 
     # Build mapping: {'alias': 'package_name'}
