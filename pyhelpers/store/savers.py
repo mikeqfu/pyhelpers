@@ -215,7 +215,8 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
 
 
 def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exists,
-                       autofit_column_width, writer_kwargs, verbose, raise_error, **kwargs):
+                       autofit_column_width=True, writer_kwargs=None, verbose=False, indent=None,
+                       raise_error=True, **kwargs):
     """
     Helper function to iterate through the list of DataFrames and save each one to a sheet
     in the provided ExcelWriter object, handling existing sheets, autofitting and error suppression.
@@ -238,12 +239,20 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
     :type writer_kwargs: dict | None
     :param verbose: Whether to print progress messages.
     :type verbose: bool | int
+    :param indent: Base indentation level; if an integer, represents spaces.
+        Sub-messages are automatically indented further.
+    :type indent: int | str | None
     :param raise_error: Whether to raise an error if sheet writing fails.
     :type raise_error: bool
     :param kwargs: Additional arguments for ``pandas.DataFrame.to_excel()``.
     :return: None
     :rtype: None
     """
+
+    # Resolve indentation hierarchy for printing
+    base_indent = " " * indent if isinstance(indent, int) else (indent or "")
+    sheet_indent = f"  {base_indent}"  # Level 1: Primary task detail
+    detail_indent = f"  {sheet_indent}"  # Level 2: Footnotes/renaming info
 
     # Ensure a mutable list of current sheet names to update if 'new' is used
     cur_sheet_names_list = list(cur_sheet_names)
@@ -254,14 +263,16 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
         writer._if_sheet_exists = if_sheet_exists if if_sheet_exists is not None else 'error'
 
         if verbose:
-            print(f"\t'{sheet_name}'", end=" ... ")
+            print(f"{sheet_indent}'{sheet_name}'", end=" ... ")
 
         if sheet_name in cur_sheet_names_list:
             if if_sheet_exists is None:  # Use a local variable for the user choice
-                user_choice = input("This sheet already exists; [pass]|new|replace: ")
+                user_choice = input(
+                    f"{detail_indent}This sheet already exists; [pass]|new|replace: ")
             else:  # Use a local variable for the chosen action
-                assert if_sheet_exists in {'error', 'new', 'replace', 'overlay', 'pass'}, \
-                    "Invalid option for `if_sheet_exists`."
+                valid_options = {'error', 'new', 'replace', 'overlay', 'pass'}
+                if if_sheet_exists not in {'error', 'new', 'replace', 'overlay', 'pass'}:
+                    raise ValueError(f"`if_sheet_exists` must be one of {valid_options}.")
                 user_choice = copy.copy(if_sheet_exists)
 
             if user_choice != 'pass':  # Set the writer's internal state for pandas to use
@@ -280,11 +291,12 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
 
             # Check the state of the writer after to_excel to see if a new sheet was created
             if writer._if_sheet_exists == 'new':
-                # Find the newly created sheet name (must be a new key in writer.sheets)
+                # Identify the auto-generated name (e.g. 'Sheet1')
                 new_sheet_name = [x for x in writer.sheets if x not in cur_sheet_names_list][0]
-                prefix = "\t\t" if if_sheet_exists is None else ""
+                prefix = f"{detail_indent}" if if_sheet_exists is None else ""
                 add_msg = f"{prefix}saved as '{new_sheet_name}' ... Done."
-                cur_sheet_names_list = list(writer.sheets.keys())  # Update the list of existing sheets
+                # Update the list of existing sheets
+                cur_sheet_names_list = list(writer.sheets.keys())
             else:
                 add_msg = "Done."
 
@@ -293,7 +305,7 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, writer, if_sheet_exis
 
         except Exception as e:
             _print_failure_message(
-                e=e, prefix=f'Failed. Sheet name "{sheet_name}":', verbose=verbose,
+                e=e, prefix=f'{sheet_indent}Failed. Sheet name "{sheet_name}":', verbose=verbose,
                 raise_error=raise_error)
 
     return None
@@ -391,29 +403,29 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         >>> pathname = cd("tests", "data", "dat.ods")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.ods" to "./tests/data/" ...
-            'TestSheet1' ... Done.
-            'TestSheet2' ... Done.
+          'TestSheet1' ... Done.
+          'TestSheet2' ... Done.
         >>> # Save to XLSX format (append mode with interactive prompt)
         >>> pathname = cd("tests", "data", "dat.xlsx")
         >>> save_spreadsheets(dat, pathname, sheets, verbose=True)
         Saving "dat.xlsx" to "./tests/data/" ...
-            'TestSheet1' ... Done.
-            'TestSheet2' ... Done.
+          'TestSheet1' ... Done.
+          'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, mode='a', verbose=True)
         Updating "dat.xlsx" at "./tests/data/" ...
-            'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
-                saved as 'TestSheet11' ... Done.
-            'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
-                saved as 'TestSheet21' ... Done.
+          'TestSheet1' ... This sheet already exists; [pass]|new|replace: new
+            saved as 'TestSheet11' ... Done.
+          'TestSheet2' ... This sheet already exists; [pass]|new|replace: new
+            saved as 'TestSheet21' ... Done.
         >>> # Save with automatic replacement
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='replace', verbose=True)
         Updating "dat.xlsx" at "./tests/data/" ...
-            'TestSheet1' ... Done.
-            'TestSheet2' ... Done.
+          'TestSheet1' ... Done.
+          'TestSheet2' ... Done.
         >>> save_spreadsheets(dat, pathname, sheets, 'a', if_sheet_exists='new', verbose=True)
         Updating "dat.xlsx" at "./tests/data/" ...
-            'TestSheet1' ... saved as 'TestSheet12' ... Done.
-            'TestSheet2' ... saved as 'TestSheet22' ... Done.
+          'TestSheet1' ... saved as 'TestSheet12' ... Done.
+          'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
     file_path = pathlib.Path(path_to_file).resolve()
@@ -856,7 +868,8 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
     if not inkscape_exists and raise_error:
         raise FileNotFoundError(
             '"Inkscape" (https://inkscape.org) is required to convert SVG to EMF, '
-            'but was not found.\n  Install "Inkscape" or provide a valid path.')
+            'but was not found.\n'
+            '  Install "Inkscape" or provide a valid path.')
 
     svg_file_path = pathlib.Path(path_to_svg).resolve()
     emf_file_path = pathlib.Path(path_to_emf).resolve()
@@ -882,8 +895,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         ret_code = result.returncode
 
     except Exception as e:
-        _print_failure_message(
-            e, prefix="Failed. Errors occurred:", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e, prefix="Failed. Error:", verbose=verbose, raise_error=raise_error)
 
     if verbose and ret_code == 0:
         print("Done.")
@@ -1337,7 +1349,7 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
 
     .. seealso::
 
-        - Examples for the function :func:`~pyhelpers.store.load_data`.
+        - Examples for :func:`~pyhelpers.store.load_data`.
     """
 
     ext = "".join(pathlib.Path(path_to_file).suffixes).lower()

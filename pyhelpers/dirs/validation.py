@@ -46,10 +46,6 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         'tests\\data\\dat.csv'
         >>> normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
         '.\\tests\\data\\dat.csv'
-
-    .. note::
-        This function serves as an alternative to
-        :py:func:`~pyhelpers.dirs.normalise_pathname`.
     """
 
     return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)

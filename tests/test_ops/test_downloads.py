@@ -19,31 +19,10 @@ def test_is_downloadable():
     assert not is_downloadable(google_url)
 
 
-@pytest.mark.parametrize('verbose', [True, False])
-@pytest.mark.parametrize('stream_download', [True, False])
-def test_download_file_from_url(verbose, stream_download, tmp_path, capfd):
-    logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
-
-    filename = "test_download_file_from_url.png"
-    path_to_file = tmp_path / filename
-
-    assert not os.path.isfile(path_to_file)
-
-    download_file_from_url(
-        logo_url, path_to_file, verbose=verbose, pbar_color='green', stream_download=stream_download)
-    assert os.path.isfile(path_to_file)
-
-    download_file_from_url(
-        logo_url, path_to_file, if_exists='pass', verbose=verbose, stream_download=stream_download)
-    out, _ = capfd.readouterr()
-    if verbose:
-        assert "already exists. Download skipped" in out
-
-
 @pytest.mark.parametrize('total_records', [None, 2])
 @pytest.mark.parametrize('validate', [True, False])
 @pytest.mark.parametrize('content_length', [0, 1])
-def test_mock_download_file_from_url(total_records, validate, content_length, tmp_path, capfd):
+def test__download_file_from_url(total_records, validate, content_length, tmp_path, capfd):
     path_to_file = tmp_path / "test.txt"
 
     # Mock response with Content-Length: 0
@@ -71,7 +50,28 @@ def test_mock_download_file_from_url(total_records, validate, content_length, tm
                 if total_records is None:
                     assert "validation skipped" in out
                 elif total_records == 2:
-                    assert "validation skipped" not in out and "Warning" not in out
+                    assert "Warning" in out and "validation skipped" not in out
+
+
+@pytest.mark.parametrize('verbose', [True, False])
+@pytest.mark.parametrize('stream_download', [True, False])
+def test_download_file_from_url(verbose, stream_download, tmp_path, capfd):
+    logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
+
+    filename = "test_download_file_from_url.png"
+    path_to_file = tmp_path / filename
+
+    assert not os.path.isfile(path_to_file)
+
+    download_file_from_url(
+        logo_url, path_to_file, verbose=verbose, pbar_color='green', stream_download=stream_download)
+    assert os.path.isfile(path_to_file)
+
+    download_file_from_url(
+        logo_url, path_to_file, if_exists='pass', verbose=verbose, stream_download=stream_download)
+    out, _ = capfd.readouterr()
+    if verbose:
+        assert "already exists. Download skipped" in out
 
 
 class TestGitHubFileDownloader:

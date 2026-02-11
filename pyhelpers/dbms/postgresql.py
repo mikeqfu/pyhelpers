@@ -672,12 +672,12 @@ class PostgreSQL(_Base):
             ['public', 'test_schema']
             >>> testdb.drop_schema(schema_names=['public', 'test_schema'], verbose=True)
             To drop the following schemas from postgres:***@localhost:5432/testdb:
-                "public"
-                "test_schema"
+              "public"
+              "test_schema"
             ? [No]|Yes: yes
             Dropping ...
-                "public" ... Done.
-                "test_schema" ... Done.
+              "public" ... Done.
+              "test_schema" ... Done.
             >>> testdb.get_schema_info() is None
             True
             >>> testdb.get_schema_info(verbose=True)
@@ -725,7 +725,7 @@ class PostgreSQL(_Base):
 
         return schema_info
 
-    def drop_schema(self, schema_names, confirmation_required=True, verbose=False):
+    def drop_schema(self, schema_names, confirmation_required=True, verbose=False, **kwargs):
         """
         Deletes/drops one or multiple schemas.
 
@@ -753,16 +753,16 @@ class PostgreSQL(_Base):
             >>> new_schema_names_ = ['test_schema']
             >>> testdb.drop_schema(new_schema_names + new_schema_names_, verbose=True)
             To drop the following schemas from postgres:***@localhost:5432/testdb:
-                "points"
-                "lines"
-                "polygons"
-                "test_schema"
+              "points"
+              "lines"
+              "polygons"
+              "test_schema"
             ? [No]|Yes: yes
             Dropping ...
-                "points" ... Done.
-                "lines" ... Done.
-                "polygons" ... Done.
-                "test_schema" (does not exist.)
+              "points" ... Done.
+              "lines" ... Done.
+              "polygons" ... Done.
+              "test_schema" (does not exist.)
             >>> testdb.drop_database(verbose=True)  # Delete the database "testdb"
             To drop the database "testdb" from postgres:***@localhost:5432
             ? [No]|Yes: yes
@@ -771,7 +771,7 @@ class PostgreSQL(_Base):
 
         self._drop_schema(
             schema_names=schema_names, fmt='"{}"', query_='DROP SCHEMA "{}" CASCADE;',
-            confirmation_required=confirmation_required, verbose=verbose)
+            confirmation_required=confirmation_required, verbose=verbose, **kwargs)
 
     # == Table =====================================================================================
 
