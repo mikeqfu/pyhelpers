@@ -39,7 +39,8 @@ def add_slashes(pathname, normalized=True, surrounded_by='"'):
     return _add_slashes(pathname, normalized=normalized, surrounded_by=surrounded_by)
 
 
-def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=True, **kwargs):
+def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, indent=2, raise_error=True,
+                **kwargs):
     """
     Deletes a directory.
 
@@ -50,6 +51,10 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param indent: Indentation level; if an integer, represents the number of spaces;
+        If a string, used as the indentation character (e.g. ``'\\t'``);
+        defaults to ``2`` (two spaces).
+    :type indent: int | str
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False``, the error will be suppressed; defaults to ``True``.
     :type raise_error: bool
@@ -89,10 +94,17 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
     """
 
     rel_path_to_dir = _check_relative_pathname(path_to_dir)
+    indent_str = " " * indent if isinstance(indent, int) else indent
 
     try:
         path_to_dir_ = _add_slashes(rel_path_to_dir)
 
+        if not os.path.isdir(rel_path_to_dir):
+            if verbose:
+                print(f"{indent_str}The directory {path_to_dir_} does not exist.")
+            return
+
+        # Determine logic for deletion (shutil.rmtree for non-empty, os.rmdir for empty)
         if os.listdir(rel_path_to_dir):
             cfm_msg = f"The directory {path_to_dir_} is not empty.\nConfirmed to delete it\n?"
             func = shutil.rmtree
@@ -102,21 +114,20 @@ def _delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_er
 
         if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
             if verbose:
-                print(f"Deleting {path_to_dir_}", end=" ... ")
+                indent_str = indent_str or "Deleting "
+                print(f"{indent_str}{path_to_dir_}", end=" ... ")
 
             func(rel_path_to_dir, **kwargs)
 
-        if verbose:
-            if not os.path.exists(path_to_dir):
-                print("Done.")
-            else:
-                print("Cancelled.")
+            if verbose:
+                print("Done." if not os.path.isdir(rel_path_to_dir) else "Cancelled.")
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_error=False, **kwargs):
+def delete_dir(path_to_dir, confirmation_required=True, verbose=False, indent=2, raise_error=False,
+               **kwargs):
     """
     Deletes a directory or directories.
 
@@ -127,6 +138,10 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_err
     :type confirmation_required: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param indent: Indentation level; if an integer, represents the number of spaces;
+        If a string, used as the indentation character (e.g. ``'\\t'``);
+        defaults to ``2`` (two spaces).
+    :type indent: int | str
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -149,9 +164,9 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_err
         ...         open(cd("tests", f"test_dir{x}", "file"), 'w').close()
         >>> delete_dir(path_to_dir=test_dirs, verbose=True)
         To delete the following directories:
-            "./tests/test_dir0/" (Not empty)
-            "./tests/test_dir1/" (Not empty)
-            "./tests/test_dir2/"
+          "./tests/test_dir0/" (Not empty)
+          "./tests/test_dir1/" (Not empty)
+          "./tests/test_dir2/"
         ? [No]|Yes: yes
         Deleting "./tests/test_dir0/" ... Done.
         Deleting "./tests/test_dir1/" ... Done.
@@ -164,15 +179,37 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, raise_err
     else:
         dir_pathnames = [_check_relative_pathname(path_to_dir)]
 
-    pn = [_add_slashes(p) + (" (Not empty)" if os.listdir(p) else "") for p in dir_pathnames]
+    # Resolve indentation string
+    indent_str = " " * indent if isinstance(indent, int) else indent
+
+    # Formulate path descriptions safely
+    pn = []
+    for p in dir_pathnames:
+        p_str = _add_slashes(p)
+        if os.path.exists(p):
+            if os.listdir(p):
+                p_str += " (Not empty)"
+        else:
+            p_str += " (Does not exist)"
+        pn.append(p_str)
+
     if len(pn) == 1:
         cfm_msg = f"To delete the directory {pn[0]}\n?"
     else:
-        temp = "\n\t".join(pn)
-        cfm_msg = f"To delete the following directories:\n\t{temp}\n?"
+        temp = f"\n{indent_str}".join(pn)
+        cfm_msg = f"To delete the following directories:\n{indent_str}{temp}\n?"
 
     if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
-        for dir_pathname in dir_pathnames:
+        if len(dir_pathnames) == 1:
+            # Single item: No header, no indent for a clean single-line output
             _delete_dir(
-                dir_pathname, confirmation_required=False, verbose=verbose, raise_error=raise_error,
-                **kwargs)
+                dir_pathnames[0], confirmation_required=False, verbose=verbose,
+                indent=0, raise_error=raise_error, **kwargs)
+
+        else:  # Multiple items: Print header and use indentation for a pretty list
+            if verbose and len(dir_pathnames) > 1:
+                print("Deleting:")  # Header for the progress list
+            for dir_pathname in dir_pathnames:
+                _delete_dir(
+                    dir_pathname, confirmation_required=False, verbose=verbose, indent=indent,
+                    raise_error=raise_error, **kwargs)
