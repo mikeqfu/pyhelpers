@@ -343,16 +343,21 @@ class _Base:
 
         return table_name_
 
-    def _msg_for_multi_items(self, item_names, desc, fmt='"{}"'):
+    def _msg_for_multi_items(self, item_names, desc, fmt='"{}"', indent=2):
+        # noinspection PyShadowingNames
         """
         Formulates a message for printing multiple items.
 
-        :param item_names: Name of one table/schema, or names of several tables/schemas.
+        :param item_names: Name of one or several items (e.g. tables or schemas).
         :type item_names: str | typing.Iterable[str] | None
-        :param desc: Additional description.
+        :param desc: Additional description of the items.
         :type desc: str
-        :param fmt: Printing format of each item; defaults to ``'"{}"'``.
+        :param fmt: Printing format for each item; defaults to ``'"{}"'``.
         :type fmt: str
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``2`` (two spaces).
+        :type indent: int | str
         :return: Formatted message for printing.
         :rtype: tuple
 
@@ -363,45 +368,50 @@ class _Base:
             Password (postgres@localhost:5432): ***
             Creating a database: "testdb" ... Done.
             Connecting postgres:***@localhost:5432/testdb ... Successfully.
-            >>> schema_name = 'points'
-            >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_name, desc='schema')
-            >>> schemas
+            >>> item_names = 'points'
+            >>> item_names_, print_plural, print_items, indent_str = testdb._msg_for_multi_items(
+            ...     item_names, desc='schema')
+            >>> item_names_
             ['points']
-            >>> prt_pl
+            >>> print_plural
             'schema'
-            >>> prt_name
+            >>> print_items
             '"points"'
-            >>> schema_names = ['points', 'lines', 'polygons']
-            >>> schemas, prt_pl, prt_name = testdb._msg_for_multi_items(schema_names, desc='schema')
-            >>> schemas
+            >>> indent_str
+            '  '
+            >>> item_names = ['points', 'lines', 'polygons']
+            >>> item_names_, print_plural, print_items, indent_str = testdb._msg_for_multi_items(
+            ...     item_names, desc='schema')
+            >>> item_names_
             ['points', 'lines', 'polygons']
-            >>> prt_pl
+            >>> print_plural
             'schemas'
-            >>> prt_name
-            '\n\t"points"\n\t"lines"\n\t"polygons"'
-            >>> print(prt_name)
+            >>> print_items
+            '\n  "points"\n  "lines"\n  "polygons"'
+            >>> print(print_items)
 
-                "points"
-                "lines"
-                "polygons"
+              "points"
+              "lines"
+              "polygons"
         """
 
+        # Handle integer vs string indentation
+        indent_str = " " * indent if isinstance(indent, int) else indent
+
         if item_names is None:
-            item_names_ = [x for x in sqlalchemy.inspect(self.engine).get_schema_names()]
+            item_names_ = sqlalchemy.inspect(self.engine).get_schema_names()
         else:
-            item_names_ = [item_names] if isinstance(item_names, str) else item_names
+            item_names_ = [item_names] if isinstance(item_names, str) else list(item_names)
 
         if len(item_names_) == 1:
-            print_plural = "{}".format(desc)
-            try:
-                print_items = fmt.format(item_names_[0])
-            except TypeError:
-                print_items = fmt.format(list(item_names_)[0])
+            print_plural = f"{desc}"
+            print_items = fmt.format(item_names_[0])
         else:
-            print_plural = "{}s".format(desc)
-            print_items = (f'\n\t{fmt}' * len(item_names_)).format(*item_names_)
+            print_plural = f"{desc}s"
+            # Build the multi-line string using the resolved indent_str
+            print_items = (f'\n{indent_str}{fmt}' * len(item_names_)).format(*item_names_)
 
-        return item_names_, print_plural, print_items
+        return item_names_, print_plural, print_items, indent_str
 
     def create_schema(self, schema_name, verbose=False):
         """
@@ -461,7 +471,7 @@ class _Base:
                     e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _drop_schema(self, schema_names, fmt, query_, confirmation_required=True, verbose=False,
-                     raise_error=False):
+                     indent=2, raise_error=False):
         """
         Drops one or more schemas.
 
@@ -476,13 +486,17 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``2`` (two spaces).
+        :type indent: int | str
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool
         """
 
-        schema_names_, print_plural, print_schema = self._msg_for_multi_items(
-            item_names=schema_names, desc='schema', fmt=fmt)
+        schema_names_, print_plural, print_schema, indent_str = self._msg_for_multi_items(
+            item_names=schema_names, desc='schema', fmt=fmt, indent=indent)
 
         if len(schema_names_) == 1:
             cfm_msg = f"To drop the {print_plural} {print_schema} from {self.address}\n?"
@@ -492,10 +506,8 @@ class _Base:
         if _confirmed(cfm_msg, confirmation_required=confirmation_required):
             if verbose:
                 if len(schema_names_) == 1:
-                    if confirmation_required:
-                        log_msg = f"Dropping {print_schema}"
-                    else:
-                        log_msg = f"Dropping the {print_plural}: {print_schema}"
+                    log_msg = f"Dropping {print_schema}" if confirmation_required else \
+                        f"Dropping the {print_plural}: {print_schema}"
                     print(log_msg, end=" ... ")
                 else:  # len(schema_names_) > 1
                     if confirmation_required:
@@ -507,13 +519,13 @@ class _Base:
                 if not self.schema_exists(schema_name):  # `schema` does not exist
                     if verbose:
                         if len(schema_names_) == 1:
-                            print(f"The schema \"{schema_names_[0]}\" does not exist.")
+                            print(f"The schema \"{schema_name}\" does not exist.")
                         else:
-                            print(f"\t\"{schema_name}\" (does not exist.)")
+                            print(f"{indent_str}\"{schema_name}\" (does not exist.)")
 
                 else:
                     if len(schema_names_) > 1 and verbose:
-                        print(f"\t\"{schema_name}\"", end=" ... ")
+                        print(f"{indent_str}\"{schema_name}\"", end=" ... ")
 
                     self.__drop_schema(
                         schema_name=schema_name, query_=query_, verbose=verbose,
