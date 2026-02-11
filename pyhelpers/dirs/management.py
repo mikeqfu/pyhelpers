@@ -168,9 +168,10 @@ def delete_dir(path_to_dir, confirmation_required=True, verbose=False, indent=2,
           "./tests/test_dir1/" (Not empty)
           "./tests/test_dir2/"
         ? [No]|Yes: yes
-        Deleting "./tests/test_dir0/" ... Done.
-        Deleting "./tests/test_dir1/" ... Done.
-        Deleting "./tests/test_dir2/" ... Done.
+        Deleting:
+          "./tests/test_dir0/" ... Done.
+          "./tests/test_dir1/" ... Done.
+          "./tests/test_dir2/" ... Done.
     """
 
     if (isinstance(path_to_dir, collections.abc.Sequence) and
