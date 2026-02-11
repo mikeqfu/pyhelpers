@@ -1,6 +1,29 @@
 # Changelog / Release notes
 
 
+## [2.3.4](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.4)
+
+(*11 February 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.3...2.3.4) since [2.3.3](https://www.google.com/search?q=https://pypi.org/project/pyhelpers/2.3.3/):
+
+- **Lazy loading & dependency resolution:**
+  * Fixed a submodule resolution bug within `_LazyModule`. Submodules are now resolved dynamically, preventing `AttributeError` when accessing nested package components (#119). This resolves issues reported in #118.
+- **CLI UX & output architecture:**
+  * Refactored console output logic to replace hardcoded tab characters with an **adaptive indentation hierarchy**.
+  * Introduced a configurable `indent` parameter across multiple subpackages to support a visual "Parent > Child > Grandchild" structure in verbose outputs (#120). Affected modules include:
+    * `dbms`: Standardized database operation logging.
+    * `dirs`: Enhanced `delete_dir()` with hierarchical deletion status.
+    * `downloads`: Improved `download_file_from_url()` to nest status messages beneath progress bars.
+    * `savers`: Updated `save_spreadsheets()` to handle multi-level sheet saving status.
+- **Documentation improvements:**
+  * Updated docstrings and API specifications for `normalize_pathname()`, `delete_dir()` and `download_file_from_url()` to reflect new parameters and behavior.
+- **Testing & infrastructure:**
+  * Modernized test suites for the `downloads`, `management` and `savers` modules to validate adaptive indentation logic and lazy loading stability.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.3.4 documentation](https://www.google.com/search?q=https://pyhelpers.readthedocs.io/en/2.3.4/).**
+
+
 ## [2.3.3](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.3)
 
 (*9 February 2026*)
