@@ -4,6 +4,7 @@ Utilities for file downloads from the web.
 
 import json
 import os
+import pathlib
 import re
 import secrets
 import shutil
@@ -14,8 +15,9 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _check_url_scheme, \
-    _get_ansi_color_code, _init_requests_session, _load_package_data, _print_failure_message
+from .._cache import _add_slashes, _check_relative_pathname, _check_url_scheme, \
+    _get_ansi_color_code, _init_requests_session, _lazy_check_dependencies, _load_package_data, \
+    _print_failure_message
 from ..store import _check_saving_path
 
 
@@ -60,12 +62,15 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
-                    pbar_format=None, pbar_color=None):
+                    pbar_format=None, pbar_color=None, indent=None):
+    """
+    Prepares arguments for the tqdm progress bar.
+    """
+
     file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
+    total_rec = int(total_records) if total_records else 0
 
-    total_records_ = int(total_records) if total_records else 0
-
-    block_size = 1024 ** 2
+    block_size = 1024 ** 2  # 1 MB
     chunk_size = int(block_size * chunk_multiplier) if file_size >= block_size else block_size
 
     if pbar_color:
@@ -73,82 +78,147 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     else:
         color_code, reset_color = ('', '')
 
+    # Resolve the base indentation string
+    pbar_indent = " " * indent if isinstance(indent, int) else ("" if indent is None else indent)
+
     pbar_args = {
-        'desc': pbar_desc or f'Downloading "{os.path.basename(path_to_file)}"',
+        'desc': pbar_desc or f'{pbar_indent}Downloading "{os.path.basename(path_to_file)}"',
         'unit': 'B',
         'unit_scale': True,
         'leave': True,  # Ensures bar stays visible after completion
         'miniters': 1,  # Forces update even for small changes
     }
+
     if file_size > 0:
         pbar_args.update({
             'total': file_size,  # total_iter = file_size // chunk_size
             'bar_format':
-                pbar_format or
-                f'{color_code}'
-                f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
-                f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
-                f'{reset_color}'
+                pbar_format or (
+                    f'{color_code}'
+                    f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
+                    f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                    f'{reset_color}'
+                )
         })
     elif total_records:  # 'Content-Length' is missing, but record count is known (Fallback)
-        total_records_ = int(total_records)
         pbar_args.update({  # Use a line-counting mechanism to simulate record progress
-            'total': total_records_ + 1,  # +1 for header
+            'total': total_rec + 1,  # +1 for header
             'unit': ' rec',
             'unit_scale': False,
             'bar_format':
-                pbar_format or
-                f'{color_code}'
-                f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
-                f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
-                f'{reset_color}'
+                pbar_format or (
+                    f'{color_code}'
+                    f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
+                    f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                    f'{reset_color}'
+                )
         })
     else:
         pbar_args.update({
             'total': None,
             'bar_format':
-                pbar_format or
-                f'{color_code}'
-                f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
-                f'{reset_color}'
+                pbar_format or (
+                    f'{color_code}'
+                    f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
+                    f'{reset_color}'
+                )
         })
 
-    return file_size, chunk_size, total_records_, pbar_args
+    return file_size, chunk_size, total_rec, pbar_args, pbar_indent
 
 
-def _validate_downloaded_file(validate, file_size, written, total_records_, actual_records):
-    if validate:
-        if file_size > 0:
-            if written != file_size:
-                print("Failed.")
-                raise ValueError(
-                    f"Byte count mismatch. "
-                    f"Expected {file_size} bytes, but received {written} bytes.")
-            else:
-                print("Done.")
-        elif (file_size <= 0) and (total_records_ > 0):
-            expected = total_records_ + 1
-            if actual_records != expected:
-                print(f"Done.\n"
-                      f"\t\t(Warning: Expected {expected} lines, but received {actual_records}, "
-                      f"likely due to embedded newlines in the data.)")
-            else:
-                print("Done.")
-        else:
-            # Case where both `file_size` and `total_records` are missing.
-            # We assume success if no exception was raised above.
-            print("Done. (Stream completed, validation skipped due to unknown total size/records.)")
-    else:
+def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent):
+    if not validate:
         print("Done.")
+        return
+
+    if file_size > 0:
+        if written != file_size:
+            print("Failed.")
+            raise ValueError(
+                f"Byte count mismatch. Expected {file_size} bytes, but received {written} bytes.")
+        else:
+            print("Done.")
+
+    elif (file_size <= 0) and (total_rec > 0):
+        expected = total_rec + 1
+        if actual_records != expected:
+            print(f"Done.\n"
+                  f"{indent}(Warning: Expected {expected} lines, "
+                  f"but received {actual_records}, likely due to embedded newlines in the data.)")
+        else:
+            print("Done.")
+
+    else:  # Cases where both `file_size` and `total_records` are missing.
+        # Assume success if no exception was raised above.
+        print(f"Done.\n"
+              f"{indent}(Stream completed, validation skipped due to unknown size/records.)")
+
+
+@_lazy_check_dependencies('tqdm')
+def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs):
+    # Variables for Validation Tracking
+    written = 0  # Total bytes written
+    buffer = b''
+    actual_records = 0
+
+    with open(file=path_to_file, mode='wb') as f, tqdm.tqdm(**kwargs) as progress:  # noqa
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            if not chunk:
+                continue
+
+            try:  # Write chunk to file
+                f.write(chunk)
+            except TypeError:
+                f.write(chunk.encode())
+
+            written += len(chunk)
+
+            if file_size > 0:
+                progress.update(len(chunk))  # Bytes tracking
+
+            elif total_rec > 0:
+                buffer += chunk
+                lines = buffer.count(b'\n')
+                if lines > 0:
+                    actual_records += lines  # Track the real count for validation later
+
+                    # Calculate pending update
+                    current_n = progress.n
+                    max_visual_progress = progress.total - 1
+
+                    if current_n + lines >= max_visual_progress:
+                        increment = max(0, max_visual_progress - current_n)
+                        progress.update(increment)
+                    else:
+                        progress.update(lines)  # Update records
+
+                    # Keep the tail after the last newline
+                    buffer = buffer.rsplit(b'\n', 1)[-1]  # buffer.split(b'\n', lines - 1)[-1]
+
+            else:
+                progress.update(len(chunk))  # Unbounded bytes
+
+        if (file_size <= 0) and (total_rec > 0):
+            if buffer.strip():
+                actual_records += 1  # Count the final record
+
+            # Smoothly finish the bar
+            remaining = progress.total - progress.n
+            if remaining > 0:
+                progress.update(remaining)
+
+        progress.refresh()  # Force the final 100% state to be drawn
+
+    return written, actual_records
 
 
 def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
                             pbar_desc=None, pbar_format=None, pbar_color=None, validate=True,
-                            print_wrap_limit=None, **kwargs):
+                            print_wrap_limit=None, indent=None, **kwargs):
     # noinspection PyShadowingNames
     """
-    Downloads a file with a persistent progress bar, handling both byte-size
-    and record-count tracking.
+    Internal wrapper for downloading with progress bar.
 
     This function reads the content of the response in chunks and writes it to a file while
     displaying a progress bar using `tqdm`_. It supports a fallback progress bar based on
@@ -178,6 +248,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
     :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow');
         defaults to ``None``.
     :type pbar_color: str | None
+
     :param validate: Whether to validate if the downloaded file size matches the expected content
         length; defaults to ``True``.
     :type validate: bool
@@ -186,6 +257,10 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
         when printed.
     :type print_wrap_limit: int | None
+    :param indent: Indentation level; if an integer, represents the number of spaces;
+        If a string, used as the indentation character (e.g. ``'\\t'``);
+        defaults to ``None`` (no indent).
+    :type indent: int | str | None
     :param kwargs: [Optional] Additional parameters passed to `tqdm.tqdm()`_,
         allowing customization of the progress bar
         (e.g. ``disable=True`` to hide the progress bar).
@@ -205,94 +280,56 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
         >>> with requests.get(url, stream=True) as response:
         ...     _download_file_from_url(response, path_to_img, pbar_color='green')
         Downloading "ops-download_file_from_url-demo.png" 100%|██████████| 83.6k/83.6k | ...
-            Updating "ops-download_file_from_url-demo.png" in "./tests/images/" ... Done.
+          Updating "ops-download_file_from_url-demo.png" in "./tests/images/" ... Done.
     """
-
-    tqdm_ = _check_dependencies('tqdm')
-
-    file_size, chunk_size, total_records_, pbar_args = _prep_pbar_args(
-        response=response, path_to_file=path_to_file, total_records=total_records,
-        chunk_multiplier=chunk_multiplier, pbar_desc=pbar_desc, pbar_format=pbar_format,
-        pbar_color=pbar_color)
-
-    kwargs.update(pbar_args)
 
     belated = False if os.path.isfile(path_to_file) else True
 
-    # Variables for Validation Tracking
-    written = 0  # Total bytes written
-    buffer = b''
-    actual_records = 0
-
     try:
-        with open(file=path_to_file, mode='wb') as f, tqdm_.tqdm(**kwargs) as progress:
+        # Prepare a progress bar
+        file_size, chunk_size, total_rec, pbar_args, pbar_indent = _prep_pbar_args(
+            response=response, path_to_file=path_to_file, total_records=total_records,
+            chunk_multiplier=chunk_multiplier, pbar_desc=pbar_desc, pbar_format=pbar_format,
+            pbar_color=pbar_color, indent=indent)
 
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                if not chunk:
-                    continue
+        kwargs.update(pbar_args)
 
-                try:  # Write chunk to file
-                    f.write(chunk)
-                except TypeError:
-                    f.write(chunk.encode())
+        # Perform download
+        written, actual_records = _download(
+            response=response,
+            path_to_file=path_to_file,
+            chunk_size=chunk_size,
+            file_size=file_size,
+            total_rec=total_rec,
+            **kwargs
+        )
 
-                written += len(chunk)
+        # Level 1 (Saving): Two spaces more than the progress bar
+        saving_indent = f"  {pbar_indent}"
 
-                if file_size > 0:
-                    progress.update(len(chunk))  # Bytes tracking
+        # Print "Saving/Updating..." message using sub-indent
+        _check_saving_path(
+            path_to_file=path_to_file, verbose=True, print_prefix=saving_indent,
+            print_wrap_limit=print_wrap_limit, belated=belated
+        )
 
-                elif total_records_ > 0:
-                    buffer += chunk
-                    lines = buffer.count(b'\n')
-                    if lines > 0:
-                        actual_records += lines  # Track the real count for validation later
+        # Level 2 (Validation): Two spaces more than Level 1 (Four more than pbar)
+        validate_indent = f"  {saving_indent}"
 
-                        # Calculate pending update
-                        current_n = progress.n
-                        max_visual_progress = progress.total - 1
+        _validate_downloaded_file(
+            validate=validate, file_size=file_size, written=written,
+            total_rec=total_rec, actual_records=actual_records, indent=validate_indent
+        )
 
-                        if current_n + lines >= max_visual_progress:
-                            # Only update enough to reach 99.9% (Total - 1)
-                            # We stop updating the visual bar here, even if download continues
-                            increment = max(0, max_visual_progress - current_n)
-                            progress.update(increment)
-                        else:
-                            progress.update(lines)  # Update records
-
-                        # Keep only the tail of the buffer that does NOT end in a newline
-                        buffer = buffer.split(b'\n', lines - 1)[-1]
-
-                else:
-                    progress.update(len(chunk))  # Unbounded bytes
-
-            if (file_size <= 0) and (total_records_ > 0):
-                if buffer.strip():
-                    actual_records += 1  # Count the final record
-
-                # Smoothly finish the bar
-                remaining = progress.total - progress.n
-                if remaining > 0:
-                    progress.update(remaining)
-
-            progress.refresh()  # Force the final 100% state to be drawn
-
-    except (IOError, TypeError) as e:
+    except Exception as e:
         _print_failure_message(e, prefix="Download failed:", verbose=True, raise_error=True)
-
-    _check_saving_path(
-        path_to_file, verbose=True, print_prefix="\t", print_wrap_limit=print_wrap_limit,
-        belated=belated)
-
-    _validate_downloaded_file(
-        validate=validate, file_size=file_size, written=written,
-        total_records_=total_records_, actual_records=actual_records)
 
 
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
                            requests_session_args=None, requests_headers=None, verbose=False,
                            print_wrap_limit=None, total_records=None, chunk_multiplier=1,
-                           pbar_desc=None, pbar_format=None, pbar_color=None, validate=True,
-                           stream_download=False, **kwargs):
+                           pbar_desc=None, pbar_format=None, pbar_color=None,
+                           validate=True, stream_download=False, indent=None, **kwargs):
     # noinspection PyShadowingNames
     """
     Downloads a file from a valid URL.
@@ -350,6 +387,9 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         When `stream_download=False`, the entire file content is loaded into memory first
         (simpler/faster for small files); defaults to ``False``.
     :type stream_download: bool
+    :param indent: Indentation level for the progress bar.
+        Status messages (``"Saving..."``, ``"Done"``) will be automatically indented further
+        (2 spaces) to indicate hierarchy. Defaults to ``2``.
     :param kwargs: [Optional] Additional parameters passed to the method `tqdm.tqdm()`_.
 
     :return: ``None`` upon successful completion or if the download is skipped (i.e., when
@@ -398,11 +438,11 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         - The function handles HTTP retries internally using a `requests` session adapter.
     """
 
-    path_to_file_ = os.path.abspath(path_to_file)
+    file_path = pathlib.Path(path_to_file).resolve()
 
-    if os.path.isfile(path_to_file_) and if_exists != 'replace':
+    if file_path.is_file() and if_exists != 'replace':
         if verbose:
-            print(f'File "{os.path.basename(path_to_file)}" already exists. Download skipped\n'
+            print(f'File "{file_path.name}" already exists. Download skipped\n'
                   f'(use `if_exists=\'replace\'` to overwrite)')
         return None
 
@@ -418,7 +458,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         if requests_headers:
             headers.update(requests_headers)
 
-        os.makedirs(os.path.dirname(path_to_file_), exist_ok=True)  # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure the directory exists
 
         # If streaming, we can iterate over the response
         stream_download_ = verbose or stream_download
@@ -431,7 +471,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
             if verbose:  # Handle verbose output with progress bar
                 _download_file_from_url(
                     response=response,
-                    path_to_file=path_to_file,
+                    path_to_file=file_path,
                     total_records=total_records,
                     chunk_multiplier=chunk_multiplier,
                     pbar_desc=pbar_desc,
@@ -439,30 +479,30 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     pbar_color=pbar_color,
                     validate=validate,
                     print_wrap_limit=print_wrap_limit,
+                    indent=indent,
                     **kwargs
                 )
 
             else:
                 if stream_download_:
                     encoding = response.headers.get('Content-Encoding', '')
-                    if 'gzip' in encoding or 'deflate' in encoding:
+                    if encoding and ('gzip' in encoding or 'deflate' in encoding):
                         response.raw.decode_content = True
 
-                    with open(path_to_file_, mode='wb') as f:  # Open the file in binary write mode
+                    with open(file_path, mode='wb') as f:  # Open the file in binary write mode
                         shutil.copyfileobj(fsrc=response.raw, fdst=f)  # type: ignore
 
                 else:
-                    with open(path_to_file_, mode='wb') as f:
+                    with open(file_path, mode='wb') as f:
                         f.write(response.content)
 
             # Validate download if necessary
-            if validate and os.stat(path_to_file).st_size == 0:
-                rel_path = _add_slashes(_check_relative_pathname(path_to_file))
+            if validate and file_path.stat().st_size == 0:
+                rel_file_path = _add_slashes(_check_relative_pathname(file_path))
                 raise ValueError(
-                    f"Error: The downloaded file at {rel_path} is empty. "
+                    f"Error: The downloaded file at {rel_file_path} is empty. "
                     f"Check the URL or network connection.")
-            # else:
-            #     print(f"File successfully downloaded to {rel_path}.")
+
             return None
 
 
