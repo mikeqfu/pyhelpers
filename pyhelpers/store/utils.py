@@ -12,7 +12,7 @@ import sys
 from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
 
 
-def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
+def _print_wrapped_string(message, filename, end, print_wrap_limit=100, **kwargs):
     """
     Prints a string, splitting it into two lines if it exceeds the threshold, with the second half
     being indented based on the initial indentation level.
@@ -28,10 +28,10 @@ def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
 
     if print_wrap_limit:
         stripped_text = message.lstrip()  # Remove leading spaces for accurate tab count
-        leading_tabs = len(message) - len(stripped_text)
+        leading_indentation = len(message) - len(stripped_text)
 
         if len(stripped_text) <= print_wrap_limit:
-            print(message, end=end)
+            print(message, end=end, **kwargs)
 
         else:
             # Find a suitable split point (preferably at a space)
@@ -42,19 +42,20 @@ def _print_wrapped_string(message, filename, end, print_wrap_limit=100):
             first_part = message[:split_index].rstrip()  # Trim trailing spaces
             second_part = message[split_index:].lstrip()  # Trim leading spaces
 
-            # Print first part as is
-            print(first_part + " ... ")
+            # Print first part as is, plus " ... "
+            print(first_part + " ... ", **kwargs)
 
-            # Print second part with increased indentation (original + 1 extra tab)
-            print("  " * (leading_tabs + 1) + second_part, end=end)
+            # Print second part with increased indentation (original + 1 extra double spaces)
+            indent_str = " " * (leading_indentation + 2)
+            print(f"{indent_str}{second_part}", end=end, **kwargs)
 
     else:
-        print(message, end=end)
+        print(message, end=end, **kwargs)
 
 
 def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
                        state_prep="to", print_suffix="", print_end=" ... ", print_wrap_limit=None,
-                       belated=False, ret_info=False):
+                       belated=False, ret_info=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Verifies a specified file path before saving.
@@ -146,7 +147,7 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         if (rel_dir_path == rel_dir_path.parent or rel_dir_path == file_path.parent) and \
                 (file_path.anchor == cwd.anchor):
             message = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
-            print(message, end=prt_end)
+            print(message, end=prt_end, **kwargs)
         else:
             # Use relative path if internal, otherwise absolute
             display_path = rel_dir_path if is_internal else file_path.parent
@@ -154,10 +155,11 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
                        f'{state_prep} {_add_slashes(display_path)}{print_suffix}')
 
             _print_wrapped_string(
-                message=message, filename=filename, end=prt_end, print_wrap_limit=print_wrap_limit)
+                message=message, filename=filename, end=prt_end, print_wrap_limit=print_wrap_limit,
+                **kwargs)
 
     if ret_info:
-        file_ext = file_path.suffix.lower()
+        file_ext = "".join(file_path.suffixes).lower()
         return file_path, rel_dir_path, file_ext
 
     return None
@@ -206,7 +208,7 @@ def _autofit_column_width(writer, writer_kwargs, **kwargs):
 
 
 def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb="Loading",
-                        print_suffix="", print_end=" ... ", ret_info=False):
+                        print_suffix="", print_end=" ... ", ret_info=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Checks the status of loading a file from a specified path.
@@ -255,7 +257,7 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
 
     if verbose:
         prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_dir_path)}{print_suffix}'
-        print(prt_msg, end=print_end)
+        print(prt_msg, end=print_end, **kwargs)
 
     if ret_info:
         file_path = pathlib.Path(path_to_file).resolve()
