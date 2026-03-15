@@ -16,7 +16,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from .utils import _check_loading_path, _resolve_json_engine, _set_index
+from .utils import _check_loading_path, _resolve_json_engine, _set_index, suppress_gpkg_warnings
 from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
@@ -700,6 +700,188 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             print("Done.")
             if warn_message:
                 warnings.warn(warn_message, UserWarning)
+
+        return data
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+@_lazy_check_dependencies('fiona', 'shapely', gpd='geopandas')
+def _read_gpkg_file(filepath, engine='geopandas', suppress_warnings=True, target_crs=None,
+                    **kwargs):
+    """
+    Internal helper to read a single layer from a GeoPackage using a specified engine.
+
+    :param filepath: Path to the GeoPackage file.
+    :type filepath: str | pathlib.Path
+    :param engine: The parsing engine (``'geopandas'``/``'gpd'`` or ``'fiona'``).
+    :type engine: str
+    :param suppress_warnings: Whether to ignore non-critical OGR warnings.
+    :type suppress_warnings: bool
+    :param target_crs: Optional CRS to reproject the data into (e.g. 'EPSG:27700').
+    :type target_crs: Any | None
+    :param kwargs: Arguments passed to ``geopandas.read_file`` or ``fiona.open``.
+    :return: A cleaned and downcast GeoDataFrame.
+    :rtype: geopandas.GeoDataFrame
+    """
+
+    if not isinstance(engine, str):
+        raise TypeError(f"Invalid engine type: {type(engine).__name__}. `engine` must be a string.")
+
+    engine_ = engine.lower()
+    if engine_ not in {'geopandas', 'gpd', 'fiona'}:
+        raise ValueError(f"Invalid engine: '{engine}'. Choose 'geopandas' or 'fiona'.")
+
+    if engine_ in {'geopandas', 'gpd'}:
+        if suppress_warnings:
+            with suppress_gpkg_warnings():
+                gdf = gpd.read_file(filepath, **kwargs)  # noqa
+        else:
+            gdf = gpd.read_file(filepath, **kwargs)  # noqa
+
+    elif engine_ == 'fiona':
+        features = []
+
+        # noinspection PyUnresolvedReferences
+        with fiona.open(filepath, **kwargs) as f:
+            crs = f.crs
+            features = [
+                {
+                    'type': 'Feature',
+                    'properties': dict(feat['properties']),
+                    'geometry': shapely.geometry.shape(feat['geometry'])  # noqa
+                }
+                for feat in f
+            ]
+
+        gdf = gpd.GeoDataFrame.from_features(features, crs=crs)  # noqa
+        cols = [c for c in gdf.columns if c != 'geometry']
+        gdf = gdf[cols + ['geometry']]
+
+    if target_crs and gdf.crs is not None:
+        # Use equals() to compare the underlying projection parameters
+        if not gdf.crs.equals(target_crs):
+            gdf = gdf.to_crs(crs=target_crs)
+
+    data = gdf.fillna(pd.NA).convert_dtypes()
+
+    return data
+
+
+def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
+                     verbose=False, **kwargs):
+    """
+    Reads a GeoPackage file and returns data for all layers.
+
+    If the GeoPackage contains multiple layers, returns a dictionary of GeoDataFrames.
+    If it contains a single layer, returns a single GeoDataFrame.
+
+    :param path_to_file: Path to the GeoPackage (.gpkg) file.
+    :type path_to_file: str | pathlib.Path
+    :param engine: Valid options include ``'geopandas'``, ``'gpd'``, and ``'fiona'``.
+    :type engine: str
+    :param target_crs: Optional CRS for reprojection.
+    :type target_crs: Any | None
+    :param suppress_warnings: Whether to hide underlying OGR or engine warnings.
+        Defaults to ``True``.
+    :type suppress_warnings: bool
+    :param verbose: Whether to print progress or layer information. Defaults to ``False``.
+    :type verbose: bool | int
+    :param kwargs: Additional parameters passed to `geopandas.read_file` or `fiona.open`,
+        depending on ``engine`` (e.g. ``bbox``, ``rows``, or ``where``).
+    :return: A GeoDataFrame (single layer), or a dictionary mapping layer names to GeoDataFrames,
+        or ``None`` if no valid layers found.
+    :rtype: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame] | None
+
+    :raises TypeError: If ``engine`` is not a string.
+    :raises ValueError: If ``engine`` is not one of the supported options.
+    """
+
+    # Retrieve all layer names available in the GeoPackage
+    with suppress_gpkg_warnings():
+        layers_info = gpd.list_layers(path_to_file)  # noqa
+        all_layers = layers_info['name'].tolist()
+
+    # OGR sometimes exposes these as layers if the file is slightly malformed
+    internal_layers = {
+        'gpkg_contents',
+        'gpkg_geometry_columns',
+        'gpkg_spatial_ref_sys',
+        'gpkg_tile_matrix',
+        'gpkg_tile_matrix_set',
+        'gpkg_extensions',
+        'sqlite_sequence',
+        'spatial_ref_sys',
+    }
+    # Filter out known SQLite/GPKG system or internal metadata layers
+    valid_layers = [lyr for lyr in all_layers if lyr.lower() not in internal_layers]
+
+    # Define metadata parameters to pass to the helper
+    common_params = dict(
+        filepath=path_to_file,
+        engine=engine,
+        target_crs=target_crs,
+        suppress_warnings=suppress_warnings,
+        verbose=verbose
+    )
+
+    if len(valid_layers) > 1:  # Load each layer into a dictionary
+        data = {
+            lyr: _read_gpkg_file(layer=lyr, **common_params, **kwargs)
+            for lyr in valid_layers
+        }
+    elif len(valid_layers) == 1:  # Load the single layer directly (layer=None or first in list)
+        kwargs['layer'] = valid_layers[0]
+        data = _read_gpkg_file(**common_params, **kwargs)
+    else:  # No layers found
+        data = None
+
+    return data
+
+
+def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
+                    verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
+    """
+    Loads data from a GeoPackage file with support for multi-layer datasets.
+
+    :param path_to_file: Path to the GeoPackage file.
+    :type path_to_file: str | pathlib.Path
+    :param engine: The parsing engine to use (``'geopandas'`` or ``'fiona'``).
+        Defaults to ``'geopandas'``.
+    :type engine: str
+    :param target_crs: Optional CRS for reprojection.
+    :type target_crs: Any | None
+    :param suppress_warnings: If ``True``, silences common OGR 'Measured Geometry' warnings.
+    :type suppress_warnings: bool
+    :param verbose: If ``True``, prints the loading status and feature counts.
+    :type verbose: bool | int
+    :param prt_kwargs: Optional dictionary of keyword arguments for the internal
+        path check printer (e.g., ``prefix``, ``suffix``).
+    :type prt_kwargs: dict | None
+    :param raise_error: If ``True``, re-raises any caught exceptions during loading.
+        If ``False``, prints a failure message and returns ``None``.
+    :type raise_error: bool
+    :param kwargs: Additional arguments passed to the engine (e.g., ``layer``, ``bbox``, ``rows``).
+    :return: A GeoDataFrame for single-layer files, or a dictionary of
+        {layer_name: GeoDataFrame} for multi-layer files.
+    :rtype: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame] | None
+    """
+
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+
+    try:
+        data = _load_geopackage(
+            path_to_file=path_to_file,
+            engine=engine,
+            target_crs=target_crs,
+            suppress_warnings=suppress_warnings,
+            verbose=verbose,
+            **kwargs
+        )
+
+        if verbose:
+            print("Done.")
 
         return data
 
