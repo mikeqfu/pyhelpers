@@ -2,12 +2,14 @@
 Utilities that support the main submodules of :mod:`~pyhelpers.store`.
 """
 
+import contextlib
 import functools
 import inspect
 import logging
 import os
 import pathlib
 import sys
+import warnings
 
 from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
 
@@ -416,3 +418,57 @@ def _resolve_json_engine(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+@contextlib.contextmanager
+def suppress_gpkg_warnings():
+    # noinspection PyShadowingNames
+    """
+    A context manager to suppress common GeoPackage (GPKG) and geometric warnings.
+
+    This utility silences recurring "noise" from the GIS stack (GDAL, pyogrio and Fiona) that
+    does not impact data integrity but clutters the console. Specifically, it handles:
+
+    1. ``Measured (M) geometry`` warnings: Silences the UserWarning emitted when
+       GEOS strips M-coordinates (linear referencing) from 4D geometries.
+    2. ``VERBOSE`` driver warnings: Silences the RuntimeWarning emitted when
+       the GPKG driver receives a ``'VERBOSE'`` open option it does not support.
+
+    **Examples**::
+
+        >>> from pyhelpers.store.utils import suppress_gpkg_warnings
+        >>> import geopandas as gpd
+        >>> # Suppose this would normally produce a warning:
+        >>> with suppress_gpkg_warnings():  # With warning suppression:
+        ...     df = gpd.read_file("data_with_m_coords.gpkg")
+        >>> # Outside the context, warnings behave normally
+
+    .. note::
+
+        The suppression only applies to:
+
+        - This uses ``warnings.catch_warnings`` to ensure that warning filters are restored to
+          their original state once the context is exited.
+        - Only specific messages are filtered; other unrelated ``UserWarnings`` or
+          ``RuntimeWarnings`` will still be displayed.
+        - Warnings originating from the ``'pyogrio'`` module
+    """
+
+    with warnings.catch_warnings():
+        # Handle Measured M coordinate stripping
+        warnings.filterwarnings(
+            action='ignore',
+            message=r".*Measured \(M\) geometry types are not supported.*",
+            category=UserWarning,
+            # module='pyogrio'
+        )
+
+        # Handle GDAL/GPKG driver 'VERBOSE' chatter
+        warnings.filterwarnings(
+            action='ignore',
+            message=".*driver GPKG does not support open option VERBOSE.*",
+            category=RuntimeWarning,
+            # module='pyogrio'
+        )
+
+        yield
