@@ -4,6 +4,7 @@ Test the module :mod:`~pyhelpers.store.loaders`.
 
 import importlib.resources
 import logging
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -165,25 +166,24 @@ def test_load_csr_matrix(capfd):
 def test_load_data(file_ext, engine, capfd, caplog):
     original_data = example_dataframe()
 
-    path_to_file_ = importlib.resources.files("tests").joinpath("data", f"dat{file_ext}")
+    path_to_file = Path(__file__).resolve().parents[1] / "data" / f"dat{file_ext}"
 
-    with importlib.resources.as_file(path_to_file_) as path_to_file:
-        args = {'path_to_file': path_to_file, 'verbose': True}
-        if file_ext.endswith((".csv", ".xlsx", ".ods", ".feather")):
-            args.update({'index_col': 0})  # noqa
-        elif file_ext.endswith((".json", ".parquet")):
-            args.update({'engine': engine})  # noqa
+    args = {'path_to_file': path_to_file, 'verbose': True}
+    if file_ext.endswith((".csv", ".xlsx", ".ods", ".feather")):
+        args.update({'index_col': 0})  # noqa
+    elif file_ext.endswith((".json", ".parquet")):
+        args.update({'engine': engine})  # noqa
 
-        if file_ext.endswith((".parquet", ".geoparquet")) and engine is not None:
-            with pytest.warns(UserWarning):
-                retrieved_data = load_data(**args)
-        else:
+    if file_ext.endswith((".parquet", ".geoparquet")) and engine is not None:
+        with pytest.warns(UserWarning):
             retrieved_data = load_data(**args)
+    else:
+        retrieved_data = load_data(**args)
 
-        out, _ = capfd.readouterr()
+    out, _ = capfd.readouterr()
 
-        assert f"Loading {_add_slashes(_check_relative_pathname(path_to_file))} ... " in out
-        assert "Done." in out
+    assert f"Loading {_add_slashes(_check_relative_pathname(path_to_file))} ... " in out
+    assert "Done." in out
 
     if file_ext.endswith((".xlsx", ".ods")):
         assert isinstance(retrieved_data, dict)
@@ -200,9 +200,11 @@ def test_load_data(file_ext, engine, capfd, caplog):
         #      ".csv", ".feather"))
         assert retrieved_data.astype(float).equals(original_data)
 
-    with importlib.resources.as_file(path_to_file_) as path_to_file:
+    if file_ext == ".gpkg":
+        with pytest.warns(RuntimeWarning, match=r"does not support open option TEST_ARG"):
+            _ = load_data(path_to_file=path_to_file, suppress_warnings=False, test_arg=True)
+    else:
         _ = load_data(path_to_file=path_to_file, verbose=True, test_arg=True)
-
         out, _ = capfd.readouterr()
         if file_ext != ".gpkg":
             assert "'test_arg'" in out
