@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pyproj
 
 from .utils import _check_loading_path, _is_parquet_geospatial, _resolve_json_engine, _set_index, \
     suppress_gpkg_warnings
@@ -696,13 +697,13 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
 
 
 @_lazy_check_dependencies('fiona', 'shapely', gpd='geopandas')
-def _read_gpkg_file(filepath, engine='geopandas', suppress_warnings=True, target_crs=None,
+def _read_gpkg_file(path_to_file, engine='geopandas', suppress_warnings=True, target_crs=None,
                     **kwargs):
     """
     Internal helper to read a single layer from a GeoPackage using a specified engine.
 
-    :param filepath: Path to the GeoPackage file.
-    :type filepath: str | pathlib.Path
+    :param path_to_file: Path to the GeoPackage file.
+    :type path_to_file: str | pathlib.Path
     :param engine: The parsing engine (``'geopandas'``/``'gpd'`` or ``'fiona'``).
     :type engine: str
     :param suppress_warnings: Whether to ignore non-critical OGR warnings.
@@ -724,21 +725,20 @@ def _read_gpkg_file(filepath, engine='geopandas', suppress_warnings=True, target
     if engine_ in {'geopandas', 'gpd'}:
         if suppress_warnings:
             with suppress_gpkg_warnings():
-                gdf = gpd.read_file(filepath, **kwargs)  # noqa
+                gdf = gpd.read_file(path_to_file, **kwargs)  # noqa
         else:
-            gdf = gpd.read_file(filepath, **kwargs)  # noqa
+            gdf = gpd.read_file(path_to_file, **kwargs)  # noqa
 
     elif engine_ == 'fiona':
-        features = []
-
-        # noinspection PyUnresolvedReferences
-        with fiona.open(filepath, **kwargs) as f:
+        with fiona.open(path_to_file, **kwargs) as f:  # noqa
             crs = f.crs
+            # noinspection PyUnresolvedReferences
             features = [
                 {
-                    'type': 'Feature',
-                    'properties': dict(feat['properties']),
-                    'geometry': shapely.geometry.shape(feat['geometry'])  # noqa
+                    # 'type': 'Feature',
+                    'properties': dict(feat.get('properties', {})),
+                    'geometry':
+                        shapely.geometry.shape(feat['geometry']) if feat.get('geometry') else None
                 }
                 for feat in f
             ]
@@ -747,14 +747,13 @@ def _read_gpkg_file(filepath, engine='geopandas', suppress_warnings=True, target
         cols = [c for c in gdf.columns if c != 'geometry']
         gdf = gdf[cols + ['geometry']]
 
-    if target_crs and gdf.crs is not None:
+    if target_crs is not None and gdf.crs is not None:
+        target_crs_obj = pyproj.CRS.from_user_input(target_crs)
         # Use equals() to compare the underlying projection parameters
-        if not gdf.crs.equals(target_crs):
-            gdf = gdf.to_crs(crs=target_crs)
+        if not gdf.crs.equals(target_crs_obj):
+            gdf = gdf.to_crs(crs=target_crs_obj)
 
-    data = gdf.fillna(pd.NA).convert_dtypes()
-
-    return data
+    return gdf
 
 
 def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
@@ -786,6 +785,9 @@ def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress
     :raises ValueError: If ``engine`` is not one of the supported options.
     """
 
+    # Pop 'layer' out of kwargs so it doesn't conflict later
+    requested_layer = kwargs.pop('layer', None)
+
     # Retrieve all layer names available in the GeoPackage
     with suppress_gpkg_warnings():
         layers_info = gpd.list_layers(path_to_file)  # noqa
@@ -807,25 +809,30 @@ def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress
 
     # Define metadata parameters to pass to the helper
     common_params = dict(
-        filepath=path_to_file,
+        path_to_file=path_to_file,
         engine=engine,
         target_crs=target_crs,
         suppress_warnings=suppress_warnings,
         verbose=verbose
     )
 
+    # Case A: User explicitly requested a specific layer
+    if requested_layer:
+        return _read_gpkg_file(layer=requested_layer, **common_params, **kwargs)
+
+    # Case B: Multi-layer file
     if len(valid_layers) > 1:  # Load each layer into a dictionary
-        data = {
+        return {
             lyr: _read_gpkg_file(layer=lyr, **common_params, **kwargs)
             for lyr in valid_layers
         }
-    elif len(valid_layers) == 1:  # Load the single layer directly (layer=None or first in list)
-        kwargs['layer'] = valid_layers[0]
-        data = _read_gpkg_file(**common_params, **kwargs)
-    else:  # No layers found
-        data = None
 
-    return data
+    # Case C: Single-layer file
+    if len(valid_layers) == 1:  # Load the single layer directly (layer=None or first in list)
+        return _read_gpkg_file(layer=valid_layers[0], **common_params, **kwargs)
+
+    # Case D: Empty file or no layers found
+    return None
 
 
 def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
