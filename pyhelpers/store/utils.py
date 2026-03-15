@@ -420,6 +420,19 @@ def _resolve_json_engine(func):
     return wrapper
 
 
+def _is_parquet_geospatial(path_to_file, pq_module):
+    """
+    Detects if a file is GeoParquet via metadata or extension.
+    """
+
+    try:
+        parquet_meta = pq_module.read_metadata(path_to_file)
+        return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
+    except Exception:  # noqa
+        file_ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
+        return bool(file_ext == ".geoparquet")
+
+
 @contextlib.contextmanager
 def suppress_gpkg_warnings():
     # noinspection PyShadowingNames

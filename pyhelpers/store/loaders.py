@@ -16,7 +16,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from .utils import _check_loading_path, _resolve_json_engine, _set_index, suppress_gpkg_warnings
+from .utils import _check_loading_path, _is_parquet_geospatial, _resolve_json_engine, _set_index, \
+    suppress_gpkg_warnings
 from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
@@ -535,19 +536,6 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
 
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
-
-
-def _is_parquet_geospatial(file_path, pq_module):
-    """
-    Detects if a file is GeoParquet via metadata or extension.
-    """
-
-    try:
-        parquet_meta = pq_module.read_metadata(file_path)
-        return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
-    except Exception:  # noqa
-        file_ext = "".join(pathlib.Path(file_path).suffixes).lower()
-        return bool(file_ext == ".geoparquet")
 
 
 def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
@@ -1090,11 +1078,11 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     if ext.endswith((".fea", ".feather")):
         return load_feather(**load_params)
 
-    if ext.endswith(".npz"):
-        return load_csr_matrix(**load_params)
-
     if ext.endswith((".parquet", ".geoparquet")):
         return load_parquet(**load_params)
+
+    if ext.endswith(".npz"):
+        return load_csr_matrix(**load_params)
 
     if warn_err:
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
