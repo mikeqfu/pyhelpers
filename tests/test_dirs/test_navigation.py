@@ -5,7 +5,6 @@ Tests the :mod:`~pyhelpers.dirs.navigation` submodule.
 import pathlib
 import shutil
 import sys
-import tempfile
 
 import pytest
 
@@ -14,7 +13,7 @@ from pyhelpers.dirs.validation import is_dir, normalize_pathname
 
 
 @pytest.mark.parametrize('cwd', [None, ".", os.path.join(os.sep, "some_directory")])
-def test_cd(capfd, cwd):
+def test_cd(capfd, cwd, tmp_path):
     current_wd = cd(cwd=cwd, back_check=True, normalized=False)
     if cwd in {None, "."}:
         assert current_wd == os.getcwd()
@@ -25,8 +24,20 @@ def test_cd(capfd, cwd):
         path_to_tests_dir = cd(subdir)
         assert os.path.relpath(path_to_tests_dir).replace(os.sep, "/") == "tests"
 
-    temp = tempfile.TemporaryDirectory()
-    temp_dir = cd(os.path.join(temp.name, 'test_dir'), mkdir=True)
+    # Test that None values in subdir are ignored
+    path_with_none = cd(None)
+    assert path_with_none == normalize_pathname(os.getcwd())
+
+    path_with_none_mixed = cd("test1", None, "test2")
+    expected_path = normalize_pathname(os.path.join(os.getcwd(), "test1", "test2"))
+    assert path_with_none_mixed == expected_path
+
+    path_with_multiple_nones = cd(None, None, "test1", None)
+    expected_path = normalize_pathname(os.path.join(os.getcwd(), "test1"))
+    assert path_with_multiple_nones == expected_path
+
+    # Use tmp_path instead of tempfile.TemporaryDirectory()
+    temp_dir = cd(str(tmp_path / 'test_dir'), mkdir=True)
     assert os.path.isdir(temp_dir)
 
     temp_dir_ = cd(temp_dir, 'test.dir', mkdir=True)
@@ -36,16 +47,12 @@ def test_cd(capfd, cwd):
     init_cwd = cd()
 
     # Change the current working directory
-    new_cwd = os.path.join(".", "tests", "new_cwd")
+    new_cwd = str(tmp_path / "new_cwd")
     os.makedirs(new_cwd, exist_ok=True)
     os.chdir(new_cwd)
 
     path_to_tests = cd("test1")
     assert os.path.relpath(path_to_tests).replace(os.sep, "/") == "test1"
-
-    # Change again the current working directory
-    new_cwd_ = tempfile.TemporaryDirectory()
-    os.chdir(new_cwd_.name)
 
     # Get the full path to a folder named "tests"
     path_to_tests = cd("tests")
@@ -55,7 +62,6 @@ def test_cd(capfd, cwd):
     assert path_to_tests_ == normalize_pathname(os.path.join(os.getcwd(), "test1", "test2"))
 
     os.chdir(init_cwd)  # Restore the initial working directory
-    shutil.rmtree(new_cwd)
 
 
 def test_cdd():
