@@ -14,7 +14,8 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
     Specifies the pathname of a directory (or file).
 
     :param subdir: Name of a directory or directories (and/or a filename).
-    :type subdir: str | os.PathLike | bytes
+        ``None`` values are ignored.
+    :type subdir: str | os.PathLike | bytes | None
     :param mkdir: Whether to create the directory; defaults to ``False``.
     :type mkdir: bool
     :param cwd: Current working directory; defaults to ``None``.
@@ -38,6 +39,8 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
         >>> current_wd = cd()  # Current working directory
         >>> os.path.relpath(current_wd)
         '.'
+        >>> os.path.relpath(cd(None))
+        '.'
         >>> # The directory will be created if it does not exist
         >>> path_to_tests_dir = cd("tests")
         >>> os.path.relpath(path_to_tests_dir)
@@ -60,12 +63,15 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
         while not os.path.exists(path) and path != os.path.sep:
             path = os.path.dirname(path)
 
-    for x in subdir:
-        x = x.decode() if isinstance(x, bytes) else str(x)
-        if x == "..":
+    for f in subdir:
+        if f is None:
+            continue
+
+        f = f.decode() if isinstance(f, bytes) else str(f)
+        if f == "..":
             path = os.path.dirname(path)
         else:
-            path = os.path.join(path, re.sub(r"[\\/]+", re.escape(os.path.sep), x))
+            path = os.path.join(path, re.sub(r"[\\/]+", re.escape(os.path.sep), f))
 
     if mkdir:
         path_to_file, ext = os.path.splitext(path)
