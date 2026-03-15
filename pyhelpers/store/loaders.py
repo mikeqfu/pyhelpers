@@ -879,39 +879,40 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
                 0.81357508]])
     """
 
+    load_params = {
+        'path_to_file': path_to_file,
+        'verbose': verbose,
+        'prt_kwargs': prt_kwargs,
+        'raise_error': raise_error,
+        **kwargs
+    }
+
     ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    kwargs.update(
-        {'path_to_file': path_to_file,
-         'verbose': verbose,
-         'prt_kwargs': prt_kwargs,
-         'raise_error': raise_error}
-    )
+    if ext.endswith(('.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
+                     '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz')):
+        return load_pickle(**load_params)
 
-    if ext in {'.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
-               '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz'}:
-        return load_pickle(**kwargs)
+    if ext.endswith((".csv", ".txt")):
+        return load_csv(**load_params)
 
-    if ext in {".csv", ".txt"}:
-        return load_csv(**kwargs)
+    if ext.endswith((".xlsx", ".xls", ".ods")):
+        return load_spreadsheets(**load_params)
 
-    if ext in {".xlsx", ".xls", ".ods"}:
-        return load_spreadsheets(**kwargs)
+    if ext.endswith(".json"):
+        return load_json(**load_params)
 
-    if ext == ".json":
-        return load_json(**kwargs)
+    if ext.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
+        return load_joblib(**load_params)
 
-    if ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
-        return load_joblib(**kwargs)
+    if ext.endswith((".fea", ".feather")):
+        return load_feather(**load_params)
 
-    if ext in {".fea", ".feather"}:
-        return load_feather(**kwargs)
+    if ext.endswith(".npz"):
+        return load_csr_matrix(**load_params)
 
-    if ext == ".npz":
-        return load_csr_matrix(**kwargs)
-
-    if ext in {".parquet", ".geoparquet"}:
-        return load_parquet(**kwargs)
+    if ext.endswith((".parquet", ".geoparquet")):
+        return load_parquet(**load_params)
 
     if warn_err:
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
