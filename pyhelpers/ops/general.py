@@ -284,7 +284,7 @@ def func_running_time(func):
     return inner
 
 
-def benchmark_functions(func_map, test_value, iterations=10_000):
+def benchmark_functions(func_map, test_value, iterations=10_000, verbose=True):
     # noinspection PyShadowingNames,PyUnresolvedReferences
     """
     Compares the execution time of multiple functions using a single test value.
@@ -301,6 +301,8 @@ def benchmark_functions(func_map, test_value, iterations=10_000):
     :type test_value: typing.Any
     :param iterations: Number of times to execute each function. Defaults to ``10_000``.
     :type iterations: int
+    :param verbose: Whether to print results to console. Defaults to ``True``.
+    :type verbose: bool
     :return: A dictionary mapping function names to their total execution time (in seconds).
     :rtype: dict[str, float]
 
@@ -317,6 +319,11 @@ def benchmark_functions(func_map, test_value, iterations=10_000):
         list_comp | 0.201340        | 0.020134
         list_cast | 0.113083        | 0.011308
         {'list_comp': 0.20134030003100634, 'list_cast': 0.11308330000611022}
+
+        >>> # Without console output (just get results)
+        >>> results = benchmark_functions(func_map, test_value=1_000, verbose=False)
+        >>> results
+        {'list_comp': 0.20846570003777742, 'list_cast': 0.10316660004900768}
     """
 
     # Validate inputs
@@ -326,12 +333,15 @@ def benchmark_functions(func_map, test_value, iterations=10_000):
         raise TypeError("All values in `func_map` must be callable")
     if not isinstance(iterations, int) or iterations < 1:
         raise ValueError("`iterations` must be a positive integer")
+    if not isinstance(verbose, bool):
+        raise TypeError("`verbose` must be a boolean")
 
     results = {}
     max_name_len = max((len(name) for name in func_map.keys()), default=10)
 
-    print(f"{'Method':<{max_name_len}} | {'Total Time (s)':<15} | {'Avg Time (ms)':<13}")
-    print("-" * (max_name_len + 42))
+    if verbose:
+        print(f"{'Method':<{max_name_len}} | {'Total Time (s)':<15} | {'Avg Time (ms)':<13}")
+        print("-" * (max_name_len + 42))
 
     for name, func in func_map.items():
         timer = timeit.Timer(lambda f=func: f(test_value))
@@ -340,9 +350,11 @@ def benchmark_functions(func_map, test_value, iterations=10_000):
             execution_time = timer.timeit(number=iterations)
             avg_time_ms = (execution_time / iterations) * 1000
             results[name] = execution_time
-            print(f"{name:<{max_name_len}} | {execution_time:<15.6f} | {avg_time_ms:<13.6f}")
+            if verbose:
+                print(f"{name:<{max_name_len}} | {execution_time:<15.6f} | {avg_time_ms:<13.6f}")
         except Exception as e:
-            print(f"{name:<{max_name_len}} | Failed: {str(e)}")
+            if verbose:
+                print(f"{name:<{max_name_len}} | Failed: {str(e)}")
 
     return results
 
