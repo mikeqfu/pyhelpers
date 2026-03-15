@@ -757,7 +757,7 @@ def _read_gpkg_file(path_to_file, engine='geopandas', suppress_warnings=True, ta
 
 
 def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
-                     verbose=False, **kwargs):
+                     **kwargs):
     """
     Reads a GeoPackage file and returns data for all layers.
 
@@ -773,8 +773,6 @@ def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress
     :param suppress_warnings: Whether to hide underlying OGR or engine warnings.
         Defaults to ``True``.
     :type suppress_warnings: bool
-    :param verbose: Whether to print progress or layer information. Defaults to ``False``.
-    :type verbose: bool | int
     :param kwargs: Additional parameters passed to `geopandas.read_file` or `fiona.open`,
         depending on ``engine`` (e.g. ``bbox``, ``rows``, or ``where``).
     :return: A GeoDataFrame (single layer), or a dictionary mapping layer names to GeoDataFrames,
@@ -813,7 +811,6 @@ def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress
         engine=engine,
         target_crs=target_crs,
         suppress_warnings=suppress_warnings,
-        verbose=verbose
     )
 
     # Case A: User explicitly requested a specific layer
@@ -885,7 +882,6 @@ def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_
             engine=engine,
             target_crs=target_crs,
             suppress_warnings=suppress_warnings,
-            verbose=verbose,
             **kwargs
         )
 
