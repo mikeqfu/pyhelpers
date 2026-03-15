@@ -802,6 +802,79 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+def save_geopackage(data, path_to_file, driver='GPKG', layer_name=None, mode='w', verbose=False,
+                    print_kwargs=None, raise_error=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Saves a GeoDataFrame or a dictionary of GeoDataFrames to a GeoPackage file.
+
+    This function handles both single-layer and multi-layer datasets. It uses
+    a file-level reset for 'w' mode to prevent SQLite 'ghost layer' artifacts.
+
+    :param data: Spatial data to save.
+    :type data: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame]
+    :param path_to_file: Destination path for the ``.gpkg`` file.
+    :type path_to_file: str | pathlib.Path
+    :param driver: OGR driver to use. Defaults to ``'GPKG'``.
+    :type driver: str
+    :param layer_name: Name for the layer (used if data is a GeoDataFrame).
+        Defaults to filename stem.
+    :type layer_name: str | None
+    :param mode: File write mode:
+
+        - ``'w'`` (default): Overwrite. Deletes existing file and writes fresh.
+        - ``'a'``: Append. Adds layers to existing file.
+
+    :type mode: str
+    :param verbose: If ``True``, prints status messages. Defaults to ``False``.
+    :type verbose: bool
+    :param print_kwargs: Formatting options for the path printer. Defaults to ``None``.
+    :type print_kwargs: dict | None
+    :param raise_error: If ``True``, re-raises exceptions. Defaults to ``False``.
+    :type raise_error: bool
+    :param kwargs: Additional arguments passed to ``geopandas.to_file``.
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_geopackage
+        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import shapely
+        >>> import geopandas as gpd
+        >>> gpkg_dat_ = example_dataframe()  # Get an example dataframe
+        >>> gpkg_dat = gpkg_dat_.copy()
+        >>> gpkg_dat['geometry'] = gpkg_dat_.apply(
+        ...     lambda x: shapely.geometry.Point([x.Longitude, x.Latitude]), axis=1)
+        >>> gpkg_dat = gpd.GeoDataFrame(gpkg_dat, crs=4326)
+        >>> gpkg_pathname = cd("tests/data", "dat.gpkg")
+        >>> save_geopackage(gpkg_dat, gpkg_pathname, verbose=True)
+        Saving "dat.gpkg" to "./tests/data/" ... Done.
+    """
+
+    file_path, _, _ = _check_saving_path(
+        path_to_file=path_to_file, verbose=verbose, ret_info=True, **(print_kwargs or {}))
+
+    # Handle file-level overwrite to ensure a clean SQLite container
+    if mode == 'w' and file_path.is_file():
+        file_path.unlink()
+
+    try:
+        if isinstance(data, dict):
+            for i, (lyr_name, gpkg_dat) in enumerate(data.items()):
+                # Save each dict entry as a separate layer to the multi-layer GeoPackage
+                kwargs.update({'mode': 'a' if (i > 0 or mode == 'a') else 'w', 'layer': lyr_name})
+                gpkg_dat.to_file(file_path, driver=driver, **kwargs)
+        else:
+            kwargs.update(dict(layer=layer_name or file_path.stem))
+            data.to_file(file_path, mode=mode, driver=driver, **kwargs)  # noqa
+
+        if verbose:
+            print("Done.")
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
 def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, raise_error=False,
                     print_kwargs=None):
     # noinspection PyShadowingNames
@@ -1413,7 +1486,8 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
     else:
         if err_warning:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(f'\n  The file format/extension "{ext}" is not recognized.')
+            logging.warning(
+                f'\n  The file format/extension "{ext}" is not recognized by `save_data()`.')
 
         if _confirmed("Save the data as a pickle file instead\n?", confirmation_required):
             save_pickle(**save_params)
