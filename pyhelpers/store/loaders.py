@@ -538,7 +538,7 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
+def _load_parquet(path_to_file, is_geospatial, engine, gpd_module, **kwargs):
     """
     Attempts to load data using the preferred high-level library (Pandas/GeoPandas).
     Handles specific edge cases for the 'fastparquet' engine.
@@ -548,9 +548,9 @@ def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
     warn_message = ""
 
     if is_geospatial:
-        return gpd_module.read_parquet(file_path, **kwargs), warn_message
+        return gpd_module.read_parquet(path_to_file, **kwargs), warn_message
 
-    data = pd.read_parquet(file_path, engine=actual_engine, **kwargs)
+    data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
 
     # Fix for potential 'fastparquet' issue where index is loaded as a column with nulls
     if actual_engine == 'fastparquet' and data.index.get_level_values(0).isnull().all():
@@ -565,12 +565,12 @@ def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
                 f"retried and resolved using `pyarrow`.")
             kwargs_copy = kwargs.copy()
             kwargs_copy['engine'] = 'pyarrow'
-            data = pd.read_parquet(file_path, **kwargs_copy)
+            data = pd.read_parquet(path_to_file, **kwargs_copy)
 
     return data, warn_message
 
 
-def _load_parquet_fallback(file_path, pq_module, kwargs):
+def _load_parquet_fallback(path_to_file, pq_module, kwargs):
     """
     Last-resort loader using PyArrow directly.
     Returns a DataFrame if possible, otherwise a PyArrow Table.
@@ -580,7 +580,7 @@ def _load_parquet_fallback(file_path, pq_module, kwargs):
     fallback_kwargs = kwargs.copy()
     fallback_kwargs.pop('engine', None)
 
-    table = pq_module.read_table(file_path, **fallback_kwargs)
+    table = pq_module.read_table(path_to_file, **fallback_kwargs)
     try:
         return table.to_pandas()
     except Exception:  # noqa
@@ -665,7 +665,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         try:
             # Try the high-level loaders (includes the internal fastparquet fix)
             data, warn_message = _load_parquet(
-                file_path=path_to_file,
+                path_to_file=path_to_file,
                 is_geospatial=is_geospatial,
                 engine=engine,
                 gpd_module=gpd,  # noqa
@@ -676,7 +676,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
 
             data = _load_parquet_fallback(
-                file_path=path_to_file,
+                path_to_file=path_to_file,
                 pq_module=pq,  # noqa
                 kwargs=kwargs
             )  # noqa
