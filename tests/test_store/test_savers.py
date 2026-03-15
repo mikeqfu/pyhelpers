@@ -13,10 +13,10 @@ import numpy as np
 import pytest
 
 from pyhelpers._cache import example_dataframe
-from pyhelpers.store.loaders import load_parquet, load_pickle
+from pyhelpers.store.loaders import load_geopackage, load_parquet, load_pickle
 from pyhelpers.store.savers import save_data, save_feather, save_fig, save_figure, \
-    save_html_as_pdf, save_joblib, save_json, save_parquet, save_pickle, save_spreadsheet, \
-    save_spreadsheets, save_svg_as_emf
+    save_geopackage, save_html_as_pdf, save_joblib, save_json, save_parquet, save_pickle, \
+    save_spreadsheet, save_spreadsheets, save_svg_as_emf
 
 
 def _test_save(func, dat, file_ext, capfd):
@@ -220,6 +220,52 @@ def test_save_parquet(engine, tmp_path, capfd):
 
     with pytest.raises(Exception):
         save_parquet(unserializable_dat, path_to_file=path_to_file, raise_error=True)  # noqa
+
+
+def test_save_geopackage(tmp_path, capfd):
+    # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
+    import geopandas as gpd
+    from shapely.geometry import Point
+
+    # 1. Setup mock data
+    d = {'col1': ['name1'], 'geometry': [Point(1, 2)]}
+    gdf1 = gpd.GeoDataFrame(d, crs="EPSG:4326")
+
+    d2 = {'col1': ['name2'], 'geometry': [Point(3, 4)]}
+    gdf2 = gpd.GeoDataFrame(d2, crs="EPSG:4326")
+
+    test_gpkg_path = tmp_path / "test.gpkg"
+
+    # 2. Test Single Layer Saving
+    save_geopackage(gdf1, test_gpkg_path, layer_name="layer1", verbose=True)
+    out, _ = capfd.readouterr()
+    assert test_gpkg_path.is_file()
+    assert "Saving" in out and "Done." in out
+
+    loaded = load_geopackage(test_gpkg_path, verbose=True)
+    assert isinstance(loaded, gpd.GeoDataFrame)
+    assert len(loaded) == 1
+
+    # 3. Test Multi-Layer Saving (Dict)
+    data_dict = {"layer1": gdf1, "layer2": gdf2}
+    save_geopackage(data_dict, test_gpkg_path, mode='w', verbose=True)  # Overwrite previous
+
+    loaded_dict = load_geopackage(test_gpkg_path)
+    assert isinstance(loaded_dict, dict)
+    assert set(loaded_dict.keys()) == {"layer1", "layer2"}
+
+    # 4. Test Append Mode ('a')
+    gdf3 = gpd.GeoDataFrame({'col1': ['name3'], 'geometry': [Point(5, 6)]}, crs='EPSG:4326')
+    save_geopackage(gdf3, test_gpkg_path, layer_name="layer3", mode='a', verbose=True)
+
+    final_load = load_geopackage(test_gpkg_path, verbose=True)
+    assert 'layer3' in final_load
+    assert len(final_load.keys()) == 3
+
+    # 5. Test Error Handling
+    if hasattr(gdf1, "invalid"):  # Just to trigger a failure
+        with pytest.raises(Exception):
+            save_geopackage("not_a_gdf", test_gpkg, raise_error=True)  # noqa
 
 
 def test_save_svg_as_emf(tmp_path, capfd):
