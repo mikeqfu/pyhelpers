@@ -87,13 +87,13 @@ def test_benchmark_functions(capfd):
     Test the benchmark_functions utility with valid inputs, error handling, and exceptions.
     """
 
-    # Test 1: Normal operation with valid functions
+    # Test 1: Normal operation with verbose=True
     func_map = {
         'list_comp': lambda x: [i for i in range(x)],
         'list_cast': lambda x: list(range(x))
     }
 
-    results = benchmark_functions(func_map, test_value=100, iterations=100)
+    results = benchmark_functions(func_map, test_value=100, iterations=100, verbose=True)
 
     # Verify results structure
     assert isinstance(results, dict)
@@ -114,28 +114,32 @@ def test_benchmark_functions(capfd):
     assert 'list_comp' in captured.out
     assert 'list_cast' in captured.out
 
-    # Test 2: Error handling - empty func_map
+    # Test 2: With verbose=False (no output)
+    results_silent = benchmark_functions(func_map, test_value=100, iterations=100, verbose=False)
+    captured = capfd.readouterr()
+    assert captured.out == ""  # No output when verbose=False
+    assert results_silent.keys() == results.keys()  # Results should be the same
+
+    # Test 3: Error handling - empty func_map
     with pytest.raises(ValueError, match="`func_map` cannot be empty"):
         benchmark_functions({}, test_value=10)
 
-    # Test 3: Error handling - non-callable values
+    # Test 4: Error handling - non-callable values
     with pytest.raises(TypeError, match="All values in `func_map` must be callable"):
         benchmark_functions({'test': 'not_callable'}, test_value=10)  # noqa
 
-    # Test 4: Error handling - invalid iterations
+    # Test 5: Error handling - invalid iterations
     with pytest.raises(ValueError, match="`iterations` must be a positive integer"):
         benchmark_functions({'test': lambda x: x}, test_value=10, iterations=0)
 
     with pytest.raises(ValueError, match="`iterations` must be a positive integer"):
         benchmark_functions({'test': lambda x: x}, test_value=10, iterations=-1)
 
-    # Test 5: Exception handling in benchmarked functions
-    func_map_with_error = {
-        'valid': lambda x: x * 2,
-        'raises_error': lambda x: 1 / 0  # ZeroDivisionError
-    }
+    # Test 6: Exception handling in benchmarked functions with verbose output
+    func_map_with_error = {'valid': lambda x: x * 2, 'raises_error': lambda x: 1 / 0}
 
-    results_partial = benchmark_functions(func_map_with_error, test_value=10, iterations=10)
+    results_partial = benchmark_functions(
+        func_map_with_error, test_value=10, iterations=10, verbose=True)
 
     # Valid function should be in results
     assert 'valid' in results_partial
