@@ -13,7 +13,10 @@ import numpy as np
 import pytest
 
 from pyhelpers._cache import example_dataframe
-from pyhelpers.store.savers import *
+from pyhelpers.store.loaders import load_parquet, load_pickle
+from pyhelpers.store.savers import save_data, save_feather, save_fig, save_figure, \
+    save_html_as_pdf, save_joblib, save_json, save_parquet, save_pickle, save_spreadsheet, \
+    save_spreadsheets, save_svg_as_emf
 
 
 def _test_save(func, dat, file_ext, capfd):
@@ -331,8 +334,14 @@ def test_save_html_as_pdf(tmp_path, capfd):
 
 
 @pytest.mark.parametrize(
-    'ext', [".pickle", ".csv", ".json", ".joblib", ".feather", ".parquet", ".pdf", ".png", ".bin"])
+    'ext', [
+        ".pickle", ".csv", ".json", ".joblib", ".feather", ".parquet", ".pdf", ".png",
+        ".bin",
+        ".processed.pkl.xz", ".gold.parquet"
+    ]
+)
 def test_save_data(ext, tmp_path, capfd, caplog):
+    # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
     filename = f"test_save_data{ext}"
     path_to_file = tmp_path / filename
 
@@ -361,13 +370,20 @@ def test_save_data(ext, tmp_path, capfd, caplog):
         #                          "`pyhelpers.store.save_data`."
         for record in caplog.records:
             assert record.levelname == 'WARNING'
-        assert "The file format (extension) is not explicitly recognized." in caplog.text
+        assert f'The file format/extension "{ext}" is not recognized.' in caplog.text
 
     save_data(dat, path_to_file=path_to_file, verbose=True, confirmation_required=False)
     out, _ = capfd.readouterr()
     assert f'Updating "{filename}"' in out
     if ext == ".pdf":
         assert "Done." in out
+
+    if ext == ".processed.pkl.xz":
+        retrieved_dat = load_pickle(path_to_file)
+        assert retrieved_dat.equals(dat)
+    elif ext == ".gold.parquet":
+        retrieved_dat = load_parquet(path_to_file)
+        assert retrieved_dat.equals(dat)
 
 
 if __name__ == '__main__':
