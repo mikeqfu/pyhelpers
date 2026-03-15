@@ -1,12 +1,16 @@
-"""Test the module :mod:`~pyhelpers.store`."""
+"""
+Test the module :mod:`~pyhelpers.store.loaders`.
+"""
 
 import importlib.resources
+import logging
 
+import pandas as pd
 import pytest
 import sklearn.linear_model
 
 from pyhelpers._cache import _add_slashes, _check_relative_pathname, example_dataframe
-from pyhelpers.store.loaders import *
+from pyhelpers.store.loaders import load_csr_matrix, load_data, load_parquet, load_spreadsheets
 
 
 def test_load_spreadsheets(capfd):
@@ -96,7 +100,10 @@ def test_load_csr_matrix(capfd):
 @pytest.mark.parametrize(
     'file_ext', [
         ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2",
-        ".csv", ".xlsx", ".ods", ".json", ".feather", ".joblib", ".parquet"])
+        ".csv", ".xlsx", ".ods", ".json", ".feather", ".joblib", ".parquet",
+        ".processed.pkl.xz", ".gold.parquet"
+    ]
+)
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
 def test_load_data(file_ext, engine, capfd, caplog):
     original_data = example_dataframe()
@@ -105,12 +112,12 @@ def test_load_data(file_ext, engine, capfd, caplog):
 
     with importlib.resources.as_file(path_to_file_) as path_to_file:
         args = {'path_to_file': path_to_file, 'verbose': True}
-        if file_ext in {".csv", ".xlsx", ".ods", ".feather"}:
+        if file_ext.endswith((".csv", ".xlsx", ".ods", ".feather")):
             args.update({'index_col': 0})  # noqa
-        elif file_ext in {".json", ".parquet"}:
+        elif file_ext.endswith((".json", ".parquet")):
             args.update({'engine': engine})  # noqa
 
-        if file_ext == ".parquet" and engine is not None:
+        if file_ext.endswith((".parquet", ".geoparquet")) and engine is not None:
             with pytest.warns(UserWarning):
                 retrieved_data = load_data(**args)
         else:
@@ -128,7 +135,10 @@ def test_load_data(file_ext, engine, capfd, caplog):
         assert list(retrieved_data.keys()) == original_data.index.to_list()
     elif file_ext == ".joblib":
         assert isinstance(retrieved_data, sklearn.linear_model.LinearRegression)
-    else:  # file_ext in {".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2", ".csv", ".feather"}
+    else:
+        # file_ext.endswith(
+        #     (".pickle", ".pickle.gz", ".pickle.xz", ".pickle.bz2", ".processed.pkl.xz",
+        #      ".csv", ".feather"))
         assert retrieved_data.astype(float).equals(original_data)
 
     with importlib.resources.as_file(path_to_file_) as path_to_file:

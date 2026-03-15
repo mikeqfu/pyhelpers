@@ -75,13 +75,13 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
 
     try:
-        if ext in {".pkl.gz", ".pickle.gz"}:
+        if ext.endswith((".pkl.gz", ".pickle.gz")):
             with gzip.open(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
-        elif ext in {".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma"}:
+        elif ext.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
             with lzma.open(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
-        elif ext in {".pkl.bz2", ".pickle.bz2"}:
+        elif ext.endswith((".pkl.bz2", ".pickle.bz2")):
             with bz2.BZ2File(file_path, mode='wb') as f:
                 pickle.dump(data, f, **kwargs)  # noqa
         else:
@@ -182,30 +182,45 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
     if raise_error:
         assert ext in valid_extensions, f"File extension must be one of {valid_extensions}."
 
-    try:  # to save the data
-        if ext in {".csv", ".txt", ".odt"}:  # a .csv file
-            kwargs.update({'path_or_buf': file_path, 'sep': delimiter, 'index': index})
-            data.to_csv(**kwargs)
+    try:
+        if ext.endswith((".csv", ".txt", ".odt")):  # Handle CSV/Text formats
+            csv_kwargs = {
+                'path_or_buf': file_path,
+                'sep': delimiter,
+                'index': index,
+                **kwargs  # User overrides defaults
+            }
+            data.to_csv(**csv_kwargs)
 
-        else:
-            if writer_kwargs is None:
-                writer_kwargs = {'path': file_path}
-            else:
-                writer_kwargs.update({'path': file_path})
-
-            if ext in {".xls", ".xlsx"}:  # a .xlsx file or a .xls file
-                writer_kwargs.update({'engine': 'openpyxl'})
+        else:  # Handle Excel/Spreadsheet formats
+            # Determine the engine based on extension
+            if ext.endswith((".xls", ".xlsx")):
+                engine_ = 'openpyxl'
             elif ext == ".ods":
-                writer_kwargs.update({'engine': 'odf'})  # kwargs.update({'engine': None})
+                engine_ = 'odf'
             else:
-                writer_kwargs.update({'engine': engine})
+                engine_ = engine
 
-            with pd.ExcelWriter(**writer_kwargs) as writer:
-                kwargs.update({'excel_writer': writer, 'index': index, 'sheet_name': sheet_name})
-                data.to_excel(**kwargs)
+            # Prepare Writer arguments
+            writer_base = writer_kwargs or {}
+            final_writer_kwargs = {
+                'path': file_path,
+                'engine': engine_,
+                **writer_base
+            }
+
+            with pd.ExcelWriter(**final_writer_kwargs) as writer:
+                excel_kwargs = {
+                    'excel_writer': writer,
+                    'index': index,
+                    'sheet_name': sheet_name,
+                    **kwargs
+                }
+                data.to_excel(**excel_kwargs)
 
                 if autofit_column_width:
-                    _autofit_column_width(writer, writer_kwargs, **kwargs)
+                    # Pass the final dictionaries to avoid re-calculation
+                    _autofit_column_width(writer, final_writer_kwargs, **excel_kwargs)
 
         if verbose:
             print("Done.")
@@ -1354,7 +1369,7 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
 
     ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    params = {
+    save_params = {
         'data': data,
         'path_to_file': path_to_file,
         'verbose': verbose,
@@ -1362,43 +1377,43 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
         **kwargs
     }
 
-    if ext in {".pkl", ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
-               ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2"}:
-        save_pickle(**params)
+    if ext.endswith((".pkl", ".pkl.gz", ".pkl.xz", ".pkl.lzma", ".pkl.bz2",
+                     ".pickle", ".pickle.gz", ".pickle.xz", ".pickle.lzma", ".pickle.bz2")):
+        save_pickle(**save_params)
 
-    elif ext in {".csv", ".xlsx", ".xls", ".txt", ".ods"}:
+    elif ext.endswith((".csv", ".xlsx", ".xls", ".txt", ".ods")):
         try:
-            save_spreadsheet(**params)
+            save_spreadsheet(**save_params)
         except Exception:  # noqa
-            save_spreadsheets(**params)
+            save_spreadsheets(**save_params)
 
     elif ext == ".json":
-        save_json(**params)
+        save_json(**save_params)
 
-    elif ext in {".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"}:
-        save_joblib(**params)
+    elif ext.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
+        save_joblib(**save_params)
 
-    elif ext in {".fea", ".feather"}:
-        save_feather(**params)
+    elif ext.endswith((".fea", ".feather")):
+        save_feather(**save_params)
 
-    elif ext in {".parquet", ".geoparquet"}:
-        save_parquet(**params)
+    elif ext.endswith((".parquet", ".geoparquet")):
+        save_parquet(**save_params)
 
     elif ext == ".pdf":
         data_module = getattr(getattr(data, '__class__', {}), '__module__', '')
         if any(m in data_module for m in ('matplotlib', 'seaborn')):
-            save_figure(**params)
+            save_figure(**save_params)
         else:
-            save_html_as_pdf(**params)
+            save_html_as_pdf(**save_params)
 
-    elif ext in {'.eps', '.jpeg', '.jpg', '.pgf', '.png', '.ps',
-                 '.raw', '.rgba', '.svg', '.svgz', '.tif', '.tiff'}:
-        save_figure(**params)
+    elif ext.endswith((".eps", ".jpeg", ".jpg", ".pgf", ".png", ".ps",
+                       ".raw", ".rgba", ".svg", ".svgz", ".tif", ".tiff")):
+        save_figure(**save_params)
 
     else:
         if err_warning:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning("\n  The file format (extension) is not explicitly recognized.")
+            logging.warning(f'\n  The file format/extension "{ext}" is not recognized.')
 
         if _confirmed("Save the data as a pickle file instead\n?", confirmation_required):
-            save_pickle(**params)
+            save_pickle(**save_params)
