@@ -854,6 +854,20 @@ def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_
     :return: A GeoDataFrame for single-layer files, or a dictionary of
         {layer_name: GeoDataFrame} for multi-layer files.
     :rtype: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame] | None
+
+    **Examples**::
+
+        >>> from pyhelpers.store import load_geopackage
+        >>> from pyhelpers.dirs import cd
+        >>> gpkg_pathname = cd("tests/data", "dat.gpkg")
+        >>> gpkg_dat = load_geopackage(gpkg_pathname, verbose=True)
+        Loading "./tests/data/dat.gpkg" ... Done.
+        >>> gpkg_dat
+                 City  Longitude   Latitude                   geometry
+        0      London  -0.127647  51.507322  POINT (-0.12765 51.50732)
+        1  Birmingham  -1.902691  52.479699   POINT (-1.90269 52.4797)
+        2  Manchester  -2.245115  53.479489  POINT (-2.24511 53.47949)
+        3       Leeds  -1.543794  53.797418  POINT (-1.54379 53.79742)
     """
 
     _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
@@ -1081,12 +1095,15 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     if ext.endswith((".parquet", ".geoparquet")):
         return load_parquet(**load_params)
 
+    if ext.endswith((".gpkg", ".geopackage")):
+        return load_geopackage(**load_params)
+
     if ext.endswith(".npz"):
         return load_csr_matrix(**load_params)
 
     if warn_err:
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.warning(
-            "\n  The specified file format (extension) is not recognisable by `load_data()`.")
+            f'\n  The file format/extension "{ext}" is not recognized by `load_data()`.')
 
     return None
