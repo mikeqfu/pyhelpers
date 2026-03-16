@@ -4,6 +4,7 @@ Utilities for loading data of various formats.
 
 import bz2
 import csv
+import functools
 import gzip
 import inspect
 import logging
@@ -67,16 +68,17 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    file_path, _, file_ext = _check_loading_path(
-        path_to_file=path_to_file, verbose=verbose, ret_info=True, **(prt_kwargs or {}))
+    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         # Determine the opener based on extension
-        if file_ext.endswith((".pkl.gz", ".pkl.gzip", ".pickle.gz", ".pickle.gzip")):
+        path_str = str(path_to_file).lower()
+
+        if path_str.endswith((".pkl.gz", ".pkl.gzip", ".pickle.gz", ".pickle.gzip")):
             opener = gzip.open
-        elif file_ext.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
+        elif path_str.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
             opener = lzma.open
-        elif file_ext.endswith((".pkl.bz2", ".pickle.bz2")):
+        elif path_str.endswith((".pkl.bz2", ".pickle.bz2")):
             opener = bz2.open
         else:
             opener = open
@@ -956,14 +958,60 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
+@functools.lru_cache(maxsize=64)
+def get_loader(file_ext):
+    """
+    Finds the appropriate loader function based on a file extension.
+
+    This function uses an LRU cache to ensure that once an extension is mapped
+    to a loader, subsequent lookups are nearly instantaneous (``O(1)``).
+
+    :param file_ext: The file extension string (e.g. ``".pickle.gz"`` or ``".parquet"``).
+    :type file_ext: str
+    :return: The loader function if a match is found; otherwise, ``None``.
+    :rtype: typing.Callable | None
+
+    .. note::
+
+        **Logic**: The mapping follows a specific order where nested extensions (e.g. ``".pkl.gz"``)
+        are prioritized over general compression extensions (e.g. ``".gz"``) to ensure the
+        specialized loader is selected.
+
+    **Examples**::
+
+        >>> from pyhelpers.store import get_loader
+        >>> get_loader(".parquet").__name__
+        'load_parquet'
+        >>> get_loader(".pkl.gz").__name__
+        'load_pickle'
+        >>> get_loader(".gz").__name__
+        'load_joblib'
+    """
+
+    _mapping = {
+        ('.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.gzip', '.pickle.lzma', '.pickle.xz',
+         '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.gzip', '.pkl.lzma', '.pkl.xz'): load_pickle,
+        ('.csv', '.txt'): load_csv,
+        (".xlsx", ".xls", ".ods"): load_spreadsheets,
+        (".json", ): load_json,
+        (".fea", ".feather"): load_feather,
+        (".parquet", ".geoparquet"): load_parquet,
+        (".gpkg", ".geopackage"): load_geopackage,
+        (".npz", ): load_csr_matrix,
+        (".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"): load_joblib,
+    }
+
+    return next((func for ext, func in _mapping.items() if file_ext.endswith(ext)), None)
+
+
 def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
     Loads data from a file.
 
     :param path_to_file: Pathname of the file; supported formats include
-        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_ and
-        `Parquet`_.
+        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_,
+        `Parquet`_ and `GeoPackage`_.
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information in console as the function runs;
         defaults to ``False``.
@@ -983,8 +1031,9 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         :func:`~pyhelpers.store.load_spreadsheets`,
         :func:`~pyhelpers.store.load_json`,
         :func:`~pyhelpers.store.load_joblib`,
-        :func:`~pyhelpers.store.load_feather`, or
-        :func:`~pyhelpers.store.load_parquet`.
+        :func:`~pyhelpers.store.load_feather`,
+        :func:`~pyhelpers.store.load_parquet`, or
+        :func:`~pyhelpers.store.load_geopackage`.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
 
@@ -995,6 +1044,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
     .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
+    .. _`GeoPackage`: https://www.geopackage.org/
 
     .. note::
 
@@ -1047,62 +1097,26 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         >>> joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "./tests/data/dat.joblib" ... Done.
         >>> joblib_dat
-        array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
-                0.00469548],
-               [0.67781654, 0.27000797, 0.73519402, ..., 0.25435648, 0.05802916,
-                0.43441663],
-               [0.31179588, 0.69634349, 0.37775184, ..., 0.86219152, 0.97291949,
-                0.96083466],
-               ...,
-               [0.89111234, 0.26867428, 0.84028499, ..., 0.5736796 , 0.73729114,
-                0.22519844],
-               [0.26969792, 0.73882539, 0.80714479, ..., 0.94836806, 0.88130699,
-                0.1419334 ],
-               [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
-                0.81357508]])
+        LinearRegression()
     """
-
-    load_params = {
-        'path_to_file': path_to_file,
-        'verbose': verbose,
-        'prt_kwargs': prt_kwargs,
-        'raise_error': raise_error,
-        **kwargs
-    }
 
     ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    if ext.endswith(('.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
-                     '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz')):
-        return load_pickle(**load_params)
+    # Find the loader function
+    loader_func = get_loader(ext)
 
-    if ext.endswith((".csv", ".txt")):
-        return load_csv(**load_params)
+    if loader_func:
+        return loader_func(
+            path_to_file=path_to_file,
+            verbose=verbose,
+            prt_kwargs=prt_kwargs,
+            raise_error=raise_error,
+            **kwargs
+        )
 
-    if ext.endswith((".xlsx", ".xls", ".ods")):
-        return load_spreadsheets(**load_params)
-
-    if ext.endswith(".json"):
-        return load_json(**load_params)
-
-    if ext.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        return load_joblib(**load_params)
-
-    if ext.endswith((".fea", ".feather")):
-        return load_feather(**load_params)
-
-    if ext.endswith((".parquet", ".geoparquet")):
-        return load_parquet(**load_params)
-
-    if ext.endswith((".gpkg", ".geopackage")):
-        return load_geopackage(**load_params)
-
-    if ext.endswith(".npz"):
-        return load_csr_matrix(**load_params)
-
+    # Fallback for unrecognized formats
     if warn_err:
-        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-        logging.warning(
-            f'\n  The file format/extension "{ext}" is not recognized by `load_data()`.')
+        logging.getLogger(__name__).warning(
+            'The file format/extension "%s" is not recognized by `load_data()`.', ext)
 
     return None
