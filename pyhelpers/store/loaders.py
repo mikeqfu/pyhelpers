@@ -67,31 +67,27 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    file_path, _, file_ext = _check_loading_path(
+        path_to_file=path_to_file, verbose=verbose, ret_info=True, **(prt_kwargs or {}))
 
     try:
-        path_to_file_ = str(path_to_file).lower()
-
-        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
-            with gzip.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
-        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
-            with lzma.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
-        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
-            with bz2.BZ2File(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
+        # Determine the opener based on extension
+        if file_ext.endswith((".pkl.gz", ".pkl.gzip", ".pickle.gz", ".pickle.gzip")):
+            opener = gzip.open
+        elif file_ext.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
+            opener = lzma.open
+        elif file_ext.endswith((".pkl.bz2", ".pickle.bz2")):
+            opener = bz2.open
         else:
-            with open(file=path_to_file, mode='rb') as f:
+            opener = open
+
+        # Try standard pickle first. Fall back to pandas.read_pickle.
+        try:
+            with opener(path_to_file, mode='rb') as f:
                 data = pickle.load(f, **kwargs)  # nosec
-
-        if verbose:
-            print("Done.")
-
-        return data
-
-    except ModuleNotFoundError:
-        data = pd.read_pickle(path_to_file)  # nosec
+        except (ModuleNotFoundError, AttributeError, ImportError, pickle.UnpicklingError):
+            # Fallback to Pandas for complex objects or dependency issues
+            data = pd.read_pickle(path_to_file, **kwargs)  # nosec
 
         if verbose:
             print("Done.")

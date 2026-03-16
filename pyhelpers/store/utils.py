@@ -7,9 +7,9 @@ import functools
 import inspect
 import logging
 import os
-import pathlib
 import sys
 import warnings
+from pathlib import Path
 
 from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
 
@@ -113,8 +113,8 @@ def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb=
         Saving "pyhelpers.txt" to "C:/" ... Passed.
     """
 
-    file_path = pathlib.Path(path_to_file).resolve()
-    cwd = pathlib.Path.cwd()
+    file_path = Path(path_to_file).resolve()
+    cwd = Path.cwd()
 
     if file_path.is_dir():
         raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
@@ -262,8 +262,9 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         print(prt_msg, end=print_end, **kwargs)
 
     if ret_info:
-        file_path = pathlib.Path(path_to_file).resolve()
-        return file_path, pathlib.Path(rel_dir_path).parent
+        file_path = Path(path_to_file).resolve()
+        file_ext = "".join(file_path.suffixes).lower()
+        return file_path, Path(rel_dir_path).parent, file_ext
 
     return None
 
@@ -429,7 +430,7 @@ def _is_parquet_geospatial(path_to_file, pq_module):
         parquet_meta = pq_module.read_metadata(path_to_file)
         return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
     except Exception:  # noqa
-        file_ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
+        file_ext = "".join(Path(path_to_file).suffixes).lower()
         return bool(file_ext == ".geoparquet")
 
 
