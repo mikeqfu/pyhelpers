@@ -68,7 +68,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         # Determine the opener based on extension
@@ -169,7 +169,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index_col=None, verbose=Fals
         2       Leeds  582044   152953
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         with open(path_to_file, mode='r') as csv_file:
@@ -302,7 +302,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
             print(msg)
 
     _check_loading_path(
-        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **(prt_kwargs or {}))
+        path=path_to_file, verbose=verbose, end=" ... \n", **(prt_kwargs or {}))
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -386,7 +386,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
 
     json_mod = kwargs.pop('json_mod')
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         if engine == 'orjson':
@@ -455,7 +455,7 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
                 0.81357508]])
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = joblib.load(filename=path_to_file, **kwargs)  # noqa
@@ -521,7 +521,7 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = pd.read_feather(path_to_file, **kwargs)
@@ -656,7 +656,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         - Example data can be referred to in the function :func:`~pyhelpers.store.save_parquet`.
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         is_geospatial = _is_parquet_geospatial(path_to_file, pq)  # noqa
@@ -872,7 +872,7 @@ def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_
         3       Leeds  -1.543794  53.797418  POINT (-1.54379 53.79742)
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = _load_geopackage(
@@ -937,7 +937,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         True
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         csr_loader = np.load(path_to_file, **kwargs)
