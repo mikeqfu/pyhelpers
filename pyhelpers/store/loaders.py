@@ -1004,7 +1004,7 @@ def get_loader(file_ext):
     return next((func for ext, func in _mapping.items() if file_ext.endswith(ext)), None)
 
 
-def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise_error=False,
+def load_data(path_to_file, verbose=False, show_warning=True, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
     Loads data from a file.
@@ -1016,9 +1016,9 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     :param verbose: Whether to print relevant information in console as the function runs;
         defaults to ``False``.
     :type verbose: bool | int
-    :param warn_err: Whether to show a warning message if an unknown error occurs;
+    :param show_warning: Whether to show a warning message if an unknown error occurs;
         defaults to ``True``.
-    :type warn_err: bool
+    :type show_warning: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -1115,8 +1115,8 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         )
 
     # Fallback for unrecognized formats
-    if warn_err:
+    if show_warning:
         logging.getLogger(__name__).warning(
-            'The file format/extension "%s" is not recognized by `load_data()`.', ext)
+            'Warning: The file format/extension "%s" is not recognized by `load_data()`.', ext)
 
     return None
