@@ -364,8 +364,8 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 
         # Print "Saving/Updating..." message using sub-indent
         _check_saving_path(
-            path_to_file=path_to_file, verbose=True, print_prefix=saving_indent,
-            print_wrap_limit=print_wrap_limit, belated=belated
+            path=path_to_file, verbose=True, msg_prefix=saving_indent,
+            msg_wrap_limit=print_wrap_limit, skip_updating_state=belated
         )
 
         # Level 2 (Validation): Two spaces more than Level 1 (Four more than pbar)

@@ -6,163 +6,242 @@ import contextlib
 import functools
 import inspect
 import logging
-import os
 import sys
+import textwrap
 import warnings
 from pathlib import Path
 
-from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname
+from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _normalize_pathname
 
 
-def _print_wrapped_string(message, filename, end, print_wrap_limit=100, **kwargs):
+@functools.lru_cache(maxsize=8)
+def _get_indent_str(indent=None):
     """
-    Prints a string, splitting it into two lines if it exceeds the threshold, with the second half
-    being indented based on the initial indentation level.
+    Returns a standardized indentation string.
 
-    :param message: The string to print.
-    :type message: str
-    :param filename: The filename to be included in the string.
-    :type filename: str
-    :param end:
-    :param print_wrap_limit: The maximum length before splitting.
-    :type print_wrap_limit: int | None
+    :param indent: Number of spaces (int) or a literal prefix string; defaults to ``None``.
+    :type indent: int | str | None
+    :return: Indentation string.
+    :rtype: str
     """
 
-    if print_wrap_limit:
-        stripped_text = message.lstrip()  # Remove leading spaces for accurate tab count
-        leading_indentation = len(message) - len(stripped_text)
+    # Handle integer input (common case: indent=2, 4, etc.)
+    if isinstance(indent, int):
+        return " " * max(0, indent)
 
-        if len(stripped_text) <= print_wrap_limit:
-            print(message, end=end, **kwargs)
-
-        else:
-            # Find a suitable split point (preferably at a space)
-            split_index = message.find(f'"{filename}"') + len(f'"{filename}"')
-            if message[split_index] == " ":
-                split_index += 1  # Move to space if it exists
-
-            first_part = message[:split_index].rstrip()  # Trim trailing spaces
-            second_part = message[split_index:].lstrip()  # Trim leading spaces
-
-            # Print first part as is, plus " ... "
-            print(first_part + " ... ", **kwargs)
-
-            # Print second part with increased indentation (original + 1 extra double spaces)
-            indent_str = " " * (leading_indentation + 2)
-            print(f"{indent_str}{second_part}", end=end, **kwargs)
-
-    else:
-        print(message, end=end, **kwargs)
+    # Handle string input or None (common case: indent="\t" or indent=None)
+    return str(indent) if indent is not None else ""
 
 
-def _check_saving_path(path_to_file, verbose=False, print_prefix="", state_verb="Saving",
-                       state_prep="to", print_suffix="", print_end=" ... ", print_wrap_limit=None,
-                       belated=False, ret_info=False, **kwargs):
+def _print_wrapped_string(message, indent=None, base_indent="  ", end=" ... ", wrap_limit=100,
+                          **kwargs):
     # noinspection PyShadowingNames
     """
-    Verifies a specified file path before saving.
+    Prints a message, wrapping it into multiple lines if it exceeds a length threshold.
 
-    :param path_to_file: Path where the file will be saved.
-    :type path_to_file: str | pathlib.Path
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    This function uses ``textwrap.TextWrapper`` to break long strings (e.g. file paths)
+    into multiple lines while maintaining a clear visual hierarchy through indentation
+    and continuation markers (``...``).
+
+    :param message: The full string/message to be printed.
+    :type message: str
+    :param indent: Base indentation level for the first line; can be an integer (number of spaces),
+        a literal string, or ``None`` (no indentation); defaults to ``None``.
+    :type indent: int | str | None
+    :param base_indent: Default indentation prepended from the second line if ``indent`` is a str;
+        defaults to ``"  "``.
+    :type base_indent: str
+    :param end: String to append to the end of the final line; defaults to ``" ... "``.
+    :type end: str
+    :param wrap_limit: Maximum character width for a single line before wrapping occurs.
+        If ``None``, wrapping is disabled; defaults to ``100``.
+    :type wrap_limit: int | None
+    :param kwargs: Additional keyword arguments passed to the built-in ``print()`` function.
+    :return: None
+    :rtype: None
+
+    **Examples**::
+
+        >>> from pyhelpers.store.utils import _print_wrapped_string
+        >>> message = 'Saving "data.bin" to "C:/Users/Admin/Documents/Projects/Output/"'
+        >>> # Example of multi-line wrapping with default settings
+        >>> _print_wrapped_string(message, wrap_limit=60)
+        Saving "data.bin" ...
+          to "C:/Users/Admin/Documents/Projects/Output/" ...
+        >>> # Example with integer indentation and custom end
+        >>> _print_wrapped_string(message, indent=2, wrap_limit=50); print("Done.")
+          Saving "data.bin" ...
+            to "C:/Users/Admin/Documents/Projects/Output/" ... Done.
+    """
+
+    initial_indent = _get_indent_str(indent)  # The initial indent is for the first line
+
+    if isinstance(indent, int):  # The subsequent indent is for lines 2, 3, ..., N
+        subsequent_indent = _get_indent_str(indent + 2)
+    else:  # If indent is a string or None, prepend the base_indent
+        subsequent_indent = base_indent + initial_indent
+
+    # Check if wrapping is necessary
+    if not wrap_limit or (len(initial_indent) + len(message)) <= wrap_limit:
+        print(f"{initial_indent}{message}", end=end, **kwargs)
+        return
+
+    line1_content, line2_content = None, None
+    msg = message.lstrip()
+    for prep in [" in ", " on ", " at ", " for ", " with ", " by ", " to ", " from ", " into "]:
+        if prep in msg:
+            parts = msg.split(prep, 1)
+            line1_content = parts[0]
+            line2_content = f"{prep.lstrip()}{parts[1]}"
+            break
+
+    if line1_content and line2_content:
+        print(f"{initial_indent}{line1_content} ...", **kwargs)
+
+        wrapper = textwrap.TextWrapper(
+            width=wrap_limit,
+            initial_indent=subsequent_indent,
+            subsequent_indent=subsequent_indent,
+            break_long_words=False,
+            break_on_hyphens=False,
+            replace_whitespace=False
+        )
+
+        path_lines = wrapper.wrap(line2_content)
+
+        for i, line in enumerate(path_lines):
+            print(line, end=end if i == len(path_lines) - 1 else " ...\n", **kwargs)
+
+    else:
+        wrapper = textwrap.TextWrapper(
+            width=wrap_limit,
+            initial_indent=initial_indent,
+            subsequent_indent=subsequent_indent,
+            break_long_words=False
+        )
+        lines = wrapper.wrap(message)
+        for i, line in enumerate(lines):
+            print(line, end=end if i == len(lines) - 1 else " ...\n", **kwargs)
+
+
+def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", state_prep="to",
+                       msg_suffix="", end=" ... ", skip_updating_state=False, indent=None,
+                       msg_wrap_limit=None, return_info=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Verifies a file path before saving, creates directories, and manages console output.
+
+    :param path: Destination file path.
+    :type path: str | pathlib.Path
+    :param verbose: Whether to print relevant information to the console;
+        ``2`` enables CWD boundary warnings; defaults to ``False``.
     :type verbose: bool | int
-    :param print_prefix: Text prefixed to the default print message; defaults to ``""``.
-    :type print_prefix: str
+    :param msg_prefix: Text prefixed to the default print message; defaults to ``""``.
+    :type msg_prefix: str
     :param state_verb: Verb indicating the action being performed, e.g. *saving* or *updating*;
         defaults to ``"Saving"``.
     :type state_verb: str
     :param state_prep: Preposition associated with ``state_verb``; defaults to ``"to"``.
     :type state_prep: str
-    :param print_suffix: Text suffixed to the default print message; defaults to ``""``.
-    :type print_suffix: str
-    :param print_end: String passed to the ``end`` parameter of ``print``; defaults to ``" ... "``.
-    :type print_end: str
-    :param print_wrap_limit: Maximum length of the string before splitting into two lines;
-        defaults to ``None``, which disables splitting. If the string exceeds this value,
-        e.g. ``100``, it will be split at (before) ``state_prep`` to improve readability
-        when printed.
-    :type print_wrap_limit: int | None
-    :param ret_info: Whether to return file path information; defaults to ``False``.
-    :type ret_info: bool
-    :return: A tuple containing the relative path and, if ``ret_info=True``, the filename.
+    :param msg_suffix: Text suffixed to the default print message; defaults to ``""``.
+    :type msg_suffix: str
+    :param end: String passed to the ``end`` parameter of ``print``; defaults to ``" ... "``.
+    :type end: str
+    :param skip_updating_state: If ``True``, ``state_verb`` does not flip to ``"Updating"``;
+        defaults to ``False``.
+    :type skip_updating_state: bool
+    :param indent: Indentation level; defaults to ``None``.
+    :type indent: int | str | None
+    :param msg_wrap_limit: Threshold for multi-line wrapping;
+        If the string exceeds this value (e.g. ``100``), it will be split at (before)
+        ``state_prep`` to improve readability when being printed.
+        If ``None`` (default), the printed string is in a single line.
+    :type msg_wrap_limit: int | None
+    :param return_info: Whether to return file path information; defaults to ``False``.
+    :type return_info: bool
+    :return: A tuple containing the absolute path, the relative directory path, and the extension.
     :rtype: tuple
 
     **Tests**::
 
         >>> from pyhelpers.store import _check_saving_path
         >>> from pyhelpers.dirs import cd
-        >>> path_to_file = cd()
-        >>> _check_saving_path(path_to_file, verbose=True)
+        >>> path = cd()
+        >>> _check_saving_path(path, verbose=True)
         Traceback (most recent call last):
-            ...
-        ValueError: The input for '<path_to_file>' may not be a file path.
-        >>> path_to_file = "pyhelpers.txt"
-        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
+          ...
+            raise ValueError(f"The input '{path}' appears to be a directory, not a file path.")
+        ValueError: The input '<path>' appears to be a directory, not a file path.
+        >>> path = "pyhelpers.txt"
+        >>> _check_saving_path(path, verbose=True); print("Passed.")
         Saving "pyhelpers.txt" ... Passed.
-        >>> path_to_file = cd("tests", "documents", "pyhelpers.txt")
-        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
+        >>> path = cd("tests", "documents", "pyhelpers.txt")
+        >>> _check_saving_path(path, verbose=True); print("Passed.")
         Saving "pyhelpers.txt" to "./tests/documents/" ... Passed.
-        >>> _check_saving_path(path_to_file, verbose=True, print_wrap_limit=10); print("Passed.")
+        >>> _check_saving_path(path, verbose=True, msg_wrap_limit=40); print("Passed.")
         Saving "pyhelpers.txt" ...
           to "./tests/documents/" ... Passed.
-        >>> path_to_file = "C:\\Windows\\pyhelpers.txt"
-        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
+        >>> path = "C:\\Windows\\pyhelpers.txt"
+        >>> _check_saving_path(path, verbose=2); print("Passed.")
         Saving "pyhelpers.txt" to "C:/Windows/" ... Passed.
-        >>> path_to_file = "C:\\pyhelpers.txt"
-        >>> _check_saving_path(path_to_file, verbose=True); print("Passed.")
+          Warning: "C:/Windows/pyhelpers.txt" is outside the current working directory.
+        >>> path = "C:\\pyhelpers.txt"
+        >>> _check_saving_path(path, verbose=2); print("Passed.")
         Saving "pyhelpers.txt" to "C:/" ... Passed.
+          Warning: "C:/pyhelpers.txt" is outside the current working directory.
+        >>> _check_saving_path(path, verbose=2, indent=4, msg_wrap_limit=30); print("Passed.")
+            Saving "pyhelpers.txt" to "C:/" ... Passed.
+              Warning: "C:/pyhelpers.txt" is outside the current working directory.
     """
 
-    file_path = Path(path_to_file).resolve()
-    cwd = Path.cwd()
+    file_path = Path(path).resolve()
 
-    if file_path.is_dir():
-        raise ValueError(f"The input for '{path_to_file}' may not be a file path.")
+    if file_path.is_dir():  # Guard against directory-only paths
+        raise ValueError(f'The input "{path}" appears to be a directory, not a file path.')
 
+    # Determine display path (relative vs absolute)
     try:
         # Attempt to get path relative to current working directory
-        rel_dir_path = file_path.parent.relative_to(cwd)
+        rel_dir = file_path.parent.relative_to(Path.cwd())
     except ValueError:  # If outside CWD (common on Linux mounts or different Windows drives)
-        if verbose == 2:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(
-                f'\n  "{file_path.parent}" is outside the current working directory.')
-        rel_dir_path = file_path.parent
+        rel_dir = file_path.parent
 
-    # Ensure the directory exists
-    rel_dir_path.mkdir(parents=True, exist_ok=True)
-
-    filename = file_path.name if file_path.suffix else ""
+    # Ensure the parent directory exists before proceeding
+    rel_dir.mkdir(parents=True, exist_ok=True)
 
     if verbose:
-        # Flip verb to 'Updating' if file exists, unless 'belated' is flagged
-        if os.path.isfile(file_path) and not belated:
+        filename = file_path.name if file_path.suffix else ""
+
+        # Flip verb to 'Updating' if file exists, unless 'skip_updating_state' is flagged
+        if file_path.is_file() and not skip_updating_state:
             state_verb, state_prep = "Updating", "in"
 
-        prt_end = print_end or "\n"
+        # Build message
+        indent_str = _get_indent_str(indent)
+        base_msg = f'{indent_str}{msg_prefix}{state_verb} "{filename}"'
 
-        # Cross-platform check: Is the file in the CWD or its immediate root?
-        # On Linux, .anchor is '/', on Windows it is 'C:\\'
-        is_internal = file_path.is_relative_to(cwd)
-
-        # If the directory is effectively the "base" or on the same local drive/anchor
-        if (rel_dir_path == rel_dir_path.parent or rel_dir_path == file_path.parent) and \
-                (file_path.anchor == cwd.anchor):
-            message = f'{print_prefix}{state_verb} "{filename}"{print_suffix}'
-            print(message, end=prt_end, **kwargs)
+        if rel_dir == Path('.') or rel_dir == Path(''):
+            msg = f'{base_msg}{msg_suffix}'
         else:
-            # Use relative path if internal, otherwise absolute
-            display_path = rel_dir_path if is_internal else file_path.parent
-            message = (f'{print_prefix}{state_verb} "{filename}" '
-                       f'{state_prep} {_add_slashes(display_path)}{print_suffix}')
+            msg = f'{base_msg} {state_prep} {_add_slashes(rel_dir)}{msg_suffix}'
 
+        # Print message
+        kwargs['flush'] = True
+        if msg_wrap_limit and len(msg) > msg_wrap_limit:
             _print_wrapped_string(
-                message=message, filename=filename, end=prt_end, print_wrap_limit=print_wrap_limit,
-                **kwargs)
+                message=msg, indent=indent, end=end, wrap_limit=msg_wrap_limit, **kwargs)
+        else:
+            print(msg, end=end, **kwargs)
 
-    if ret_info:
+        if verbose == 2:
+            logging.getLogger(__name__).warning(
+                f'  {indent_str}Warning: "{_normalize_pathname(file_path)}" '
+                f'is outside the current working directory.')
+
+    if return_info:
         file_ext = "".join(file_path.suffixes).lower()
-        return file_path, rel_dir_path, file_ext
+        # Returns (absolute path, relative dir, file extension)
+        return file_path, rel_dir, file_ext
 
     return None
 
@@ -197,39 +276,47 @@ def _autofit_column_width(writer, writer_kwargs, **kwargs):
           https://openpyxl.readthedocs.io/en/stable/
     """
 
-    if 'sheet_name' in kwargs and writer_kwargs['engine'] == 'openpyxl':
+    if 'sheet_name' in kwargs and writer_kwargs.get('engine') == 'openpyxl':
         # Reference: https://stackoverflow.com/questions/39529662/
         ws = writer.sheets[kwargs.get('sheet_name')]
+
         for column in ws.columns:
             max_length = 0
             column_letter = column[0].column_letter
+
             for cell in column:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
+                val = str(cell.value) if cell.value is not None else ""
+
+                if len(val) > max_length:
+                    max_length = len(val)
+
             ws.column_dimensions[column_letter].width = (max_length + 2) * 1.1
 
 
-def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb="Loading",
-                        print_suffix="", print_end=" ... ", ret_info=False, **kwargs):
+def _check_loading_path(path, verbose=False, msg_prefix="", state_verb="Loading", msg_suffix="",
+                        end=" ... ", indent=None, return_info=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Checks the status of loading a file from a specified path.
+    Verifies a file path for loading and prints status to the console.
 
-    :param path_to_file: Path where the file is located.
+    :param path_to_file: Path to the target file.
     :type path_to_file: str | bytes | pathlib.Path
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print status; defaults to ``False``.
     :type verbose: bool | int
-    :param print_prefix: Prefix added to the default printing message; defaults to ``""``.
-    :type print_prefix: str
-    :param state_verb: Action verb indicating *loading* or *reading* a file;
-        defaults to ``"Loading"``.
+    :param msg_prefix: Text prepended to the message; defaults to ``""``.
+    :type msg_prefix: str
+    :param state_verb: Action verb; defaults to ``"Loading"``.
     :type state_verb: str
-    :param print_suffix: Suffix added to the default printing message; defaults to ``""``.
-    :type print_suffix: str
-    :param print_end: String passed to ``end`` parameter for ``print()``; defaults to ``" ... "``.
-    :type print_end: str
-    :param ret_info: Whether to return file path information; defaults to ``False``.
-    :type ret_info: bool
+    :param msg_suffix: Text appended to the message; defaults to ``""``.
+    :type msg_suffix: str
+    :param end: Print end character; defaults to ``" ... "``.
+    :type end: str
+    :param indent: Indentation level; defaults to ``None``.
+    :type indent: int | str | None
+    :param return_info: If ``True``, returns path metadata; defaults to ``False``.
+    :type return_info: bool
+    :return: (Absolute path, Parent directory, Extension) if ``return_info`` else ``None``.
+    :rtype: tuple | None
 
     **Tests**::
 
@@ -238,33 +325,39 @@ def _check_loading_path(path_to_file, verbose=False, print_prefix="", state_verb
         >>> from pyhelpers.dirs import cd
         >>> from pathlib import Path
         >>> path_to_file = cd("test_func.py")
-        >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
+        >>> _check_loading_path(path, verbose=True); print("Passed.")
         Loading "./test_func.py" ... Passed.
-        >>> file_path, rel_dir_path = _check_loading_path(path_to_file, ret_info=True)
+        >>> file_path, rel_dir, file_ext = _check_loading_path(path, return_info=True)
         >>> _check_relative_pathname(file_path)
         'test_func.py'
-        >>> _check_relative_pathname(rel_dir_path)
+        >>> _check_relative_pathname(rel_dir)
         '.'
+        >>> file_ext
+        '.py'
         >>> path_to_file = Path("C:\\Windows\\pyhelpers.pkg")
-        >>> _check_loading_path(path_to_file, verbose=True); print("Passed.")
+        >>> _check_loading_path(path, verbose=True); print("Passed.")
         Loading "C:/Windows/pyhelpers.pkg" ... Passed.
-        >>> file_path, rel_dir_path = _check_loading_path(path_to_file, ret_info=True)
+        >>> file_path, rel_dir, file_ext = _check_loading_path(path, return_info=True)
         >>> _check_relative_pathname(file_path)
         'C:/Windows/pyhelpers.pkg'
-        >>> _check_relative_pathname(rel_dir_path)
+        >>> _check_relative_pathname(rel_dir)
         'C:/Windows'
+        >>> file_ext
+        '.pkg'
     """
 
-    rel_dir_path = _check_relative_pathname(path_to_file)
+    rel_dir = _check_relative_pathname(path)
 
     if verbose:
-        prt_msg = f'{print_prefix}{state_verb} {_add_slashes(rel_dir_path)}{print_suffix}'
-        print(prt_msg, end=print_end, **kwargs)
+        indent_str = _get_indent_str(indent)
+        prt_msg = f'{indent_str}{msg_prefix}{state_verb} {_add_slashes(rel_dir)}{msg_suffix}'
 
-    if ret_info:
-        file_path = Path(path_to_file).resolve()
+        print(prt_msg, end=end, **kwargs)
+
+    if return_info:
+        file_path = Path(path).resolve()
         file_ext = "".join(file_path.suffixes).lower()
-        return file_path, Path(rel_dir_path).parent, file_ext
+        return file_path, Path(rel_dir).parent, file_ext
 
     return None
 
@@ -421,16 +514,16 @@ def _resolve_json_engine(func):
     return wrapper
 
 
-def _is_parquet_geospatial(path_to_file, pq_module):
+def _is_parquet_geospatial(path, pq_module):
     """
     Detects if a file is GeoParquet via metadata or extension.
     """
 
     try:
-        parquet_meta = pq_module.read_metadata(path_to_file)
+        parquet_meta = pq_module.read_metadata(path)
         return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
     except Exception:  # noqa
-        file_ext = "".join(Path(path_to_file).suffixes).lower()
+        file_ext = "".join(Path(path).suffixes).lower()
         return bool(file_ext == ".geoparquet")
 
 
