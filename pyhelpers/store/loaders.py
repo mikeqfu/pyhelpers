@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import pyproj
+import shapely.geometry
 
 from .utils import _check_loading_path, _is_parquet_geospatial, _resolve_json_engine, _set_index, \
     suppress_gpkg_warnings
@@ -730,7 +731,6 @@ def _read_gpkg_file(path_to_file, engine='geopandas', suppress_warnings=True, ta
     elif engine_ == 'fiona':
         with fiona.open(path_to_file, **kwargs) as f:  # noqa
             crs = f.crs
-            # noinspection PyUnresolvedReferences
             features = [
                 {
                     # 'type': 'Feature',
