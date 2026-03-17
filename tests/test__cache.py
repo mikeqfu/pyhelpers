@@ -229,16 +229,16 @@ def test__check_file_pathname():
     assert path_to_test_exe is None  # Should return input name
 
 
-def test__format_error_message():
-    from pyhelpers._cache import _format_error_message
+def test__format_exception_message():
+    from pyhelpers._cache import _format_exception_message
 
-    res = _format_error_message(None)
+    res = _format_exception_message(None)
     assert res == ''
 
-    res = _format_error_message("test")
+    res = _format_exception_message("test")
     assert res == 'test.'
 
-    res = _format_error_message("test", prefix="Failed.")
+    res = _format_exception_message("test", prefix="Failed.")
     assert res == 'Failed. test.'
 
 
