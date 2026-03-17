@@ -2,34 +2,35 @@
 Tests the :mod:`~pyhelpers.store.utils` submodule.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from pyhelpers._cache import _add_slashes, example_dataframe
-from pyhelpers.store.utils import *
+from pyhelpers.store.utils import _check_loading_path, _check_saving_path, _set_index
 
 
 @pytest.mark.parametrize('print_wrap_limit', [None, 10, 1000])
 def test__check_saving_path(print_wrap_limit, tmp_path, capfd):
-    from pyhelpers.store import _check_saving_path
-
-    path_to_file = os.getcwd()
+    path = Path.cwd()
     with pytest.raises(ValueError) as exc_info:
-        _check_saving_path(path_to_file, verbose=True)
-    assert str(exc_info.value) == f"The input for '{path_to_file}' may not be a file path."
+        _check_saving_path(path, verbose=True)
+    assert (str(exc_info.value) ==
+            f'The input "{str(path)}" appears to be a directory, not a file path.')
 
-    file_path = "pyhelpers.txt"
-    _check_saving_path(file_path, verbose=True)
+    path = "pyhelpers.txt"
+    _check_saving_path(path, verbose=True)
     out, _ = capfd.readouterr()
-    assert f"Saving \"{file_path}\" ... " in out
+    assert f'Saving "{path}" ... ' in out
 
     filename = "pyhelpers.txt"
-    path_to_file = tmp_path / filename
-    with open(path_to_file, 'w'):
+    path = tmp_path / filename
+    with open(path, 'w'):
         pass
 
-    _check_saving_path(path_to_file, verbose=True, print_wrap_limit=print_wrap_limit)
+    _check_saving_path(path, verbose=True, msg_wrap_limit=print_wrap_limit)
     out, _ = capfd.readouterr()
 
     if print_wrap_limit in {None, 1000}:
@@ -39,17 +40,13 @@ def test__check_saving_path(print_wrap_limit, tmp_path, capfd):
 
 
 def test__check_loading_path(tmp_path, capfd):
-    from pyhelpers.store import _check_loading_path
-
-    path_to_file = tmp_path / "pyhelpers.txt"
-    _check_loading_path(path_to_file, verbose=True)
+    path = tmp_path / "pyhelpers.txt"
+    _check_loading_path(path, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Loading {_add_slashes(path_to_file)}' in out
+    assert f'Loading {_add_slashes(path)}' in out
 
 
 def test__set_index():
-    from pyhelpers.store import _set_index
-
     example_df = example_dataframe()
 
     # Basic Identity: index_col=None on a df with a named index should do nothing

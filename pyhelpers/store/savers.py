@@ -72,7 +72,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`~pyhelpers.store.load_pickle`.
     """
 
-    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
 
     try:
         if ext.endswith((".pkl.gz", ".pickle.gz")):
@@ -176,7 +176,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Saving "dat.ods" to "./tests/data/" ... Done.
     """
 
-    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
     if raise_error:
@@ -450,7 +450,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         raise ValueError(f"Unsupported file format '{file_path.suffix}'. "
                          f"Must be one of {supported_ext_set}")
 
-    _check_saving_path(file_path, verbose=verbose, ret_info=False)
+    _check_saving_path(file_path, verbose=verbose)
 
     if file_path.is_file() and mode == 'a':
         with pd.ExcelFile(file_path) as f:
@@ -559,7 +559,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
 
     json_mod = kwargs.pop('json_mod')
 
-    _check_saving_path(path_to_file, verbose=verbose, ret_info=False)
+    _check_saving_path(path_to_file, verbose=verbose)
 
     try:
         if engine == 'orjson':
@@ -626,7 +626,7 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`pyhelpers.store.load_joblib`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
 
     try:
         joblib.dump(data, file_path, **kwargs)  # noqa
@@ -689,7 +689,7 @@ def save_feather(data, path_to_file, index=True, verbose=False, raise_error=Fals
         - Examples for the function :func:`pyhelpers.store.load_feather`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
 
     try:
         # Check if index is the default integer range [0, 1, ..., n-1]
@@ -781,7 +781,7 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_parquet`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, ret_info=True)
+    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
 
     try:
         # Only use direct pyarrow writer if data is already an Arrow Table
@@ -794,6 +794,79 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
 
             else:  # DataFrames
                 data.to_parquet(file_path, engine='auto' if engine is None else engine, **kwargs)
+
+        if verbose:
+            print("Done.")
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+def save_geopackage(data, path_to_file, driver='GPKG', layer_name=None, mode='w', verbose=False,
+                    print_kwargs=None, raise_error=False, **kwargs):
+    # noinspection PyShadowingNames
+    """
+    Saves a GeoDataFrame or a dictionary of GeoDataFrames to a GeoPackage file.
+
+    This function handles both single-layer and multi-layer datasets. It uses
+    a file-level reset for 'w' mode to prevent SQLite 'ghost layer' artifacts.
+
+    :param data: Spatial data to save.
+    :type data: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame]
+    :param path_to_file: Destination path for the ``.gpkg`` file.
+    :type path_to_file: str | pathlib.Path
+    :param driver: OGR driver to use. Defaults to ``'GPKG'``.
+    :type driver: str
+    :param layer_name: Name for the layer (used if data is a GeoDataFrame).
+        Defaults to filename stem.
+    :type layer_name: str | None
+    :param mode: File write mode:
+
+        - ``'w'`` (default): Overwrite. Deletes existing file and writes fresh.
+        - ``'a'``: Append. Adds layers to existing file.
+
+    :type mode: str
+    :param verbose: If ``True``, prints status messages. Defaults to ``False``.
+    :type verbose: bool
+    :param print_kwargs: Formatting options for the path printer. Defaults to ``None``.
+    :type print_kwargs: dict | None
+    :param raise_error: If ``True``, re-raises exceptions. Defaults to ``False``.
+    :type raise_error: bool
+    :param kwargs: Additional arguments passed to ``geopandas.to_file``.
+
+    **Examples**::
+
+        >>> from pyhelpers.store import save_geopackage
+        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import shapely
+        >>> import geopandas as gpd
+        >>> gpkg_dat_ = example_dataframe()  # Get an example dataframe
+        >>> gpkg_dat = gpkg_dat_.copy()
+        >>> gpkg_dat['geometry'] = gpkg_dat_.apply(
+        ...     lambda x: shapely.geometry.Point([x.Longitude, x.Latitude]), axis=1)
+        >>> gpkg_dat = gpd.GeoDataFrame(gpkg_dat, crs=4326)
+        >>> gpkg_pathname = cd("tests/data", "dat.gpkg")
+        >>> save_geopackage(gpkg_dat, gpkg_pathname, verbose=True)
+        Saving "dat.gpkg" to "./tests/data/" ... Done.
+    """
+
+    file_path, _, _ = _check_saving_path(
+        path=path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
+
+    # Handle file-level overwrite to ensure a clean SQLite container
+    if mode == 'w' and file_path.is_file():
+        file_path.unlink()
+
+    try:
+        if isinstance(data, dict):
+            for i, (lyr_name, gpkg_dat) in enumerate(data.items()):
+                # Save each dict entry as a separate layer to the multi-layer GeoPackage
+                kwargs.update({'mode': 'a' if (i > 0 or mode == 'a') else 'w', 'layer': lyr_name})
+                gpkg_dat.to_file(file_path, driver=driver, **kwargs)
+        else:
+            kwargs.update(dict(layer=layer_name or file_path.stem))
+            data.to_file(file_path, mode=mode, driver=driver, **kwargs)  # noqa
 
         if verbose:
             print("Done.")
@@ -1002,9 +1075,9 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     current_fig = plt.gcf()  # noqa
     fig_id = current_fig.get_label() or f"Figure {current_fig.number}"
 
-    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    print_kwargs = {'msg_prefix': f"[{fig_id}] "}
     file_path, _, file_ext = _check_saving_path(
-        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
+        path_to_file, verbose=verbose, return_info=True, **print_kwargs)
     common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
@@ -1094,9 +1167,9 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
 
     fig_id = data.get_label() or f"Figure {data.number}"
 
-    print_kwargs = {'print_prefix': f"[{fig_id}] "}
+    print_kwargs = {'msg_prefix': f"[{fig_id}] "}
     file_path, _, file_ext = _check_saving_path(
-        path_to_file, verbose=verbose, ret_info=True, **print_kwargs)
+        path_to_file, verbose=verbose, return_info=True, **print_kwargs)
     common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
@@ -1223,8 +1296,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     verbose_level = 2 if verbose == 2 else (1 if verbose else 0)
     print_end = " ... \n" if verbose_level == 2 else " ... "
 
-    _check_saving_path(
-        path_to_file=path_to_file, verbose=verbose, print_end=print_end, ret_info=False)
+    _check_saving_path(path=path_to_file, verbose=verbose, end=print_end)
 
     # Base options
     options = {
@@ -1267,7 +1339,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_required=True,
+def save_data(data, path_to_file, verbose=False, show_warning=True, confirmation_required=True,
               raise_error=False, **kwargs):
     """
     Saves data to a file in a specific format.
@@ -1284,9 +1356,9 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
-    :param err_warning: Whether to display a warning message if an unknown error occurs;
+    :param show_warning: Whether to display a warning message if an unknown error occurs;
         defaults to ``True``.
-    :type err_warning: bool
+    :type show_warning: bool
     :param confirmation_required: Whether user confirmation is required to proceed;
         defaults to ``True``.
     :type confirmation_required: bool
@@ -1411,9 +1483,9 @@ def save_data(data, path_to_file, verbose=False, err_warning=True, confirmation_
         save_figure(**save_params)
 
     else:
-        if err_warning:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-            logging.warning(f'\n  The file format/extension "{ext}" is not recognized.')
+        if show_warning:
+            logging.getLogger(__name__).warning(
+                'Warning: The file format/extension "%s" is not recognized by `save_data()`.', ext)
 
         if _confirmed("Save the data as a pickle file instead\n?", confirmation_required):
             save_pickle(**save_params)

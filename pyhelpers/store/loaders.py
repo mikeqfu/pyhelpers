@@ -4,6 +4,7 @@ Utilities for loading data of various formats.
 
 import bz2
 import csv
+import functools
 import gzip
 import inspect
 import logging
@@ -15,8 +16,11 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pyproj
+import shapely.geometry
 
-from .utils import _check_loading_path, _resolve_json_engine, _set_index
+from .utils import _check_loading_path, _is_parquet_geospatial, _resolve_json_engine, _set_index, \
+    suppress_gpkg_warnings
 from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
@@ -65,31 +69,28 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
-        path_to_file_ = str(path_to_file).lower()
+        # Determine the opener based on extension
+        path_str = str(path_to_file).lower()
 
-        if path_to_file_.endswith((".pkl.gz", ".pickle.gz")):
-            with gzip.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
-        elif path_to_file_.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
-            with lzma.open(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
-        elif path_to_file_.endswith((".pkl.bz2", ".pickle.bz2")):
-            with bz2.BZ2File(path_to_file, mode='rb') as f:
-                data = pickle.load(f, **kwargs)  # nosec
+        if path_str.endswith((".pkl.gz", ".pkl.gzip", ".pickle.gz", ".pickle.gzip")):
+            opener = gzip.open
+        elif path_str.endswith((".pkl.xz", ".pkl.lzma", ".pickle.xz", ".pickle.lzma")):
+            opener = lzma.open
+        elif path_str.endswith((".pkl.bz2", ".pickle.bz2")):
+            opener = bz2.open
         else:
-            with open(file=path_to_file, mode='rb') as f:
+            opener = open
+
+        # Try standard pickle first. Fall back to pandas.read_pickle.
+        try:
+            with opener(path_to_file, mode='rb') as f:
                 data = pickle.load(f, **kwargs)  # nosec
-
-        if verbose:
-            print("Done.")
-
-        return data
-
-    except ModuleNotFoundError:
-        data = pd.read_pickle(path_to_file)  # nosec
+        except (ModuleNotFoundError, AttributeError, ImportError, pickle.UnpicklingError):
+            # Fallback to Pandas for complex objects or dependency issues
+            data = pd.read_pickle(path_to_file, **kwargs)  # nosec
 
         if verbose:
             print("Done.")
@@ -169,7 +170,7 @@ def load_csv(path_to_file, delimiter=',', header=0, index_col=None, verbose=Fals
         2       Leeds  582044   152953
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         with open(path_to_file, mode='r') as csv_file:
@@ -302,7 +303,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
             print(msg)
 
     _check_loading_path(
-        path_to_file=path_to_file, verbose=verbose, print_end=" ... \n", **(prt_kwargs or {}))
+        path=path_to_file, verbose=verbose, end=" ... \n", **(prt_kwargs or {}))
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -386,7 +387,7 @@ def load_json(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_e
 
     json_mod = kwargs.pop('json_mod')
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         if engine == 'orjson':
@@ -455,7 +456,7 @@ def load_joblib(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
                 0.81357508]])
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = joblib.load(filename=path_to_file, **kwargs)  # noqa
@@ -521,7 +522,7 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         Leeds       -1.543794  53.797418
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         data = pd.read_feather(path_to_file, **kwargs)
@@ -537,20 +538,7 @@ def load_feather(path_to_file, index_col=None, verbose=False, prt_kwargs=None, r
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def _is_parquet_geospatial(file_path, pq_module):
-    """
-    Detects if a file is GeoParquet via metadata or extension.
-    """
-
-    try:
-        parquet_meta = pq_module.read_metadata(file_path)
-        return bool(parquet_meta.metadata and b'geo' in parquet_meta.metadata)
-    except Exception:  # noqa
-        file_ext = "".join(pathlib.Path(file_path).suffixes).lower()
-        return bool(file_ext == ".geoparquet")
-
-
-def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
+def _load_parquet(path_to_file, is_geospatial, engine, gpd_module, **kwargs):
     """
     Attempts to load data using the preferred high-level library (Pandas/GeoPandas).
     Handles specific edge cases for the 'fastparquet' engine.
@@ -560,9 +548,9 @@ def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
     warn_message = ""
 
     if is_geospatial:
-        return gpd_module.read_parquet(file_path, **kwargs), warn_message
+        return gpd_module.read_parquet(path_to_file, **kwargs), warn_message
 
-    data = pd.read_parquet(file_path, engine=actual_engine, **kwargs)
+    data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
 
     # Fix for potential 'fastparquet' issue where index is loaded as a column with nulls
     if actual_engine == 'fastparquet' and data.index.get_level_values(0).isnull().all():
@@ -577,12 +565,12 @@ def _load_parquet(file_path, is_geospatial, engine, gpd_module, **kwargs):
                 f"retried and resolved using `pyarrow`.")
             kwargs_copy = kwargs.copy()
             kwargs_copy['engine'] = 'pyarrow'
-            data = pd.read_parquet(file_path, **kwargs_copy)
+            data = pd.read_parquet(path_to_file, **kwargs_copy)
 
     return data, warn_message
 
 
-def _load_parquet_fallback(file_path, pq_module, kwargs):
+def _load_parquet_fallback(path_to_file, pq_module, kwargs):
     """
     Last-resort loader using PyArrow directly.
     Returns a DataFrame if possible, otherwise a PyArrow Table.
@@ -592,7 +580,7 @@ def _load_parquet_fallback(file_path, pq_module, kwargs):
     fallback_kwargs = kwargs.copy()
     fallback_kwargs.pop('engine', None)
 
-    table = pq_module.read_table(file_path, **fallback_kwargs)
+    table = pq_module.read_table(path_to_file, **fallback_kwargs)
     try:
         return table.to_pandas()
     except Exception:  # noqa
@@ -669,7 +657,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         - Example data can be referred to in the function :func:`~pyhelpers.store.save_parquet`.
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         is_geospatial = _is_parquet_geospatial(path_to_file, pq)  # noqa
@@ -677,7 +665,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         try:
             # Try the high-level loaders (includes the internal fastparquet fix)
             data, warn_message = _load_parquet(
-                file_path=path_to_file,
+                path_to_file=path_to_file,
                 is_geospatial=is_geospatial,
                 engine=engine,
                 gpd_module=gpd,  # noqa
@@ -688,7 +676,7 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             warn_message = f"Primary loader failed ({e}). Falling back to PyArrow."
 
             data = _load_parquet_fallback(
-                file_path=path_to_file,
+                path_to_file=path_to_file,
                 pq_module=pq,  # noqa
                 kwargs=kwargs
             )  # noqa
@@ -700,6 +688,203 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             print("Done.")
             if warn_message:
                 warnings.warn(warn_message, UserWarning)
+
+        return data
+
+    except Exception as e:
+        _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+
+@_lazy_check_dependencies('fiona', 'shapely', gpd='geopandas')
+def _read_gpkg_file(path_to_file, engine='geopandas', suppress_warnings=True, target_crs=None,
+                    **kwargs):
+    """
+    Internal helper to read a single layer from a GeoPackage using a specified engine.
+
+    :param path_to_file: Path to the GeoPackage file.
+    :type path_to_file: str | pathlib.Path
+    :param engine: The parsing engine (``'geopandas'``/``'gpd'`` or ``'fiona'``).
+    :type engine: str
+    :param suppress_warnings: Whether to ignore non-critical OGR warnings.
+    :type suppress_warnings: bool
+    :param target_crs: Optional CRS to reproject the data into (e.g. 'EPSG:27700').
+    :type target_crs: Any | None
+    :param kwargs: Arguments passed to ``geopandas.read_file`` or ``fiona.open``.
+    :return: A cleaned and downcast GeoDataFrame.
+    :rtype: geopandas.GeoDataFrame
+    """
+
+    if not isinstance(engine, str):
+        raise TypeError(f"Invalid engine type: {type(engine).__name__}. `engine` must be a string.")
+
+    engine_ = engine.lower()
+    if engine_ not in {'geopandas', 'gpd', 'fiona'}:
+        raise ValueError(f"Invalid engine: '{engine}'. Choose 'geopandas' or 'fiona'.")
+
+    if engine_ in {'geopandas', 'gpd'}:
+        if suppress_warnings:
+            with suppress_gpkg_warnings():
+                gdf = gpd.read_file(path_to_file, **kwargs)  # noqa
+        else:
+            gdf = gpd.read_file(path_to_file, **kwargs)  # noqa
+
+    elif engine_ == 'fiona':
+        with fiona.open(path_to_file, **kwargs) as f:  # noqa
+            crs = f.crs
+            features = [
+                {
+                    # 'type': 'Feature',
+                    'properties': dict(feat.get('properties', {})),
+                    'geometry':
+                        shapely.geometry.shape(feat['geometry']) if feat.get('geometry') else None
+                }
+                for feat in f
+            ]
+
+        gdf = gpd.GeoDataFrame.from_features(features, crs=crs)  # noqa
+        cols = [c for c in gdf.columns if c != 'geometry']
+        gdf = gdf[cols + ['geometry']]
+
+    if target_crs is not None and gdf.crs is not None:
+        target_crs_obj = pyproj.CRS.from_user_input(target_crs)
+        # Use equals() to compare the underlying projection parameters
+        if not gdf.crs.equals(target_crs_obj):
+            gdf = gdf.to_crs(crs=target_crs_obj)
+
+    return gdf
+
+
+def _load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
+                     **kwargs):
+    """
+    Reads a GeoPackage file and returns data for all layers.
+
+    If the GeoPackage contains multiple layers, returns a dictionary of GeoDataFrames.
+    If it contains a single layer, returns a single GeoDataFrame.
+
+    :param path_to_file: Path to the GeoPackage (.gpkg) file.
+    :type path_to_file: str | pathlib.Path
+    :param engine: Valid options include ``'geopandas'``, ``'gpd'``, and ``'fiona'``.
+    :type engine: str
+    :param target_crs: Optional CRS for reprojection.
+    :type target_crs: Any | None
+    :param suppress_warnings: Whether to hide underlying OGR or engine warnings.
+        Defaults to ``True``.
+    :type suppress_warnings: bool
+    :param kwargs: Additional parameters passed to `geopandas.read_file` or `fiona.open`,
+        depending on ``engine`` (e.g. ``bbox``, ``rows``, or ``where``).
+    :return: A GeoDataFrame (single layer), or a dictionary mapping layer names to GeoDataFrames,
+        or ``None`` if no valid layers found.
+    :rtype: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame] | None
+
+    :raises TypeError: If ``engine`` is not a string.
+    :raises ValueError: If ``engine`` is not one of the supported options.
+    """
+
+    # Pop 'layer' out of kwargs so it doesn't conflict later
+    requested_layer = kwargs.pop('layer', None)
+
+    # Retrieve all layer names available in the GeoPackage
+    with suppress_gpkg_warnings():
+        layers_info = gpd.list_layers(path_to_file)  # noqa
+        all_layers = layers_info['name'].tolist()
+
+    # OGR sometimes exposes these as layers if the file is slightly malformed
+    internal_layers = {
+        'gpkg_contents',
+        'gpkg_geometry_columns',
+        'gpkg_spatial_ref_sys',
+        'gpkg_tile_matrix',
+        'gpkg_tile_matrix_set',
+        'gpkg_extensions',
+        'sqlite_sequence',
+        'spatial_ref_sys',
+    }
+    # Filter out known SQLite/GPKG system or internal metadata layers
+    valid_layers = [lyr for lyr in all_layers if lyr.lower() not in internal_layers]
+
+    # Define metadata parameters to pass to the helper
+    common_params = dict(
+        path_to_file=path_to_file,
+        engine=engine,
+        target_crs=target_crs,
+        suppress_warnings=suppress_warnings,
+    )
+
+    # Case A: User explicitly requested a specific layer
+    if requested_layer:
+        return _read_gpkg_file(layer=requested_layer, **common_params, **kwargs)
+
+    # Case B: Multi-layer file
+    if len(valid_layers) > 1:  # Load each layer into a dictionary
+        return {
+            lyr: _read_gpkg_file(layer=lyr, **common_params, **kwargs)
+            for lyr in valid_layers
+        }
+
+    # Case C: Single-layer file
+    if len(valid_layers) == 1:  # Load the single layer directly (layer=None or first in list)
+        return _read_gpkg_file(layer=valid_layers[0], **common_params, **kwargs)
+
+    # Case D: Empty file or no layers found
+    return None
+
+
+def load_geopackage(path_to_file, engine='geopandas', target_crs=None, suppress_warnings=True,
+                    verbose=False, prt_kwargs=None, raise_error=False, **kwargs):
+    """
+    Loads data from a GeoPackage file with support for multi-layer datasets.
+
+    :param path_to_file: Path to the GeoPackage file.
+    :type path_to_file: str | pathlib.Path
+    :param engine: The parsing engine to use (``'geopandas'`` or ``'fiona'``).
+        Defaults to ``'geopandas'``.
+    :type engine: str
+    :param target_crs: Optional CRS for reprojection.
+    :type target_crs: Any | None
+    :param suppress_warnings: If ``True``, silences common OGR 'Measured Geometry' warnings.
+    :type suppress_warnings: bool
+    :param verbose: If ``True``, prints the loading status and feature counts.
+    :type verbose: bool | int
+    :param prt_kwargs: Optional dictionary of keyword arguments for the internal
+        path check printer (e.g., ``prefix``, ``suffix``).
+    :type prt_kwargs: dict | None
+    :param raise_error: If ``True``, re-raises any caught exceptions during loading.
+        If ``False``, prints a failure message and returns ``None``.
+    :type raise_error: bool
+    :param kwargs: Additional arguments passed to the engine (e.g., ``layer``, ``bbox``, ``rows``).
+    :return: A GeoDataFrame for single-layer files, or a dictionary of
+        {layer_name: GeoDataFrame} for multi-layer files.
+    :rtype: geopandas.GeoDataFrame | dict[str, geopandas.GeoDataFrame] | None
+
+    **Examples**::
+
+        >>> from pyhelpers.store import load_geopackage
+        >>> from pyhelpers.dirs import cd
+        >>> gpkg_pathname = cd("tests/data", "dat.gpkg")
+        >>> gpkg_dat = load_geopackage(gpkg_pathname, verbose=True)
+        Loading "./tests/data/dat.gpkg" ... Done.
+        >>> gpkg_dat
+                 City  Longitude   Latitude                   geometry
+        0      London  -0.127647  51.507322  POINT (-0.12765 51.50732)
+        1  Birmingham  -1.902691  52.479699   POINT (-1.90269 52.4797)
+        2  Manchester  -2.245115  53.479489  POINT (-2.24511 53.47949)
+        3       Leeds  -1.543794  53.797418  POINT (-1.54379 53.79742)
+    """
+
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+
+    try:
+        data = _load_geopackage(
+            path_to_file=path_to_file,
+            engine=engine,
+            target_crs=target_crs,
+            suppress_warnings=suppress_warnings,
+            **kwargs
+        )
+
+        if verbose:
+            print("Done.")
 
         return data
 
@@ -752,7 +937,7 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         True
     """
 
-    _check_loading_path(path_to_file=path_to_file, verbose=verbose, **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, **(prt_kwargs or {}))
 
     try:
         csr_loader = np.load(path_to_file, **kwargs)
@@ -773,21 +958,67 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise_error=False,
+@functools.lru_cache(maxsize=64)
+def get_loader(file_ext):
+    """
+    Finds the appropriate loader function based on a file extension.
+
+    This function uses an LRU cache to ensure that once an extension is mapped
+    to a loader, subsequent lookups are nearly instantaneous (``O(1)``).
+
+    :param file_ext: The file extension string (e.g. ``".pickle.gz"`` or ``".parquet"``).
+    :type file_ext: str
+    :return: The loader function if a match is found; otherwise, ``None``.
+    :rtype: typing.Callable | None
+
+    .. note::
+
+        **Logic**: The mapping follows a specific order where nested extensions (e.g. ``".pkl.gz"``)
+        are prioritized over general compression extensions (e.g. ``".gz"``) to ensure the
+        specialized loader is selected.
+
+    **Examples**::
+
+        >>> from pyhelpers.store import get_loader
+        >>> get_loader(".parquet").__name__
+        'load_parquet'
+        >>> get_loader(".pkl.gz").__name__
+        'load_pickle'
+        >>> get_loader(".gz").__name__
+        'load_joblib'
+    """
+
+    _mapping = {
+        ('.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.gzip', '.pickle.lzma', '.pickle.xz',
+         '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.gzip', '.pkl.lzma', '.pkl.xz'): load_pickle,
+        ('.csv', '.txt'): load_csv,
+        (".xlsx", ".xls", ".ods"): load_spreadsheets,
+        (".json", ): load_json,
+        (".fea", ".feather"): load_feather,
+        (".parquet", ".geoparquet"): load_parquet,
+        (".gpkg", ".geopackage"): load_geopackage,
+        (".npz", ): load_csr_matrix,
+        (".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma"): load_joblib,
+    }
+
+    return next((func for ext, func in _mapping.items() if file_ext.endswith(ext)), None)
+
+
+def load_data(path_to_file, verbose=False, show_warning=True, prt_kwargs=None, raise_error=False,
               **kwargs):
     """
     Loads data from a file.
 
     :param path_to_file: Pathname of the file; supported formats include
-        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_ and
-        `Parquet`_.
+        `Pickle`_, `CSV`_, `Microsoft Excel`_ spreadsheet, `JSON`_, `Joblib`_, `Feather`_,
+        `Parquet`_ and `GeoPackage`_.
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information in console as the function runs;
         defaults to ``False``.
     :type verbose: bool | int
-    :param warn_err: Whether to show a warning message if an unknown error occurs;
+    :param show_warning: Whether to show a warning message if an unknown error occurs;
         defaults to ``True``.
-    :type warn_err: bool
+    :type show_warning: bool
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
@@ -800,8 +1031,9 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         :func:`~pyhelpers.store.load_spreadsheets`,
         :func:`~pyhelpers.store.load_json`,
         :func:`~pyhelpers.store.load_joblib`,
-        :func:`~pyhelpers.store.load_feather`, or
-        :func:`~pyhelpers.store.load_parquet`.
+        :func:`~pyhelpers.store.load_feather`,
+        :func:`~pyhelpers.store.load_parquet`, or
+        :func:`~pyhelpers.store.load_geopackage`.
     :return: Data retrieved from the specified path ``path_to_file``.
     :rtype: typing.Any
 
@@ -812,6 +1044,7 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
     .. _`Joblib`: https://pypi.org/project/joblib/
     .. _`Feather`: https://arrow.apache.org/docs/python/feather.html
     .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
+    .. _`GeoPackage`: https://www.geopackage.org/
 
     .. note::
 
@@ -864,59 +1097,26 @@ def load_data(path_to_file, verbose=False, warn_err=True, prt_kwargs=None, raise
         >>> joblib_dat = load_data(path_to_file=dat_pathname, verbose=True)
         Loading "./tests/data/dat.joblib" ... Done.
         >>> joblib_dat
-        array([[0.5488135 , 0.71518937, 0.60276338, ..., 0.02010755, 0.82894003,
-                0.00469548],
-               [0.67781654, 0.27000797, 0.73519402, ..., 0.25435648, 0.05802916,
-                0.43441663],
-               [0.31179588, 0.69634349, 0.37775184, ..., 0.86219152, 0.97291949,
-                0.96083466],
-               ...,
-               [0.89111234, 0.26867428, 0.84028499, ..., 0.5736796 , 0.73729114,
-                0.22519844],
-               [0.26969792, 0.73882539, 0.80714479, ..., 0.94836806, 0.88130699,
-                0.1419334 ],
-               [0.88498232, 0.19701397, 0.56861333, ..., 0.75842952, 0.02378743,
-                0.81357508]])
+        LinearRegression()
     """
-
-    load_params = {
-        'path_to_file': path_to_file,
-        'verbose': verbose,
-        'prt_kwargs': prt_kwargs,
-        'raise_error': raise_error,
-        **kwargs
-    }
 
     ext = "".join(pathlib.Path(path_to_file).suffixes).lower()
 
-    if ext.endswith(('.pickle', '.pickle.bz2', '.pickle.gz', '.pickle.lzma', '.pickle.xz',
-                     '.pkl', '.pkl.bz2', '.pkl.gz', '.pkl.lzma', '.pkl.xz')):
-        return load_pickle(**load_params)
+    # Find the loader function
+    loader_func = get_loader(ext)
 
-    if ext.endswith((".csv", ".txt")):
-        return load_csv(**load_params)
+    if loader_func:
+        return loader_func(
+            path_to_file=path_to_file,
+            verbose=verbose,
+            prt_kwargs=prt_kwargs,
+            raise_error=raise_error,
+            **kwargs
+        )
 
-    if ext.endswith((".xlsx", ".xls", ".ods")):
-        return load_spreadsheets(**load_params)
-
-    if ext.endswith(".json"):
-        return load_json(**load_params)
-
-    if ext.endswith((".joblib", ".sav", ".z", ".gz", ".bz2", ".xz", ".lzma")):
-        return load_joblib(**load_params)
-
-    if ext.endswith((".fea", ".feather")):
-        return load_feather(**load_params)
-
-    if ext.endswith(".npz"):
-        return load_csr_matrix(**load_params)
-
-    if ext.endswith((".parquet", ".geoparquet")):
-        return load_parquet(**load_params)
-
-    if warn_err:
-        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-        logging.warning(
-            "\n  The specified file format (extension) is not recognisable by `load_data()`.")
+    # Fallback for unrecognized formats
+    if show_warning:
+        logging.getLogger(__name__).warning(
+            'Warning: The file format/extension "%s" is not recognized by `load_data()`.', ext)
 
     return None

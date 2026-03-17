@@ -35,8 +35,9 @@ def _load_package_data(filename):
     :rtype: dict
     """
 
-    filepath = importlib.resources.files(__name__).joinpath(f"data/{filename}")
-    if filepath.suffix == ".json":  # noqa
+    filepath = importlib.resources.files(__package__).joinpath(f"data/{filename}")
+
+    if filepath.suffix.endswith(".json"):  # noqa
         return json.loads(filepath.read_text(encoding='utf-8'))
 
     return {}
@@ -643,41 +644,40 @@ def _check_file_pathname(name, options=None, target=None):
     return file_exists, pathname
 
 
-def _format_error_message(e=None, prefix=""):
+def _format_exception_message(exception=None, prefix=""):
     """
-    Formats an error message.
+    Formats a consolidated error message string.
 
-    This function formats an error message by combining ``message`` and ``e`` (if provided).
-    If ``e`` is provided and is a string, it appends ``e`` to ``message``.
-    If ``e`` is an ``Exception`` or its subclass, it includes the exception's message
-    in the final output.
+    This function combines a prefix with an error description (string or ``Exception``), ensuring
+    proper spacing and terminal punctuation.
 
-    :param e: An error message, exception, or any subclass of ``Exception``; defaults to ``None``.
-    :type e: Exception | BaseException | str | None
-    :param prefix: The base text to prepend to ``e``; defaults to ``""``.
+    :param exception: Error message or ``Exception`` object. Defaults to ``None``.
+    :type exception: Exception | str | None
+    :param prefix: Text to prepend to the error description. Defaults to ``""``.
     :type prefix: str
-    :return: A formatted error message.
+    :return: Formatted error message.
     :rtype: str
 
     **Tests**::
 
-        >>> from pyhelpers._cache import _format_error_message
-        >>> _format_error_message("test")
-        'test.'
-        >>> _format_error_message("test", prefix="Failed.")
+        >>> from pyhelpers._cache import _format_exception_message
+        >>> _format_exception_message("test")
+        'Failed. Error: test.'
+        >>> _format_exception_message("test", prefix="Failed.")
         'Failed. test.'
+        >>> _format_exception_message(ValueError('There is a value error.'))
+        'There is a value error.'
     """
 
-    if e:
-        e_ = f"{e}".strip()
-        error_message = e_ + "." if not e_.endswith((".", "!", "?")) else e_
-    else:
-        error_message = ""
+    # Convert exception to string and clean it up
+    msg_str = str(exception).strip() if exception is not None else ""
 
-    if prefix:
-        error_message = prefix + " " + error_message
+    # Add terminal punctuation if content exists and isn't already punctuated
+    if msg_str and not msg_str.endswith((".", "!", "?")):
+        msg_str += "."
 
-    return error_message
+    # Clean join to handle empty prefix or empty message
+    return " ".join(filter(None, [prefix.strip(), msg_str]))
 
 
 def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
@@ -714,17 +714,19 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
         ... except ZeroDivisionError as e:
         ...     _print_failure_message(e, prefix="Error:", raise_error=True, verbose=False)
         Traceback (most recent call last):
-            ...
+          ...
+            result = 1 / 0  # This will raise a ZeroDivisionError
+                     ~~^~~
         ZeroDivisionError: division by zero
     """
 
-    error_message = _format_error_message(e=e, prefix=prefix)
-
     if verbose:
-        print(error_message)
+        print(_format_exception_message(exception=e, prefix=prefix))
 
     if raise_error:
-        raise e
+        if isinstance(e, BaseException):
+            raise e  # Raise the passed exception object
+        raise Exception(str(e))  # Fallback if e is just a message string
 
 
 def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
