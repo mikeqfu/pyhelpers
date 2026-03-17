@@ -725,8 +725,8 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
 
     if raise_error:
         if isinstance(e, BaseException):
-            raise  # Maintains original traceback/stack trace
-        raise Exception(str(e))  # Fallback if e was just a string
+            raise e  # Raise the passed exception object
+        raise Exception(str(e))  # Fallback if e is just a message string
 
 
 def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
