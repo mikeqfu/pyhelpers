@@ -221,8 +221,9 @@ def import_data(db_instance, data, schema_name, table_name, data_name="data", pr
 
 def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="data", prefix='',
               suffix='', verbose=False, raise_error=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Reads data from the project database.
+    Reads data from a database using either a table name or custom SQL.
 
     :param db_instance: A class instance for handling the database.
     :type db_instance: pyhelpers.dbms.PostgreSQL | pyhelpers.dbms.MSSQL
@@ -286,34 +287,34 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
         Dropping "testdb" ... Done.
     """
 
-    tbl = f'"{schema_name}"."{table_name}"'
+    # Use the instance's naming logic for dialect-specific quotes (e.g. [] or "")
+    full_table_name = db_instance._table_name(table_name=table_name, schema_name=schema_name)
 
+    # Check existence
     if not db_instance.table_exists(table_name=table_name, schema_name=schema_name):
         if verbose:
-            print(f"The table {tbl} does not exist.")
+            print(f"The table {full_table_name} does not exist.")
         return None
 
-    else:
-        try:
-            if verbose:
-                print(f'Reading {prefix}{data_name}{suffix} from {tbl}', end=" ... ")
+    try:
+        data_label = f"{prefix}{data_name}{suffix}"
 
-            # noinspection PyBroadException
-            try:
-                sql_query_ = sql_query or f'SELECT * FROM {tbl}'
-                data = db_instance.read_sql_query(sql_query=sql_query_, **kwargs)
+        if verbose:
+            print(f'Reading {data_label} from {full_table_name}', end=" ... ", flush=True)
 
-            except Exception:
-                kwargs.update({'table_name': table_name, 'schema_name': schema_name})
-                data = db_instance.read_table(**kwargs)
+        # Decision Logic: If query is provided, use it. Otherwise, use read_table.
+        if sql_query:
+            data = db_instance.read_sql_query(sql_query=sql_query, **kwargs)
+        else:
+            data = db_instance.read_table(table_name=table_name, schema_name=schema_name, **kwargs)
 
-            if verbose:
-                print("Done.")
+        if not data.empty and verbose:
+            print("Done.")
 
-            return data
+        return data
 
-        except Exception as e:
-            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+    except Exception as e:
+        _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def _get_chunk_size(mssql, mssql_table_name, chunk_size=None):
