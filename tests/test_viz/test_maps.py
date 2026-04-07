@@ -18,12 +18,12 @@ def test_create_base_folium_map(fit_bounds, tiles):
     gdf = load_geopackage(test_data_path)
 
     # noinspection PyTypeChecker
-    gdf_4326_1, m1 = create_base_folium_map(gdf, fit_bounds=fit_bounds, tiles=tiles)
+    m1, gdf_4326_1 = create_base_folium_map(gdf, fit_bounds=fit_bounds, tiles=tiles)
     assert gdf_4326_1.crs.to_epsg() == 4326
     assert isinstance(m1, folium.Map)
 
     # noinspection PyTypeChecker
-    gdf_4326_2, m2 = create_base_folium_map(
+    m2, gdf_4326_2 = create_base_folium_map(
         gdf, fit_bounds=fit_bounds, tiles=tiles, initial_tile_name="Test tile")
     assert gdf_4326_2.crs.to_epsg() == 4326
     assert isinstance(m2, folium.Map)
