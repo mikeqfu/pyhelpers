@@ -346,20 +346,20 @@ class _Base:
     def _msg_for_multi_items(self, item_names, desc, fmt='"{}"', indent=2):
         # noinspection PyShadowingNames
         """
-        Formulates a message for printing multiple items.
+        Formulates a message for printing multiple items with singular/plural logic.
 
-        :param item_names: Name of one or several items (e.g. tables or schemas).
+        :param item_names: One or several item names.
         :type item_names: str | typing.Iterable[str] | None
-        :param desc: Additional description of the items.
+        :param desc: Description of the items (e.g. ``'table'``, ``'schema'``).
         :type desc: str
-        :param fmt: Printing format for each item; defaults to ``'"{}"'``.
+        :param fmt: Format string for each item. Defaults to ``'"{}"'``.
         :type fmt: str
         :param indent: Indentation level; if an integer, represents the number of spaces;
             If a string, used as the indentation character (e.g. ``'\\t'``);
             defaults to ``2`` (two spaces).
         :type indent: int | str
         :return: Formatted message for printing.
-        :rtype: tuple
+        :rtype: tuple[list[str], str, str, str]
 
         **Examples**::
 
@@ -396,20 +396,23 @@ class _Base:
         """
 
         # Handle integer vs string indentation
-        indent_str = " " * indent if isinstance(indent, int) else indent
+        indent_str = " " * max(0, indent) if isinstance(indent, int) else str(indent or "")
 
+        # Item normalisation
         if item_names is None:
             item_names_ = sqlalchemy.inspect(self.engine).get_schema_names()
         else:
             item_names_ = [item_names] if isinstance(item_names, str) else list(item_names)
 
+        # Singular vs. plural logic
         if len(item_names_) == 1:
             print_plural = f"{desc}"
             print_items = fmt.format(item_names_[0])
         else:
-            print_plural = f"{desc}s"
+            print_plural = f"{desc}s"  # Use simple pluralisation (suffix 's')
             # Build the multi-line string using the resolved indent_str
-            print_items = (f'\n{indent_str}{fmt}' * len(item_names_)).format(*item_names_)
+            item_lines = [f"{indent_str}{fmt.format(name)}" for name in item_names_]
+            print_items = "\n" + "\n".join(item_lines)
 
         return item_names_, print_plural, print_items, indent_str
 
@@ -476,7 +479,7 @@ class _Base:
         Drops one or more schemas.
 
         :param schema_names: Name(s) of the schemas to drop.
-        :type schema_names: str | list[str]
+        :type schema_names: str | typing.Iterable[str]
         :param fmt: String format of the schema name.
         :type fmt: str
         :param query_: SQL query to drop the schema.
@@ -533,34 +536,41 @@ class _Base:
 
     def get_table_names(self, schema_name, verbose=False):
         """
-        Gets names of all tables stored in a schema.
+        Gets names of all tables stored in one or more schemas.
 
-        :param schema_name: Name of a schema.
+        :param schema_name: Name of a schema or a list of schema names.
+            If ``None``, defaults to the default schema.
         :type schema_name: str | list | None
-        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :param verbose: Whether to print relevant information to the console. Defaults to ``False``.
         :type verbose: bool | int
-        :return: Table names of the given schema(s).
-        :rtype: dict
+        :return: A dictionary where keys are schema names and values are lists of table names.
+        :rtype: dict[str, list[str]]
         """
 
-        schema_name_ = self._schema_name(schema_name=schema_name)
-        if isinstance(schema_name_, str):
-            schema_name_ = [schema_name_]
+        # Normalize schema names to a list
+        schema_input = self._schema_name(schema_name=schema_name)
+        schema_names = [schema_input] if isinstance(schema_input, str) else list(schema_input)
 
-        inspector = sqlalchemy.inspection.inspect(self.engine)
+        inspector = sqlalchemy.inspect(self.engine)
 
-        table_names = dict()
-        for schema in schema_name_:
-            if not self.schema_exists(schema_name=schema):
+        table_names_map = {}
+
+        for schema in schema_names:
+            if not self.schema_exists(schema_name=schema):  # Check existence before inspecting
                 if verbose:
-                    if self.engine.dialect.name == 'mssql':
-                        schema_ = f"[{schema}]"
-                    else:
-                        schema_ = f'"{schema}"'
-                    print(f'The schema {schema_} does not exist.')
-            table_names[schema] = inspector.get_table_names(schema=schema)
+                    s = f"[{schema}]" if self.engine.dialect.name == 'mssql' else f'"{schema}"'
+                    print(f'The schema {s} does not exist.')
+                continue  # Skip to the next schema to avoid crashing
 
-        return table_names
+            # Safe inspection
+            try:
+                table_names_map[schema] = inspector.get_table_names(schema=schema)
+            except Exception as e:
+                if verbose:
+                    print(f"Warning: Could not retrieve tables for '{schema}'. Error: {e}")
+                table_names_map[schema] = []
+
+        return table_names_map
 
     def table_exists(self, table_name, schema_name):
         """
@@ -569,56 +579,61 @@ class _Base:
         :param table_name: Name of the table to check.
         :type table_name: str
         :param schema_name: Name of the schema to check in.
-        :type schema_name: str
+        :type schema_name: str | None
         :return: Whether the table exists.
         :rtype: bool
         """
         return None
 
-    def _create_table(self, table_name, column_specs, schema_name=None, verbose=False,
-                      raise_error=False):
+    def _create_table(self, table_name, column_specs, schema_name, verbose=False, raise_error=True):
         """
-        Creates a table with specified columns.
+        Creates a new table with the specified column definitions.
+
+        If the table already exists, the operation is skipped.
+        If the schema does not exist, it is created automatically.
 
         :param table_name: Name of the table to be created.
         :type table_name: str
-        :param column_specs: Specifications for each column of the table.
+        :param column_specs: SQL fragment defining columns
+            (e.g. ``'id INT PRIMARY KEY, val TEXT'``).
         :type column_specs: str
         :param schema_name: Name of the schema where the table will be created;
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'dbo'``)
-            if ``schema_name=None``.
+            if ``None``, defaults to the engine's default schema.
         :type schema_name: str | None
-        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+        :param verbose: Whether to print relevant information to the console. Defaults to ``False``.
         :type verbose: bool | int
         :param raise_error: Whether to raise the provided exception;
-            if ``raise_error=False`` (default), the error will be suppressed.
+            if ``raise_error=False``, the error will be suppressed. Defaults to ``True``.
         :type raise_error: bool
         """
 
-        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+        # Resolve full table name (e.g. "schema"."table")
+        full_table_name = self._table_name(table_name=table_name, schema_name=schema_name)
 
+        # Check existence
         if self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
-                print(f"The table {table_name_} already exists.")
+                print(f"The table {full_table_name} already exists.")
+            return
 
-        else:
-            if not self.schema_exists(schema_name):
-                self.create_schema(schema_name=schema_name, verbose=False)
+        # Ensure schema exists
+        if schema_name and not self.schema_exists(schema_name):
+            self.create_schema(schema_name=schema_name, verbose=False)
 
-            try:
-                if verbose:
-                    print(f"Creating a table: {table_name_} ... ", end="")
+        # Execute creation
+        try:
+            if verbose:
+                print(f"Creating a table: {full_table_name} ... ", end="", flush=True)
 
-                with self.engine.connect() as connection:
-                    query = sqlalchemy.text(f'CREATE TABLE {table_name_} ({column_specs});')
-                    connection.execute(query)
+            with self.engine.connect() as connection:
+                query = sqlalchemy.text(f'CREATE TABLE {full_table_name} ({column_specs});')
+                connection.execute(query)
 
-                if verbose:
-                    print("Done.")
+            if verbose:
+                print("Done.")
 
-            except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        except Exception as e:
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
                     verbose=False, raise_error=False):
@@ -641,44 +656,46 @@ class _Base:
         :type raise_error: bool
         """
 
-        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+        full_table_name = self._table_name(table_name=table_name, schema_name=schema_name)
 
         if not self.table_exists(table_name=table_name, schema_name=schema_name):
             if verbose:
-                print(f"The table {table_name_} does not exist.")
+                print(f"The table {full_table_name} does not exist.")
+            return
 
-        else:
-            if _confirmed(f"To drop the table {table_name_} from {self.address}\n?",
-                          confirmation_required=confirmation_required):
+        confirm_prompt = f"To drop the table {full_table_name} from {self.address}\n?"
+        if not _confirmed(confirm_prompt, confirmation_required=confirmation_required):
+            if verbose:
+                print("Canceled.")
+            return
 
-                if verbose:
-                    if confirmation_required:
-                        log_msg = f"Dropping {table_name_}"
-                    else:
-                        log_msg = f"Dropping the table {table_name_} from {self.address}"
-                    print(log_msg, end=" ... ")
+        if verbose:
+            if confirmation_required:
+                log_msg = f"Dropping {full_table_name}"
+            else:
+                log_msg = f"Dropping the table {full_table_name} from {self.address}"
+            print(log_msg, end=" ... ")
 
-                try:
-                    with self.engine.connect() as connection:
-                        # e.g. 'DROP TABLE {} CASCADE;'.format(table_name_)
-                        query = sqlalchemy.text(query_fmt.format(table_name_))
-                        connection.execute(query)
+        try:
+            with self.engine.connect() as connection:
+                # e.g. 'DROP TABLE {} CASCADE;'.format(table_name_)
+                query = sqlalchemy.text(query_fmt.format(full_table_name))
+                connection.execute(query)
 
-                    if verbose:
-                        print("Done.")
+            if verbose:
+                print("Done.")
 
-                except Exception as e:
-                    _print_failure_message(
-                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        except Exception as e:
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
-    def drop_table(self, table_name, schema_name, confirmation_required=True, verbose=False):
+    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
         """
         Drops a table from a specified schema.
 
         :param table_name: Name of the table to drop.
         :type table_name: str
         :param schema_name: Name of the schema containing the table.
-        :type schema_name: str
+        :type schema_name: str | None
         :param confirmation_required: Whether to prompt a message for confirmation before
             proceeding; defaults to ``True``.
         :type confirmation_required: bool
@@ -862,7 +879,7 @@ class _Base:
         :param table_name: Name of the table.
         :type table_name: str
         :param schema_name: Name of the schema; defaults to ``None``.
-        :type schema_name: str
+        :type schema_name: str | None
         :param column_names: Column name(s) to validate; defaults to ``None``.
         :type column_names: str | list | tuple | None
         :return: Validated column names for a PostgreSQL query statement.
