@@ -150,12 +150,12 @@ class _Base:
                 _print_failure_message(
                     e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
-    def database_exists(self, database_name):
+    def database_exists(self, database_name=None):
         """
         Checks if a database exists.
 
         :param database_name: Name of the database to check.
-        :type database_name: str
+        :type database_name: str | None
         :return: Whether the database exists.
         :rtype: bool
         """
@@ -217,15 +217,17 @@ class _Base:
 
         self.connect_database(database_name=database_name, verbose=False)
 
-    def _drop_database(self, database_name, fmt, confirmation_required, verbose=False,
+    def _drop_database(self, database_name=None, fmt='"{}"', confirmation_required=True, verbose=False,
                        raise_error=False):
         """
-        Drops (deletes) a database.
+        Drops (deletes) a database from the server.
 
         :param database_name: Name of the database to drop.
-        :type database_name: str
+        :type database_name: str | None
+        :param fmt: String format of the database name. Defaults to ``'"{}"'``.
+        :type fmt: str
         :param confirmation_required: Whether to prompt a message for confirmation before
-            proceeding.
+            proceeding. Defaults to ``True``.
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console.
         :type verbose: bool | int
@@ -234,37 +236,41 @@ class _Base:
         :type raise_error: bool
         """
 
+        # Resolve and check existence
         db_name = self._database_name(database_name, fmt=fmt)
 
         if not self.database_exists(database_name=database_name):
             if verbose:
                 print(f"The database {db_name} does not exist.")
+            return
 
-        else:
-            # address_ = self.address.replace(f"/{db_name}", "")
-            address_ = self.address.split('/')[0]
-            cfm_msg = f"To drop the database {db_name} from {address_}\n?"
-            if _confirmed(prompt=cfm_msg, confirmation_required=confirmation_required):
-                self.disconnect_database(database_name=database_name)
+        # address = self.address.replace(f"/{db_name}", "")
+        address = self.address.split('/')[0]
+        prompt = f"Drop the database {db_name} from {address}?\n"
+        if not _confirmed(prompt=prompt, confirmation_required=confirmation_required):
+            if verbose:
+                print("Canceled.")
+            return
 
-                if verbose:
-                    if confirmation_required:
-                        log_msg = f"Dropping {db_name}"
-                    else:
-                        log_msg = f"Dropping the database {db_name} from {address_}"
-                    print(log_msg, end=" ... ")
+        if verbose:
+            if confirmation_required:
+                log_msg = f"Dropping {db_name}"
+            else:
+                log_msg = f"Dropping the database {db_name} from {address}"
+            print(log_msg, end=" ... ", flush=True)
 
-                try:
-                    with self.engine.connect() as connection:
-                        query = sqlalchemy.text(f'DROP DATABASE {db_name};')
-                        connection.execute(query)
+        try:
+            self.disconnect_database(database_name=database_name)
 
-                    if verbose:
-                        print("Done.")
+            with self.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                query = sqlalchemy.text(f'DROP DATABASE {db_name};')
+                conn.execute(query)
 
-                except Exception as e:
-                    _print_failure_message(
-                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+            if verbose:
+                print("Done.")
+
+        except Exception as e:
+            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _schema_name(self, schema_name=None):
         """
@@ -570,7 +576,7 @@ class _Base:
                     print(f"Warning: Could not retrieve tables for '{schema}'. Error: {e}")
                 table_names_map[schema] = []
 
-        return table_names_map
+        return table_names_map or None
 
     def table_exists(self, table_name, schema_name):
         """
@@ -781,7 +787,7 @@ class _Base:
                     print(f"Forcing drop of existing table {table_name_} ... ")
                 self.drop_table(
                     table_name=table_name, schema_name=schema_name_, confirmation_required=False,
-                    verbose=verbose == 2, indent=2 if confirmation_required else 0)
+                    verbose=verbose == 2, indent=2)
                 # After dropping, change `if_exists` to 'fail' (let pandas create it) or keep as is.
                 if_exists = 'fail'  # Setting to 'fail' is safest
             elif if_exists == 'fail':
