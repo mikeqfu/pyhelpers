@@ -26,4 +26,6 @@ Utilities for maps
     :toctree: _generated/
     :template: class.rst
 
+    get_base_map_center
+    create_base_folium_map
     BindColormap
