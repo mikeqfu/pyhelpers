@@ -19,14 +19,14 @@ def make_database_address(host, port, username, database_name=""):
     Generates a string representing a database address.
 
     :param host: Host name or IP address of the database server.
-    :type host: str
-    :param port: Port number on which the database server is listening.
-    :type port: int | str
-    :param username: Username used to connect to the database server.
-    :type username: str
-    :param database_name: Name of the PostgreSQL database; defaults to an empty string.
+    :type host: str | None
+    :param port: Port number of the database server.
+    :type port: int | str | None
+    :param username: Username for the connection.
+    :type username: str | None
+    :param database_name: Name of the database; defaults to an empty string.
     :type database_name: str | None
-    :return: Address of the database in the format '<username>@<host>:<port>/<database_name>'.
+    :return: Formatted address as '<username>:***@<host>:<port>[/<database_name>]'.
     :rtype: str
 
     **Examples**::
@@ -40,7 +40,12 @@ def make_database_address(host, port, username, database_name=""):
         'user:***@127.0.0.1:5432'
     """
 
-    database_address = f"{username}:***@{host}:{port}"
+    # Handle None values to avoid "None" string literals
+    username_ = username or "None"
+    host_ = host or "None"
+    port_ = port or "None"
+
+    database_address = f"{username_}:***@{host_}:{port_}"
 
     if database_name:
         database_address += f"/{database_name}"
