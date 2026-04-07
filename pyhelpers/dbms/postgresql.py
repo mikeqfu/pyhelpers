@@ -390,7 +390,7 @@ class PostgreSQL(_Base):
             database.
         :type database_name: str | None
         :return: Size of the database.
-        :rtype: str
+        :rtype: str | None
 
         **Examples**::
 
@@ -417,9 +417,9 @@ class PostgreSQL(_Base):
             query = sqlalchemy.text(f'SELECT pg_size_pretty(pg_database_size({db_name})) AS size;')
             result = connection.execute(query)
 
-        db_size = result.fetchone()[0]
+        db_size = result.fetchone()
 
-        return db_size
+        return db_size[0] if db_size else None
 
     def disconnect_database(self, database_name=None, verbose=False, raise_error=False):
         """
@@ -515,7 +515,7 @@ class PostgreSQL(_Base):
         Deletes/drops a database.
 
         :param database_name: Name of the database to be dropped.
-            If ``database_name=None`` (default), drop the currently connected database.
+            If ``None`` (default), drop the currently connected database.
         :type database_name: str | None
         :param confirmation_required: Whether to prompt for confirmation before proceeding;
             defaults to ``True``.
@@ -826,6 +826,7 @@ class PostgreSQL(_Base):
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
                      raise_error=False):
+        # noinspection PyUnresolvedReferences
         """
         Creates a table.
 
@@ -862,13 +863,17 @@ class PostgreSQL(_Base):
             >>> # Get information about all columns of the table "public"."test_table"
             >>> test_tbl_col_info = testdb.get_column_info(table_name=tbl_name, as_dict=False)
             >>> test_tbl_col_info.head()
-                                        column_0      column_1
-            table_catalog                 testdb        testdb
-            table_schema                  public        public
-            table_name                test_table    test_table
-            column_name               col_name_1    col_name_2
-            ordinal_position                   1             2
-            >>> # Get data types of all columns of the table "public"."test_table"
+                                column_0    column_1
+            table_catalog         testdb      testdb
+            table_schema          public      public
+            table_name        test_table  test_table
+            column_name       col_name_1  col_name_2
+            ordinal_position           1           2
+            >>> # Get column names of the table "public"."test_table"
+            >>> test_tbl_col_names = testdb.get_column_names(table_name=tbl_name)
+            >>> test_tbl_col_names
+            ['col_name_1', 'col_name_2']
+            >>> # Get data types of all columns of the table
             >>> test_tbl_dtypes = testdb.get_column_dtype(table_name=tbl_name)
             >>> test_tbl_dtypes
             {'col_name_1': 'integer', 'col_name_2': 'text'}
@@ -916,6 +921,33 @@ class PostgreSQL(_Base):
 
         return column_info
 
+    def get_column_names(self, table_name, schema_name=None):
+        """
+        Retrieves column names of a table.
+
+        :param table_name: Name of the table to retrieve column names from.
+        :type table_name: str
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
+        :type schema_name: str | None
+        :return: List of column names in the specified table in the currently-connected database.
+        :rtype: list
+
+        .. seealso::
+
+            - Examples for the method :meth:`~pyhelpers.dbms.PostgreSQL.create_table`.
+        """
+
+        schema_name_ = self._schema_name(schema_name=schema_name)
+
+        with self.engine.connect() as connection:
+            query = sqlalchemy.text(
+                f"SELECT column_name FROM information_schema.columns "
+                f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}'"
+                f"ORDER BY ordinal_position;")
+            res = connection.execute(query)
+
+        return list(itertools.chain.from_iterable(res.fetchall()))
+
     def get_column_dtype(self, table_name, column_names=None, schema_name=None):
         """
         Retrieves information about data types of all or specific columns of a table.
@@ -956,11 +988,8 @@ class PostgreSQL(_Base):
 
         column_dtypes_ = result.fetchall()
 
-        if len(column_dtypes_) > 0:
-            # noinspection PyTypeChecker
-            column_dtypes = dict(column_dtypes_)
-        else:
-            column_dtypes = None
+        # noinspection PyTypeChecker
+        column_dtypes = dict(column_dtypes_) if len(column_dtypes_) > 0 else None
 
         return column_dtypes
 
@@ -1012,8 +1041,8 @@ class PostgreSQL(_Base):
             {'public': []}
             >>> tbl_names = testdb.get_table_names(schema_name='testdb', verbose=True)
             The schema "testdb" does not exist.
-            >>> tbl_names
-            {'testdb': []}
+            >>> tbl_names is None
+            True
             >>> # Create a new table named "test_table" in the schema "testdb"
             >>> new_tbl_name = 'test_table'
             >>> col_spec = 'col_name_1 INT, col_name_2 TEXT'
@@ -1315,6 +1344,10 @@ class PostgreSQL(_Base):
 
         column_dtypes = self.get_column_dtype(
             table_name=table_name, column_names=column_names, schema_name=schema_name)
+
+        if column_dtypes is None:
+            raise RuntimeError("Failed to identify column data types via `.get_column_dtype()`.")
+
         text_columns = [k for k, v in column_dtypes.items() if v == 'text']
 
         if len(text_columns) > 0:
@@ -1410,7 +1443,7 @@ class PostgreSQL(_Base):
         :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
         .. _`pandas.DataFrame.to_sql()`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+            https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html
 
         .. seealso::
 
@@ -1418,10 +1451,19 @@ class PostgreSQL(_Base):
         """
 
         self._import_data(
-            data, table_name, schema_name=schema_name, if_exists=if_exists,
-            force_replace=force_replace, chunk_size=chunk_size, col_type=col_type, method=method,
-            index=index, confirmation_required=confirmation_required, verbose=verbose,
-            **kwargs)
+            data=data,
+            table_name=table_name,
+            schema_name=schema_name,
+            if_exists=if_exists,
+            force_replace=force_replace,
+            chunk_size=chunk_size,
+            col_type=col_type,
+            method=method,
+            index=index,
+            confirmation_required=confirmation_required,
+            verbose=verbose,
+            **kwargs
+        )
 
     def read_sql_query(self, sql_query, method='tempfile', max_size_spooled=1, delimiter=',',
                        tempfile_kwargs=None, stringio_kwargs=None, **kwargs):
@@ -1457,7 +1499,7 @@ class PostgreSQL(_Base):
         :rtype: pandas.DataFrame
 
         .. _`pandas.read_csv()`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html
+            https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
         .. _`tempfile.TemporaryFile()`:
             https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryFile
         .. _`tempfile.SpooledTemporaryFile()`:
@@ -1486,10 +1528,10 @@ class PostgreSQL(_Base):
             >>> schema = 'points'
             >>> # Import the data into a table named "points"."England"
             >>> testdb.import_data(example_df, table, schema, index=True, verbose=2)
-            To import data into "points"."England" at postgres:***@localhost:5432/testdb
-            ? [No]|Yes: yes
+            Import data into "points"."England" at postgres:***@localhost:5432/testdb?
+             [No]|Yes: yes
             Creating a schema: "points" ... Done.
-            Importing the data into the table "points"."England" ... Done.
+            Importing the data into "points"."England" ... Done.
 
         The table "*points*"."*England*" is illustrated in
         :numref:`dbms-postgresql-get_primary_keys-demo` below:
@@ -1504,7 +1546,7 @@ class PostgreSQL(_Base):
         .. code-block:: python
 
             >>> res = testdb.table_exists(table_name=table, schema_name=schema)
-            >>> print(f"The table \"{schema}\".\"{table}\" exists? {res}.")
+            >>> print(f'The table "{schema}"."{table}" exists? {res}.')
             The table "points"."England" exists? True.
             >>> # Retrieve the data using the method .read_table()
             >>> example_df_ret = testdb.read_table(table, schema_name=schema, index_col='City')
@@ -1543,8 +1585,8 @@ class PostgreSQL(_Base):
             ? [No]|Yes: yes
             Dropping "testdb" ... Done.
 
-        **Aside:** a brief example of using the parameter ``params`` for `pandas.read_sql
-        <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html>`_
+        **Aside:** a brief example of using the parameter ``params`` for
+        `pandas.read_sql <https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html>`_
 
         .. code-block:: python
 
@@ -1598,6 +1640,7 @@ class PostgreSQL(_Base):
             # Rewind the file handle using seek() in order to read the data back from it
             csv_temp.seek(0)
 
+            # noinspection PyTypeChecker
             table_data = pd.read_csv(csv_temp, **kwargs)  # Read data from temporary csv
 
             csv_temp.close()  # Close the temp file
@@ -1632,8 +1675,7 @@ class PostgreSQL(_Base):
         :return: Data of the specified table.
         :rtype: pandas.DataFrame
 
-        .. _`pandas.read_sql()`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_sql.html
+        .. _`pandas.read_sql()`: https://pandas.pydata.org/docs/reference/api/pandas.read_sql.html
 
         .. seealso::
 
@@ -1652,16 +1694,17 @@ class PostgreSQL(_Base):
         else:
             with self.engine.connect() as connection:
                 sql_query_ = sqlalchemy.text(sql_query)
+                # noinspection PyTypeChecker
                 data = pd.read_sql(sql=sql_query_, con=connection, chunksize=chunk_size, **kwargs)
 
         if sorted_by:
-            # noinspection PyUnboundLocalVariable
+            # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
             data.sort_values(sorted_by, inplace=True, ignore_index=True)
 
         return data
 
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
-                   raise_error=False):
+                   indent=0, raise_error=False):
         """
         Deletes/drops a specified table.
 
@@ -1676,6 +1719,10 @@ class PostgreSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``0`` (no space).
+        :type indent: int | str
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool
@@ -1686,5 +1733,11 @@ class PostgreSQL(_Base):
         """
 
         self._drop_table(
-            table_name, query_fmt='DROP TABLE {} CASCADE;', schema_name=schema_name,
-            confirmation_required=confirmation_required, verbose=verbose, raise_error=raise_error)
+            table_name=table_name,
+            query_fmt='DROP TABLE {} CASCADE;',
+            schema_name=schema_name,
+            confirmation_required=confirmation_required,
+            verbose=verbose,
+            indent=indent,
+            raise_error=raise_error
+        )
