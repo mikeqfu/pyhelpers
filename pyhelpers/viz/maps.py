@@ -7,8 +7,6 @@ for calculating optimal map centers and initializing base maps directly from
 `GeoPandas <https://geopandas.org/>`_ GeoDataFrames.
 """
 
-import shapely
-
 from .._cache import _lazy_check_dependencies
 
 
@@ -37,57 +35,63 @@ def get_base_map_center(gdf, center_method='bounds'):
     :type center_method: str
     :return: A tuple containing the re-projected GeoDataFrame and the center coordinates.
         The center coordinates are returned as a list `[latitude, longitude]`.
-    :rtype: tuple[geopandas.GeoDataFrame, list[float], list[float], list[float]]
+    :rtype: tuple[list[float], list[float], list[float], geopandas.GeoDataFrame]
 
     **Examples**::
 
         >>> from pyhelpers.viz import get_base_map_center
-        >>> # gdf_proj, center, ll, ur = get_base_map_center(my_gdf)
+        >>> import geopandas as gpd
+        >>> from shapely.geometry import Point
+        >>> gdf = gpd.GeoDataFrame({'col': [1, 2]}, geometry=[Point(0, 0), Point(2, 2)], crs=4326)
+        >>> center_lat_lon, ll_lat_lon, ur_lat_lon, gdf_proj = get_base_map_center(gdf)
+        >>> center_lat_lon
+        [1.0, 1.0]
+        >>> center_lat_lon, ll_lat_lon, ur_lat_lon, gdf_proj = get_base_map_center(
+        ...     gdf, center_method='centroid')
+        >>> center_lat_lon
+        [1.0001523435165862, 0.9999999999999998]
     """
 
-    # Converted CRS to EPSG:4326 for Folium compatibility
-    gdf_proj = gdf.to_crs(epsg=4326) if not gdf.crs.equals(4326) else gdf.copy()
-
-    if gdf_proj.empty:
+    if gdf.empty:
         raise ValueError("The input GeoDataFrame is empty.")
+
+    # Standardize CRS to WGS84 (EPSG:4326) for Folium compatibility
+    target_crs = 'EPSG:4326'
+    if gdf.crs is None or not gdf.crs.equals(target_crs):  # noqa
+        gdf_proj = gdf.to_crs(target_crs)
+    else:
+        gdf_proj = gdf.copy()
+
+    # Get the global WGS84 bounds (used for ll and ur in most methods)
+    bounds = gdf_proj.total_bounds  # [min_x, min_y, max_x, max_y]
+    ll_lat_lon = [bounds[1], bounds[0]]
+    ur_lat_lon = [bounds[3], bounds[2]]
 
     # Calculate center based on selected method
     if center_method == 'bounds':  # Bounds center
-        bounds = gdf_proj.total_bounds
-        center_lat_lon = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
-        ll_lat_lon = [bounds[1], bounds[0]]
-        ur_lat_lon = [bounds[3], bounds[2]]
+        center_lat_lon = [float((bounds[1] + bounds[3]) / 2), float((bounds[0] + bounds[2]) / 2)]
 
     elif center_method == 'centroid':  # Proper centroid calculation
         # Project to a metric CRS (Web Mercator) for accurate centroid calculation
         gdf_proj_ = gdf_proj.geometry.union_all()
+        temp_crs = 'EPSG:3857'
         # Create a temporary Series to project just the union geometry
-        temp_gs = gpd.GeoSeries([gdf_proj_], crs='EPSG:4326').to_crs(epsg=3857)  # noqa
-        centroid_3857 = temp_gs.centroid.iloc[0]
+        temp_gs = gpd.GeoSeries([gdf_proj_], crs=target_crs).to_crs(temp_crs)  # noqa
 
-        # Convert centroid and bounds back to 4326
-        dat = gpd.GeoSeries([  # noqa
-            centroid_3857,
-            shapely.Point(temp_gs.total_bounds[[0, 1]]),
-            shapely.Point(temp_gs.total_bounds[[2, 3]])
-        ], crs='EPSG:3857').to_crs(epsg=4326)
-
-        center_lat_lon = [dat.iloc[0].y, dat.iloc[0].x]
-        ll_lat_lon = [dat.iloc[1].y, dat.iloc[1].x]
-        ur_lat_lon = [dat.iloc[2].y, dat.iloc[2].x]
+        centroid_wgs84 = temp_gs.centroid.to_crs(target_crs).iloc[0]
+        center_lat_lon = [float(centroid_wgs84.y), float(centroid_wgs84.x)]
 
     elif center_method == 'convex_hull':
         convex_hull = gdf_proj.geometry.union_all().convex_hull
-        center_lat_lon = [convex_hull.centroid.y, convex_hull.centroid.x]
-        ll_lat_lon = [convex_hull.bounds[1], convex_hull.bounds[0]]
-        ur_lat_lon = [convex_hull.bounds[3], convex_hull.bounds[2]]
+        center_lat_lon = [float(convex_hull.centroid.y), float(convex_hull.centroid.x)]
 
     else:
         valid_methods = ('bounds', 'centroid', 'convex_hull')
-        raise ValueError(f"Invalid `center_method`: '{center_method}'.\n"
-                         f"  Expected: {valid_methods}")
+        raise ValueError(
+            f"Invalid `center_method`: '{center_method}'.\n"
+            f"  Expected: {valid_methods}")
 
-    return gdf_proj, center_lat_lon, ll_lat_lon, ur_lat_lon
+    return center_lat_lon, ll_lat_lon, ur_lat_lon, gdf_proj
 
 
 @_lazy_check_dependencies('folium', 'folium.plugins')
@@ -118,7 +122,7 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     :type fit_bounds: bool
     :param tiles: The tile layer(s) to use. Can be a string (e.g. ``'CartoDB positron'``) or a list
         of strings for multiple tile layers.
-    :type tiles: str | list[str]
+    :type tiles: str | list[str] | None
     :param initial_tile_name: Optional custom name to display for the first (default) tile layer
         in the map's Layer Control. If None, the default tile name is used.
     :type initial_tile_name: str | None
@@ -128,7 +132,7 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     :param kwargs: Additional arguments passed to the ``folium.Map`` constructor.
     :type kwargs: dict
     :return: Tuple of (re-projected GeoDataFrame, Folium Map object).
-    :rtype: tuple[geopandas.GeoDataFrame, folium.Map]
+    :rtype: tuple[folium.Map, geopandas.GeoDataFrame]
 
     **Examples**::
 
@@ -139,11 +143,11 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
         >>> df = example_dataframe()
         >>> df['geometry'] = df.apply(lambda x: Point([x.Longitude, x.Latitude]), axis=1)
         >>> gdf = gpd.GeoDataFrame(df, geometry='geometry', crs=4326)
-        >>> gdf_proj, m = create_base_folium_map(gdf, fit_bounds=False, zoom_start=7)
+        >>> m, gdf_proj = create_base_folium_map(gdf, fit_bounds=False, zoom_start=7)
         >>> m.show_in_browser()
     """
 
-    gdf_proj, center_lat_lon, ll_lat_lon, ur_lat_lon = get_base_map_center(
+    center_lat_lon, ll_lat_lon, ur_lat_lon, gdf_proj = get_base_map_center(
         gdf=gdf, center_method=center_method)
 
     # Handle tiles logic
@@ -189,4 +193,4 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     # Add a control to the map to show or hide layers
     folium.LayerControl(collapsed=True).add_to(m)  # noqa
 
-    return gdf_proj, m
+    return m, gdf_proj
