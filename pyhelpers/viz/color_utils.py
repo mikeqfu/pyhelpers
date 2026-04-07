@@ -12,11 +12,8 @@ def cmap_discretization(cmap, n_colors):
     """
     Creates a discrete colormap based on the input.
 
-    Reference: [`OPS-CD-1
-    <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html#.WbpP0T6GNQB>`_].
-
     :param cmap: A colormap instance, e.g. built-in `colormaps`_ available via
-        `matplotlib.colormaps.get_cmap`_.
+        `matplotlib.pyplot.get_cmap`_.
     :type cmap:
         matplotlib.colors.ListedColormap | matplotlib.colors.LinearSegmentedColormap |
         matplotlib.colors.Colormap | str
@@ -26,9 +23,9 @@ def cmap_discretization(cmap, n_colors):
     :rtype: matplotlib.colors.LinearSegmentedColormap
 
     .. _`colormaps`:
-        https://matplotlib.org/stable/tutorials/colors/colormaps.html
-    .. _`matplotlib.colormaps.get_cmap`:
-        https://matplotlib.org/stable/api/cm_api.html#matplotlib.cm.ColormapRegistry.get_cmap
+        https://matplotlib.org/stable/users/explain/colors/colormaps.html
+    .. _`matplotlib.pyplot.get_cmap`:
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.get_cmap.html
 
     **Examples**::
 
@@ -53,7 +50,7 @@ def cmap_discretization(cmap, n_colors):
         >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
         >>> # save_figure(fig, f"{path_to_fig_}.pdf", verbose=True)
 
-    The exmaple is illustrated in :numref:`viz-cmap_discretization-demo`:
+    The example is illustrated in :numref:`viz-cmap_discretization-demo`:
 
     .. figure:: ../_images/viz-cmap_discretization-demo.*
         :name: viz-cmap_discretization-demo
@@ -91,12 +88,9 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
 
         - To avoid off-by-one errors, this function takes a standard colormap,
           discretizes it, and then draws a color bar with labels aligned correctly.
-        - See also [`VIZ-CBI-1
-          <https://sensitivecities.com/so-youd-like-to-make-a-map-using-python-EN.html
-          #.WbpP0T6GNQB>`_].
 
     :param cmap: A colormap instance,
-        e.g. built-in `colormaps`_ accessible via `matplotlib.cm.get_cmap()`_.
+        e.g. built-in `colormaps`_ accessible via `matplotlib.pyplot.get_cmap()`_.
     :type cmap: matplotlib.colors.ListedColormap | matplotlib.colors.Colormap
     :param n_colors: Number of discrete colors to use in the color bar.
     :type n_colors: int
@@ -108,11 +102,11 @@ def color_bar_index(cmap, n_colors, labels=None, **kwargs):
     :rtype: matplotlib.colorbar.Colorbar
 
     .. _`colormaps`:
-        https://matplotlib.org/tutorials/colors/colormaps.html
-    .. _`matplotlib.cm.get_cmap()`:
-        https://matplotlib.org/api/cm_api.html#matplotlib.cm.get_cmap
+        https://matplotlib.org/stable/users/explain/colors/colormaps.html
+    .. _`matplotlib.pyplot.get_cmap()`:
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.get_cmap.html
     .. _`matplotlib.pyplot.colorbar()`:
-        https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
 
     **Examples**::
 
