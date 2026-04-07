@@ -67,12 +67,29 @@ def get_default_database_address(db_cls):
         'None:***@None:None'
     """
 
-    args_spec = inspect.getfullargspec(func=db_cls)
+    # Use signature for modern introspection
+    sig = inspect.signature(db_cls.__init__)
 
-    args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
+    # Extract defaults for relevant keys
+    #   handling both positional-with-defaults and keyword-only-with-defaults
+    params = sig.parameters
 
+    def _get_default(key, fallback=None):
+        param = params.get(key)
+        # Check if param exists and has a default value (not empty)
+        if param and param.default is not inspect.Parameter.empty:
+            return param.default
+        return fallback
+
+    # 3. Map keys flexibly (handles 'user' vs 'username' if needed)
+    host = _get_default('host')
+    port = _get_default('port')
+    username = _get_default('username') or _get_default('user')
+    db_name = _get_default('database_name') or _get_default('database')
+
+    # Construct the address
     database_address = make_database_address(
-        args_dict['host'], args_dict['port'], args_dict['username'], args_dict['database_name'])
+        host=host, port=port, username=username, database_name=db_name)
 
     return database_address
 
