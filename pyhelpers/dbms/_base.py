@@ -11,7 +11,7 @@ import typing
 import pandas as pd
 import sqlalchemy
 
-from .._cache import _check_dependencies, _confirmed, _print_failure_message
+from .._cache import _confirmed, _lazy_check_dependencies, _print_failure_message
 
 
 class _Base:
@@ -636,7 +636,7 @@ class _Base:
             _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def _drop_table(self, table_name, query_fmt, schema_name=None, confirmation_required=True,
-                    verbose=False, raise_error=False):
+                    verbose=False, indent=0, raise_error=False):
         """
         Drops a table from a specified schema.
 
@@ -650,7 +650,11 @@ class _Base:
             proceeding; defaults to ``True``.
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-        :type verbose: bool
+        :type verbose: bool | int
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``0`` (no space).
+        :type indent: int | str
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool
@@ -663,17 +667,19 @@ class _Base:
                 print(f"The table {full_table_name} does not exist.")
             return
 
-        confirm_prompt = f"To drop the table {full_table_name} from {self.address}\n?"
-        if not _confirmed(confirm_prompt, confirmation_required=confirmation_required):
+        indent_str = " " * max(0, indent) if isinstance(indent, int) else str(indent or "")
+
+        prompt = f"{indent_str}Drop the table {full_table_name} from {self.address}?\n"
+        if not _confirmed(prompt, confirmation_required=confirmation_required):
             if verbose:
                 print("Canceled.")
             return
 
         if verbose:
             if confirmation_required:
-                log_msg = f"Dropping {full_table_name}"
+                log_msg = f"  {indent_str}Dropping {full_table_name}"
             else:
-                log_msg = f"Dropping the table {full_table_name} from {self.address}"
+                log_msg = f"{indent_str}Dropping {full_table_name} from {self.address}"
             print(log_msg, end=" ... ")
 
         try:
@@ -688,7 +694,8 @@ class _Base:
         except Exception as e:
             _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
-    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False):
+    def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
+                   indent=0):
         """
         Drops a table from a specified schema.
 
@@ -701,14 +708,19 @@ class _Base:
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information to the console; defaults to ``False``.
         :type verbose: bool | int
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``0`` (no space).
+        :type indent: int | str
         """
         return None
 
+    @_lazy_check_dependencies(pd_io_parsers='pandas.io.parsers')
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
                      force_replace=False, chunk_size=None, col_type=None, method='multi',
                      index=False, confirmation_required=True, verbose=False, **kwargs):
         """
-        Imports tabular data into a table.
+        Imports tabular data into a database table.
 
         :param data: Tabular data to be imported into a database.
         :type data: pandas.DataFrame | pandas.io.parsers.TextFileReader | list | tuple
@@ -744,77 +756,88 @@ class _Base:
         :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_sql()`_.
 
         .. _`pandas.DataFrame.to_sql()`:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_sql.html
+            https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_sql.html
         """
 
         schema_name_ = self._schema_name(schema_name=schema_name)
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name_)
 
-        if _confirmed(f"To import data into the table {table_name_} at {self.address}\n?",
-                      confirmation_required=confirmation_required):
-
-            inspector = sqlalchemy.inspect(self.engine)
-            if schema_name_ not in inspector.get_schema_names():
-                self.create_schema(schema_name=schema_name_, verbose=verbose)
-
-            if self.table_exists(table_name=table_name, schema_name=schema_name_):
-                if verbose:
-                    if_exists_msg = f"The table {table_name_} already exists"
-                    if if_exists == 'fail':
-                        if not force_replace:
-                            add_msg = ("Use `if_exists='replace'` or "
-                                       "`force_replace=True` to update it.")
-                            print(if_exists_msg + f". ({add_msg})")
-                            return None
-                    elif if_exists == 'replace':
-                        print(if_exists_msg + " and is being replaced.")
-
-                    if force_replace:
-                        verbose_ = True if verbose == 2 else False
-                        if verbose_:
-                            print("The existing table is forced to be dropped.")
-                        self.drop_table(
-                            table_name=table_name, schema_name=schema_name_,
-                            confirmation_required=confirmation_required, verbose=verbose_)
-
+        prompt = f"Import data into {table_name_} at {self.address}?\n"
+        if not _confirmed(prompt, confirmation_required=confirmation_required):
             if verbose:
-                if confirmation_required:
-                    log_msg = f"Importing the data into {table_name_}"
-                else:
-                    log_msg = f"Importing data into the table {table_name_} at {self.address}"
-                print(log_msg, end=" ... ")
+                print("Canceled.")
+            return
 
-            to_sql_args = {
-                'name': table_name,
-                'con': self.engine,
-                'schema': schema_name_,
-                'if_exists': if_exists,
-                'index': index,
-                'dtype': col_type,
-                'method': method,
-            }
+        # Schema existence check
+        if not self.schema_exists(schema_name_):
+            self.create_schema(schema_name=schema_name_, verbose=verbose)
 
-            kwargs.update(to_sql_args)
+        # Handle 'force_replace' logic independently of pandas
+        table_exists = self.table_exists(table_name=table_name, schema_name=schema_name_)
 
-            pd_parsers = _check_dependencies('pandas.io.parsers')
+        if table_exists:
+            if force_replace:
+                if verbose:
+                    print(f"Forcing drop of existing table {table_name_} ... ")
+                self.drop_table(
+                    table_name=table_name, schema_name=schema_name_, confirmation_required=False,
+                    verbose=verbose == 2, indent=2 if confirmation_required else 0)
+                # After dropping, change `if_exists` to 'fail' (let pandas create it) or keep as is.
+                if_exists = 'fail'  # Setting to 'fail' is safest
+            elif if_exists == 'fail':
+                if verbose:
+                    print(f"The table {table_name_} already exists.\n"
+                          "  Use `if_exists='replace'` or `force_replace=True` to update.")
+                return
 
-            if isinstance(data, (pd_parsers.TextFileReader, list, tuple)):
-                for chunk in data:
-                    chunk.to_sql(**kwargs)
-                    del chunk
-                    gc.collect()
+        # Prepare Pandas arguments
+        to_sql_kwargs = {
+            'name': table_name,
+            'con': self.engine,
+            'schema': schema_name_,
+            'if_exists': if_exists,
+            'index': index,
+            'dtype': col_type,
+            'method': method,
+            'chunksize': chunk_size
+        }
+        # Allow user kwargs to supplement, but not overwrite core mapping
+        import_kwargs = {**kwargs, **to_sql_kwargs}
+
+        # Execution logic
+        if verbose:
+            print(f"Importing data into {table_name_}", end=" ... ", flush=True)
+
+        try:
+            # Check if data is an iterable of DataFrames or a single DataFrame
+            if isinstance(data, (pd_io_parsers.TextFileReader, list, tuple)):  # noqa
+                for i, chunk in enumerate(data):
+                    # If appending a list, the first chunk follows 'if_exists', others MUST be 'append'
+                    if i > 0:
+                        import_kwargs['if_exists'] = 'append'
+                    if isinstance(chunk, pd.DataFrame):
+                        chunk.to_sql(**import_kwargs)
+                    else:  # Fallback for non-dataframe items in a list
+                        pd.DataFrame(chunk).to_sql(**import_kwargs)
+
+            elif isinstance(data, pd.DataFrame):
+                # noinspection PyUnresolvedReferences
+                data.to_sql(**import_kwargs)
 
             else:
-                kwargs.update({'chunksize': chunk_size})
-                data.to_sql(**kwargs)
-                gc.collect()
+                raise TypeError("The input `data` type is not accepted.")
 
             if verbose:
                 print("Done.")
 
-        return None
+        except Exception as e:
+            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=True)
+
+        finally:
+            gc.collect()  # Final cleanup
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
+        # noinspection PyUnresolvedReferences
         """
         Gets information about columns of a table.
 
@@ -872,6 +895,20 @@ class _Base:
 
         return column_info
 
+    def get_column_names(self, table_name, schema_name=None):
+        """
+        Retrieves column names of a table.
+
+        :param table_name: Name of the table to retrieve column names from.
+        :type table_name: str
+        :param schema_name: Name of the schema where the table is located; defaults to ``None``.
+        :type schema_name: str | None
+        :return: List of column names in the specified table in the currently-connected database.
+        :rtype: list
+        """
+
+        return []
+
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
         Validates column names for a query statement.
@@ -886,11 +923,7 @@ class _Base:
         :rtype: str
         """
 
-        tbl_col_info = self.get_column_info(
-            table_name=table_name, schema_name=schema_name, as_dict=False)
-
-        tbl_col_info.index = [x.lower() for x in tbl_col_info.index]
-        tbl_col_names = tbl_col_info.loc['column_name'].to_list()
+        tbl_col_names = self.get_column_names(table_name=table_name, schema_name=schema_name)
 
         if isinstance(column_names, str):
             assert column_names in tbl_col_names, \
