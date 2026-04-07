@@ -15,7 +15,8 @@ import urllib.parse
 
 import requests
 
-from .._cache import _init_requests_session, _load_package_data, _print_failure_message
+from .._cache import _init_requests_session, _lazy_check_dependencies, _load_package_data, \
+    _print_failure_message
 
 
 def is_network_connected():
@@ -255,6 +256,7 @@ def _user_agent_strings(browser_names=None, dump_dat=False):
 
 def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False,
                             raise_error=False):
+    # noinspection PyUnresolvedReferences
     """
     Loads user-agent strings for popular web browsers.
 
@@ -293,6 +295,8 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
 
         >>> from pyhelpers.ops import load_user_agent_strings
         >>> uas = load_user_agent_strings()
+        >>> type(uas)
+        dict
         >>> list(uas.keys())
         ['Chrome', 'Firefox', 'Safari', 'Edge', 'Internet Explorer', 'Opera']
         >>> type(uas['Chrome'])
@@ -361,11 +365,11 @@ def get_user_agent_string(fancy=None, **kwargs):
         >>> # Get a random user-agent string
         >>> uas_0 = get_user_agent_string()
         >>> uas_0
-        'Opera/7.01 (Windows 98; U)  [en]'
+        'Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8.0.5) Gecko/20060731 Ubuntu/dapper-security...
         >>> # Get a random Chrome user-agent string
         >>> uas_1 = get_user_agent_string(fancy='Chrome')
         >>> uas_1
-        'Mozilla/5.0 (Windows NT 6.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrom...
+        'Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.13 (KHTML, like Gecko) Chrome/...
 
     .. note::
 
@@ -435,3 +439,58 @@ def fake_requests_headers(randomized=True, **kwargs):
     fake_headers = {'User-Agent': user_agent_string}
 
     return fake_headers
+
+
+@_lazy_check_dependencies('bs4')
+def get_dynamic_url(page_url, pattern, base_url):
+    # noinspection PyShadowingNames
+    """
+    Gets a dynamic URL matching a specific regex pattern.
+
+    This function is primarily used to retrieve direct download links for datasets
+    (e.g. timestamped files) whose filenames may change. It parses the HTML of the ``page_url`` and
+    looks for the first ``<a>`` tag with an ``href`` attribute that matches the provided
+    ``pattern``.
+
+    :param page_url: The URL of the webpage to scrape for links.
+    :type page_url: str
+    :param pattern: A regular expression pattern to search for within the ``href`` attributes.
+    :type pattern: str
+    :param base_url: The base URL used to resolve relative links found on the page.
+    :type base_url: str
+    :return: The fully qualified URL if a match is found; ``None`` otherwise.
+    :rtype: str | None
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import get_dynamic_url
+        >>> page_url = "https://northerngasopendataportal.co.uk/datasets/"
+        >>> pattern = ".*\\.pdf"
+        >>> base_url = "https://northerngasopendataportal.co.uk"
+        >>> download_url = get_dynamic_url(page_url, pattern, base_url)
+        >>> print(download_url)
+        https://www.northerngasnetworks.co.uk/wp-content/uploads/2018/05/GDPR-Privacy-Statement...
+    """
+
+    with requests.Session() as session:
+        session.headers.update(fake_requests_headers())
+
+        try:
+            # Fetch the portal page
+            response = session.get(page_url, timeout=10)
+            response.raise_for_status()
+
+            # Parse HTML content
+            soup = bs4.BeautifulSoup(response.content, 'html.parser')  # noqa
+
+            # Search for any <a> tag whose 'href' contains our pattern
+            for link in soup.find_all('a', href=True):
+                href = link['href']
+
+                if re.search(pattern, href):
+                    return urllib.parse.urljoin(base_url, href)
+
+        except (requests.exceptions.RequestException, Exception):
+            return None
+
+    return None
