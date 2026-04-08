@@ -1397,10 +1397,10 @@ class PostgreSQL(_Base):
         con_cur.copy_expert(sql=sql_query, file=io_buffer)
 
     def import_data(self, data, table_name, schema_name=None, if_exists='fail', force_replace=False,
-                    chunk_size=None, col_type=None, method='multi', index=False,
+                    chunk_size=None, dtype=None, method='multi', index=False,
                     confirmation_required=True, verbose=False, **kwargs):
         """
-        Imports tabular data into a table.
+        Imports tabular data into the database.
 
         See also [`DBMS-PS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method>`_]
@@ -1423,8 +1423,8 @@ class PostgreSQL(_Base):
         :param chunk_size: Number of rows in each batch to be written at a time;
             defaults to ``None``.
         :type chunk_size: int | None
-        :param col_type: Data types for columns; defaults to ``None``.
-        :type col_type: dict | None
+        :param dtype: Data types for columns; defaults to ``None``.
+        :type dtype: dict | None
         :param method: Method for SQL insertion clause; defaults to ``'multi'``.
 
             - ``None``: Uses standard SQL ``INSERT`` clause (one per row).
@@ -1457,7 +1457,7 @@ class PostgreSQL(_Base):
             if_exists=if_exists,
             force_replace=force_replace,
             chunk_size=chunk_size,
-            col_type=col_type,
+            dtype=dtype,
             method=method,
             index=index,
             confirmation_required=confirmation_required,

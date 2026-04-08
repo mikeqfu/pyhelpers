@@ -723,7 +723,7 @@ class _Base:
 
     @_lazy_check_dependencies(pd_io_parsers='pandas.io.parsers')
     def _import_data(self, data, table_name, schema_name=None, if_exists='fail',
-                     force_replace=False, chunk_size=None, col_type=None, method='multi',
+                     force_replace=False, chunk_size=None, dtype=None, method='multi',
                      index=False, confirmation_required=True, verbose=False, **kwargs):
         """
         Imports tabular data into a database table.
@@ -742,8 +742,8 @@ class _Base:
         :param chunk_size: Number of rows in each batch to be written at a time;
             defaults to ``None``.
         :type chunk_size: int | None
-        :param col_type: Data types for columns; defaults to ``None``.
-        :type col_type: dict | None
+        :param dtype: Data types for columns; defaults to ``None``.
+        :type dtype: dict | None
         :param method: Method for SQL insertion clause; defaults to ``'multi'``.
 
             - ``None``: Uses standard SQL ``INSERT`` clause (one per row).
@@ -803,7 +803,7 @@ class _Base:
             'schema': schema_name_,
             'if_exists': if_exists,
             'index': index,
-            'dtype': col_type,
+            'dtype': dtype,
             'method': method,
             'chunksize': chunk_size
         }
@@ -812,7 +812,10 @@ class _Base:
 
         # Execution logic
         if verbose:
-            print(f"Importing data into {table_name_}", end=" ... ", flush=True)
+            if confirmation_required:
+                print(f"Importing the data", end=" ... ", flush=True)
+            else:
+                print(f"Importing data into {table_name_}", end=" ... ", flush=True)
 
         try:
             # Check if data is an iterable of DataFrames or a single DataFrame
