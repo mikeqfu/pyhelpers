@@ -21,7 +21,7 @@ from ..ops.general import is_visual_object
 from ..ops.web import is_url
 
 
-def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
+def save_pickle(data, path_to_file, verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
     Saves data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
@@ -31,6 +31,9 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -74,7 +77,8 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`~pyhelpers.store.load_pickle`.
     """
 
-    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
+    file_path, _, ext = _check_saving_path(
+        path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
     try:
         if ext.endswith((".pkl.gz", ".pickle.gz")):
@@ -100,7 +104,7 @@ def save_pickle(data, path_to_file, verbose=False, raise_error=False, **kwargs):
 @_lazy_check_dependencies('openpyxl', 'odf')
 def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engine=None,
                      delimiter=',', autofit_column_width=True, writer_kwargs=None,
-                     verbose=False, raise_error=False, **kwargs):
+                     verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
     Saves data to a spreadsheet file format
     (e.g. `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
@@ -138,6 +142,9 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
     :type raise_error: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param kwargs: [Optional] Additional parameters for the method `pandas.DataFrame.to_excel()`_
         or `pandas.DataFrame.to_csv()`_.
 
@@ -178,7 +185,8 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
         Saving "dat.ods" to "./tests/data/" ... Done.
     """
 
-    file_path, _, ext = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
+    file_path, _, ext = _check_saving_path(
+        path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
     valid_extensions = {".txt", ".csv", ".xlsx", ".xls", ".ods", ".odt"}
     if raise_error:
@@ -343,7 +351,7 @@ def _save_spreadsheets(data, sheet_names, cur_sheet_names, excel_writer, if_shee
 
 def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists=None,
                       autofit_column_width=True, writer_kwargs=None, verbose=False,
-                      raise_error=False, **kwargs):
+                      print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Saves multiple dataframes to a multi-sheet `Microsoft Excel`_ (.xlsx, .xls) or
@@ -386,6 +394,9 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
     :param verbose: Whether to print relevant information and sheet saving progress to the console;
         defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the exception if saving a specific sheet fails;
         if ``raise_error=False`` (default), the error will be suppressed, and the process
         will continue with the next sheet.
@@ -473,7 +484,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
         raise ValueError(
             f"Unsupported file format '{file_path.suffix}'. Must be one of {supported_ext_set}")
 
-    _check_saving_path(file_path, verbose=verbose)
+    _check_saving_path(file_path, verbose=verbose, **(print_kwargs or {}))
 
     if file_path.is_file() and mode == 'a':
         with pd.ExcelFile(file_path) as f:
@@ -502,7 +513,8 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
 
 
 @_resolve_json_engine
-def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
+def save_json(data, path_to_file, engine=None, verbose=False, print_kwargs=None, raise_error=False,
+              **kwargs):
     """
     Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
@@ -523,6 +535,9 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
     :type engine: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -584,7 +599,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
 
     json_mod = kwargs.pop('json_mod')
 
-    _check_saving_path(path_to_file, verbose=verbose)
+    _check_saving_path(path_to_file, verbose=verbose, **(print_kwargs or {}))
 
     try:
         if engine == 'orjson':
@@ -602,7 +617,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, raise_error=False,
 
 
 @_lazy_check_dependencies('joblib')
-def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
+def save_joblib(data, path_to_file, verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
     Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
@@ -610,11 +625,14 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
     :type data: typing.Any
     :param path_to_file: The file path where the Joblib file will be saved.
     :type path_to_file: str | os.PathLike
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
     :param kwargs: [Optional] Additional parameters for the `joblib.dump()`_ function.
 
     .. _`joblib.dump()`: https://joblib.readthedocs.io/en/latest/generated/joblib.dump.html
@@ -651,7 +669,8 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         - Examples for the function :func:`pyhelpers.store.load_joblib`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
+    file_path, _, _ = _check_saving_path(
+        path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
     try:
         joblib.dump(data, file_path, **kwargs)  # noqa
@@ -663,7 +682,8 @@ def save_joblib(data, path_to_file, verbose=False, raise_error=False, **kwargs):
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def save_feather(data, path_to_file, index=True, verbose=False, raise_error=False, **kwargs):
+def save_feather(data, path_to_file, index=True, verbose=False, print_kwargs=None,
+                 raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
@@ -683,6 +703,9 @@ def save_feather(data, path_to_file, index=True, verbose=False, raise_error=Fals
     :type index: bool | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise an exception if saving fails; defaults to ``False``.
     :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for `pandas.DataFrame.to_feather()`_.
@@ -714,7 +737,8 @@ def save_feather(data, path_to_file, index=True, verbose=False, raise_error=Fals
         - Examples for the function :func:`pyhelpers.store.load_feather`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
+    file_path, _, _ = _check_saving_path(
+        path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
     try:
         # Check if index is the default integer range [0, 1, ..., n-1]
@@ -737,7 +761,8 @@ def save_feather(data, path_to_file, index=True, verbose=False, raise_error=Fals
 
 
 @_lazy_check_dependencies(pa='pyarrow', pq='pyarrow_parquet')
-def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=False, **kwargs):
+def save_parquet(data, path_to_file, engine=None, verbose=False, print_kwargs=None,
+                 raise_error=False, **kwargs):
     """
     Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
 
@@ -754,6 +779,9 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
     :type engine: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to re-raise exceptions encountered during saving;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -806,7 +834,8 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, raise_error=Fal
         - Examples for the function :func:`pyhelpers.store.load_parquet`.
     """
 
-    file_path, _, _ = _check_saving_path(path_to_file, verbose=verbose, return_info=True)
+    file_path, _, _ = _check_saving_path(
+        path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
     try:
         # Only use direct pyarrow writer if data is already an Arrow Table
@@ -857,7 +886,8 @@ def save_geopackage(data, path_to_file, driver='GPKG', layer_name=None, mode='w'
     :type mode: str
     :param verbose: If ``True``, prints status messages. Defaults to ``False``.
     :type verbose: bool
-    :param print_kwargs: Formatting options for the path printer. Defaults to ``None``.
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
     :type print_kwargs: dict | None
     :param raise_error: If ``True``, re-raises exceptions. Defaults to ``False``.
     :type raise_error: bool
@@ -925,7 +955,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         defaults to ``False``.
     :type raise_error: bool
     :param print_kwargs: [Optional] Additional parameters passed to
-        `pyhelpers.store._check_saving_path()`; defaults to ``None``.
+        `pyhelpers.store._check_saving_path()`. Defaults to ``None``.
     :type print_kwargs: dict | None
 
     **Examples**::
@@ -1021,14 +1051,14 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
 
 
 def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args, print_kwargs=None,
-                        *args, **kwargs):
+                        **kwargs):
     if conv_svg_to_emf:
         if file_ext == ".svg":
             svg_path = file_path
         else:
             svg_path = file_path.with_suffix(".svg")
             kwargs.update({'conv_svg_to_emf': False} | common_args)
-            func(path_to_file=svg_path, *args, **kwargs)
+            func(path_to_file=svg_path, **kwargs)
 
         emf_path = svg_path.with_suffix(".emf")
         save_svg_as_emf(
@@ -1036,8 +1066,8 @@ def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args,
 
 
 @_lazy_check_dependencies(plt='matplotlib.pyplot')
-def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise_error=False,
-             **kwargs):
+def save_fig(path_to_file, dpi=None, conv_svg_to_emf=False, verbose=False, print_kwargs=None,
+             raise_error=False, **kwargs):
     """
     Saves a figure object to a file in a supported format.
 
@@ -1049,10 +1079,13 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     :param dpi: Resolution in dots per inch;
         when ``dpi=None`` (default), it takes the value of ``rcParams['savefig.dpi']``.
     :type dpi: int | None
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
     :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
     :type conv_svg_to_emf: bool
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -1104,9 +1137,9 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     current_fig = plt.gcf()  # noqa
     fig_id = current_fig.get_label() or f"Figure {current_fig.number}"
 
-    print_kwargs = {'msg_prefix': f"[{fig_id}] "}
+    print_kwargs_ = print_kwargs or {'msg_prefix': f"[{fig_id}] "}
     file_path, _, file_ext = _check_saving_path(
-        path_to_file, verbose=verbose, return_info=True, **print_kwargs)
+        path_to_file, verbose=verbose, return_info=True, **print_kwargs_)
     common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
@@ -1127,8 +1160,8 @@ def save_fig(path_to_file, dpi=None, verbose=False, conv_svg_to_emf=False, raise
     )
 
 
-def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_error=False,
-                **kwargs):
+def save_figure(data, path_to_file, conv_svg_to_emf=False, verbose=False, print_kwargs=None,
+                raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Saves a figure object to a file in a supported format (with the figure object specified).
@@ -1139,10 +1172,13 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
     :type data: matplotlib.Figure | seaborn.FacetGrid
     :param path_to_file: The path where the figure file will be saved.
     :type path_to_file: str | os.PathLike
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-    :type verbose: bool | int
     :param conv_svg_to_emf: Whether to convert a .svg file to a .emf file; defaults to ``False``.
     :type conv_svg_to_emf: bool
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
@@ -1196,9 +1232,9 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
 
     fig_id = data.get_label() or f"Figure {data.number}"
 
-    print_kwargs = {'msg_prefix': f"[{fig_id}] "}
+    print_kwargs_ = print_kwargs or {'msg_prefix': f"[{fig_id}] "}
     file_path, _, file_ext = _check_saving_path(
-        path_to_file, verbose=verbose, return_info=True, **print_kwargs)
+        path_to_file, verbose=verbose, return_info=True, **print_kwargs_)
     common_args = {'verbose': verbose, 'raise_error': raise_error}
 
     try:
@@ -1223,7 +1259,7 @@ def save_figure(data, path_to_file, verbose=False, conv_svg_to_emf=False, raise_
 @_lazy_check_dependencies('pdfkit')
 def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zoom=1.0,
                      encoding='UTF-8', wkhtmltopdf_options=None, wkhtmltopdf_path=None,
-                     verbose=False, raise_error=False, **kwargs):
+                     verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Saves a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
@@ -1254,6 +1290,9 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     :param verbose: Whether to print progress to the console; defaults to ``False``.
         Set ``verbose=2`` to see full output from wkhtmltopdf.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param raise_error: Whether to raise exceptions on failure; defaults to ``False``.
     :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for `pdfkit.from_url()`_ or
@@ -1325,7 +1364,9 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     verbose_level = 2 if verbose == 2 else (1 if verbose else 0)
     print_end = " ... \n" if verbose_level == 2 else " ... "
 
-    _check_saving_path(path=path_to_file, verbose=verbose, end=print_end)
+    print_kwargs_ = print_kwargs or {}
+    print_kwargs_['end'] = print_end
+    _check_saving_path(path=path_to_file, verbose=verbose, **print_kwargs_)
 
     # Base options
     options = {
@@ -1415,7 +1456,8 @@ def get_save_func(file_ext):
     return next((func for ext, func in _mapping.items() if file_ext.endswith(ext)), None)
 
 
-def save_data(data, path_to_file, verbose=False, show_warning=True, raise_error=False, **kwargs):
+def save_data(data, path_to_file, verbose=False, print_kwargs=None, show_warning=True,
+              raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
     Saves data to a file in a specific format.
@@ -1432,6 +1474,9 @@ def save_data(data, path_to_file, verbose=False, show_warning=True, raise_error=
     :type path_to_file: str | os.PathLike
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
+    :param print_kwargs: [Optional] Additional parameters passed to
+        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :type print_kwargs: dict | None
     :param show_warning: Whether to display a warning message if an unknown error occurs;
         defaults to ``True``.
     :type show_warning: bool
@@ -1512,6 +1557,7 @@ def save_data(data, path_to_file, verbose=False, show_warning=True, raise_error=
         'data': data,
         'path_to_file': path_to_file,
         'verbose': verbose,
+        'print_kwargs': print_kwargs,
         'raise_error': raise_error,
         **kwargs
     }
