@@ -1040,6 +1040,7 @@ class MSSQL(_Base):
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
                      raise_error=False):
+        # noinspection PyUnresolvedReferences
         """
         Creates a table with specified columns.
 
@@ -1559,26 +1560,59 @@ class MSSQL(_Base):
         """
 
         schema_name_ = self.DEFAULT_SCHEMA if schema_name is None else schema_name
-        column_type_query = \
-            f"SELECT DATA_TYPE, CHARACTER_OCTET_LENGTH AS OCTET_LENGTH " \
-            f"FROM INFORMATION_SCHEMA.COLUMNS " \
-            f"WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name_}' " \
-            f"AND COLUMN_NAME = '{column_name}';"
-
-        with self.engine.connect() as connection:
-            col_typ_ = connection.execute(sqlalchemy.text(column_type_query))
-            data_type, octet_len = col_typ_.fetchone()
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name_)
 
         with self.engine.connect() as connection:
-            if data_type == 'varchar' and (octet_len == -1 or octet_len > 900):
-                alter_column_query = \
-                    f"ALTER TABLE {table_name_} ALTER COLUMN {column_name} VARCHAR(500) NOT NULL;"
-                connection.execute(sqlalchemy.text(alter_column_query))
+            column_type_query = \
+                f"SELECT DATA_TYPE, CHARACTER_OCTET_LENGTH AS OCTET_LENGTH " \
+                f"FROM INFORMATION_SCHEMA.COLUMNS " \
+                f"WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name_}' " \
+                f"AND COLUMN_NAME = '{column_name}';"
+            res = connection.execute(sqlalchemy.text(column_type_query)).fetchone()
 
-            query = f'ALTER TABLE {table_name_} ADD PRIMARY KEY ({column_name});'
-            connection.execute(sqlalchemy.text(query))
+            if res:
+                data_type, max_len = res
+                data_type = data_type.upper()
+
+                # nvarchar/nchar = 2 bytes per char; varchar/char = 1 byte per char
+                multiplier = 2 if data_type.startswith('N') and data_type.endswith('VARCHAR') else 1
+                byte_len = max_len * multiplier if max_len != -1 else float('inf')
+
+                # Determine safe PK length
+                if byte_len > 900:
+                    # For varchar, 900 is the absolute maximum; otherwise, 450 for nvarchar
+                    target_type = f"{data_type}({450 if multiplier == 2 else 900})"
+                else:
+                    # Otherwise, keep the existing type but append NOT NULL
+                    type_dim = f"({max_len})" if max_len > 0 else ""
+                    target_type = f"{data_type}{type_dim}"
+
+                # Identify and drop existing indices on the specific column
+                find_idx_query = f"""
+                    SELECT i.name
+                    FROM sys.indexes i
+                    JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                    JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                    WHERE i.object_id = OBJECT_ID('{table_name}')
+                    AND c.name = '{column_name}';
+                """
+                indices = connection.execute(sqlalchemy.text(find_idx_query)).fetchall()
+                for idx in indices:
+                    idx_name = idx[0]
+                    # Drop the index so we can modify the column
+                    connection.execute(sqlalchemy.text(f"DROP INDEX [{idx_name}] ON {table_name};"))
+
+                # Always set to NOT NULL before PK creation
+                alter_query = (
+                    f"ALTER TABLE {table_name_}"
+                    f" ALTER COLUMN [{column_name}] {target_type} NOT NULL;"
+                )
+                connection.execute(sqlalchemy.text(alter_query))
+
+                # Add the primary key
+                pk_query = f'ALTER TABLE {table_name_} ADD PRIMARY KEY ([{column_name}]);'
+                connection.execute(sqlalchemy.text(pk_query))
 
     def varchar_to_geometry_dtype(self, table_name, geom_column_name=None, srid=None,
                                   schema_name=None, verbose=True, raise_error=False):
@@ -1832,7 +1866,7 @@ class MSSQL(_Base):
 
         return col_names, col_names_
 
-    @_lazy_check_dependencies('shapely.wkt')
+    @_lazy_check_dependencies('shapely')
     def read_columns(self, table_name, column_names, dtype=None, schema_name=None, chunk_size=None,
                      **kwargs):
         """
