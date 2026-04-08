@@ -259,6 +259,7 @@ def test_save_geopackage(tmp_path, capfd):
     save_geopackage(gdf3, test_gpkg_path, layer_name="layer3", mode='a', verbose=True)
 
     final_load = load_geopackage(test_gpkg_path, verbose=True)
+    assert isinstance(final_load, dict)
     assert 'layer3' in final_load
     assert len(final_load.keys()) == 3
 
@@ -402,11 +403,11 @@ def test_save_data(ext, tmp_path, capfd, caplog):
     else:
         dat = example_dataframe()
 
-    save_data(dat, path_to_file=path_to_file, verbose=True, confirmation_required=False)
+    save_data(dat, path_to_file=path_to_file, verbose=True)
     out, _ = capfd.readouterr()
     if ext == ".pdf":
         assert f'Saving "{filename}"' in out
-    else:
+    elif ext != ".bin":
         assert f'Saving "{filename}"' in out and "Done." in out
 
     if ext == ".bin":
@@ -419,18 +420,19 @@ def test_save_data(ext, tmp_path, capfd, caplog):
         assert (f'The file format/extension "{ext}" is not recognized by `save_data()`.' in
                 caplog.text)
 
-    save_data(dat, path_to_file=path_to_file, verbose=True, confirmation_required=False)
+    save_data(dat, path_to_file=path_to_file, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Updating "{filename}"' in out
-    if ext == ".pdf":
-        assert "Done." in out
+    if ext != ".bin":
+        assert f'Updating "{filename}"' in out
+        if ext == ".pdf":
+            assert "Done." in out
 
-    if ext == ".processed.pkl.xz":
-        retrieved_dat = load_pickle(path_to_file)
-        assert retrieved_dat.equals(dat)
-    elif ext == ".gold.parquet":
-        retrieved_dat = load_parquet(path_to_file)
-        assert retrieved_dat.equals(dat)
+        if ext == ".processed.pkl.xz":
+            retrieved_dat = load_pickle(path_to_file)
+            assert retrieved_dat.equals(dat)
+        elif ext == ".gold.parquet":
+            retrieved_dat = load_parquet(path_to_file)
+            assert retrieved_dat.equals(dat)
 
 
 if __name__ == '__main__':
