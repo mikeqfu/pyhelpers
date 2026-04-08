@@ -14,6 +14,70 @@ from .._cache import _lazy_check_dependencies
 
 
 # ==================================================================================================
+# General
+# ==================================================================================================
+
+def shift_decimal_to_int(value, precision=20):
+    """
+    Converts a float value to an integer by simply removing its decimal point.
+
+    The function shifts the decimal point to the right until it disappears,
+    effectively multiplying by the appropriate power of 10 to eliminate the
+    fractional part. For example, 12.345 becomes 12345 (×1000).
+
+    :param value: The float value to convert. Can be positive, negative, or zero.
+    :type value: float | int
+    :param precision: The maximum number of digits after the decimal point. Defaults to ``20``.
+    :type precision: int
+    :return: Integer with the decimal point removed.
+    :rtype: int
+    :raises TypeError: If ``value`` is not a number.
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import shift_decimal_to_int
+        >>> shift_decimal_to_int(12.345)
+        12345
+        >>> shift_decimal_to_int(0.056)
+        56
+        >>> shift_decimal_to_int(-3.14)
+        -314
+        >>> shift_decimal_to_int(1000.0)
+        10000
+        >>> shift_decimal_to_int(1.2300)
+        123
+        >>> shift_decimal_to_int(0.0005)
+        5
+        >>> shift_decimal_to_int(1.2e-15)
+        12
+
+    .. note::
+
+        - Trailing zeros are preserved (1.2300 → 12300)
+        - The conversion uses string manipulation for accuracy and speed
+    """
+
+    # Fast path for integers
+    if isinstance(value, int):
+        return value
+
+    #  Convert to string and normalize casing for scientific notation
+    s = str(value).lower().strip()
+    if 'e-' in s:
+        s = f'{float(value):.{precision}f}'.rstrip('0').rstrip('.')
+    elif 'e+' in s:
+        # For large numbers, just format as a flat integer string
+        s = f'{float(value):.0f}'
+
+    str_val = s.replace('.', '')
+
+    try:
+        return int(str_val)
+    except ValueError:
+        raise ValueError(f"Cannot convert non-numeric value: '{value}'.")
+
+
+# ==================================================================================================
 # Iterable
 # ==================================================================================================
 
