@@ -282,12 +282,11 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         >>> closest_to_each = find_closest_points(
         ...     pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
         >>> closest_to_each.wkt
-        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+        'MULTIPOINT ((-2.2451148 53.4794892), (-2.2451148 53.4794892), (-1.5437941 53.7974185))'
         >>> _, idx = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, ret_idx=True)
         >>> idx
-        array([2, 2, 3], dtype=int64)
-        >>> _, _, dist = find_closest_points(
-        ...     cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
+        array([2, 2, 3])
+        >>> _, _, dist = find_closest_points(cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
         >>> dist
         array([0.75005697, 3.11232712, 1.17847198])
         >>> cities_geoms_1 = LineString(cities)
@@ -299,35 +298,40 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         >>> cities_geoms_2 = MultiPoint(cities)
         >>> closest_to_each = find_closest_points(cities_geoms_2, ref_cities, k=1, as_geom=True)
         >>> closest_to_each.wkt
-        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+        'MULTIPOINT ((-2.2451148 53.4794892), (-2.2451148 53.4794892), (-1.5437941 53.7974185))'
     """
 
     ckdtree = _check_dependencies('scipy.spatial')
 
-    pts_, ref_pts_ = map(
-        functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
+    # Extract coordinates
+    # Note: If `unique=True`, indices returned will refer to the deduplicated ref_pts_
+    pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
     ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
-    n_workers = os.cpu_count() - 1
+    n_workers = max(1, (os.cpu_count() or 2) - 1)
 
-    # returns (distance, index)
+    # Perform query
     distances, indices = ref_ckd_tree.query(x=pts_, k=k, workers=n_workers)
 
-    closest_points_ = [ref_pts_[i] for i in indices]
+    # Use NumPy advanced indexing for robustness (handles k=1 and k>1)
+    closest_points_arr = ref_pts_[indices]
     if as_geom:
-        closest_points = shapely.geometry.MultiPoint(closest_points_)
+        # If k > 1, the result is technically a list of MultiPoints or a flattened MultiPoint
+        if k > 1:
+            closest_points = shapely.geometry.MultiPoint(closest_points_arr.reshape(-1, 2))
+        else:
+            closest_points = shapely.geometry.MultiPoint(closest_points_arr)
     else:
-        closest_points = np.array(closest_points_)
+        closest_points = closest_points_arr
 
-    if ret_idx and ret_dist:
-        closest_points = closest_points, indices, distances
-    else:
-        if ret_idx:
-            closest_points = closest_points, indices
-        elif ret_dist:
-            closest_points = closest_points, distances
+    # Return management
+    results = [closest_points]
+    if ret_idx:
+        results.append(indices)
+    if ret_dist:
+        results.append(distances)
 
-    return closest_points
+    return tuple(results) if len(results) > 1 else results[0]
 
 
 def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs):
