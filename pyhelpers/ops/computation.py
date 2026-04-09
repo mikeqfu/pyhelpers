@@ -330,35 +330,40 @@ def interquartile_range(num_dat, axis=None, rng=(25, 75), scale=1.0, outlier_fen
         >>> num_dat = [1, 2, 'nan', 3, 4]
         >>> iqr = interquartile_range(num_dat, ignore_nan=True)
         >>> iqr
-        np.float64(1.5)
+        1.5
         >>> num_dat = list(range(100))
         >>> iqr = interquartile_range(num_dat)
         >>> iqr
-        np.float64(49.5)
+        49.5
         >>> iqr, lower_fence, upper_fence = interquartile_range(num_dat, outlier_fences=True)
         >>> iqr, lower_fence, upper_fence
-        (np.float64(49.5), np.float64(-49.5), np.float64(148.5))
+        (49.5, -49.5, 148.5)
     """
 
-    if isinstance(ignore_nan, np.ndarray):
-        arr = num_dat.copy()
-    else:
-        arr = np.array(list(map(float, num_dat)))
+    arr = np.array(num_dat, dtype=float)
 
-    if len(num_dat) < 2:
+    if arr.size < 2:
         raise ValueError("Input must contain at least 2 elements.")
 
-    if ignore_nan and arr.dtype.kind == 'f':
-        arr = arr[~np.isnan(arr)]
+    # Use NumPy's native NaN-aware percentile if requested
+    perc_func = np.nanpercentile if ignore_nan else np.percentile
 
-    q1, q3 = np.percentile(arr, q=rng, axis=axis, **kwargs)
-    iqr = (q3 - q1) * scale
+    try:
+        q1, q3 = perc_func(arr, q=rng, axis=axis, **kwargs)
+    except ValueError as e:
+        raise ValueError(f"Calculation failed: {e}")
+
+    # Calculate IQR and Fences
+    base_iqr = q3 - q1
+    iqr_scaled = base_iqr * scale
 
     if outlier_fences:
-        lower_fence, upper_fence = q1 - k * iqr, q3 + k * iqr
-        return iqr, lower_fence, upper_fence
-    else:
-        return iqr
+        # Fences usually use the unscaled IQR (k * base_iqr)
+        lower_fence = q1 - k * base_iqr
+        upper_fence = q3 + k * base_iqr
+        return tuple(map(float, (iqr_scaled, lower_fence, upper_fence)))
+
+    return float(iqr_scaled)
 
 
 def get_extreme_outlier_bounds(num_dat, k=1.5):
