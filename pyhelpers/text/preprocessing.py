@@ -187,7 +187,7 @@ def get_acronym(input_text, only_capitals=False, capitals_in_words=False, keep_p
     return acronym
 
 
-def split_on_uppercase(input_text, join_with=None):
+def split_on_uppercase(input_text, join_with=None, split_numbers=True):
     """
     Extracts words from a string by splitting it at occurrences of uppercase letters.
 
@@ -195,12 +195,12 @@ def split_on_uppercase(input_text, join_with=None):
     is encountered. Optionally, it can join these words back into a single string using a specified
     delimiter.
 
-    :param input_text: Input text containing a number of words each starting with
-        an uppercase letter.
+    :param input_text: Input text containing words starting with uppercase letters.
     :type input_text: str
-    :param join_with: Optional delimiter used to join the extracted words into a single string;
-        defaults to ``None``.
+    :param join_with: Optional delimiter to join words. Defaults to ``None``.
     :type join_with: str | None
+    :param split_numbers: Whether to split numbers from letters; defaults to ``True``.
+    :type split_numbers: bool
     :return: If ``join_with=None``, the function returns a list of words extracted from
         ``input_text`` where each word starts with an uppercase letter;
         if ``join_with`` is specified, it returns a single string where these words are
@@ -221,28 +221,51 @@ def split_on_uppercase(input_text, join_with=None):
     if not input_text:
         return "" if join_with is not None else []
 
-    input_text_ = remove_punctuation(input_text)
+    # SHIELD: Preserve lowercase snake_case and kebab-case
+    preservation_pattern = r'\b[a-z]+(?:[-_][a-z]+)+\b'
+    preserved_tokens = re.findall(preservation_pattern, input_text)
 
-    # Split camelCase, PascalCase, and numbers
-    parts = re.sub(r'([A-Z][a-z]+)', r' \1', re.sub(r'([A-Z]+)', r' \1', input_text_))
-    parts = re.sub(r'([0-9]+)', r' \1', parts)  # Split numbers from letters
+    temp_text = input_text
+    # Use \uFFFC (Object Replacement Character) as a safe, non-word anchor
+    for i, token in enumerate(preserved_tokens):
+        temp_text = temp_text.replace(token, f" \uFFFC{i}\uFFFC ")
 
-    # Split on underscores or hyphens, but preserve kebab-case and snake_case
+    # SPLIT BOUNDARIES: Handle CamelCase and Acronyms
+    # Lower to Upper: (?<=[a-z])(?=[A-Z])
+    # Acronym to Word: (?<=[A-Z])(?=[A-Z][a-z])
+    patterns = [r'(?<=[a-z])(?=[A-Z])', r'(?<=[A-Z])(?=[A-Z][a-z])']
+
+    # Handle numeric boundaries based on split_numbers toggle
+    if split_numbers:
+        # Alpha to Digit: (?<=[A-Za-z])(?=[0-9])
+        # Digit to Alpha: (?<=[0-9])(?=[A-Za-z])
+        patterns.append(r'(?<=[A-Za-z])(?=[0-9])')
+        patterns.append(r'(?<=[0-9])(?=[A-Za-z])')
+
+    # Join patterns into a single regex and insert spaces at these boundaries
+    combined_pattern = '|'.join(patterns)
+    processed = re.sub(combined_pattern, ' ', temp_text)
+
+    # CLEAN: Split by whitespace and common punctuation (excluding our placeholders)
+    # This replaces the need for a separate remove_punctuation call
+    raw_parts = re.split(r'[\s\-_,.;:!?|\\/]+', processed)
+
+    # RESTORE: Replace placeholders with original preserved tokens
     result = []
-    for part in parts.split():
-        if re.match(r'^[a-z]+(-[a-z]+)*$', part) or re.match(r'^[a-z]+(_[a-z]+)*$', part):
-            # Preserve kebab-case and snake_case as single tokens
-            result.append(part)
+    for part in raw_parts:
+        if not part:
+            continue
+        if part.startswith('\uFFFC') and part.endswith('\uFFFC'):
+            try:
+                idx = int(part.strip('\uFFFC'))
+                result.append(preserved_tokens[idx])
+            except (ValueError, IndexError):
+                result.append(part)
         else:
-            # Split on underscores or hyphens
-            sub_parts = re.split(r'[-_]', part)
-            result.extend(sub_parts)
+            result.append(part)
 
-    # Remove empty strings from the result
-    result = [part for part in result if part]
-
-    if join_with is not None:  # Join words with the specified delimiter
-        result = join_with.join(result)
+    if join_with is not None:
+        return str(join_with).join(result)
 
     return result
 
