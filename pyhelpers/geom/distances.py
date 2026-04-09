@@ -11,7 +11,7 @@ import shapely.geometry
 import shapely.ops
 
 from .transforms import get_coordinates_as_array, get_point_coordinates, transform_point_type
-from .._cache import _check_dependencies, _print_failure_message
+from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
 def calc_spherical_distance(pt1, pt2, unit='mile', decimals=None):
@@ -217,6 +217,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     return closest_point
 
 
+@_lazy_check_dependencies(ckdtree='scipy.spatial')
 def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False,
                         ret_dist=False, **kwargs):
     """
@@ -301,13 +302,11 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         'MULTIPOINT ((-2.2451148 53.4794892), (-2.2451148 53.4794892), (-1.5437941 53.7974185))'
     """
 
-    ckdtree = _check_dependencies('scipy.spatial')
-
     # Extract coordinates
     # Note: If `unique=True`, indices returned will refer to the deduplicated ref_pts_
     pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
-    ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
+    ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)  # noqa
     n_workers = max(1, (os.cpu_count() or 2) - 1)
 
     # Perform query
@@ -334,6 +333,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     return tuple(results) if len(results) > 1 else results[0]
 
 
+@_lazy_check_dependencies(nx='networkx', nn='sklearn.neighbors')
 def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs):
     """
     Finds the shortest path through a sequence of points.
@@ -440,44 +440,46 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     if len(points_sequence_) <= 2:
         shortest_path, min_dist = points_sequence_, 0.0
 
-    else:
-        nx, sklearn_neighbors = _check_dependencies('networkx', 'sklearn.neighbors')
+        # Calculate distance for 2 points
+        if len(points_sequence_) == 2:
+            min_dist = np.linalg.norm(points_sequence_[0] - points_sequence_[1])
 
-        nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence_)
+    else:
+        # Build 2-NN graph
+        nn_clf = nn.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence_)  # noqa
         kn_g = nn_clf.kneighbors_graph()
 
-        nx_g = nx.from_scipy_sparse_array(kn_g)
+        nx_g = nx.from_scipy_sparse_array(kn_g)  # noqa
 
         # Get all possible path orders starting from every node using DFS
         possible_paths = [
-            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence_))]
+            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence_))]  # noqa
 
         min_dist, idx = np.inf, -1  # Initialise idx to a sentinel value
 
-        for i in range(len(points_sequence_)):
-            nodes_order = possible_paths[i]
-
+        for i, nodes_order in enumerate(possible_paths):
             # Skip paths that don't visit all nodes (due to disconnected 2-NN graph)
             if len(nodes_order) != len(points_sequence_):
                 continue
 
             ordered_nodes = points_sequence_[nodes_order]
 
-            # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
-            dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1) ** 0.5).sum()
+            # Vectorised distance calculation
+            # # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
+            dist = np.linalg.norm(ordered_nodes[:-1] - ordered_nodes[1:], axis=1).sum()
+            # dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1) ** 0.5).sum()
             if dist < min_dist:  # Use < instead of <= to guarantee determinism in case of ties
                 min_dist = dist
                 idx = i
 
         if idx == -1:  # Handle case where 2-NN graph is so disconnected no full path was found
-            shortest_path, min_dist = points_sequence_, 0.0
+            # Fallback: original order
+            shortest_path = points_sequence_
+            min_dist = np.linalg.norm(shortest_path[:-1] - shortest_path[1:], axis=1).sum()
         else:
             shortest_path = points_sequence_[possible_paths[idx]]
 
-        if as_geom:
-            shortest_path = shapely.geometry.LineString(shortest_path)
+    if as_geom:
+        shortest_path = shapely.geometry.LineString(shortest_path)
 
-        if ret_dist:
-            return shortest_path, min_dist
-
-    return shortest_path
+    return (shortest_path, min_dist) if ret_dist else shortest_path
