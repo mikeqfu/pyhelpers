@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from .web import fake_requests_headers
 from .._cache import _print_failure_message
 
 
@@ -42,32 +43,35 @@ def get_utc_tai_offset(verbose=False, raise_error=False, url=None):
     """
 
     if url is None:
-        url = "https://datacenter.iers.org/data/latestVersion/bulletinC.txt"
+        url = 'https://datacenter.iers.org/data/latestVersion/bulletinC.txt'
+
+    utc_tai_offset = None
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=fake_requests_headers(), timeout=10)
         if raise_error:
             response.raise_for_status()  # Raise an error if the request was unsuccessful
 
         content = response.text
 
-        desc, utc_tai_offset = None, None
+        pattern = re.compile(r'UTC-TAI\s*=\s*(-?\d+)\s*s')
+
         for line in content.splitlines():  # Search for the specific line containing "UTC-TAI"
             if 'UTC-TAI' in line:
-                desc = line.strip()
-                utc_tai_offset_ = re.search(r"UTC-TAI\s*=\s*(-?\d+)\s*s", desc)
-                utc_tai_offset = int(utc_tai_offset_.group(1).strip().replace(' ', ''))
-                break
+                match = re.search(pattern, line)
+                if match:
+                    utc_tai_offset = int(match.group(1))
+                    break
 
-        if utc_tai_offset and verbose:
-            print("UTC-TAI difference not found in the bulletin.")
+        if utc_tai_offset is None and verbose:
+            print("UTC-TAI difference not found in the bulletin format.")
 
-        return utc_tai_offset
-
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         _print_failure_message(
-            e=e, prefix="An error occurred while retrieving the data:", verbose=verbose,
+            e=e, prefix="An error occurred while retrieving UTC-TAI offset:", verbose=verbose,
             raise_error=raise_error)
+
+    return utc_tai_offset
 
 
 def gps_time_to_utc(gps_time, as_datetime=True, utc_tai_offset=None):
