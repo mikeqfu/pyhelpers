@@ -15,11 +15,11 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
 
     :param subdir: Name of a directory or directories (and/or a filename).
         ``None`` values are ignored.
-    :type subdir: str | os.PathLike | bytes | None
+    :type subdir: str | bytes | pathlib.Path | os.PathLike | None
     :param mkdir: Whether to create the directory; defaults to ``False``.
     :type mkdir: bool
     :param cwd: Current working directory; defaults to ``None``.
-    :type cwd: str | os.PathLike | bytes | None
+    :type cwd: str | bytes | pathlib.Path | os.PathLike | None
     :param back_check: Whether to check if a parent directory exists; defaults to ``False``.
     :type back_check: bool
     :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
@@ -54,33 +54,33 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwar
     """
 
     # Current working directory
-    if cwd in {None, "."}:
-        path = os.getcwd()
-    else:
-        path = cwd.decode() if isinstance(cwd, bytes) else str(cwd)
+    path = os.getcwd() if cwd in {None, "."} else os.fsdecode(cwd)
 
     if back_check:
-        while not os.path.exists(path) and path != os.path.sep:
-            path = os.path.dirname(path)
+        while not os.path.exists(path):
+            parent = os.path.dirname(path)
+            if parent == path:  # Reached root (e.g. / or C:\)
+                break
+            path = parent
 
     for f in subdir:
         if f is None:
             continue
 
-        f = f.decode() if isinstance(f, bytes) else str(f)
+        f = os.fsdecode(f)  # f.decode() if isinstance(f, bytes) else str(f)
         if f == "..":
             path = os.path.dirname(path)
         else:
-            path = os.path.join(path, re.sub(r"[\\/]+", re.escape(os.path.sep), f))
+            path = os.path.join(path, re.sub(r"[\\/]+", re.escape(os.sep), f))
 
     if mkdir:
-        path_to_file, ext = os.path.splitext(path)
+        # Check if the path looks like a file (has an extension)
+        base = os.path.basename(path)
+        dir_to_make = os.path.dirname(path) if ('.' in base and not base.startswith('.')) else path
 
-        kwargs.update({'exist_ok': True})
-        if ext == '':
-            os.makedirs(path_to_file, **kwargs)
-        else:
-            os.makedirs(os.path.dirname(path_to_file), **kwargs)
+        if dir_to_make:
+            kwargs['exist_ok'] = True
+            os.makedirs(dir_to_make, **kwargs)
 
     return _normalize_pathname(path) if normalized else path
 
