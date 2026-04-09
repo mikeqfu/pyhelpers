@@ -1,8 +1,8 @@
-=======
-Modules
-=======
+===========
+Subpackages
+===========
 
-The current release includes the following modules, with each containing a number of utilities:
+The current release includes the following subpackages, with each containing a number of utilities:
 
 .. py:module:: pyhelpers
 

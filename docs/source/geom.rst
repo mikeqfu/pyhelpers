@@ -15,7 +15,7 @@ Distance-related calculations
     :toctree: _generated/
     :template: function.rst
 
-    calc_distance_on_unit_sphere
+    calc_spherical_distance
     calc_hypotenuse_distance
     find_closest_point
     find_closest_points
@@ -52,6 +52,7 @@ Geometric data transformation
     :template: function.rst
 
     transform_point_type
+    get_point_coordinates
     get_coordinates_as_array
 
 .. rubric:: Coordinate system
