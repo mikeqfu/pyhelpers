@@ -14,7 +14,7 @@ from .transforms import get_coordinates_as_array, get_point_coordinates, transfo
 from .._cache import _check_dependencies, _print_failure_message
 
 
-def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', decimals=None):
+def calc_spherical_distance(pt1, pt2, unit='mile', decimals=None):
     """
     Calculates the distance between two points on a unit sphere.
 
@@ -35,9 +35,9 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', decimals=None):
         (relative to the earth's radius).
     :rtype: float | None
 
-    Examples:
+    **Examples**::
 
-        >>> from pyhelpers.geom import calc_distance_on_unit_sphere
+        >>> from pyhelpers.geom import calc_spherical_distance
         >>> from pyhelpers._cache import example_dataframe
         >>> example_df = example_dataframe()
         >>> example_df
@@ -52,10 +52,10 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', decimals=None):
         array([-0.1276474, 51.5073219])
         >>> birmingham
         array([-1.9026911, 52.4796992])
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
+        >>> arc_len_in_miles = calc_spherical_distance(london, birmingham)
         >>> arc_len_in_miles  # in miles
         101.10431101941569
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, decimals=4)
+        >>> arc_len_in_miles = calc_spherical_distance(london, birmingham, decimals=4)
         >>> arc_len_in_miles
         101.1043
 
@@ -75,20 +75,12 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', decimals=None):
         lon1, lat1 = get_point_coordinates(pt1)
         lon2, lat2 = get_point_coordinates(pt2)
     except Exception as e:
-        _print_failure_message(e, raise_error=True)
-        return None
+        # noinspection PyNoneFunctionAssignment
+        return _print_failure_message(e, raise_error=True)
 
     # Convert to spherical radians
-    # phi = 90 - latitude
-    phi1, phi2 = (90.0 - lat1) * deg2rad, (90.0 - lat2) * deg2rad
-    # theta = longitude
-    theta1, theta2 = lon1 * deg2rad, lon2 * deg2rad
-
-    # Compute spherical distance from spherical coordinates.
-    # For two locations in spherical coordinates
-    # (1, theta, phi) and (1, theta', phi')
-    # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
-    # distance = rho * arc length
+    phi1, phi2 = (90.0 - lat1) * deg2rad, (90.0 - lat2) * deg2rad  # phi = 90 - latitude
+    theta1, theta2 = lon1 * deg2rad, lon2 * deg2rad  # theta = longitude
 
     # Spherical Law of Cosines
     cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
@@ -120,7 +112,7 @@ def calc_hypotenuse_distance(pt1, pt2):
         - Calculated using the formula: ``sqrt((x2 - x1)^2 + (y2 - y1)^2)``
         - Equivalent to ``numpy.hypot(x, y)`` which computes ``sqrt(x*x + y*y)``.
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import calc_hypotenuse_distance
         >>> from shapely.geometry import Point
@@ -169,7 +161,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
     .. _`numpy.ndarray`: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_closest_point
         >>> from pyhelpers._cache import example_dataframe
@@ -265,7 +257,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     .. _`scipy.spatial.cKDTree`:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_closest_points
         >>> from pyhelpers._cache import example_dataframe
@@ -371,7 +363,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     (optimal TSP-P solution) because the 2-NN graph may contain local cycles or may not be
     fully connected, preventing DFS from discovering the optimal global order.
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_shortest_path
         >>> from pyhelpers._cache import example_dataframe
