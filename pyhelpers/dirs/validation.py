@@ -53,55 +53,69 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
 
 def is_dir(path_to_dir):
     """
-    Checks whether a string represents a valid directory path.
+    Checks if an input string is explicitly formatted as a directory path.
 
     This function verifies whether the input string is a valid directory path. See also
     [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and [`DIRS-IVD-2
     <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
 
     :param path_to_dir: Pathname of a directory.
-    :type path_to_dir: str | bytes
+    :type path_to_dir: str | bytes | pathlib.Path | os.PathLike
     :return: ``True`` if the input string is a valid directory path, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
         >>> from pyhelpers.dirs import cd, is_dir
-        >>> x = "tests"
-        >>> is_dir(x)
+        >>> is_dir("tests")
         False
-        >>> x = "/tests"
-        >>> is_dir(x)
+        >>> is_dir("/tests")
         True
-        >>> x = cd("tests")
-        >>> is_dir(x)
+        >>> is_dir(cd("tests"))
+        True
+        >>> is_dir(".\\tests/")
         True
     """
 
+    if not path_to_dir:
+        return False
+
     try:
-        root_dirname_, pathname_ = os.path.splitdrive(path_to_dir)
+        path_str = os.fsdecode(path_to_dir)
 
-        root_dirname = root_dirname_ if root_dirname_ else '.'
-        root_dirname += os.path.sep
+        # String-based validation (If it does not exist yet): check if the name is valid for the OS
+        root, pathname = os.path.splitdrive(path_str)
 
-        dir_names = re.split(r'[\\/]', validate_dir(pathname_))
+        # Ensure root is usable for joining
+        root = root if root else '.'
+
+        # Validate segments via OS-level lstat check
+        dir_names = [d for d in re.split(r'[\\/]', pathname) if d]
 
         for i in range(len(dir_names)):
             try:
-                os.lstat(os.path.join(root_dirname, *dir_names[:i + 1]))
+                os.lstat(os.path.join(root, *dir_names[:i + 1]))
             except OSError as exc:
-                if hasattr(exc, 'winerror'):
-                    if exc.winerror == 123:  # ERROR_INVALID_NAME
-                        return False
-                elif exc.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
+                if getattr(exc, 'winerror', None) == 123:  # ERROR_INVALID_NAME (Windows)
+                    return False
+                if exc.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
                     return False
 
-    except TypeError:
+    except (TypeError, ValueError):
         return False
 
-    else:
-        path_to_dir_, ext = os.path.splitext(path_to_dir)
-        return bool(os.path.dirname(path_to_dir_)) and not ext
+    else:  # Final heuristic: Does it 'look' like a directory?
+        # Ends with a slash
+        if path_str.endswith(('/', '\\')):
+            return True
+
+        # Has a parent directory structure (e.g. "./tests")
+        has_dir_structure = bool(os.path.dirname(path_str))
+
+        # Check extension, but only if there is no trailing slash
+        _, ext = os.path.splitext(path_str)
+
+        return has_dir_structure and not ext
 
 
 def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
