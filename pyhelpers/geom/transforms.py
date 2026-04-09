@@ -74,6 +74,47 @@ def transform_point_type(*pts, as_geom=True):
     return _transform_point_type(*pts, as_geom=as_geom)
 
 
+def get_point_coordinates(pt):
+    """
+    Extracts (x, y) coordinates from a point-like object.
+
+    Supported types include Shapely Points, lists, tuples, and NumPy arrays.
+
+    :param pt: A point-like object containing at least two coordinates.
+    :type pt: shapely.geometry.Point | list | tuple | numpy.ndarray
+    :return: A tuple of (x, y) coordinates.
+    :rtype: tuple[float, float]
+    :raises ValueError: If the input format is unrecognized or has insufficient length.
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import get_point_coordinates
+        >>> from shapely.geometry import Point
+        >>> get_point_coordinates(Point(1.0, 2.0))
+        (1.0, 2.0)
+        >>> get_point_coordinates([1.5, 2.5, 0.0])
+        (1.5, 2.5)
+    """
+
+    # Handle Shapely Points
+    if hasattr(pt, 'x') and hasattr(pt, 'y'):
+        return float(pt.x), float(pt.y)
+
+    # Handle sequence types (list, tuple, ndarray)
+    if hasattr(pt, '__getitem__'):
+        try:
+            if len(pt) >= 2:
+                return float(pt[0]), float(pt[1])
+        except (TypeError, IndexError):
+            pass
+
+    # Fallback/error
+    raise ValueError(
+        f"Invalid point format: {type(pt).__name__}. "
+        "Expected Shapely Point or sequence of length >= 2."
+    )
+
+
 def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
     """
     Retrieves an array of coordinates from the input geometry object.
