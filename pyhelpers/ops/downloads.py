@@ -48,17 +48,32 @@ def is_downloadable(url, request_field='content-type', **kwargs):
         False
     """
 
-    kwargs.update({'allow_redirects': True})
-    h = requests.head(url=url, **kwargs)
+    # Use setdefault to allow user to override redirects if they really want to
+    kwargs.setdefault('allow_redirects', True)
+    kwargs.setdefault('timeout', 10)
 
-    content_type = h.headers.get(request_field).lower()
+    try:
+        response = requests.head(url=url, **kwargs)  # Try a HEAD request first
 
-    if content_type.startswith('text/html'):
-        downloadable = False
-    else:
-        downloadable = True
+        # If HEAD is not allowed, some servers return 405 or 403
+        if response.status_code in {403, 405}:
+            response = requests.get(url=url, stream=True, **kwargs)
 
-    return downloadable
+        response.raise_for_status()
+
+        # Safely get the header
+        header = response.headers.get(request_field, '')
+        content_type = header.lower()
+
+        # A resource is generally downloadable if it is not a webpage (HTML)
+        # or if it is explicitly a binary/attachment
+        if not content_type or content_type.startswith('text/html'):
+            return False
+
+        return True
+
+    except requests.RequestException:
+        return False
 
 
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
@@ -500,7 +515,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         return None
 
     else:
-        # Initialise session
+        # Initialize session
         requests_session_args = requests_session_args or {}
         session = _init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
@@ -869,7 +884,7 @@ class GitHubFileDownloader:
         # Make a directory with the name which is taken from the actual repo
         os.makedirs(self.dir_out, exist_ok=True)
 
-        # Get response from GutHub response
+        # Get response from GitHub response
         try:
             self._get_response(api_url_local=api_url_local)
 
