@@ -2,7 +2,6 @@
 Utilities for distance-related calculations and proximity operations.
 """
 
-import copy
 import functools
 import os
 import typing
@@ -11,11 +10,11 @@ import numpy as np
 import shapely.geometry
 import shapely.ops
 
-from .transforms import get_coordinates_as_array, transform_point_type
-from .._cache import _check_dependencies
+from .transforms import get_coordinates_as_array, get_point_coordinates, transform_point_type
+from .._cache import _check_dependencies, _print_failure_message
 
 
-def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
+def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', decimals=None):
     """
     Calculates the distance between two points on a unit sphere.
 
@@ -29,9 +28,9 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
     :type pt2: shapely.geometry.Point | tuple | numpy.ndarray
     :param unit: Unit of distance for output; options include ``'mile'`` (default) and ``'km'``.
     :type unit: str
-    :param precision: Number of decimal places for the calculated result;
+    :param decimals: Number of decimal places for the calculated result;
         defaults to ``None`` (no rounding).
-    :type precision: int | None
+    :type decimals: int | None
     :return: Distance between ``pt1`` and ``pt2`` in miles or kilometers
         (relative to the earth's radius).
     :rtype: float | None
@@ -56,7 +55,7 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
         >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
         >>> arc_len_in_miles  # in miles
         101.10431101941569
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, precision=4)
+        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, decimals=4)
         >>> arc_len_in_miles
         101.1043
 
@@ -68,27 +67,22 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
         point's longitude and latitude.
     """
 
+    # Resolve earth radius
     earth_radius = 3960.0 if unit == "mile" else 6371.0
+    deg2rad = np.pi / 180.0  # Convert latitude and longitude to spherical coordinates in radians
 
-    # Convert latitude and longitude to spherical coordinates in radians.
-    degrees_to_radians = np.pi / 180.0
+    try:
+        lon1, lat1 = get_point_coordinates(pt1)
+        lon2, lat2 = get_point_coordinates(pt2)
+    except Exception as e:
+        _print_failure_message(e, raise_error=True)
+        return None
 
-    if not all(isinstance(x, shapely.geometry.Point) for x in (pt1, pt2)):
-        try:
-            pt1_, pt2_ = shapely.geometry.Point(pt1), shapely.geometry.Point(pt2)
-        except Exception as e:
-            print(e)
-            return None
-    else:
-        pt1_, pt2_ = map(copy.copy, (pt1, pt2))
-
+    # Convert to spherical radians
     # phi = 90 - latitude
-    phi1 = (90.0 - pt1_.y) * degrees_to_radians
-    phi2 = (90.0 - pt2_.y) * degrees_to_radians
-
+    phi1, phi2 = (90.0 - lat1) * deg2rad, (90.0 - lat2) * deg2rad
     # theta = longitude
-    theta1 = pt1_.x * degrees_to_radians
-    theta2 = pt2_.x * degrees_to_radians
+    theta1, theta2 = lon1 * deg2rad, lon2 * deg2rad
 
     # Compute spherical distance from spherical coordinates.
     # For two locations in spherical coordinates
@@ -96,14 +90,15 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
     # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
     # distance = rho * arc length
 
+    # Spherical Law of Cosines
     cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
-    arc_length = np.arccos(cosine) * earth_radius
+    # Clip to prevent NaN on identical points due to float precision
+    arc_length = np.arccos(np.clip(cosine, -1.0, 1.0)) * earth_radius
 
-    if precision:
-        arc_length = np.round(arc_length, precision)
+    if decimals:  # Rounding
+        arc_length = np.round(arc_length, decimals=decimals)
 
-    # To multiply arc by the radius of the earth in a set of units to get length.
-    return arc_length
+    return float(arc_length)
 
 
 def calc_hypotenuse_distance(pt1, pt2):
