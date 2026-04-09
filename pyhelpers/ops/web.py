@@ -5,6 +5,7 @@ Utilities for Internet-related tasks and data manipulation from online sources.
 import html.parser
 import importlib.resources
 import json
+import logging
 import pathlib
 import random
 import re
@@ -15,8 +16,7 @@ import urllib.parse
 
 import requests
 
-from .._cache import _init_requests_session, _lazy_check_dependencies, _load_package_data, \
-    _print_failure_message
+from .._cache import _init_requests_session, _lazy_check_dependencies, _load_package_data
 
 
 def is_network_connected():
@@ -265,8 +265,7 @@ def _user_agent_strings(browser_names=None, dump_dat=False):
     return user_agent_strings
 
 
-def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False,
-                            raise_error=False):
+def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbose=False):
     # noinspection PyUnresolvedReferences
     """
     Loads user-agent strings for popular web browsers.
@@ -283,9 +282,6 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
     :type update: bool
     :param verbose: Whether to print relevant information in the console; defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
-    :type raise_error: bool
     :return: Dictionary or list of user-agent strings, depending on the `flattened` parameter.
     :rtype: dict | list
 
@@ -313,12 +309,12 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         >>> type(uas['Chrome'])
         list
         >>> uas['Chrome'][0]
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)...
+        'Chrome/15.0.860.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/533.20.25 (KHTML, li...
         >>> uas_list = load_user_agent_strings(shuffled=True, flattened=True)
         >>> type(uas_list)
         list
         >>> uas_list[0]  # a random one
-        'Mozilla/5.0 (Windows NT 6.0) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.7...
+        'Mozilla/5.0 (X11; U; Linux x86_64; en-US) AppleWebKit/532.2 (KHTML, like Gecko) Chrome...
 
     .. note::
 
@@ -326,12 +322,12 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
         as ``shuffled=True``.
     """
 
-    if not update:
+    if not update:  # Load from local cache
         user_agent_strings = _load_package_data("user-agent-strings.json")
 
     else:
         if verbose:
-            print("Updating the backup data of user-agent strings", end=" ... ")
+            print("Updating the backup data of user-agent strings", end=" ... ", flush=True)
 
         try:
             user_agent_strings = _user_agent_strings(dump_dat=True)
@@ -342,13 +338,15 @@ def load_user_agent_strings(shuffled=False, flattened=False, update=False, verbo
                 print("Done.")
 
         except Exception as e:
-            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
-            user_agent_strings = load_user_agent_strings(update=False, verbose=False)
+            if verbose:
+                logging.getLogger(__name__).warning(
+                    f'Warning: Update failed. Load local backup instead.\n'
+                    f'  Error: {e}')
+            user_agent_strings = _load_package_data("user-agent-strings.json")
 
     if shuffled:
-        for browser_name, ua_str in user_agent_strings.items():
-            random.shuffle(ua_str)
-            user_agent_strings.update({browser_name: ua_str})
+        for browser_name in user_agent_strings:
+            random.shuffle(user_agent_strings[browser_name])
 
     if flattened:
         user_agent_strings = [x for v in user_agent_strings.values() for x in v]
