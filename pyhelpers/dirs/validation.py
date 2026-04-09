@@ -118,9 +118,13 @@ def is_path_to_dir(path_to_dir):
         return has_dir_structure and not ext
 
 
-def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
+def resolve_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     """
-    Validates the pathname of a directory.
+    Resolves a directory path into an absolute pathname.
+
+    This function takes a variety of input types and ensures they are converted
+    into a standardized absolute path string. It handles relative paths by
+    anchoring them to a default directory and resolves missing inputs using the provided `subdir`.
 
     :param path_to_dir: Pathname of a data directory;
         if ``path_to_dir=None`` (default),
@@ -138,16 +142,16 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import validate_dir
+        >>> from pyhelpers.dirs import resolve_dir
         >>> import os
         >>> import pathlib
-        >>> dat_dir = validate_dir()
+        >>> dat_dir = resolve_dir()
         >>> os.path.relpath(dat_dir)
         '.'
-        >>> dat_dir = validate_dir("tests")
+        >>> dat_dir = resolve_dir("tests")
         >>> os.path.relpath(dat_dir)
         'tests'
-        >>> dat_dir = validate_dir(subdir="data")
+        >>> dat_dir = resolve_dir(subdir="data")
         >>> os.path.relpath(dat_dir)
         'data'
     """
