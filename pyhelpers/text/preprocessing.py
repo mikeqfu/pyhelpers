@@ -3,13 +3,13 @@ Utilities for (pre)processing textual data.
 """
 
 import collections
-import copy
 import html
 import math
 import re
 import string
 
-from .._cache import _check_dependencies, _load_package_data, _remove_punctuation, _vectorize_text
+from .._cache import _lazy_check_dependencies, _load_package_data, _remove_punctuation, \
+    _vectorize_text
 
 
 def clean_html_text(input_text):
@@ -223,10 +223,10 @@ def split_on_uppercase(input_text, join_with=None):
 
 def _english_numerals():
     """
-    Returns a dictionary facilitaing to map textual English numerals to their corresponding
+    Returns a dictionary facilitating to map textual English numerals to their corresponding
     numerical representations.
 
-    :return: Dictionary facilitaing to map textual English numerals to their corresponding
+    :return: Dictionary facilitating to map textual English numerals to their corresponding
         numerical representations.
     :rtype: dict
 
@@ -320,6 +320,7 @@ def numeral_english_to_arabic(input_text):
     return result
 
 
+@_lazy_check_dependencies('nltk')
 def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -397,25 +398,34 @@ def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_word
         {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
     """
 
-    nltk = _check_dependencies('nltk')
+    # # Ensure necessary NLTK data is present (optional, depending on your library's setup)
+    # nltk.download('punkt', quiet=True)  # noqa
 
-    doc = str(input_text).lower() if lowercase else str(input_text)
+    # Initial case handling
+    text = str(input_text).lower() if lowercase else str(input_text)
+
+    # Tokenization (before removing punctuation preserves word integrity (e.g. contractions))
+    tokens = nltk.word_tokenize(text, **kwargs)  # noqa
+
+    # Punctuation filtering
     if ignore_punctuation:
-        doc = remove_punctuation(doc, rm_whitespace=False)
+        # Filter tokens that are just punctuation marks
+        tokens = [w for w in tokens if not all(char in string.punctuation for char in w)]
 
-    tokens = nltk.word_tokenize(doc, **kwargs)
-
-    if stop_words:  # Remove stop words if provided
+    # Stopword filtering
+    if stop_words:
         if stop_words is True:
-            language = kwargs['language'] if 'language' in kwargs else 'english'
-            stop_words_ = set(nltk.corpus.stopwords.words(language))
+            lang = kwargs.get('language', 'english')
+            # NLTK stopwords are lowercase by default
+            stop_set = set(nltk.corpus.stopwords.words(lang))  # noqa
         else:
-            stop_words_ = copy.copy(stop_words)
-        tokens = [w for w in tokens if not w.lower() in stop_words_]
+            # Lowercase the user-provided list to match 'w.lower()'
+            stop_set = {str(sw).lower() for sw in stop_words}
 
-    word_count_dict = dict(collections.Counter(tokens))
+        tokens = [w for w in tokens if w.lower() not in stop_set]
 
-    return word_count_dict
+    # Counting
+    return dict(collections.Counter(tokens))
 
 
 def calculate_idf(documents, lowercase=True, ignore_punctuation=True, stop_words=None,
