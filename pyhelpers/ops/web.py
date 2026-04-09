@@ -181,24 +181,35 @@ class _FakeUserAgentParser(html.parser.HTMLParser):
         pass
 
     def handle_starttag(self, tag, attrs):
+        """
+        Identifies the start of an anchor tag that leads to a browser's user-agent list and
+        toggles the recording state.
+
+        :param tag: The name of the HTML tag (e.g., 'a', 'div').
+        :type tag: str
+        :param attrs: A list of (name, value) tuples containing the tag's attributes.
+        :type attrs: list[tuple[str, str]]
+        """
+        tag = tag.lower()
+
         if tag != 'a':
             return
 
+        # If already inside a matching tag, increment depth
         if self.recording:
             self.recording += 1
             return
 
-        if tag == 'a':
-            for name, link in attrs:
-                if (name == 'href' and link.startswith(f'/{self.browser_name}') and
-                        link.endswith('.php')):
+        # Search for the specific href pattern across all attributes
+        for name, value in attrs:
+            if name.lower() == 'href' and value:
+                # Robust check: matches /browser_name and contains .php
+                if value.startswith(f'/{self.browser_name}') and '.php' in value:
+                    self.recording = 1
                     break
-                else:
-                    return
-            self.recording = 1
 
     def handle_endtag(self, tag):
-        if tag == 'a' and self.recording:
+        if tag.lower() == 'a' and self.recording:
             self.recording -= 1
 
     def handle_data(self, data):
