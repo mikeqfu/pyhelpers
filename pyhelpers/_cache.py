@@ -9,6 +9,7 @@ import importlib.metadata
 import importlib.resources
 import importlib.util
 import json
+import logging
 import os
 import pathlib
 import re
@@ -434,9 +435,9 @@ def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
         >>> _normalize_pathname("tests//data/dat.csv")
         'tests/data/dat.csv'
         >>> pathname = pathlib.Path("tests\\data/dat.csv")
-        >>> _normalize_pathname(pathname, sep=os.path.sep)  # On Windows
+        >>> _normalize_pathname(pathname, sep=os.sep)  # On Windows
         'tests\\data\\dat.csv'
-        >>> _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)  # On Windows
+        >>> _normalize_pathname(pathname, sep=os.sep, add_slash=True)  # On Windows
         '.\\tests\\data\\dat.csv'
     """
 
@@ -447,18 +448,22 @@ def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     return re.sub(r"[\\/]+", re.escape(sep), pathname_)
 
 
-def _add_slashes(pathname, normalized=True, surrounded_by='"'):
+def _add_slashes(pathname, normalized=True, surrounded_by='"', is_dir=None):
     """
     Adds leading and/or trailing slashes to a given pathname for formatting or display purposes.
 
     :param pathname: The pathname of a file or directory.
-    :type pathname: str | bytes | os.PathLike
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :type pathname: str | bytes | pathlib.Path | os.PathLike
+    :param normalized: Whether to use forward slashes
+        (via :func:`~pyhelpers._cache._normalize_pathname`). Defaults to ``True``.
     :type normalized: bool
-    :param surrounded_by: A string by which the returned pathname is surrounded;
-        defaults to ``'"'``.
+    :param surrounded_by: A string by which the returned pathname is surrounded.
+        Defaults to ``'"'``.
     :type surrounded_by: str
-    :return: A formatted pathname with added slashes.
+    :param is_dir: Explicitly treat as a directory. If ``None``, it checks
+        the filesystem or guesses via extensions. Defaults to ``None``.
+    :type is_dir: bool | None
+    :return: Formatted pathname.
     :rtype: str
 
     **Examples**::
@@ -474,25 +479,29 @@ def _add_slashes(pathname, normalized=True, surrounded_by='"'):
         '"C:/Windows/"'
     """
 
-    # Normalize path separators for consistency
-    path = os.path.normpath(pathname.decode() if isinstance(pathname, bytes) else pathname)
+    # String conversion
+    path_str = os.fsdecode(pathname)
 
-    # Add a leading slash
-    if not path.startswith((os.path.sep, ".")) and not os.path.isabs(path):
-        path = f".{os.path.sep}{path}"
+    if is_dir is None:
+        if os.path.exists(path_str):
+            is_dir = os.path.isdir(path_str)
+        else:  # Guess: no extension usually means directory
+            is_dir = os.path.splitext(path_str)[1] == ''
 
-    has_trailing_sep = path.endswith(os.path.sep)
-    is_file_like = os.path.splitext(path)[1] != ''
+    # Handle leading slash/dot (for relative paths)
+    if not os.path.isabs(path_str) and not path_str.startswith(('.', os.sep, '/')):
+        path_str = f".{os.sep}{path_str}"
 
-    if not has_trailing_sep and not is_file_like:  # Add a trailing slash
-        path = path + os.path.sep
+    # Handle trailing slash
+    if not path_str.endswith(os.sep) and is_dir:
+        path_str += os.sep  # Add a trailing slash
 
     if normalized:
-        path = _normalize_pathname(path)
+        path_str = _normalize_pathname(path_str)
 
     s = surrounded_by or ""
 
-    return f'{s}{path}{s}'
+    return f'{s}{path_str}{s}'
 
 
 def _check_relative_pathname(pathname, normalized=True):
@@ -504,7 +513,7 @@ def _check_relative_pathname(pathname, normalized=True):
     otherwise, it returns a copy of the input.
 
     :param pathname: Pathname (of a file or directory).
-    :type pathname: str | bytes | pathlib.Path
+    :type pathname: str | bytes | pathlib.Path | os.PathLike
     :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
     :type normalized: bool
     :return: A location relative to the current working directory
@@ -652,7 +661,7 @@ def _format_exception_message(exception=None, prefix=""):
     proper spacing and terminal punctuation.
 
     :param exception: Error message or ``Exception`` object. Defaults to ``None``.
-    :type exception: Exception | str | None
+    :type exception: BaseException | Exception | str | None
     :param prefix: Text to prepend to the error description. Defaults to ``""``.
     :type prefix: str
     :return: Formatted error message.
@@ -698,7 +707,7 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
     :param raise_error: Whether to raise the provided exception;
         if ``raise_error=False`` (default), the error will be suppressed.
     :type raise_error: bool
-    :return: None
+    :return: None.
     :rtype: None
 
     **Tests**::
@@ -721,12 +730,16 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
     """
 
     if verbose:
-        print(_format_exception_message(exception=e, prefix=prefix))
+        msg = _format_exception_message(exception=e, prefix=prefix)
+        if msg.strip():
+            print(msg)
 
     if raise_error:
         if isinstance(e, BaseException):
             raise e  # Raise the passed exception object
         raise Exception(str(e))  # Fallback if e is just a message string
+
+    return None
 
 
 def _init_requests_session(url, max_retries=5, backoff_factor=0.1, retry_status='default',
@@ -814,23 +827,23 @@ def _check_url_scheme(url, allowed_schemes=None):
     return parsed_url
 
 
+@functools.lru_cache(maxsize=1)
 def _load_ansi_escape_codes():
     """
     Loads and filters ANSI escape codes from the package data file.
 
-    The function uses :py:mod:`pkgutil` to access the data file relative to the
-    current package (``__name__``), decodes the JSON content, and filters out
-    any key-value pairs used for comments (keys starting with ``'_comment_'``).
+    The function accesses internal ``ansi-escape-codes.json`` using `importlib.resources`_.
+    It filters out keys used for comments (keys starting with ``'_comment_'``).
 
     :return: A dictionary mapping color/style names (e.g. ``'red'``, ``'bold'``) to their
-        full ANSI escape code strings (e.g. ``'\\u001b[31m'``). Returns an empty
-        dictionary on failure and prints a warning.
+        full ANSI escape code strings (e.g. ``'\\u001b[31m'``).
+        Returns an empty dictionary if the file is missing or invalid.
     :rtype: dict[str, str]
 
-    :raises json.JSONDecodeError: If the data file is found but contains invalid JSON.
-    :raises FileNotFoundError: If the data file cannot be located by ``pkgutil``.
-    :raises Exception: Catches and handles other general exceptions related to
-        package data loading (e.g. decoding errors, ``pkgutil`` issues).
+    .. note::
+
+        Exceptions are caught internally; failures return an empty dict and
+        print a warning to stderr.
 
     **Examples**::
 
@@ -838,16 +851,22 @@ def _load_ansi_escape_codes():
         >>> ansi_escape_codes = _load_ansi_escape_codes()
         >>> ansi_escape_codes.get('red')
         '\\x1b[31m'
-        >>> ansi_escape_codes.get('_comment_styles')  # Should be filtered out and returns None
-
+        >>> ansi_escape_codes.get('_comment_styles') is None
+        True
     """
 
     try:
-        filepath = importlib.resources.files(__name__).joinpath("data/ansi-escape-codes.json")
-        raw_data = json.loads(filepath.read_text(encoding='utf-8'))
+        data_path = importlib.resources.files(__package__ or __name__).joinpath(
+            "data/ansi-escape-codes.json")
+
+        raw_data = json.loads(data_path.read_text(encoding='utf-8'))
+
         return {k: v for k, v in raw_data.items() if not k.startswith('_comment_')}
+
     except Exception as e:  # Fallback
-        print(f"Warning: Could not load data file. Error: {e}")
+        # print(f"Warning: Failed to load ANSI escape codes. Error: {e}")
+        logging.getLogger(__name__).warning(
+            'Warning: Failed to load ANSI escape codes.\n  Error: %s', e)
         return {}
 
 
@@ -1045,7 +1064,7 @@ def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
         >>> _remove_punctuation('Hello, world!')
         'Hello world'
         >>> raw_text = '   How   are you? '
-        >>> _remove_punctuation(raw_text)
+        >>> _remove_punctuation(raw_text, rm_whitespace=True)
         'How are you'
         >>> _remove_punctuation(raw_text, rm_whitespace=False)
         'How   are you'
@@ -1058,17 +1077,21 @@ def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
         'Hello world \tThis is a test'
     """
 
-    if preserve_hyphenated:  # Remove hyphens only if not between words
-        text_ = re.sub(r'(?<!\w)-|-(?!\w)', ' ', text)  # Remove isolated hyphens only
-        text_ = re.sub(r'[^\w\s-]', ' ', text_)  # Remove punctuation except hyphens
+    if not text:
+        return ""
+
+    if preserve_hyphenated:
+        # Remove hyphens that are not connecting two word characters
+        text_ = re.sub(r'(?<!\w)-|-(?!\w)', ' ', text)
+        # Remove all other punctuation
+        text_ = re.sub(r'[^\w\s-]|_', ' ', text_)
     else:
-        text_ = re.sub(r'[^\w\s]', ' ', text)  # Remove all hyphens completely
+        # Remove all punctuation including hyphens and underscores
+        text_ = re.sub(r'[^\w\s]', ' ', text)
 
-    # Strip leading/trailing spaces
-    text_ = text_.strip()
-
-    # Normalize whitespace by collapsing multiple spaces
+    # Normalize whitespace
     if rm_whitespace:
+        # split() without arguments handles all whitespace (space, tab, newline)
         text_ = ' '.join(text_.split())
 
-    return text_
+    return text_.strip()  # Strip leading/trailing spaces
