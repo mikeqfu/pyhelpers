@@ -2,7 +2,6 @@
 Utilities for calculating geometric properties and shape sketching.
 """
 
-import copy
 import functools
 import typing
 
@@ -119,10 +118,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
     """
     Gets the midpoint between two points by pure calculation.
 
-    See also
-    [`GEOM-GGMC-1 <https://code.activestate.com/recipes/577713/>`_]
-    and
-    [`GEOM-GGMC-2 <https://www.movable-type.co.uk/scripts/latlong.html>`_].
+    See also [`GEOM-GGMC-1 <https://www.movable-type.co.uk/scripts/latlong.html>`_].
 
     :param pt1: One point.
     :type pt1: shapely.geometry.Point | list | tuple | numpy.ndarray
@@ -171,6 +167,7 @@ def get_geometric_midpoint_calc(pt1, pt2, as_geom=False):
 
 
 def get_rectangle_centroid(rectangle, as_geom=False):
+    # noinspection PyShadowingNames
     """
     Gets coordinates of the centroid of a rectangle.
 
@@ -190,41 +187,52 @@ def get_rectangle_centroid(rectangle, as_geom=False):
         >>> from shapely.geometry import Polygon
         >>> import numpy
         >>> coords_1 = [[0, 0], [0, 1], [1, 1], [1, 0]]
-        >>> rect_obj = Polygon(coords_1)
-        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
-        >>> rect_cen
+        >>> rectangle = Polygon(coords_1)
+        >>> rectangle_centroid = get_rectangle_centroid(rectangle)
+        >>> rectangle_centroid
         array([0.5, 0.5])
-        >>> rect_obj = numpy.array(coords_1)
-        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj)
-        >>> rect_cen
+        >>> rectangle = numpy.array(coords_1)
+        >>> rectangle_centroid = get_rectangle_centroid(rectangle)
+        >>> rectangle_centroid
         array([0.5, 0.5])
-        >>> rect_cen = get_rectangle_centroid(rectangle=rect_obj, as_geom=True)
-        >>> type(rect_cen)
+        >>> rectangle_centroid = get_rectangle_centroid(rectangle, as_geom=True)
+        >>> type(rectangle_centroid)
         shapely.geometry.point.Point
-        >>> rect_cen.wkt
+        >>> rectangle_centroid.wkt
         'POINT (0.5 0.5)'
-        >>> coords_2 = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
-        >>> rect_cen = get_rectangle_centroid(rectangle=coords_2)
-        >>> rect_cen
+        >>> rectangle = [[(0, 0), (0, 1), (1, 1), (1, 0)], [(1, 1), (1, 2), (2, 2), (2, 1)]]
+        >>> rectangle_centroid = get_rectangle_centroid(rectangle)
+        >>> rectangle_centroid
         array([1., 1.])
     """
 
-    if isinstance(rectangle, typing.Iterable):  # (np.ndarray, list, tuple)
-        try:
+    # Handle Shapely objects directly
+    if hasattr(rectangle, 'centroid'):
+        rectangle_ = rectangle
+
+    # Handle Iterables (lists, tuples, numpy arrays)
+    elif isinstance(rectangle, typing.Iterable):  # (np.ndarray, list, tuple)
+        try:  # Try to treat as a single sequence of coordinates
             rectangle_ = shapely.geometry.Polygon(rectangle)
-        except (TypeError, ValueError, AttributeError):
-            rectangle_ = shapely.geometry.MultiPolygon(
-                [shapely.geometry.Polygon(x) for x in rectangle])
-            rectangle_ = rectangle_.convex_hull
+        except (TypeError, ValueError):  # Try to treat as a collection of shapes
+            parts = []
+            for item in rectangle:
+                if isinstance(item, shapely.geometry.base.BaseGeometry):
+                    parts.append(item)
+                else:
+                    parts.append(shapely.geometry.Polygon(item))
+            rectangle_ = shapely.geometry.MultiPolygon(parts)
+
     else:
-        rectangle_ = copy.copy(rectangle)
+        raise TypeError(f"Unsupported type: {type(rectangle)}")
 
-    rec_centroid = rectangle_.centroid
+    # noinspection PyUnresolvedReferences
+    res_centroid = rectangle_.centroid  # Get centroid
 
-    if not as_geom:
-        rec_centroid = np.array(rec_centroid.coords[0])
+    if as_geom:
+        return res_centroid
 
-    return rec_centroid
+    return np.array(res_centroid.coords[0])
 
 
 def get_square_vertices(ctr_x, ctr_y, side_length, rotation_theta=0):
@@ -424,7 +432,7 @@ def sketch_square(ctr_x, ctr_y, side_length, rotation_theta=0, annotation=False,
         >>> # save_fig(f"{path_to_fig_}.svg", verbose=True)
         >>> # save_fig(f"{path_to_fig_}.pdf", verbose=True)
 
-    The above exmaple is illustrated in :numref:`geom-sketch_square-demo-1`:
+    The above example is illustrated in :numref:`geom-sketch_square-demo-1`:
 
     .. figure:: ../_images/geom-sketch_square-demo-1.*
         :name: geom-sketch_square-demo-1
