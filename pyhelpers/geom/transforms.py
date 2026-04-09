@@ -393,21 +393,46 @@ def drop_axis(geom, axis='z', as_array=False):
                 [3., 4.]]])
     """
 
-    geom_obj = shapely.ops.transform(func=globals()[f'_drop_{axis}'], geom=geom)
+    # Map axis names to your existing helper functions
+    helpers = {
+        'x': _drop_x,
+        'y': _drop_y,
+        'z': _drop_z
+    }
+
+    if axis.lower() not in helpers:
+        raise ValueError("axis must be 'x', 'y' or 'z'")
+
+    geom_obj = shapely.ops.transform(helpers[axis.lower()], geom)
 
     if as_array:
-        sim_typ = ('Point', 'LineString')
-        if geom_obj.geom_type in sim_typ:
-            geom_obj = np.array(geom_obj.coords)
-        elif geom_obj.geom_type.startswith('Multi'):
-            geom_obj = np.array(
-                [np.array(g.coords) if g.geom_type in sim_typ else np.array(g.exterior.coords)
-                 for g in geom_obj.geoms])
-        else:
-            geom_obj = np.array(geom_obj.exterior.coords)
+        # Points are a special case in Shapely (coords[0] is the point)
+        if geom_obj.geom_type == 'Point':
+            return np.array(geom_obj.coords[0])
 
-        if geom_obj.shape[0] == 1:
-            geom_obj = geom_obj[0]
+        if geom_obj.geom_type == 'Polygon':
+            # Returns the exterior ring. Note: interiors are ignored for array output.
+            return np.array(geom_obj.exterior.coords)
+
+        # For Multi-geometries, iterate through parts
+        if hasattr(geom_obj, 'geoms'):
+            # Use a list as sub-geometries may have different lengths
+            parts = []
+            for g in geom_obj.geoms:
+                if g.geom_type == 'Polygon':
+                    parts.append(np.array(g.exterior.coords))
+                else:
+                    parts.append(np.array(g.coords))
+
+            # Return as a single array if possible, otherwise a list of arrays
+            try:
+                return np.array(parts)
+            except ValueError:
+                return parts
+
+        # For LineString and others
+        geom_coords = geom_obj.coords if hasattr(geom_obj, 'coords') else geom_obj.exterior.coords
+        return np.array(geom_coords)
 
     return geom_obj
 
