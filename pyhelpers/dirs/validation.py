@@ -152,24 +152,30 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
         'data'
     """
 
-    if path_to_dir:
-        if isinstance(path_to_dir, pathlib.Path):
-            path_to_dir_ = str(path_to_dir)
-        elif isinstance(path_to_dir, bytes):
-            path_to_dir_ = path_to_dir.decode()
+    try:
+        # Uniformly handle str, bytes, pathlib.Path, and os.PathLike
+        if path_to_dir is not None:
+            path_to_dir_ = os.fsdecode(path_to_dir)
         else:
-            path_to_dir_ = path_to_dir
-            assert isinstance(path_to_dir_, str), msg
+            path_to_dir_ = None
 
-        if not os.path.isabs(path_to_dir_):  # Use default file directory
-            data_dir_ = cd(path_to_dir_.strip('.\\.'), **kwargs)
+        subdir_ = os.fsdecode(subdir) if subdir else ""
 
+    except (TypeError, ValueError):
+        raise TypeError(msg)
+
+    # Logic for path construction
+    if path_to_dir_:
+        # Normalize to remove redundant separators or dots safely
+        normalized_path = os.path.normpath(path_to_dir_)
+
+        if not os.path.isabs(normalized_path):  # Use default file directory
+            data_dir_ = cd(normalized_path, **kwargs)
         else:
-            assert os.path.isabs(path_to_dir_), msg
-            data_dir_ = _check_relative_pathname(path_to_dir_.lstrip('.\\.'))
+            data_dir_ = _check_relative_pathname(normalized_path)
 
-    else:
-        data_dir_ = cd(subdir, **kwargs) if subdir else cd()
+    else:  # Fallback to subdir or current dir
+        data_dir_ = cd(subdir_, **kwargs) if subdir_ else cd()
 
     return data_dir_
 
