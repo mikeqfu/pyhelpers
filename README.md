@@ -24,7 +24,7 @@ $ pip install --upgrade pyhelpers
 
 For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html). 
 
-## Quick Start
+## Quick start
 
 For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html).
 
@@ -44,11 +44,11 @@ Fu, Q. (2020). PyHelpers: An open-source toolkit for facilitating Python users' 
 @software{Fu_PyHelpers_2020, 
     author = {Fu, Qian},
     title = {{PyHelpers: An open-source toolkit for facilitating Python users' data manipulation tasks}},
-    year = 2020,
+    year = {2020},
     publisher = {Zenodo},
     doi = {10.5281/zenodo.4017438},
     license = {MIT},
-    url = {https://github.com/mikeqfu/pyhelpers}
+    url = {https://doi.org/10.5281/zenodo.4017438},
 }
 ```
 
