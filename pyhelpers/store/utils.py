@@ -250,12 +250,13 @@ def _autofit_column_width(excel_writer, writer_kwargs, sheet_name):
     """
     Adjusts the column widths in an Excel spreadsheet based on the content length.
 
-    This function is specifically designed for *openpyxl* engine when working with *Pandas*
-    `ExcelWriter`_. It iterates through each column of the specified sheet and calculates
-    the maximum length of the content. It then adjusts the column width to accommodate the
-    longest content plus some padding.
+    This function is specifically designed for *openpyxl* engine when working with
+    `pandas.ExcelWriter`_.
+    It iterates through each column of the specified sheet and calculates the
+    maximum length of the content.
+    It then adjusts the column width to accommodate the longest content plus some padding.
 
-    :param excel_writer: ``pandas.ExcelWriter`` object used to write data into Excel file.
+    :param excel_writer: `pandas.ExcelWriter`_ object used to write data into Excel file.
     :type excel_writer: pandas.ExcelWriter
     :param writer_kwargs: A dict of keyword arguments passed to the `pandas.ExcelWriter`_,
         including the ``'engine'``.
@@ -263,14 +264,14 @@ def _autofit_column_width(excel_writer, writer_kwargs, sheet_name):
     :param sheet_name: The name of the sheet to adjust.
     :type sheet_name: str
 
-    .. _ExcelWriter:
+    .. _`pandas.ExcelWriter`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
 
     .. note::
 
         - This function assumes that *openpyxl* engine is used
           (i.e. ``writer_kwargs['engine'] == 'openpyxl'``).
-        - It modifies the column dimensions directly in the ``pandas.ExcelWriter`` object.
+        - It modifies the column dimensions directly in the `pandas.ExcelWriter`_ object.
 
     .. seealso::
 

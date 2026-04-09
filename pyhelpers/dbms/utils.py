@@ -26,7 +26,7 @@ def make_database_address(host, port, username, database_name=""):
     :type username: str | None
     :param database_name: Name of the database; defaults to an empty string.
     :type database_name: str | None
-    :return: Formatted address as '<username>:***@<host>:<port>[/<database_name>]'.
+    :return: Formatted address as ``'<username>:***@<host>:<port>[/<database_name>]'``.
     :rtype: str
 
     **Examples**::
