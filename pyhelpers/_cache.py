@@ -14,6 +14,7 @@ import os
 import pathlib
 import re
 import shutil
+import string
 import sys
 import urllib.parse
 
@@ -1045,17 +1046,25 @@ def _vectorize_text(*texts):
         yield [tokens.count(word) for word in vocab]
 
 
-def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
+def _remove_punctuation(text, normalize_whitespace=True, preserve_kebab_case=True,
+                        preserve_snake_case=True, exclude=None):
     """
     Removes punctuation from textual data.
 
-    :param text: The input text from which punctuation will be removed.
+    :param text: The input text.
     :type text: str
-    :param rm_whitespace: Whether to remove whitespace characters as well; defaults to ``True``.
-    :type rm_whitespace: bool
-    :param preserve_hyphenated: Whether to preserve hyphenated words; defaults to ``True``.
-    :type preserve_hyphenated: bool
-    :return: The input text without punctuation (and optionally without whitespace).
+    :param normalize_whitespace: Whether to collapse all whitespace into single spaces.
+        Defaults to ``True``.
+    :type normalize_whitespace: bool
+    :param preserve_kebab_case: Whether to preserve hyphens in Kebab case (e.g., ``'kebab-case'``).
+        Defaults to ``True``.
+    :type preserve_kebab_case: bool
+    :param preserve_snake_case: Whether to preserve underscores in Snake case
+        (e.g. ``'snake_case'``). Defaults to ``True``.
+    :param exclude: Punctuation marks to always keep, overriding other parameters.
+        Defaults to ``None``.
+    :type exclude: str | list | set | None
+    :return: The processed text that is without punctuation (and optionally without whitespace).
     :rtype: str
 
     **Examples**::
@@ -1064,34 +1073,52 @@ def _remove_punctuation(text, rm_whitespace=True, preserve_hyphenated=True):
         >>> _remove_punctuation('Hello, world!')
         'Hello world'
         >>> raw_text = '   How   are you? '
-        >>> _remove_punctuation(raw_text, rm_whitespace=True)
+        >>> _remove_punctuation(raw_text, normalize_whitespace=True)
         'How are you'
-        >>> _remove_punctuation(raw_text, rm_whitespace=False)
+        >>> _remove_punctuation(raw_text, normalize_whitespace=False)
         'How   are you'
-        >>> _remove_punctuation('No-punctuation!', preserve_hyphenated=False)
+        >>> _remove_punctuation('No-punctuation!', preserve_kebab_case=False)
         'No punctuation'
         >>> raw_text = 'Hello world!\tThis is a test. :-)'
         >>> _remove_punctuation(raw_text)
         'Hello world This is a test'
-        >>> _remove_punctuation(raw_text, rm_whitespace=False)
+        >>> _remove_punctuation(raw_text, normalize_whitespace=False)
         'Hello world \tThis is a test'
+        >>> raw_text = "The 'hyphen' is-cool; but underscores_are_not."
+        >>> _remove_punctuation(raw_text)
+        'The hyphen is-cool but underscores_are_not'
+        >>> _remove_punctuation(raw_text, preserve_kebab_case=False, exclude=';')
+        'The hyphen is cool; but underscores_are_not'
     """
 
     if not text:
-        return ""
+        return ''
 
-    if preserve_hyphenated:
-        # Remove hyphens that are not connecting two word characters
-        text_ = re.sub(r'(?<!\w)-|-(?!\w)', ' ', text)
-        # Remove all other punctuation
-        text_ = re.sub(r'[^\w\s-]|_', ' ', text_)
-    else:
-        # Remove all punctuation including hyphens and underscores
-        text_ = re.sub(r'[^\w\s]', ' ', text)
+    text_str = str(text)
 
-    # Normalize whitespace
-    if rm_whitespace:
-        # split() without arguments handles all whitespace (space, tab, newline)
-        text_ = ' '.join(text_.split())
+    # Ensure exclude is a set for O(1) lookup
+    exclude_set = set(exclude) if exclude else set()
 
-    return text_.strip()  # Strip leading/trailing spaces
+    if '-' not in exclude_set:
+        if preserve_kebab_case:  # Only remove hyphens not surrounded by alphanumeric chars
+            text_str = re.sub(r'(?<!\w)-|-(?!\w)', ' ', text_str)
+        else:
+            text_str = text_str.replace('-', ' ')
+
+    if '_' not in exclude_set:
+        if preserve_snake_case:
+            text_str = re.sub(r'(?<!\w)_|_(?!\w)', ' ', text_str)
+        else:
+            text_str = text_str.replace('_', ' ')
+
+    # General punctuation cleanup
+    to_remove = set(string.punctuation) - exclude_set - {'-', '_'}
+
+    if to_remove:  # Escaping ensures characters like '.' or '[' don't break the regex
+        text_str = re.sub(f'[{re.escape(''.join(to_remove))}]', ' ', text_str)
+
+    if normalize_whitespace:
+        # Collapses multiple spaces, tabs, and newlines into single spaces
+        text_str = ' '.join(text_str.split())
+
+    return text_str.strip()  # Strip leading/trailing spaces

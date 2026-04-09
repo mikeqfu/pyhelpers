@@ -69,17 +69,26 @@ def vectorize_text(*input_text):
     return _vectorize_text(*input_text)
 
 
-def remove_punctuation(input_text, rm_whitespace=True, preserve_hyphenated=True):
+def remove_punctuation(input_text, normalize_whitespace=True, preserve_kebab_case=True,
+                       preserve_snake_case=True, exclude=None):
+    # noinspection PyShadowingNames
     """
     Removes punctuation from textual data.
 
-    :param input_text: The input text from which punctuation will be removed.
+    :param input_text: The input text.
     :type input_text: str
-    :param rm_whitespace: Whether to remove whitespace characters as well; defaults to ``True``.
-    :type rm_whitespace: bool
-    :param preserve_hyphenated: Whether to preserve hyphenated words; defaults to ``True``.
-    :type preserve_hyphenated: bool
-    :return: The input text without punctuation (and optionally without whitespace).
+    :param normalize_whitespace: Whether to collapse all whitespace into single spaces.
+        Defaults to ``True``.
+    :type normalize_whitespace: bool
+    :param preserve_kebab_case: Whether to preserve hyphens in Kebab case (e.g., ``'kebab-case'``).
+        Defaults to ``True``.
+    :type preserve_kebab_case: bool
+    :param preserve_snake_case: Whether to preserve underscores in Snake case
+        (e.g. ``'snake_case'``). Defaults to ``True``.
+    :param exclude: Punctuation marks to always keep, overriding other parameters.
+        Defaults to ``None``.
+    :type exclude: str | list | set | None
+    :return: The processed text that is without punctuation (and optionally without whitespace).
     :rtype: str
 
     **Examples**::
@@ -87,19 +96,33 @@ def remove_punctuation(input_text, rm_whitespace=True, preserve_hyphenated=True)
         >>> from pyhelpers.text import remove_punctuation
         >>> remove_punctuation('Hello, world!')
         'Hello world'
-        >>> remove_punctuation('   How   are you? ', rm_whitespace=False)
+        >>> input_text = '   How   are you? '
+        >>> remove_punctuation(input_text, normalize_whitespace=True)
+        'How are you'
+        >>> remove_punctuation(input_text, normalize_whitespace=False)
         'How   are you'
-        >>> remove_punctuation('No-punctuation!', preserve_hyphenated=False)
+        >>> input_text = 'No-punctuation!'
+        >>> remove_punctuation(input_text, preserve_kebab_case=False)
         'No punctuation'
-        >>> raw_text = 'Hello world!\tThis is a test. :-)'
-        >>> remove_punctuation(raw_text)
+        >>> input_text = 'Hello world!\tThis is a test. :-)'
+        >>> remove_punctuation(input_text)
         'Hello world This is a test'
-        >>> remove_punctuation(raw_text, rm_whitespace=False)
+        >>> remove_punctuation(input_text, normalize_whitespace=False)
         'Hello world \tThis is a test'
+        >>> input_text = "The 'hyphen' is-cool; but underscores_are_not."
+        >>> remove_punctuation(input_text)
+        'The hyphen is-cool but underscores_are_not'
+        >>> remove_punctuation(input_text, preserve_kebab_case=False, exclude=';')
+        'The hyphen is cool; but underscores_are_not'
     """
 
     return _remove_punctuation(
-        text=input_text, rm_whitespace=rm_whitespace, preserve_hyphenated=preserve_hyphenated)
+        text=input_text,
+        normalize_whitespace=normalize_whitespace,
+        preserve_kebab_case=preserve_kebab_case,
+        preserve_snake_case=preserve_snake_case,
+        exclude=exclude
+    )
 
 
 def get_acronym(input_text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
@@ -194,6 +217,9 @@ def split_on_uppercase(input_text, join_with=None):
         >>> split_on_uppercase('BCRRE_Projects')
         ['BCRRE', 'Projects']
     """
+
+    if not input_text:
+        return "" if join_with is not None else []
 
     input_text_ = remove_punctuation(input_text)
 
