@@ -1931,6 +1931,7 @@ class MSSQL(_Base):
 
         return data
 
+    @_lazy_check_dependencies('pyhelpers')
     def read_table(self, table_name, schema_name=None, column_names=None, conditions=None,
                    chunk_size=None, save_as=None, data_dir=None, save_args=None, verbose=False,
                    **kwargs):
@@ -2063,15 +2064,12 @@ class MSSQL(_Base):
         data = data[[x for x in column_names_ if x not in data.index.names]]
 
         if save_as:
-            from pyhelpers.dirs import validate_dir
-            from pyhelpers.store import save_data
-
-            data_dir_ = validate_dir(data_dir)
+            data_dir_ = pyhelpers.dirs.resolve_dir(data_dir)  # noqa
             path_to_file = os.path.join(data_dir_, table_name + save_as)
 
             save_args_ = {} if save_args is None else save_args
             save_args_.update({'data': data, 'path_to_file': path_to_file, 'verbose': verbose})
-            save_data(**save_args_)
+            pyhelpers.store.save_data(**save_args_)  # noqa
 
         return data
 
