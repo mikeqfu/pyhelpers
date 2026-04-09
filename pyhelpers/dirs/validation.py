@@ -51,9 +51,9 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
 
 
-def is_dir(path_to_dir):
+def is_path_to_dir(path_to_dir):
     """
-    Checks if an input string is explicitly formatted as a directory path.
+    Checks if an input string is formatted as a directory path.
 
     This function verifies whether the input string is a valid directory path. See also
     [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and [`DIRS-IVD-2
@@ -66,14 +66,14 @@ def is_dir(path_to_dir):
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import cd, is_dir
-        >>> is_dir("tests")
+        >>> from pyhelpers.dirs import cd, is_path_to_dir
+        >>> is_path_to_dir("tests")
         False
-        >>> is_dir("/tests")
+        >>> is_path_to_dir("/tests")
         True
-        >>> is_dir(cd("tests"))
+        >>> is_path_to_dir(cd("tests"))
         True
-        >>> is_dir(".\\tests/")
+        >>> is_path_to_dir(".\\tests/")
         True
     """
 
