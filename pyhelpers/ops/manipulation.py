@@ -800,18 +800,22 @@ def np_shift(array, step, fill_value=np.nan):
 
 
 @_lazy_check_dependencies(pl='polars')
-def downcast_numeric_columns(*dataframes):
-    # noinspection PyShadowingNames
+def downcast_numeric_columns(*dataframes, return_copy=True):
+    # noinspection PyShadowingNames,PyUnresolvedReferences
     """
-    Downcasts numeric columns in pandas DataFrames to optimal dtypes to reduce memory usage.
+    Downcasts numeric columns to optimal dtypes.
 
     This function processes multiple DataFrames in one pass, converting:
+
         - Integer columns to the smallest signed integer dtype (int8, int16, int32, or int64)
         - Floating-point columns to the smallest floating dtype (float32 or float64)
           that can safely represent their values.
 
     :param dataframes: One or more pandas DataFrames to optimize.
     :type dataframes: pandas.DataFrame | polars.DataFrame
+    :param return_copy: Whether to return a copy or modify the input (where possible).
+        Defaults to ``True``.
+    :type return_copy: bool
     :return: New DataFrame(s) with downcasted numeric columns.
     :rtype: None | pandas.DataFrame | polars.DataFrame | tuple[pandas.DataFrame | polars.DataFrame]
 
@@ -869,36 +873,30 @@ def downcast_numeric_columns(*dataframes):
 
     for df in dataframes:
         if isinstance(df, pd.DataFrame):
-            df_ = df.copy()
-            # Process all integer columns
-            int_cols = df_.select_dtypes(include=['integer'], exclude=['timedelta']).columns
-            if not int_cols.empty:
-                df_[int_cols] = df_[int_cols].apply(pd.to_numeric, downcast='integer')
+            # noinspection PyUnresolvedReferences
+            _df = df.copy() if return_copy else df
 
-            # Process all float columns
-            float_cols = df_.select_dtypes(include=['floating']).columns  # noqa
-            if not float_cols.empty:
-                df_[float_cols] = df_[float_cols].apply(pd.to_numeric, downcast='float')
+            # Process all integer and float columns
+            for dtype in ['integer', 'float']:
+                # noinspection PyUnresolvedReferences
+                cols = _df.select_dtypes(include=[dtype], exclude=['timedelta']).columns
+                for col in cols:
+                    _df[col] = pd.to_numeric(_df[col], downcast=dtype)
 
-            results.append(df_)
+            results.append(_df)
 
         # Handle polars DataFrames
         elif isinstance(df, pl.DataFrame):  # noqa
-            df_ = df.clone()
+            _df = df.clone() if return_copy else df
+
             # Process integer columns
-            int_cols = [col for col in df_.columns if df_[col].dtype.is_integer()]
-            if int_cols:
-                df_ = df_.with_columns([df_[col].shrink_dtype() for col in int_cols]) # noqa
+            _df = _df.with_columns(
+                pl.selectors.numeric().map_batches(lambda s: s.shrink_dtype()))  # noqa
 
-            # Process float columns
-            float_cols = [col for col in df_.columns if df_[col].dtype.is_float()]
-            if float_cols:
-                df_ = df_.with_columns([df_[col].shrink_dtype() for col in float_cols]) # noqa
-
-            results.append(df_)
+            results.append(_df)
 
         else:
-            raise TypeError(f"Unsupported DataFrame type: {type(df)}")
+            raise TypeError(f"Unsupported DataFrame type: '{type(df)}'")
 
     return results[0] if len(results) == 1 else tuple(results)
 
