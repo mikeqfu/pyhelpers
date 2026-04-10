@@ -813,7 +813,7 @@ class _Base:
         # Execution logic
         if verbose:
             if confirmation_required:
-                print(f"Importing the data", end=" ... ", flush=True)
+                print("Importing the data", end=" ... ", flush=True)
             else:
                 print(f"Importing data into {table_name_}", end=" ... ", flush=True)
 
