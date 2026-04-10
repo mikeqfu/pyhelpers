@@ -20,23 +20,50 @@ def test_vectorize_text():
     assert vectors == [[1, 1], [2, 1]]
 
 
-@pytest.mark.parametrize('rm_whitespace', [True, False])
-@pytest.mark.parametrize('preserve_hyphenated', [True, False])
-def test_remove_punctuation(rm_whitespace, preserve_hyphenated):
-    raw_text = 'Hello world!\tThis is a test. :-) No hyphenated-word contents.'
+@pytest.mark.parametrize(
+    'normalize_whitespace, preserve_kebab_case, preserve_snake_case, exclude, expected', [
+        # Basic usage
+        (True, True, True, None, "Hello world"),
+        # Whitespace normalization
+        (True, True, True, None, "How are you"),
+        (False, True, True, None, "How   are you"),
+        # Kebab-case preservation
+        (True, False, True, None, "No punctuation"),
+        # Tab and special character handling
+        (True, True, True, None, "Hello world This is a test"),
+        (False, True, True, None, "Hello world \tThis is a test"),
+        # Complex mixed cases
+        (True, True, True, None, "The hyphen is-cool but underscores_are_not"),
+        # Exclusion and multi-toggle handling
+        (True, False, True, ';', "The hyphen is cool; but underscores_are_not"),
+    ])
+def test_remove_punctuation(normalize_whitespace, preserve_kebab_case, preserve_snake_case,
+                            exclude, expected):
+    # Mapping inputs to the specific scenarios provided in your examples
+    input_map = {
+        "Hello world": "Hello, world!",
+        "How are you": "   How   are you? ",
+        "How   are you": "   How   are you? ",
+        "No punctuation": "No-punctuation!",
+        "Hello world This is a test": "Hello world!\tThis is a test. :-)",
+        "Hello world \tThis is a test": "Hello world!\tThis is a test. :-)",
+        "The hyphen is-cool but underscores_are_not":
+            "The 'hyphen' is-cool; but underscores_are_not.",
+        "The hyphen is cool; but underscores_are_not":
+            "The 'hyphen' is-cool; but underscores_are_not."
+    }
 
-    text = remove_punctuation(
-        raw_text, rm_whitespace=rm_whitespace, preserve_hyphenated=preserve_hyphenated)
-    if rm_whitespace:
-        if preserve_hyphenated:
-            assert text == 'Hello world This is a test No hyphenated-word contents'
-        else:
-            assert text == 'Hello world This is a test No hyphenated word contents'
-    else:
-        if preserve_hyphenated:
-            assert text == 'Hello world \tThis is a test      No hyphenated-word contents'
-        else:
-            assert text == 'Hello world \tThis is a test      No hyphenated word contents'
+    raw_text = input_map[expected]
+
+    result = remove_punctuation(
+        raw_text,
+        normalize_whitespace=normalize_whitespace,
+        preserve_kebab_case=preserve_kebab_case,
+        preserve_snake_case=preserve_snake_case,
+        exclude=exclude
+    )
+
+    assert result == expected
 
 
 @pytest.mark.parametrize('only_capitals', [False, True])
@@ -98,7 +125,8 @@ def test_split_on_uppercase(join_with):
             ['BCRRE', 'Projects'],
             ['Version', '2', 'Update'],
             ['file_name_with_underscores'],
-            ['some-text-in-kebab-case']]
+            ['some-text-in-kebab-case']
+        ]
 
 
 def test__english_numerals():

@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from pyhelpers.dirs.validation import check_files_exist, check_relative_pathname, \
-    get_file_pathnames, is_dir, normalize_pathname, validate_dir, validate_filename
+    get_file_pathnames, is_path_to_dir, normalize_pathname, resolve_dir, validate_filename
 
 
 @pytest.fixture(scope='module')
@@ -38,30 +38,30 @@ def test_normalize_pathname():
         assert pathname_2 == './tests/data/dat.csv'
 
 
-def test_is_dir():
+def test_is_path_to_dir():
     # noinspection PyTypeChecker
-    assert not is_dir(1)
-    assert not is_dir("tests")
-    assert is_dir("/tests")
+    assert not is_path_to_dir(1)
+    assert not is_path_to_dir("tests")
+    assert is_path_to_dir("/tests")
 
     if os.name == 'nt':
-        assert is_dir("\\tests")
+        assert is_path_to_dir("\\tests")
 
 
-def test_validate_dir():
-    dat_dir = validate_dir()
+def test_resolve_dir():
+    dat_dir = resolve_dir()
     assert os.path.relpath(dat_dir) == '.'
-    dat_dir = validate_dir(os.getcwd())
+    dat_dir = resolve_dir(os.getcwd())
     assert os.path.relpath(dat_dir) == '.'
 
-    dat_dir = validate_dir("tests")
+    dat_dir = resolve_dir("tests")
     assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = validate_dir(b"tests")
+    dat_dir = resolve_dir(b"tests")
     assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = validate_dir(Path("tests"))
+    dat_dir = resolve_dir(Path("tests"))
     assert os.path.relpath(dat_dir) == 'tests'
 
-    dat_dir = validate_dir(subdir="data")
+    dat_dir = resolve_dir(subdir="data")
     assert os.path.relpath(dat_dir) == 'data'
 
 

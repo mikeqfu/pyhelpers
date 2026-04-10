@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from pyhelpers.dirs.navigation import *
-from pyhelpers.dirs.validation import is_dir, normalize_pathname
+from pyhelpers.dirs.validation import is_path_to_dir, normalize_pathname
 
 
 @pytest.mark.parametrize('cwd', [None, ".", os.path.join(os.sep, "some_directory")])
@@ -86,7 +86,7 @@ def test_cdd():
 @pytest.mark.parametrize('mkdir', [False, True])
 def test_cd_data(subdir, mkdir):
     path_to_dat_dir = cd_data(*subdir, mkdir=mkdir)
-    if is_dir(path_to_dat_dir):
+    if is_path_to_dir(path_to_dat_dir):
         path_to_dat_dir_ = path_to_dat_dir
     else:
         path_to_dat_dir_ = os.path.relpath(os.path.dirname(path_to_dat_dir))

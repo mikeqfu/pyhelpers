@@ -3,13 +3,13 @@ Utilities for (pre)processing textual data.
 """
 
 import collections
-import copy
 import html
 import math
 import re
 import string
 
-from .._cache import _check_dependencies, _load_package_data, _remove_punctuation, _vectorize_text
+from .._cache import _lazy_check_dependencies, _load_package_data, _remove_punctuation, \
+    _vectorize_text
 
 
 def clean_html_text(input_text):
@@ -69,17 +69,26 @@ def vectorize_text(*input_text):
     return _vectorize_text(*input_text)
 
 
-def remove_punctuation(input_text, rm_whitespace=True, preserve_hyphenated=True):
+def remove_punctuation(input_text, normalize_whitespace=True, preserve_kebab_case=True,
+                       preserve_snake_case=True, exclude=None):
+    # noinspection PyShadowingNames
     """
     Removes punctuation from textual data.
 
-    :param input_text: The input text from which punctuation will be removed.
+    :param input_text: The input text.
     :type input_text: str
-    :param rm_whitespace: Whether to remove whitespace characters as well; defaults to ``True``.
-    :type rm_whitespace: bool
-    :param preserve_hyphenated: Whether to preserve hyphenated words; defaults to ``True``.
-    :type preserve_hyphenated: bool
-    :return: The input text without punctuation (and optionally without whitespace).
+    :param normalize_whitespace: Whether to collapse all whitespace into single spaces.
+        Defaults to ``True``.
+    :type normalize_whitespace: bool
+    :param preserve_kebab_case: Whether to preserve hyphens in Kebab case (e.g., ``'kebab-case'``).
+        Defaults to ``True``.
+    :type preserve_kebab_case: bool
+    :param preserve_snake_case: Whether to preserve underscores in Snake case
+        (e.g. ``'snake_case'``). Defaults to ``True``.
+    :param exclude: Punctuation marks to always keep, overriding other parameters.
+        Defaults to ``None``.
+    :type exclude: str | list | set | None
+    :return: The processed text that is without punctuation (and optionally without whitespace).
     :rtype: str
 
     **Examples**::
@@ -87,19 +96,33 @@ def remove_punctuation(input_text, rm_whitespace=True, preserve_hyphenated=True)
         >>> from pyhelpers.text import remove_punctuation
         >>> remove_punctuation('Hello, world!')
         'Hello world'
-        >>> remove_punctuation('   How   are you? ', rm_whitespace=False)
+        >>> input_text = '   How   are you? '
+        >>> remove_punctuation(input_text, normalize_whitespace=True)
+        'How are you'
+        >>> remove_punctuation(input_text, normalize_whitespace=False)
         'How   are you'
-        >>> remove_punctuation('No-punctuation!', preserve_hyphenated=False)
+        >>> input_text = 'No-punctuation!'
+        >>> remove_punctuation(input_text, preserve_kebab_case=False)
         'No punctuation'
-        >>> raw_text = 'Hello world!\tThis is a test. :-)'
-        >>> remove_punctuation(raw_text)
+        >>> input_text = 'Hello world!\tThis is a test. :-)'
+        >>> remove_punctuation(input_text)
         'Hello world This is a test'
-        >>> remove_punctuation(raw_text, rm_whitespace=False)
+        >>> remove_punctuation(input_text, normalize_whitespace=False)
         'Hello world \tThis is a test'
+        >>> input_text = "The 'hyphen' is-cool; but underscores_are_not."
+        >>> remove_punctuation(input_text)
+        'The hyphen is-cool but underscores_are_not'
+        >>> remove_punctuation(input_text, preserve_kebab_case=False, exclude=';')
+        'The hyphen is cool; but underscores_are_not'
     """
 
     return _remove_punctuation(
-        text=input_text, rm_whitespace=rm_whitespace, preserve_hyphenated=preserve_hyphenated)
+        text=input_text,
+        normalize_whitespace=normalize_whitespace,
+        preserve_kebab_case=preserve_kebab_case,
+        preserve_snake_case=preserve_snake_case,
+        exclude=exclude
+    )
 
 
 def get_acronym(input_text, only_capitals=False, capitals_in_words=False, keep_punctuation=False):
@@ -164,7 +187,7 @@ def get_acronym(input_text, only_capitals=False, capitals_in_words=False, keep_p
     return acronym
 
 
-def split_on_uppercase(input_text, join_with=None):
+def split_on_uppercase(input_text, join_with=None, split_numbers=True):
     """
     Extracts words from a string by splitting it at occurrences of uppercase letters.
 
@@ -172,12 +195,12 @@ def split_on_uppercase(input_text, join_with=None):
     is encountered. Optionally, it can join these words back into a single string using a specified
     delimiter.
 
-    :param input_text: Input text containing a number of words each starting with
-        an uppercase letter.
+    :param input_text: Input text containing words starting with uppercase letters.
     :type input_text: str
-    :param join_with: Optional delimiter used to join the extracted words into a single string;
-        defaults to ``None``.
+    :param join_with: Optional delimiter to join words. Defaults to ``None``.
     :type join_with: str | None
+    :param split_numbers: Whether to split numbers from letters; defaults to ``True``.
+    :type split_numbers: bool
     :return: If ``join_with=None``, the function returns a list of words extracted from
         ``input_text`` where each word starts with an uppercase letter;
         if ``join_with`` is specified, it returns a single string where these words are
@@ -195,38 +218,64 @@ def split_on_uppercase(input_text, join_with=None):
         ['BCRRE', 'Projects']
     """
 
-    input_text_ = remove_punctuation(input_text)
+    if not input_text:
+        return "" if join_with is not None else []
 
-    # Split camelCase, PascalCase, and numbers
-    parts = re.sub(r'([A-Z][a-z]+)', r' \1', re.sub(r'([A-Z]+)', r' \1', input_text_))
-    parts = re.sub(r'([0-9]+)', r' \1', parts)  # Split numbers from letters
+    # SHIELD: Preserve lowercase snake_case and kebab-case
+    preservation_pattern = r'\b[a-z]+(?:[-_][a-z]+)+\b'
+    preserved_tokens = re.findall(preservation_pattern, input_text)
 
-    # Split on underscores or hyphens, but preserve kebab-case and snake_case
+    temp_text = input_text
+    # Use \uFFFC (Object Replacement Character) as a safe, non-word anchor
+    for i, token in enumerate(preserved_tokens):
+        temp_text = temp_text.replace(token, f" \uFFFC{i}\uFFFC ")
+
+    # SPLIT BOUNDARIES: Handle CamelCase and Acronyms
+    # Lower to Upper: (?<=[a-z])(?=[A-Z])
+    # Acronym to Word: (?<=[A-Z])(?=[A-Z][a-z])
+    patterns = [r'(?<=[a-z])(?=[A-Z])', r'(?<=[A-Z])(?=[A-Z][a-z])']
+
+    # Handle numeric boundaries based on split_numbers toggle
+    if split_numbers:
+        # Alpha to Digit: (?<=[A-Za-z])(?=[0-9])
+        # Digit to Alpha: (?<=[0-9])(?=[A-Za-z])
+        patterns.append(r'(?<=[A-Za-z])(?=[0-9])')
+        patterns.append(r'(?<=[0-9])(?=[A-Za-z])')
+
+    # Join patterns into a single regex and insert spaces at these boundaries
+    combined_pattern = '|'.join(patterns)
+    processed = re.sub(combined_pattern, ' ', temp_text)
+
+    # CLEAN: Split by whitespace and common punctuation (excluding our placeholders)
+    # This replaces the need for a separate remove_punctuation call
+    raw_parts = re.split(r'[\s\-_,.;:!?|\\/]+', processed)
+
+    # RESTORE: Replace placeholders with original preserved tokens
     result = []
-    for part in parts.split():
-        if re.match(r'^[a-z]+(-[a-z]+)*$', part) or re.match(r'^[a-z]+(_[a-z]+)*$', part):
-            # Preserve kebab-case and snake_case as single tokens
-            result.append(part)
+    for part in raw_parts:
+        if not part:
+            continue
+        if part.startswith('\uFFFC') and part.endswith('\uFFFC'):
+            try:
+                idx = int(part.strip('\uFFFC'))
+                result.append(preserved_tokens[idx])
+            except (ValueError, IndexError):
+                result.append(part)
         else:
-            # Split on underscores or hyphens
-            sub_parts = re.split(r'[-_]', part)
-            result.extend(sub_parts)
+            result.append(part)
 
-    # Remove empty strings from the result
-    result = [part for part in result if part]
-
-    if join_with is not None:  # Join words with the specified delimiter
-        result = join_with.join(result)
+    if join_with is not None:
+        return str(join_with).join(result)
 
     return result
 
 
 def _english_numerals():
     """
-    Returns a dictionary facilitaing to map textual English numerals to their corresponding
+    Returns a dictionary facilitating to map textual English numerals to their corresponding
     numerical representations.
 
-    :return: Dictionary facilitaing to map textual English numerals to their corresponding
+    :return: Dictionary facilitating to map textual English numerals to their corresponding
         numerical representations.
     :rtype: dict
 
@@ -320,6 +369,7 @@ def numeral_english_to_arabic(input_text):
     return result
 
 
+@_lazy_check_dependencies('nltk')
 def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_words=None, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -397,25 +447,34 @@ def count_words(input_text, lowercase=False, ignore_punctuation=False, stop_word
         {'apple': 1, 'pear': 1, 'hello': 1, 'world': 1}
     """
 
-    nltk = _check_dependencies('nltk')
+    # # Ensure necessary NLTK data is present (optional, depending on your library's setup)
+    # nltk.download('punkt', quiet=True)  # noqa
 
-    doc = str(input_text).lower() if lowercase else str(input_text)
+    # Initial case handling
+    text = str(input_text).lower() if lowercase else str(input_text)
+
+    # Tokenization (before removing punctuation preserves word integrity (e.g. contractions))
+    tokens = nltk.word_tokenize(text, **kwargs)  # noqa
+
+    # Punctuation filtering
     if ignore_punctuation:
-        doc = remove_punctuation(doc, rm_whitespace=False)
+        # Filter tokens that are just punctuation marks
+        tokens = [w for w in tokens if not all(char in string.punctuation for char in w)]
 
-    tokens = nltk.word_tokenize(doc, **kwargs)
-
-    if stop_words:  # Remove stop words if provided
+    # Stopword filtering
+    if stop_words:
         if stop_words is True:
-            language = kwargs['language'] if 'language' in kwargs else 'english'
-            stop_words_ = set(nltk.corpus.stopwords.words(language))
+            lang = kwargs.get('language', 'english')
+            # NLTK stopwords are lowercase by default
+            stop_set = set(nltk.corpus.stopwords.words(lang))  # noqa
         else:
-            stop_words_ = copy.copy(stop_words)
-        tokens = [w for w in tokens if not w.lower() in stop_words_]
+            # Lowercase the user-provided list to match 'w.lower()'
+            stop_set = {str(sw).lower() for sw in stop_words}
 
-    word_count_dict = dict(collections.Counter(tokens))
+        tokens = [w for w in tokens if w.lower() not in stop_set]
 
-    return word_count_dict
+    # Counting
+    return dict(collections.Counter(tokens))
 
 
 def calculate_idf(documents, lowercase=True, ignore_punctuation=True, stop_words=None,

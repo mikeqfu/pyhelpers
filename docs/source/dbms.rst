@@ -35,6 +35,7 @@ Database tools/utilities
     make_database_address
     get_default_database_address
     add_sql_query_condition
+    get_adaptive_index_dtypes
     import_data
     read_data
     mssql_to_postgresql

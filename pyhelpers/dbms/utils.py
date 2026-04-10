@@ -19,14 +19,14 @@ def make_database_address(host, port, username, database_name=""):
     Generates a string representing a database address.
 
     :param host: Host name or IP address of the database server.
-    :type host: str
-    :param port: Port number on which the database server is listening.
-    :type port: int | str
-    :param username: Username used to connect to the database server.
-    :type username: str
-    :param database_name: Name of the PostgreSQL database; defaults to an empty string.
+    :type host: str | None
+    :param port: Port number of the database server.
+    :type port: int | str | None
+    :param username: Username for the connection.
+    :type username: str | None
+    :param database_name: Name of the database; defaults to an empty string.
     :type database_name: str | None
-    :return: Address of the database in the format '<username>@<host>:<port>/<database_name>'.
+    :return: Formatted address as ``'<username>:***@<host>:<port>[/<database_name>]'``.
     :rtype: str
 
     **Examples**::
@@ -40,7 +40,12 @@ def make_database_address(host, port, username, database_name=""):
         'user:***@127.0.0.1:5432'
     """
 
-    database_address = f"{username}:***@{host}:{port}"
+    # Handle None values to avoid "None" string literals
+    username_ = username or "None"
+    host_ = host or "None"
+    port_ = port or "None"
+
+    database_address = f"{username_}:***@{host_}:{port_}"
 
     if database_name:
         database_address += f"/{database_name}"
@@ -67,12 +72,29 @@ def get_default_database_address(db_cls):
         'None:***@None:None'
     """
 
-    args_spec = inspect.getfullargspec(func=db_cls)
+    # Use signature for modern introspection
+    sig = inspect.signature(db_cls.__init__)
 
-    args_dict = dict(zip([x for x in args_spec.args if x != 'self'], args_spec.defaults))
+    # Extract defaults for relevant keys
+    #   handling both positional-with-defaults and keyword-only-with-defaults
+    params = sig.parameters
 
+    def _get_default(key, fallback=None):
+        param = params.get(key)
+        # Check if param exists and has a default value (not empty)
+        if param and param.default is not inspect.Parameter.empty:
+            return param.default
+        return fallback
+
+    # 3. Map keys flexibly (handles 'user' vs 'username' if needed)
+    host = _get_default('host')
+    port = _get_default('port')
+    username = _get_default('username') or _get_default('user')
+    db_name = _get_default('database_name') or _get_default('database')
+
+    # Construct the address
     database_address = make_database_address(
-        args_dict['host'], args_dict['port'], args_dict['username'], args_dict['database_name'])
+        host=host, port=port, username=username, database_name=db_name)
 
     return database_address
 
@@ -131,6 +153,67 @@ def add_sql_query_condition(sql_query, add_table_name=None, **kwargs):
                     f'{argument}'
 
     return sql_query
+
+
+def get_adaptive_index_dtypes(data, index=False, dtype=None, max_len=255, verbose=False):
+    # noinspection PyShadowingNames
+    """
+    Generates SQLAlchemy types for MSSQL compatibility, specifically for indices.
+
+    This function prevents MSSQL error 42000, which occurs when attempting to use
+    an ``NVARCHAR(MAX)`` column as an index key. It maps string-based indices to fixed-length
+    ``NVARCHAR`` types.
+
+    :param data: Tabular data to be inspected.
+    :type data: pandas.DataFrame | pandas.io.parsers.TextFileReader | list | tuple
+    :param index: Whether the index will be included in the database import. Defaults to ``False``.
+    :type index: bool
+    :param dtype: Existing dictionary mapping column names to SQLAlchemy types.
+        Defaults to ``None``.
+    :type dtype: dict | None
+    :param max_len: Maximum character length for the index column; defaults to 255.
+        Note: For MSSQL, this should not exceed 450 for Unicode (NVARCHAR) columns.
+    :type max_len: int
+    :param verbose: Whether to print adaptive mapping information. Defaults to ``False``.
+    :type verbose: bool | int
+    :return: A dictionary of column/index names mapped to SQLAlchemy types.
+    :rtype: dict
+
+    **Examples**::
+
+        >>> from pyhelpers.dbms.utils import get_adaptive_index_dtypes
+        >>> from pyhelpers._cache import example_dataframe
+        >>> df = example_dataframe()
+        >>> get_adaptive_index_dtypes(df, index=True)
+        {'City': Unicode(length=255)}
+    """
+
+    col_type = dtype.copy() if dtype else {}
+
+    # If data is a DataFrame and index=True, ensure the index isn't NVARCHAR(MAX)
+    if index and isinstance(data, pd.DataFrame):
+        # Iterate through index names (handles Index and MultiIndex)
+        for i, name in enumerate(data.index.names):
+            # Resolve the label pandas uses for the index in SQL
+            if name is not None:
+                idx_label = name
+            else:
+                idx_label = f"level_{i}" if len(data.index.names) > 1 else "index"
+
+            # If a type for the column is not defined
+            if idx_label not in col_type:
+                # Check if the index is string-based (object)
+                if (pd.api.types.is_object_dtype(data.index.get_level_values(i)) or
+                        pd.api.types.is_string_dtype(data.index.get_level_values(i))):
+                    if verbose == 2:
+                        msg = (f"Note: [Adaptive] Mapping index '{idx_label}' to "
+                               f"NVARCHAR({max_len}) for MSSQL compatibility.")
+                        print(msg)
+
+                    # Map to Unicode (NVARCHAR) with fixed length
+                    col_type[idx_label] = sqlalchemy.Unicode(max_len)
+
+    return col_type
 
 
 def import_data(db_instance, data, schema_name, table_name, data_name="data", prefix='', suffix='',
@@ -199,8 +282,9 @@ def import_data(db_instance, data, schema_name, table_name, data_name="data", pr
 
 def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="data", prefix='',
               suffix='', verbose=False, raise_error=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Reads data from the project database.
+    Reads data from a database using either a table name or custom SQL.
 
     :param db_instance: A class instance for handling the database.
     :type db_instance: pyhelpers.dbms.PostgreSQL | pyhelpers.dbms.MSSQL
@@ -264,34 +348,34 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
         Dropping "testdb" ... Done.
     """
 
-    tbl = f'"{schema_name}"."{table_name}"'
+    # Use the instance's naming logic for dialect-specific quotes (e.g. [] or "")
+    full_table_name = db_instance._table_name(table_name=table_name, schema_name=schema_name)
 
+    # Check existence
     if not db_instance.table_exists(table_name=table_name, schema_name=schema_name):
         if verbose:
-            print(f"The table {tbl} does not exist.")
+            print(f"The table {full_table_name} does not exist.")
         return None
 
-    else:
-        try:
-            if verbose:
-                print(f'Reading {prefix}{data_name}{suffix} from {tbl}', end=" ... ")
+    try:
+        data_label = f"{prefix}{data_name}{suffix}"
 
-            # noinspection PyBroadException
-            try:
-                sql_query_ = sql_query or f'SELECT * FROM {tbl}'
-                data = db_instance.read_sql_query(sql_query=sql_query_, **kwargs)
+        if verbose:
+            print(f'Reading {data_label} from {full_table_name}', end=" ... ", flush=True)
 
-            except Exception:
-                kwargs.update({'table_name': table_name, 'schema_name': schema_name})
-                data = db_instance.read_table(**kwargs)
+        # Decision Logic: If query is provided, use it. Otherwise, use read_table.
+        if sql_query:
+            data = db_instance.read_sql_query(sql_query=sql_query, **kwargs)
+        else:
+            data = db_instance.read_table(table_name=table_name, schema_name=schema_name, **kwargs)
 
-            if verbose:
-                print("Done.")
+        if not data.empty and verbose:
+            print("Done.")
 
-            return data
+        return data
 
-        except Exception as e:
-            _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+    except Exception as e:
+        _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
 def _get_chunk_size(mssql, mssql_table_name, chunk_size=None):
@@ -326,7 +410,7 @@ def _get_col_type(mssql, mssql_table_name, source_data):
 
 
 def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_name,
-                                mssql_table_name, memory_threshold, chunk_size, col_type):
+                                mssql_table_name, memory_threshold, chunk_size, dtype):
     memory_usage = sys.getsizeof(source_data) / 1024 ** 3
     if memory_usage > memory_threshold:
         np = _check_dependencies('numpy')
@@ -340,7 +424,7 @@ def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_na
                 schema_name=postgres_schema_name,
                 if_exists='replace' if i == 0 else 'append',
                 method=postgres.psql_insert_copy, chunk_size=chunk_size,
-                col_type=col_type, confirmation_required=False, verbose=False)
+                dtype=dtype, confirmation_required=False, verbose=False)
 
             gc.collect()
             i += 1
@@ -349,7 +433,7 @@ def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_na
         postgres.import_data(
             source_data, table_name=mssql_table_name, schema_name=postgres_schema_name,
             if_exists='replace', method=postgres.psql_insert_copy,
-            chunk_size=chunk_size, col_type=col_type, confirmation_required=False,
+            chunk_size=chunk_size, dtype=dtype, confirmation_required=False,
             verbose=False)
 
     # Get primary keys from MSSQL
@@ -474,81 +558,83 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
     task_msg = f'from [{mssql.database_name}] (MSSQL) to "{postgres.database_name}" (PostgreSQL)'
 
-    if _confirmed(f'To copy tables {task_msg}\n?', confirmation_required=confirmation_required):
-        # MSSQL
-        mssql_schema_name = mssql._schema_name(schema_name=mssql_schema)
-        mssql_table_names = mssql.get_table_names(schema_name=mssql_schema_name)[mssql_schema_name]
-
-        # PostgreSQL
-        postgres_schema_name = postgres_schema or postgres.DEFAULT_SCHEMA
-
+    if not _confirmed(f'Copy tables {task_msg}?\n', confirmation_required=confirmation_required):
         if verbose:
-            if confirmation_required:
-                print("Processing tables ... ")
-            else:
-                print(f"Copying tables {task_msg} ... ")
+            print("Canceled.")
+        return None
 
-        excl_tbl_names = [] if excluded_tables is None else copy.copy(excluded_tables)
+    # MSSQL
+    mssql_schema_name = mssql._schema_name(schema_name=mssql_schema)
+    mssql_table_names = mssql.get_table_names(schema_name=mssql_schema_name)[mssql_schema_name]
 
-        if not file_tables:
-            file_table_names = mssql.get_file_tables()
-            excl_tbl_names += file_table_names
+    # PostgreSQL
+    postgres_schema_name = postgres_schema or postgres.DEFAULT_SCHEMA
 
-        mssql_table_names = [x for x in mssql_table_names if x not in excl_tbl_names]
+    if verbose:
+        if confirmation_required:
+            print("Processing tables ... ")
+        else:
+            print(f"Copying tables {task_msg} ... ")
 
-        table_counter, table_total = 1, len(mssql_table_names)
-        error_log = {}
-        for mssql_table_name in mssql_table_names:
-            counter_msg = f"({table_counter}/{table_total})"
+    excl_tbl_names = [] if excluded_tables is None else copy.copy(excluded_tables)
 
-            postgres_table_exists = postgres.table_exists(
-                table_name=mssql_table_name, schema_name=postgres_schema_name)
+    if not file_tables:
+        file_table_names = mssql.get_file_tables()
+        excl_tbl_names += file_table_names
 
-            if not postgres_table_exists or update:
-                try:
-                    if verbose:
-                        postgresql_tbl = postgres._table_name(
-                            table_name=mssql_table_name, schema_name=postgres_schema_name)
-                        if postgres_table_exists:
-                            msg = f"Updating {postgresql_tbl}"
-                        else:
-                            mssql_tbl = mssql._table_name(
-                                table_name=mssql_table_name, schema_name=mssql_schema_name)
-                            msg = f"Copying {mssql_tbl} to {postgresql_tbl}"
-                        print(f'\t{counter_msg} ' + msg, end=" ... ")
+    mssql_table_names = [x for x in mssql_table_names if x not in excl_tbl_names]
 
-                    chunk_size_ = _get_chunk_size(mssql, mssql_table_name, chunk_size=chunk_size)
+    table_counter, table_total = 1, len(mssql_table_names)
+    error_log = {}
+    for mssql_table_name in mssql_table_names:
+        counter_msg = f"({table_counter}/{table_total})"
 
-                    source_data = mssql.read_table(
-                        table_name=mssql_table_name, chunk_size=chunk_size_)
+        postgres_table_exists = postgres.table_exists(
+            table_name=mssql_table_name, schema_name=postgres_schema_name)
 
-                    source_data_, col_type = _get_col_type(mssql, mssql_table_name, source_data)
-
-                    _mssql_postgres_import_data(
-                        mssql=mssql, postgres=postgres, source_data=source_data_,
-                        postgres_schema_name=postgres_schema_name,
-                        mssql_table_name=mssql_table_name, memory_threshold=memory_threshold,
-                        chunk_size=chunk_size_, col_type=col_type)
-
-                    if verbose:
-                        print("Done.")
-
-                except Exception as e:
-                    print("Failed.")
-
-                    error_log.update({mssql_table_name: f"{e}"})
-
-            else:
+        if not postgres_table_exists or update:
+            try:
                 if verbose:
-                    postgresql_tbl = f'"{postgres_schema_name}"."{mssql_table_name}"'
-                    print(f"\t{counter_msg} {postgresql_tbl} already exists.")
+                    postgresql_tbl = postgres._table_name(
+                        table_name=mssql_table_name, schema_name=postgres_schema_name)
+                    if postgres_table_exists:
+                        msg = f"Updating {postgresql_tbl}"
+                    else:
+                        mssql_tbl = mssql._table_name(
+                            table_name=mssql_table_name, schema_name=mssql_schema_name)
+                        msg = f"Copying {mssql_tbl} to {postgresql_tbl}"
+                    print(f'\t{counter_msg} ' + msg, end=" ... ")
 
-            table_counter += 1
+                chunk_size_ = _get_chunk_size(mssql, mssql_table_name, chunk_size=chunk_size)
 
-        if bool(error_log):
-            return error_log
+                source_data = mssql.read_table(
+                    table_name=mssql_table_name, chunk_size=chunk_size_)
+
+                source_data_, col_type = _get_col_type(mssql, mssql_table_name, source_data)
+
+                _mssql_postgres_import_data(
+                    mssql=mssql, postgres=postgres, source_data=source_data_,
+                    postgres_schema_name=postgres_schema_name, mssql_table_name=mssql_table_name,
+                    memory_threshold=memory_threshold, chunk_size=chunk_size_, dtype=col_type)
+
+                if verbose:
+                    print("Done.")
+
+            except Exception as e:
+                print("Failed.")
+                error_log.update({mssql_table_name: f"{e}"})
+
         else:
             if verbose:
-                print("Completed.")
+                postgresql_tbl = f'"{postgres_schema_name}"."{mssql_table_name}"'
+                print(f"\t{counter_msg} {postgresql_tbl} already exists.")
+
+        table_counter += 1
+
+    if bool(error_log):
+        return error_log
+    else:
+        if verbose:
+            print("Completed.")
 
     return None

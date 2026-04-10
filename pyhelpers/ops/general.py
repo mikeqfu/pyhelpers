@@ -45,6 +45,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
 
 def get_obj_attr(obj, col_names=None, as_dataframe=False):
+    # noinspection PyUnresolvedReferences
     """
     Retrieves main attributes of an object.
 
@@ -135,7 +136,56 @@ def eval_dtype(str_val):
     return val
 
 
+def is_visual_object(obj):
+    """
+    Determines if an object is a known figure or image type.
+
+    This function checks for visual objects post-conversion, supporting
+    Matplotlib Figures/Axes, Seaborn grids, Plotly figures, and PIL Images.
+    It is designed to be library-agnostic by checking for common methods
+    ('.show' or '.savefig') and using string-based type inspection to
+    avoid explicit imports of heavy libraries.
+
+    :param obj: The object to inspect.
+    :type obj: Any
+    :return: True if the object is identified as a figure or image, else False.
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_visual_object
+        >>> import matplotlib.pyplot as plt
+        >>> from PIL import Image
+        >>> import numpy as np
+
+        >>> # Case 1: Matplotlib Figure
+        >>> fig, ax = plt.subplots()
+        >>> is_visual_object(fig)
+        True
+
+        >>> # Case 2: PIL Image converted from array
+        >>> img = Image.fromarray(np.zeros((10, 10), dtype=np.uint8))
+        >>> is_visual_object(img)
+        True
+
+        >>> # Case 3: Raw data (not converted)
+        >>> is_visual_object([1, 2, 3])
+        False
+    """
+
+    # Matplotlib / Seaborn / Plotly (Objects with dedicated plotting methods)
+    if hasattr(obj, 'savefig') or hasattr(obj, 'show'):
+        return True
+
+    # PIL Image (Checking for the specific internal Image class is safest)
+    if 'PIL' in str(type(obj)):
+        return True
+
+    return False
+
+
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
+    # noinspection PyShadowingNames,PyUnresolvedReferences
     """
     Hashes a password using `hashlib.pbkdf2_hmac
     <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_
@@ -172,8 +222,8 @@ def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash
         >>> from pyhelpers.ops import hash_password, verify_password
         >>> test_pwd = 'test%123'
         >>> salt_size_ = 16
-        >>> sk = hash_password(password=test_pwd, salt_size=salt_size_)  # salt and key
-        >>> salt_data, key_data = sk[:salt_size_].hex(), sk[salt_size_:].hex()
+        >>> salt_and_key = hash_password(password=test_pwd, salt_size=salt_size_)  # salt and key
+        >>> salt_data, key_data = salt_and_key[:salt_size_].hex(), salt_and_key[salt_size_:].hex()
         >>> verify_password(password=test_pwd, salt=salt_data, key=key_data)
         True
         >>> test_pwd = b'test%123'

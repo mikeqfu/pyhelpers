@@ -8,24 +8,24 @@ from pyhelpers._cache import example_dataframe
 from pyhelpers.geom.distances import *
 
 
-def test_calc_distance_on_unit_sphere():
+def test_calc_spherical_distance():
     example_df = example_dataframe()
 
     london, birmingham = example_df.loc[['London', 'Birmingham']].values
-    arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
+    arc_len_in_miles = calc_spherical_distance(london, birmingham)
     assert arc_len_in_miles == 101.10431101941569
-    arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, unit='km')
+    arc_len_in_miles = calc_spherical_distance(london, birmingham, unit='km')
     assert arc_len_in_miles == 162.66049633957005
-    arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, precision=4)
+    arc_len_in_miles = calc_spherical_distance(london, birmingham, decimals=4)
     assert arc_len_in_miles == 101.1043
 
     leeds, manchester = map(
         lambda x: shapely.geometry.Point(x), example_df.loc[['Leeds', 'Manchester']].values)
-    arc_len_in_miles = calc_distance_on_unit_sphere(leeds, manchester)
+    arc_len_in_miles = calc_spherical_distance(leeds, manchester)
     assert arc_len_in_miles == 36.175811917161276
 
     with pytest.raises(Exception) as err:
-        calc_distance_on_unit_sphere([1], [2])
+        calc_spherical_distance([1], [2])
         assert isinstance(err.value.__cause__, IndexError)
 
 

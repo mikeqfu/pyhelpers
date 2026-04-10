@@ -132,7 +132,7 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
     Verifies a file path before saving, creates directories, and manages console output.
 
     :param path: Destination file path.
-    :type path: str | pathlib.Path
+    :type path: str | pathlib.Path | os.PathLike
     :param verbose: Whether to print relevant information to the console;
         ``2`` enables CWD boundary warnings; defaults to ``False``.
     :type verbose: bool | int
@@ -246,51 +246,63 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
     return None
 
 
-def _autofit_column_width(writer, writer_kwargs, **kwargs):
+def _autofit_column_width(excel_writer, writer_kwargs, sheet_name):
     """
     Adjusts the column widths in an Excel spreadsheet based on the content length.
 
-    This function is specifically designed for *openpyxl* engine when working with *Pandas*
-    `ExcelWriter`_. It iterates through each column of the specified sheet and calculates
-    the maximum length of the content. It then adjusts the column width to accommodate the
-    longest content plus some padding.
+    This function is specifically designed for *openpyxl* engine when working with
+    `pandas.ExcelWriter`_.
+    It iterates through each column of the specified sheet and calculates the
+    maximum length of the content.
+    It then adjusts the column width to accommodate the longest content plus some padding.
 
-    :param writer: ExcelWriter object used to write data into Excel file.
-    :type writer: pandas.ExcelWriter
-    :param writer_kwargs: Keyword arguments passed to the `ExcelWriter`_, including the engine.
+    :param excel_writer: `pandas.ExcelWriter`_ object used to write data into Excel file.
+    :type excel_writer: pandas.ExcelWriter
+    :param writer_kwargs: A dict of keyword arguments passed to the `pandas.ExcelWriter`_,
+        including the ``'engine'``.
     :type writer_kwargs: dict
-    :param kwargs: [Optional] Additional parameters.
+    :param sheet_name: The name of the sheet to adjust.
+    :type sheet_name: str
 
-    .. _ExcelWriter:
+    .. _`pandas.ExcelWriter`:
         https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
 
     .. note::
 
         - This function assumes that *openpyxl* engine is used
           (i.e. ``writer_kwargs['engine'] == 'openpyxl'``).
-        - It modifies the column dimensions directly in the ``pandas.ExcelWriter`` object.
+        - It modifies the column dimensions directly in the `pandas.ExcelWriter`_ object.
 
     .. seealso::
 
         - For more information on *openpyxl*, refer to the official documentation:
           https://openpyxl.readthedocs.io/en/stable/
+        - Reference: [`STORE-U-ACW-1 <https://stackoverflow.com/questions/39529662/>`_]
     """
 
-    if 'sheet_name' in kwargs and writer_kwargs.get('engine') == 'openpyxl':
-        # Reference: https://stackoverflow.com/questions/39529662/
-        ws = writer.sheets[kwargs.get('sheet_name')]
+    kwargs = writer_kwargs or {}
+    engine = kwargs.get('engine')
+
+    if engine == 'openpyxl' and sheet_name in excel_writer.sheets:
+        ws = excel_writer.sheets[sheet_name]
 
         for column in ws.columns:
-            max_length = 0
+            # column[0] is the header cell
             column_letter = column[0].column_letter
 
+            # Use a list comprehension to get lengths of all lines in all cells
+            max_length = 0
             for cell in column:
-                val = str(cell.value) if cell.value is not None else ""
+                if cell.value is not None:
+                    # Handle multiline text by taking the longest line
+                    lines = str(cell.value).split('\n')
+                    current_max = max(len(line) for line in lines)
+                    if current_max > max_length:
+                        max_length = current_max
 
-                if len(val) > max_length:
-                    max_length = len(val)
-
-            ws.column_dimensions[column_letter].width = (max_length + 2) * 1.1
+            # If the column is empty, max_length stays 0; use a minimum floor
+            adjusted_width = (max_length + 2) * 1.05
+            ws.column_dimensions[column_letter].width = max(adjusted_width, 8.0)
 
 
 def _check_loading_path(path, verbose=False, msg_prefix="", state_verb="Loading", msg_suffix="",

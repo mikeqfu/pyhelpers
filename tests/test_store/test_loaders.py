@@ -73,35 +73,30 @@ def test_load_geopackage(tmp_path):
     Test loading single and multi-layer GeoPackage files.
     """
     # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
-
-    # 1. Create mock data
-    df1 = gpd.GeoDataFrame({
-        'City': ['London'],
-        'geometry': [Point(-0.1276, 51.5073)]
-    }, crs="EPSG:4326")
-
-    df2 = gpd.GeoDataFrame({
-        'City': ['Paris'],
-        'geometry': [Point(2.3522, 48.8566)]
-    }, crs="EPSG:4326")
+    crs = 4326  # Create mock data
+    gdf1 = gpd.GeoDataFrame({'City': ['London'], 'geometry': [Point(-0.1276, 51.5073)]}, crs=crs)
+    gdf2 = gpd.GeoDataFrame({'City': ['Paris'], 'geometry': [Point(2.3522, 48.8566)]}, crs=crs)
 
     gpkg_path = tmp_path / "test_data.gpkg"
 
-    # 2. Test Single Layer
-    df1.to_file(gpkg_path, layer='cities', driver="GPKG")
+    # Test single layer
+    gdf1.to_file(gpkg_path, layer='cities', driver='GPKG')
 
     loaded_df = load_geopackage(gpkg_path)
     assert isinstance(loaded_df, gpd.GeoDataFrame)
     assert loaded_df.iloc[0]['City'] == 'London'
-    assert loaded_df.crs == "EPSG:4326"
+    # noinspection PyUnresolvedReferences
+    assert loaded_df.crs.equals(crs)
 
-    # 3. Test Reprojection (target_crs)
-    # Using EPSG:3857 (Web Mercator)
-    loaded_df_3857 = load_geopackage(gpkg_path, target_crs=3857)
-    assert loaded_df_3857.crs == "EPSG:3857"
+    # Test Reprojection (target_crs), using EPSG:3857 (Web Mercator)
+    test_crs = 3857
+    loaded_df_3857 = load_geopackage(gpkg_path, target_crs=test_crs)
+    assert isinstance(loaded_df_3857, gpd.GeoDataFrame)
+    # noinspection PyUnresolvedReferences
+    assert loaded_df_3857.crs.equals(test_crs)
 
-    # 4. Test Multi-layer (returns a dict)
-    df2.to_file(gpkg_path, layer='capitals', driver="GPKG")
+    # Test multi-layer (returns a dict)
+    gdf2.to_file(gpkg_path, layer='capitals', driver='GPKG')
 
     loaded_dict = load_geopackage(gpkg_path)
     assert isinstance(loaded_dict, dict)
@@ -109,13 +104,13 @@ def test_load_geopackage(tmp_path):
     assert 'capitals' in loaded_dict
     assert loaded_dict['capitals'].iloc[0]['City'] == 'Paris'
 
-    # 5. Test specific layer loading via kwargs
+    # Test specific layer loading via kwargs
     specific_layer = load_geopackage(gpkg_path, layer='capitals')
     assert isinstance(specific_layer, gpd.GeoDataFrame)
     assert len(specific_layer) == 1
     assert specific_layer.iloc[0]['City'] == 'Paris'
 
-    # 6. Test failure handling
+    # Test failure handling
     non_existent_path = tmp_path / "missing.gpkg"
     result = load_geopackage(non_existent_path, raise_error=False, verbose=False)
     assert result is None
@@ -170,9 +165,9 @@ def test_load_data(file_ext, engine, capfd, caplog):
 
     args = {'path_to_file': path_to_file, 'verbose': True}
     if file_ext.endswith((".csv", ".xlsx", ".ods", ".feather")):
-        args.update({'index_col': 0})  # noqa
+        args['index_col'] = 0
     elif file_ext.endswith((".json", ".parquet")):
-        args.update({'engine': engine})  # noqa
+        args['engine'] = engine
 
     if file_ext.endswith((".parquet", ".geoparquet")) and engine is not None:
         with pytest.warns(UserWarning):

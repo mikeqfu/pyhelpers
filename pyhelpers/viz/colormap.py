@@ -1,5 +1,5 @@
 """
-Colormap utilities for Folium map visualization.
+Colormap utilities for visualization.
 """
 
 from .._cache import _check_dependencies
@@ -49,8 +49,7 @@ class BindColormap:
             - Example usages: `Exploration of UK's Food Hygiene Rating data
               <https://github.com/mikeqfu/uk-fsa-fhr-exploration/blob/master/src/
               geographic_disparities.py>`_
-            - Reference: [`VIZ-BC-1
-              <https://nbviewer.org/gist/BibMartin/f153aa957ddc5fadc64929abdee9ff2e>`_].
+            - Reference: [`VIZ-BC-1 <https://stackoverflow.com/questions/56164535/>`_].
         """
 
         branca, jinja2 = _check_dependencies('branca', 'jinja2')

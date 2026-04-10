@@ -4,6 +4,7 @@ API-related utilities.
 
 import datetime
 import html
+import logging
 import os
 import re
 import secrets
@@ -70,7 +71,7 @@ class CrossRefOrcid:
         }
 
     def get_orcid_profile(self, orcid_id, section=None, verbose=False):
-        # noinspection PyShadowingNames
+        # noinspection PyShadowingNames,PyUnresolvedReferences
         """
         Fetches the ORCID profile for a given ORCID ID.
 
@@ -132,6 +133,10 @@ class CrossRefOrcid:
         """
 
         profile_data = self.get_orcid_profile(orcid_id=orcid_id)
+
+        if profile_data is None:
+            logging.getLogger(__name__).warning('Warning: Failed to fetch the ORCID profile.')
+            return []
 
         try:
             works = profile_data["activities-summary"]["works"]["group"]
@@ -249,8 +254,12 @@ class CrossRefOrcid:
             ... #     print(ref_dat)
         """
 
-        data = self.get_orcid_profile(orcid_id=orcid_id, section='works')
-        works = data.get("group", [])  # ORCID stores works in "group"
+        profile_data = self.get_orcid_profile(orcid_id=orcid_id, section='works')
+        if profile_data is None:
+            logging.getLogger(__name__).warning('Warning: Failed to fetch the ORCID profile.')
+            return []
+
+        works = profile_data.get("group", [])  # ORCID stores works in "group"
 
         ref_data = []
         current_year = datetime.datetime.now().year  # Get the current year

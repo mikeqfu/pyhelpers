@@ -8,7 +8,6 @@ import pathlib
 import re
 import secrets
 import shutil
-import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -48,17 +47,32 @@ def is_downloadable(url, request_field='content-type', **kwargs):
         False
     """
 
-    kwargs.update({'allow_redirects': True})
-    h = requests.head(url=url, **kwargs)
+    # Use setdefault to allow user to override redirects if they really want to
+    kwargs.setdefault('allow_redirects', True)
+    kwargs.setdefault('timeout', 10)
 
-    content_type = h.headers.get(request_field).lower()
+    try:
+        response = requests.head(url=url, **kwargs)  # Try a HEAD request first
 
-    if content_type.startswith('text/html'):
-        downloadable = False
-    else:
-        downloadable = True
+        # If HEAD is not allowed, some servers return 405 or 403
+        if response.status_code in {403, 405}:
+            response = requests.get(url=url, stream=True, **kwargs)
 
-    return downloadable
+        response.raise_for_status()
+
+        # Safely get the header
+        header = response.headers.get(request_field, '')
+        content_type = header.lower()
+
+        # A resource is generally downloadable if it is not a webpage (HTML)
+        # or if it is explicitly a binary/attachment
+        if not content_type or content_type.startswith('text/html'):
+            return False
+
+        return True
+
+    except requests.RequestException:
+        return False
 
 
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
@@ -500,7 +514,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         return None
 
     else:
-        # Initialise session
+        # Initialize session
         requests_session_args = requests_session_args or {}
         session = _init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
@@ -618,7 +632,7 @@ class GitHubFileDownloader:
             Downloaded to: "./tests/temp/tests/data/zipped.7z"
             Downloaded to: "./tests/temp/tests/data/zipped.txt"
             Downloaded to: "./tests/temp/tests/data/zipped.zip"
-            15
+            16
             >>> downloader = GitHubFileDownloader(
             ...     repo_url, flatten_files=True, output_dir=output_dir)
             >>> downloader.download()
@@ -637,7 +651,7 @@ class GitHubFileDownloader:
             Downloaded to: "./tests/temp/zipped.7z"
             Downloaded to: "./tests/temp/zipped.txt"
             Downloaded to: "./tests/temp/zipped.zip"
-            15
+            16
             >>> delete_dir(output_dir)
             To delete the directory "./tests/temp/" (Not empty)
             ? [No]|Yes: yes
@@ -646,7 +660,9 @@ class GitHubFileDownloader:
         self.dir_out = ''
         self.repo_url = repo_url
         self.flatten = flatten_files
-        self.output_dir = os.path.relpath(os.getcwd()) if output_dir is None else output_dir
+
+        # Use Path for robust directory handling
+        self.output_dir = pathlib.Path(output_dir) if output_dir else pathlib.Path.cwd()
 
         # Create a URL that is compatible with GitHub's REST API
         self.api_url, self.download_path = self.create_url(self.repo_url)
@@ -654,14 +670,11 @@ class GitHubFileDownloader:
         # Initialize the total number of files under the given directory
         self.total_files = 0
 
-        # Set user agent in default
+        # Create a private opener to avoid global side effects
         user_agent_strings = _load_package_data("user-agent-strings.json")
-        opener = urllib.request.build_opener()
-        opener.addheaders = [(
-            'user-agent',
-            secrets.choice(user_agent_strings.get(secrets.choice(list(user_agent_strings)))))]
-
-        urllib.request.install_opener(opener)
+        self.opener = urllib.request.build_opener()
+        random_ua = secrets.choice(list(user_agent_strings.values()))[0]  # Example selection
+        self.opener.addheaders = [('User-Agent', random_ua)]
 
     @classmethod
     def create_url(cls, url):
@@ -680,41 +693,48 @@ class GitHubFileDownloader:
         **Examples**::
 
             >>> from pyhelpers.ops import GitHubFileDownloader
+            >>> main_page = 'https://github.com/mikeqfu'
             >>> output_dir = "tests/temp"
-            >>> url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv'
+            >>> url = f'{main_page}/pyhelpers/blob/master/tests/data/dat.csv'
             >>> downloader = GitHubFileDownloader(url, output_dir=output_dir)
             >>> api_url, download_path = downloader.create_url(url)
             >>> api_url
-            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?...
+            'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/dat.csv?ref=mas...
             >>> download_path
             'tests/data/dat.csv'
-            >>> url = 'https://github.com/xyluo25/openNetwork/blob/main/docs'
+            >>> url = f'{main_page}/smart-home-product-reviews-analysis/tree/master/demos'
             >>> downloader = GitHubFileDownloader(url, output_dir=output_dir)
             >>> api_url, download_path = downloader.create_url(url)
             >>> api_url
-            'https://api.github.com/repos/xyluo25/openNetwork/contents/docs?ref=main'
+            'https://api.github.com/repos/mikeqfu/smart-home-product-reviews-analysis/contents/...
             >>> download_path
-            'docs'
+            'demos'
         """
 
-        repo_only_url = re.compile(
-            r"https://github\.com/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}/[a-zA-Z0-9]+$")
-        re_branch = re.compile("/(tree|blob)/(.+?)/")
+        # Simplified but robust patterns
+        repo_only_pattern = re.compile(r'https://github\.com/[^/]+/[^/]+/?$')
+        # Match /blob/ or /tree/, then capture the branch name until the next slash
+        re_branch = re.compile(r"/(?P<type>tree|blob)/(?P<ref>[^/]+)")
 
         # Check if the given URL is a complete url to a GitHub repo.
-        if re.match(repo_only_url, url):
-            print(
-                "Given url is a complete repository, "
-                "please use 'git clone' to download the repository.")
-            sys.exit()
+        if re.match(repo_only_pattern, url.strip()):
+            raise ValueError("URL points to a root repository. Use 'git clone' instead.")
 
         # Extract the branch name from the given url (e.g. master)
-        branch = re_branch.search(url)
-        download_path = url[branch.end():]
+        match = re_branch.search(url)
+        if not match:
+            raise ValueError(f"Could not parse GitHub branch structure from: '{url}'")
 
-        api_url = (
-            f'{url[: branch.start()].replace("github.com", "api.github.com/repos", 1)}/'
-            f'contents/{download_path}?ref={branch[2]}')
+        # The internal path starts after the branch name (plus the following slash)
+        path_start_index = match.end()
+        # Clean up the path (remove leading slashes if they exist)
+        download_path = url[path_start_index:].strip('/')
+
+        # Build API URL
+        base_api = url[:match.start()].replace('github.com', 'api.github.com/repos', 1)
+        ref = match.group('ref')
+
+        api_url = f'{base_api}/contents/{download_path}?ref={ref}'
 
         return api_url, download_path
 
@@ -869,7 +889,7 @@ class GitHubFileDownloader:
         # Make a directory with the name which is taken from the actual repo
         os.makedirs(self.dir_out, exist_ok=True)
 
-        # Get response from GutHub response
+        # Get response from GitHub response
         try:
             self._get_response(api_url_local=api_url_local)
 

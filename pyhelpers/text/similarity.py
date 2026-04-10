@@ -86,7 +86,7 @@ def cosine_similarity_between_texts(txt1, txt2, cosine_distance=False):
 
 
 def find_matched_str(input_str, lookup_list, use_regex=True):
-    # noinspection PyShadowingNames
+    # noinspection PyShadowingNames,SpellCheckingInspection
     """
     Finds all strings (in a sequence) that match a given string or regex pattern.
 
