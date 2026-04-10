@@ -1092,33 +1092,33 @@ def _remove_punctuation(text, normalize_whitespace=True, preserve_kebab_case=Tru
     """
 
     if not text:
-        return ''
+        return ""
 
     text_str = str(text)
 
     # Ensure exclude is a set for O(1) lookup
     exclude_set = set(exclude) if exclude else set()
 
-    if '-' not in exclude_set:
+    if "-" not in exclude_set:
         if preserve_kebab_case:  # Only remove hyphens not surrounded by alphanumeric chars
-            text_str = re.sub(r'(?<!\w)-|-(?!\w)', ' ', text_str)
+            text_str = re.sub(r"(?<!\w)-|-(?!\w)", " ", text_str)
         else:
-            text_str = text_str.replace('-', ' ')
+            text_str = text_str.replace("-", " ")
 
-    if '_' not in exclude_set:
+    if "_" not in exclude_set:
         if preserve_snake_case:
-            text_str = re.sub(r'(?<!\w)_|_(?!\w)', ' ', text_str)
+            text_str = re.sub(r"(?<!\w)_|_(?!\w)", " ", text_str)
         else:
-            text_str = text_str.replace('_', ' ')
+            text_str = text_str.replace("_", " ")
 
     # General punctuation cleanup
-    to_remove = set(string.punctuation) - exclude_set - {'-', '_'}
+    to_remove = set(string.punctuation) - exclude_set - {"-", "_"}
 
     if to_remove:  # Escaping ensures characters like '.' or '[' don't break the regex
-        text_str = re.sub(f'[{re.escape(''.join(to_remove))}]', ' ', text_str)
+        text_str = re.sub(f"[{re.escape(''.join(to_remove))}]", " ", text_str)
 
     if normalize_whitespace:
         # Collapses multiple spaces, tabs, and newlines into single spaces
-        text_str = ' '.join(text_str.split())
+        text_str = " ".join(text_str.split())
 
     return text_str.strip()  # Strip leading/trailing spaces
