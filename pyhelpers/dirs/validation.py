@@ -4,7 +4,6 @@ Utilities for directory/file validation.
 
 import errno
 import os
-import pathlib
 import re
 
 from .navigation import cd
