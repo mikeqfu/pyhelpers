@@ -4,7 +4,6 @@ Utilities for directory/file validation.
 
 import errno
 import os
-import pathlib
 import re
 
 from .navigation import cd
@@ -51,62 +50,80 @@ def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     return _normalize_pathname(pathname=pathname, sep=sep, add_slash=add_slash, **kwargs)
 
 
-def is_dir(path_to_dir):
+def is_path_to_dir(path_to_dir):
     """
-    Checks whether a string represents a valid directory path.
+    Checks if an input string is formatted as a directory path.
 
     This function verifies whether the input string is a valid directory path. See also
     [`DIRS-IVD-1 <https://stackoverflow.com/questions/9532499/>`_] and [`DIRS-IVD-2
     <https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499->`_].
 
     :param path_to_dir: Pathname of a directory.
-    :type path_to_dir: str | bytes
+    :type path_to_dir: str | bytes | pathlib.Path | os.PathLike
     :return: ``True`` if the input string is a valid directory path, ``False`` otherwise.
     :rtype: bool
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import cd, is_dir
-        >>> x = "tests"
-        >>> is_dir(x)
+        >>> from pyhelpers.dirs import cd, is_path_to_dir
+        >>> is_path_to_dir("tests")
         False
-        >>> x = "/tests"
-        >>> is_dir(x)
+        >>> is_path_to_dir("/tests")
         True
-        >>> x = cd("tests")
-        >>> is_dir(x)
+        >>> is_path_to_dir(cd("tests"))
+        True
+        >>> is_path_to_dir(".\\tests/")
         True
     """
 
+    if not path_to_dir:
+        return False
+
     try:
-        root_dirname_, pathname_ = os.path.splitdrive(path_to_dir)
+        path_str = os.fsdecode(path_to_dir)
 
-        root_dirname = root_dirname_ if root_dirname_ else '.'
-        root_dirname += os.path.sep
+        # String-based validation (If it does not exist yet): check if the name is valid for the OS
+        root, pathname = os.path.splitdrive(path_str)
 
-        dir_names = re.split(r'[\\/]', validate_dir(pathname_))
+        # Ensure root is usable for joining
+        root = root if root else '.'
+
+        # Validate segments via OS-level lstat check
+        dir_names = [d for d in re.split(r'[\\/]', pathname) if d]
 
         for i in range(len(dir_names)):
             try:
-                os.lstat(os.path.join(root_dirname, *dir_names[:i + 1]))
+                os.lstat(os.path.join(root, *dir_names[:i + 1]))
             except OSError as exc:
-                if hasattr(exc, 'winerror'):
-                    if exc.winerror == 123:  # ERROR_INVALID_NAME
-                        return False
-                elif exc.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
+                if getattr(exc, 'winerror', None) == 123:  # ERROR_INVALID_NAME (Windows)
+                    return False
+                if exc.errno in {errno.ENAMETOOLONG, errno.ERANGE}:
                     return False
 
-    except TypeError:
+    except (TypeError, ValueError):
         return False
 
-    else:
-        path_to_dir_, ext = os.path.splitext(path_to_dir)
-        return bool(os.path.dirname(path_to_dir_)) and not ext
+    else:  # Final heuristic: Does it 'look' like a directory?
+        # Ends with a slash
+        if path_str.endswith(('/', '\\')):
+            return True
+
+        # Has a parent directory structure (e.g. "./tests")
+        has_dir_structure = bool(os.path.dirname(path_str))
+
+        # Check extension, but only if there is no trailing slash
+        _, ext = os.path.splitext(path_str)
+
+        return has_dir_structure and not ext
 
 
-def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
+def resolve_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
     """
-    Validates the pathname of a directory.
+    Resolves a directory path into an absolute pathname.
+
+    This function takes a variety of input types and ensures they are converted
+    into a standardized absolute path string. It handles relative paths by
+    anchoring them to a default directory and resolves missing inputs using the provided `subdir`.
 
     :param path_to_dir: Pathname of a data directory;
         if ``path_to_dir=None`` (default),
@@ -124,38 +141,44 @@ def validate_dir(path_to_dir=None, subdir="", msg="Invalid input!", **kwargs):
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import validate_dir
+        >>> from pyhelpers.dirs import resolve_dir
         >>> import os
         >>> import pathlib
-        >>> dat_dir = validate_dir()
+        >>> dat_dir = resolve_dir()
         >>> os.path.relpath(dat_dir)
         '.'
-        >>> dat_dir = validate_dir("tests")
+        >>> dat_dir = resolve_dir("tests")
         >>> os.path.relpath(dat_dir)
         'tests'
-        >>> dat_dir = validate_dir(subdir="data")
+        >>> dat_dir = resolve_dir(subdir="data")
         >>> os.path.relpath(dat_dir)
         'data'
     """
 
-    if path_to_dir:
-        if isinstance(path_to_dir, pathlib.Path):
-            path_to_dir_ = str(path_to_dir)
-        elif isinstance(path_to_dir, bytes):
-            path_to_dir_ = path_to_dir.decode()
+    try:
+        # Uniformly handle str, bytes, pathlib.Path, and os.PathLike
+        if path_to_dir is not None:
+            path_to_dir_ = os.fsdecode(path_to_dir)
         else:
-            path_to_dir_ = path_to_dir
-            assert isinstance(path_to_dir_, str), msg
+            path_to_dir_ = None
 
-        if not os.path.isabs(path_to_dir_):  # Use default file directory
-            data_dir_ = cd(path_to_dir_.strip('.\\.'), **kwargs)
+        subdir_ = os.fsdecode(subdir) if subdir else ""
 
+    except (TypeError, ValueError):
+        raise TypeError(msg)
+
+    # Logic for path construction
+    if path_to_dir_:
+        # Normalize to remove redundant separators or dots safely
+        normalized_path = os.path.normpath(path_to_dir_)
+
+        if not os.path.isabs(normalized_path):  # Use default file directory
+            data_dir_ = cd(normalized_path, **kwargs)
         else:
-            assert os.path.isabs(path_to_dir_), msg
-            data_dir_ = _check_relative_pathname(path_to_dir_.lstrip('.\\.'))
+            data_dir_ = _check_relative_pathname(normalized_path)
 
-    else:
-        data_dir_ = cd(subdir, **kwargs) if subdir else cd()
+    else:  # Fallback to subdir or current dir
+        data_dir_ = cd(subdir_, **kwargs) if subdir_ else cd()
 
     return data_dir_
 

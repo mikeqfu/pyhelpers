@@ -74,6 +74,47 @@ def transform_point_type(*pts, as_geom=True):
     return _transform_point_type(*pts, as_geom=as_geom)
 
 
+def get_point_coordinates(pt):
+    """
+    Extracts (x, y) coordinates from a point-like object.
+
+    Supported types include Shapely Points, lists, tuples, and NumPy arrays.
+
+    :param pt: A point-like object containing at least two coordinates.
+    :type pt: shapely.geometry.Point | list | tuple | numpy.ndarray
+    :return: A tuple of (x, y) coordinates.
+    :rtype: tuple[float, float]
+    :raises ValueError: If the input format is unrecognized or has insufficient length.
+
+    **Examples**::
+
+        >>> from pyhelpers.geom import get_point_coordinates
+        >>> from shapely.geometry import Point
+        >>> get_point_coordinates(Point(1.0, 2.0))
+        (1.0, 2.0)
+        >>> get_point_coordinates([1.5, 2.5, 0.0])
+        (1.5, 2.5)
+    """
+
+    # Handle Shapely Points
+    if hasattr(pt, 'x') and hasattr(pt, 'y'):
+        return float(pt.x), float(pt.y)
+
+    # Handle sequence types (list, tuple, ndarray)
+    if hasattr(pt, '__getitem__'):
+        try:
+            if len(pt) >= 2:
+                return float(pt[0]), float(pt[1])
+        except (TypeError, IndexError):
+            pass
+
+    # Fallback/error
+    raise ValueError(
+        f"Invalid point format: {type(pt).__name__}. "
+        "Expected Shapely Point or sequence of length >= 2."
+    )
+
+
 def get_coordinates_as_array(geom_obj, unique=False, dtype=None):
     """
     Retrieves an array of coordinates from the input geometry object.
@@ -393,21 +434,46 @@ def drop_axis(geom, axis='z', as_array=False):
                 [3., 4.]]])
     """
 
-    geom_obj = shapely.ops.transform(func=globals()[f'_drop_{axis}'], geom=geom)
+    # Map axis names to your existing helper functions
+    helpers = {
+        'x': _drop_x,
+        'y': _drop_y,
+        'z': _drop_z
+    }
+
+    if axis.lower() not in helpers:
+        raise ValueError("axis must be 'x', 'y' or 'z'")
+
+    geom_obj = shapely.ops.transform(helpers[axis.lower()], geom)
 
     if as_array:
-        sim_typ = ('Point', 'LineString')
-        if geom_obj.geom_type in sim_typ:
-            geom_obj = np.array(geom_obj.coords)
-        elif geom_obj.geom_type.startswith('Multi'):
-            geom_obj = np.array(
-                [np.array(g.coords) if g.geom_type in sim_typ else np.array(g.exterior.coords)
-                 for g in geom_obj.geoms])
-        else:
-            geom_obj = np.array(geom_obj.exterior.coords)
+        # Points are a special case in Shapely (coords[0] is the point)
+        if geom_obj.geom_type == 'Point':
+            return np.array(geom_obj.coords[0])
 
-        if geom_obj.shape[0] == 1:
-            geom_obj = geom_obj[0]
+        if geom_obj.geom_type == 'Polygon':
+            # Returns the exterior ring. Note: interiors are ignored for array output.
+            return np.array(geom_obj.exterior.coords)
+
+        # For Multi-geometries, iterate through parts
+        if hasattr(geom_obj, 'geoms'):
+            # Use a list as sub-geometries may have different lengths
+            parts = []
+            for g in geom_obj.geoms:
+                if g.geom_type == 'Polygon':
+                    parts.append(np.array(g.exterior.coords))
+                else:
+                    parts.append(np.array(g.coords))
+
+            # Return as a single array if possible, otherwise a list of arrays
+            try:
+                return np.array(parts)
+            except ValueError:
+                return parts
+
+        # For LineString and others
+        geom_coords = geom_obj.coords if hasattr(geom_obj, 'coords') else geom_obj.exterior.coords
+        return np.array(geom_coords)
 
     return geom_obj
 

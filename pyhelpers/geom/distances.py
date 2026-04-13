@@ -2,7 +2,6 @@
 Utilities for distance-related calculations and proximity operations.
 """
 
-import copy
 import functools
 import os
 import typing
@@ -11,11 +10,11 @@ import numpy as np
 import shapely.geometry
 import shapely.ops
 
-from .transforms import get_coordinates_as_array, transform_point_type
-from .._cache import _check_dependencies
+from .transforms import get_coordinates_as_array, get_point_coordinates, transform_point_type
+from .._cache import _lazy_check_dependencies, _print_failure_message
 
 
-def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
+def calc_spherical_distance(pt1, pt2, unit='mile', decimals=None):
     """
     Calculates the distance between two points on a unit sphere.
 
@@ -29,16 +28,16 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
     :type pt2: shapely.geometry.Point | tuple | numpy.ndarray
     :param unit: Unit of distance for output; options include ``'mile'`` (default) and ``'km'``.
     :type unit: str
-    :param precision: Number of decimal places for the calculated result;
+    :param decimals: Number of decimal places for the calculated result;
         defaults to ``None`` (no rounding).
-    :type precision: int | None
+    :type decimals: int | None
     :return: Distance between ``pt1`` and ``pt2`` in miles or kilometers
         (relative to the earth's radius).
     :rtype: float | None
 
-    Examples:
+    **Examples**::
 
-        >>> from pyhelpers.geom import calc_distance_on_unit_sphere
+        >>> from pyhelpers.geom import calc_spherical_distance
         >>> from pyhelpers._cache import example_dataframe
         >>> example_df = example_dataframe()
         >>> example_df
@@ -53,10 +52,10 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
         array([-0.1276474, 51.5073219])
         >>> birmingham
         array([-1.9026911, 52.4796992])
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham)
+        >>> arc_len_in_miles = calc_spherical_distance(london, birmingham)
         >>> arc_len_in_miles  # in miles
         101.10431101941569
-        >>> arc_len_in_miles = calc_distance_on_unit_sphere(london, birmingham, precision=4)
+        >>> arc_len_in_miles = calc_spherical_distance(london, birmingham, decimals=4)
         >>> arc_len_in_miles
         101.1043
 
@@ -68,42 +67,30 @@ def calc_distance_on_unit_sphere(pt1, pt2, unit='mile', precision=None):
         point's longitude and latitude.
     """
 
+    # Resolve earth radius
     earth_radius = 3960.0 if unit == "mile" else 6371.0
+    deg2rad = np.pi / 180.0  # Convert latitude and longitude to spherical coordinates in radians
 
-    # Convert latitude and longitude to spherical coordinates in radians.
-    degrees_to_radians = np.pi / 180.0
+    try:
+        lon1, lat1 = get_point_coordinates(pt1)
+        lon2, lat2 = get_point_coordinates(pt2)
+    except Exception as e:
+        # noinspection PyNoneFunctionAssignment
+        return _print_failure_message(e, raise_error=True)
 
-    if not all(isinstance(x, shapely.geometry.Point) for x in (pt1, pt2)):
-        try:
-            pt1_, pt2_ = shapely.geometry.Point(pt1), shapely.geometry.Point(pt2)
-        except Exception as e:
-            print(e)
-            return None
-    else:
-        pt1_, pt2_ = map(copy.copy, (pt1, pt2))
+    # Convert to spherical radians
+    phi1, phi2 = (90.0 - lat1) * deg2rad, (90.0 - lat2) * deg2rad  # phi = 90 - latitude
+    theta1, theta2 = lon1 * deg2rad, lon2 * deg2rad  # theta = longitude
 
-    # phi = 90 - latitude
-    phi1 = (90.0 - pt1_.y) * degrees_to_radians
-    phi2 = (90.0 - pt2_.y) * degrees_to_radians
-
-    # theta = longitude
-    theta1 = pt1_.x * degrees_to_radians
-    theta2 = pt2_.x * degrees_to_radians
-
-    # Compute spherical distance from spherical coordinates.
-    # For two locations in spherical coordinates
-    # (1, theta, phi) and (1, theta', phi')
-    # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
-    # distance = rho * arc length
-
+    # Spherical Law of Cosines
     cosine = (np.sin(phi1) * np.sin(phi2) * np.cos(theta1 - theta2) + np.cos(phi1) * np.cos(phi2))
-    arc_length = np.arccos(cosine) * earth_radius
+    # Clip to prevent NaN on identical points due to float precision
+    arc_length = np.arccos(np.clip(cosine, -1.0, 1.0)) * earth_radius
 
-    if precision:
-        arc_length = np.round(arc_length, precision)
+    if decimals:  # Rounding
+        arc_length = np.round(arc_length, decimals=decimals)
 
-    # To multiply arc by the radius of the earth in a set of units to get length.
-    return arc_length
+    return float(arc_length)
 
 
 def calc_hypotenuse_distance(pt1, pt2):
@@ -125,7 +112,7 @@ def calc_hypotenuse_distance(pt1, pt2):
         - Calculated using the formula: ``sqrt((x2 - x1)^2 + (y2 - y1)^2)``
         - Equivalent to ``numpy.hypot(x, y)`` which computes ``sqrt(x*x + y*y)``.
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import calc_hypotenuse_distance
         >>> from shapely.geometry import Point
@@ -174,7 +161,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     .. _`shapely.geometry.Point`: https://shapely.readthedocs.io/en/latest/manual.html#points
     .. _`numpy.ndarray`: https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_closest_point
         >>> from pyhelpers._cache import example_dataframe
@@ -230,6 +217,7 @@ def find_closest_point(pt, ref_pts, as_geom=True):
     return closest_point
 
 
+@_lazy_check_dependencies(ckdtree='scipy.spatial')
 def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=False,
                         ret_dist=False, **kwargs):
     """
@@ -270,7 +258,7 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
     .. _`scipy.spatial.cKDTree`:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.html
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_closest_points
         >>> from pyhelpers._cache import example_dataframe
@@ -295,12 +283,11 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         >>> closest_to_each = find_closest_points(
         ...     pts=cities, ref_pts=ref_cities, k=1, as_geom=True)
         >>> closest_to_each.wkt
-        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+        'MULTIPOINT ((-2.2451148 53.4794892), (-2.2451148 53.4794892), (-1.5437941 53.7974185))'
         >>> _, idx = find_closest_points(pts=cities, ref_pts=ref_cities, k=1, ret_idx=True)
         >>> idx
-        array([2, 2, 3], dtype=int64)
-        >>> _, _, dist = find_closest_points(
-        ...     cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
+        array([2, 2, 3])
+        >>> _, _, dist = find_closest_points(cities, ref_cities, k=1, ret_idx=True, ret_dist=True)
         >>> dist
         array([0.75005697, 3.11232712, 1.17847198])
         >>> cities_geoms_1 = LineString(cities)
@@ -312,37 +299,41 @@ def find_closest_points(pts, ref_pts, k=1, unique=False, as_geom=False, ret_idx=
         >>> cities_geoms_2 = MultiPoint(cities)
         >>> closest_to_each = find_closest_points(cities_geoms_2, ref_cities, k=1, as_geom=True)
         >>> closest_to_each.wkt
-        'MULTIPOINT (-2.2451148 53.4794892, -2.2451148 53.4794892, -1.5437941 53.7974185)'
+        'MULTIPOINT ((-2.2451148 53.4794892), (-2.2451148 53.4794892), (-1.5437941 53.7974185))'
     """
 
-    ckdtree = _check_dependencies('scipy.spatial')
+    # Extract coordinates
+    # Note: If `unique=True`, indices returned will refer to the deduplicated ref_pts_
+    pts_, ref_pts_ = map(functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
 
-    pts_, ref_pts_ = map(
-        functools.partial(get_coordinates_as_array, unique=unique), [pts, ref_pts])
+    ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)  # noqa
+    n_workers = max(1, (os.cpu_count() or 2) - 1)
 
-    ref_ckd_tree = ckdtree.cKDTree(ref_pts_, **kwargs)
-    n_workers = os.cpu_count() - 1
-
-    # returns (distance, index)
+    # Perform query
     distances, indices = ref_ckd_tree.query(x=pts_, k=k, workers=n_workers)
 
-    closest_points_ = [ref_pts_[i] for i in indices]
+    # Use NumPy advanced indexing for robustness (handles k=1 and k>1)
+    closest_points_arr = ref_pts_[indices]
     if as_geom:
-        closest_points = shapely.geometry.MultiPoint(closest_points_)
+        # If k > 1, the result is technically a list of MultiPoints or a flattened MultiPoint
+        if k > 1:
+            closest_points = shapely.geometry.MultiPoint(closest_points_arr.reshape(-1, 2))
+        else:
+            closest_points = shapely.geometry.MultiPoint(closest_points_arr)
     else:
-        closest_points = np.array(closest_points_)
+        closest_points = closest_points_arr
 
-    if ret_idx and ret_dist:
-        closest_points = closest_points, indices, distances
-    else:
-        if ret_idx:
-            closest_points = closest_points, indices
-        elif ret_dist:
-            closest_points = closest_points, distances
+    # Return management
+    results = [closest_points]
+    if ret_idx:
+        results.append(indices)
+    if ret_dist:
+        results.append(distances)
 
-    return closest_points
+    return tuple(results) if len(results) > 1 else results[0]
 
 
+@_lazy_check_dependencies(nx='networkx', nn='sklearn.neighbors')
 def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs):
     """
     Finds the shortest path through a sequence of points.
@@ -376,7 +367,7 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     (optimal TSP-P solution) because the 2-NN graph may contain local cycles or may not be
     fully connected, preventing DFS from discovering the optimal global order.
 
-    Examples:
+    **Examples**::
 
         >>> from pyhelpers.geom import find_shortest_path
         >>> from pyhelpers._cache import example_dataframe
@@ -449,44 +440,46 @@ def find_shortest_path(points_sequence, ret_dist=False, as_geom=False, **kwargs)
     if len(points_sequence_) <= 2:
         shortest_path, min_dist = points_sequence_, 0.0
 
-    else:
-        nx, sklearn_neighbors = _check_dependencies('networkx', 'sklearn.neighbors')
+        # Calculate distance for 2 points
+        if len(points_sequence_) == 2:
+            min_dist = np.linalg.norm(points_sequence_[0] - points_sequence_[1])
 
-        nn_clf = sklearn_neighbors.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence_)
+    else:
+        # Build 2-NN graph
+        nn_clf = nn.NearestNeighbors(n_neighbors=2, **kwargs).fit(points_sequence_)  # noqa
         kn_g = nn_clf.kneighbors_graph()
 
-        nx_g = nx.from_scipy_sparse_array(kn_g)
+        nx_g = nx.from_scipy_sparse_array(kn_g)  # noqa
 
         # Get all possible path orders starting from every node using DFS
         possible_paths = [
-            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence_))]
+            list(nx.dfs_preorder_nodes(nx_g, i)) for i in range(len(points_sequence_))]  # noqa
 
         min_dist, idx = np.inf, -1  # Initialise idx to a sentinel value
 
-        for i in range(len(points_sequence_)):
-            nodes_order = possible_paths[i]
-
+        for i, nodes_order in enumerate(possible_paths):
             # Skip paths that don't visit all nodes (due to disconnected 2-NN graph)
             if len(nodes_order) != len(points_sequence_):
                 continue
 
             ordered_nodes = points_sequence_[nodes_order]
 
-            # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
-            dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1) ** 0.5).sum()
+            # Vectorised distance calculation
+            # # cost = the sum of Euclidean distances between the i-th and (i+1)-th points
+            dist = np.linalg.norm(ordered_nodes[:-1] - ordered_nodes[1:], axis=1).sum()
+            # dist = (((ordered_nodes[:-1] - ordered_nodes[1:]) ** 2).sum(axis=1) ** 0.5).sum()
             if dist < min_dist:  # Use < instead of <= to guarantee determinism in case of ties
                 min_dist = dist
                 idx = i
 
         if idx == -1:  # Handle case where 2-NN graph is so disconnected no full path was found
-            shortest_path, min_dist = points_sequence_, 0.0
+            # Fallback: original order
+            shortest_path = points_sequence_
+            min_dist = np.linalg.norm(shortest_path[:-1] - shortest_path[1:], axis=1).sum()
         else:
             shortest_path = points_sequence_[possible_paths[idx]]
 
-        if as_geom:
-            shortest_path = shapely.geometry.LineString(shortest_path)
+    if as_geom:
+        shortest_path = shapely.geometry.LineString(shortest_path)
 
-        if ret_dist:
-            return shortest_path, min_dist
-
-    return shortest_path
+    return (shortest_path, min_dist) if ret_dist else shortest_path

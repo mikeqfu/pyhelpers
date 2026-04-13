@@ -2,12 +2,16 @@
 Tests the :mod:`~pyhelpers.ops.general` submodule.
 """
 
+import os
 import time
 
+import pandas as pd
 import pytest
 
 from pyhelpers.dbms import PostgreSQL
-from pyhelpers.ops.general import *
+from pyhelpers.ops.general import benchmark_functions, confirmed, func_running_time, \
+    get_ansi_color_code, get_git_branch, get_obj_attr, get_project_structure, hash_password, \
+    verify_password
 
 
 def test_confirmed(monkeypatch):
@@ -76,6 +80,77 @@ def test_func_running_time(capfd):
     test_func()
     out, _ = capfd.readouterr()
     assert "INFO Finished running function: test_func, total: 3s" in out
+
+
+def test_benchmark_functions(capfd):
+    """
+    Test the benchmark_functions utility with valid inputs, error handling, and exceptions.
+    """
+
+    # Test 1: Normal operation with verbose=True
+    func_map = {
+        'list_comp': lambda x: [i for i in range(x)],
+        'list_cast': lambda x: list(range(x))
+    }
+
+    results = benchmark_functions(func_map, test_value=100, iterations=100, verbose=True)
+
+    # Verify results structure
+    assert isinstance(results, dict)
+    assert len(results) == 2
+    assert 'list_comp' in results
+    assert 'list_cast' in results
+
+    # Verify timing values are positive floats
+    for name, timing in results.items():
+        assert isinstance(timing, float)
+        assert timing > 0
+
+    # Verify printed output
+    captured = capfd.readouterr()
+    assert 'Method' in captured.out
+    assert 'Total Time (s)' in captured.out
+    assert 'Avg Time (ms)' in captured.out
+    assert 'list_comp' in captured.out
+    assert 'list_cast' in captured.out
+
+    # Test 2: With verbose=False (no output)
+    results_silent = benchmark_functions(func_map, test_value=100, iterations=100, verbose=False)
+    captured = capfd.readouterr()
+    assert captured.out == ""  # No output when verbose=False
+    assert results_silent.keys() == results.keys()  # Results should be the same
+
+    # Test 3: Error handling - empty func_map
+    with pytest.raises(ValueError, match="`func_map` cannot be empty"):
+        benchmark_functions({}, test_value=10)
+
+    # Test 4: Error handling - non-callable values
+    with pytest.raises(TypeError, match="All values in `func_map` must be callable"):
+        benchmark_functions({'test': 'not_callable'}, test_value=10)  # noqa
+
+    # Test 5: Error handling - invalid iterations
+    with pytest.raises(ValueError, match="`iterations` must be a positive integer"):
+        benchmark_functions({'test': lambda x: x}, test_value=10, iterations=0)
+
+    with pytest.raises(ValueError, match="`iterations` must be a positive integer"):
+        benchmark_functions({'test': lambda x: x}, test_value=10, iterations=-1)
+
+    # Test 6: Exception handling in benchmarked functions with verbose output
+    func_map_with_error = {'valid': lambda x: x * 2, 'raises_error': lambda x: 1 / 0}
+
+    results_partial = benchmark_functions(
+        func_map_with_error, test_value=10, iterations=10, verbose=True)
+
+    # Valid function should be in results
+    assert 'valid' in results_partial
+    assert isinstance(results_partial['valid'], float)
+
+    # Failed function should not be in results
+    assert 'raises_error' not in results_partial
+
+    # Check error message was printed
+    captured = capfd.readouterr()
+    assert 'Failed' in captured.out
 
 
 def test_get_git_branch(capfd):

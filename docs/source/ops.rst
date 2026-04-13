@@ -31,6 +31,7 @@ Basic data manipulation
     :toctree: _generated/
     :template: function.rst
 
+    shift_decimal_to_int
     loop_in_pairs
     split_list_by_size
     split_list
@@ -71,6 +72,7 @@ Web data manipulation
     load_user_agent_strings
     get_user_agent_string
     fake_requests_headers
+    get_dynamic_url
 
 .. rubric:: File downloads utilities
 .. autosummary::
@@ -103,6 +105,7 @@ Misc general utilities
     confirmed
     get_obj_attr
     eval_dtype
+    is_visual_object
     hash_password
     verify_password
     func_running_time

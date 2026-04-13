@@ -9,6 +9,7 @@ import itertools
 import operator
 import os
 import re
+import time
 import warnings
 
 import pandas as pd
@@ -17,7 +18,9 @@ import sqlalchemy.dialects
 import sqlalchemy.exc
 
 from ._base import _Base
-from .._cache import _check_dependencies, _confirmed, _print_failure_message
+from .utils import get_adaptive_index_dtypes
+from .._cache import _check_dependencies, _confirmed, _lazy_check_dependencies, \
+    _print_failure_message
 
 
 class MSSQL(_Base):
@@ -72,7 +75,7 @@ class MSSQL(_Base):
         :type host: str | None
         :param port: Listening port of the SQL Server;
             defaults to ``1433`` if not specified (default by installation of the SQL Server).
-        :type port: int | None
+        :type port: int | str | None
         :param username: Username for authentication;
             if not provided, Windows Authentication is used.
         :type username: str | None
@@ -119,8 +122,8 @@ class MSSQL(_Base):
             >>> testdb.database_name
             'testdb'
             >>> testdb.drop_database(verbose=True)
-            To drop the database [testdb] from <server_name>@localhost:1433
-            ? [No]|Yes: yes
+            Drop the database [testdb] from <server_name>@localhost:1433?
+             [No]|Yes: yes
             Dropping [testdb] ... Done.
         """
 
@@ -128,12 +131,14 @@ class MSSQL(_Base):
 
         pyodbc = _check_dependencies('pyodbc')
 
-        self.host = copy.copy(self.DEFAULT_HOST) if host is None else str(host)
-        self.port = copy.copy(self.DEFAULT_PORT) if port is None else int(port)
+        self.host = self.DEFAULT_HOST if host is None else str(host)
+        self.port = self.DEFAULT_PORT if port is None else int(port)
 
         if username is None:
             self.auth = 'Windows Authentication'
-            self.username = os.environ['USERDOMAIN'] + '\\' + os.environ['USERNAME']
+            domain = os.environ.get('USERDOMAIN')
+            user = os.environ.get('USERNAME') or os.getlogin() or 'user'
+            self.username = f"{domain}\\{user}" if domain else user
             pwd = None
         else:
             self.auth = 'SQL Server Authentication'
@@ -143,53 +148,64 @@ class MSSQL(_Base):
             else:
                 pwd = str(password)
 
+        # Engine configuration
         self.credentials = {
-            'drivername': '+'.join([self.DEFAULT_DIALECT, self.DEFAULT_DRIVER]),
+            'drivername': f"{self.DEFAULT_DIALECT}+{self.DEFAULT_DRIVER}",
             'host': self.host,
             'port': self.port,
             'username': self.username,
-            'database': self.DEFAULT_DATABASE,
+            'database': self.DEFAULT_DATABASE,  # Start with 'master'
         }
 
-        if self.DEFAULT_ODBC_DRIVER not in pyodbc.drivers():
-            self.odbc_driver = [x for x in pyodbc.drivers() if 'ODBC' in x and 'SQL Server' in x][0]
-        else:
+        # Driver
+        available_drivers = pyodbc.drivers()
+        if self.DEFAULT_ODBC_DRIVER in available_drivers:
             self.odbc_driver = self.DEFAULT_ODBC_DRIVER
+        else:  # Fallback to first available SQL Server driver
+            sql_drivers = [x for x in available_drivers if 'ODBC' in x and 'SQL Server' in x]
+            self.odbc_driver = sql_drivers[0] if sql_drivers else self.DEFAULT_ODBC_DRIVER
 
         url_query = {'driver': self.odbc_driver}
         if pwd is None:
-            url_query.update({'trusted_connection': 'yes'})
-            url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
-        else:
-            url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd, query=url_query)
+            url_query['trusted_connection'] = 'yes'
 
+        url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd, query=url_query)
+
+        # Note: Using AUTOCOMMIT here is specific to DB management tasks
         self.engine = sqlalchemy.create_engine(url=url, isolation_level='AUTOCOMMIT')
 
-        if database_name is None or database_name == self.DEFAULT_DATABASE:
-            self.database_name = copy.copy(self.DEFAULT_DATABASE)
-            reconnect_db = False
-        else:
-            self.database_name = self.credentials['database'] = copy.copy(database_name)
-            if database_name in self.get_database_names():
-                self.engine.url = self.engine.url.set(database=self.database_name)
-            else:  # The database doesn't exist
+        # Connect to database
+        target_db = database_name or self.DEFAULT_DATABASE
+        reconnect_needed = False
+
+        if target_db != self.DEFAULT_DATABASE:
+            if target_db in self.get_database_names():  # Switch URL to the target database
+                self.engine.url = self.engine.url.set(database=target_db)
+            else:
+                # The database doesn't exist
+                self.database_name = target_db  # Set for _create_db
                 self._create_db(
                     confirm_db_creation=confirm_db_creation, fmt='[{}]', verbose=verbose,
                     raise_error=raise_error)
-            reconnect_db = True
+            self.database_name = target_db
+            reconnect_needed = True
+        else:
+            self.database_name = self.DEFAULT_DATABASE
 
-        self.address = re.split(
-            r'://|\?', self.engine.url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
+        # Address & connection test
+        curr_url = self.engine.url
+        self.address = f"{curr_url.username}@{curr_url.host}:{curr_url.port}/{curr_url.database}"
+
         if verbose:
-            print(f"Connecting {self.address}", end=" ... ")
+            print(f"Connecting {self.address}", end=" ... ", flush=True)
 
         try:
-            if reconnect_db:
+            if reconnect_needed:
                 self.engine = sqlalchemy.create_engine(
                     url=self.engine.url, isolation_level='AUTOCOMMIT')
 
-            with self.engine.connect() as test_conn:
-                test_conn.close()
+            with self.engine.connect():
+                pass  # Successful connection
 
             if verbose:
                 print("Successfully.")
@@ -459,21 +475,20 @@ class MSSQL(_Base):
         db_name = self.database_name if database_name is None else str(database_name)
 
         with self.engine.connect() as connection:
-            # noinspection PyBroadException
             try:
                 query = sqlalchemy.text(
                     f"IF (EXISTS (SELECT name FROM master.sys.databases WHERE name='{db_name}')) "
                     f"SELECT 1 ELSE SELECT 0")
                 result_ = connection.execute(query)
-            except Exception:
+            except Exception:  # noqa
                 query = sqlalchemy.text(
                     f"SELECT COUNT(*) FROM master.sys.databases "
                     f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
                 result_ = connection.execute(query)
 
-        result = bool(result_.fetchone()[0])
+        result = result_.fetchone()
 
-        return result
+        return bool(result[0]) if result else False
 
     def create_database(self, database_name, verbose=False):
         """
@@ -1025,6 +1040,7 @@ class MSSQL(_Base):
 
     def create_table(self, table_name, column_specs, schema_name=None, verbose=False,
                      raise_error=False):
+        # noinspection PyUnresolvedReferences
         """
         Creates a table with specified columns.
 
@@ -1123,9 +1139,9 @@ class MSSQL(_Base):
                 f"SELECT 1 ELSE SELECT 0")
             result_ = connection.execute(query)
 
-        result = bool(result_.fetchone()[0])
+        result = result_.fetchone()
 
-        return result
+        return bool(result[0]) if result else False
 
     def get_file_tables(self, names_only=True):
         """
@@ -1166,7 +1182,7 @@ class MSSQL(_Base):
         :param schema_name: Name of the schema where the table is located; defaults to ``None``.
         :type schema_name: str | None
         :return: Number of rows in the specified table in the currently-connected database.
-        :rtype: int
+        :rtype: int | None
 
         **Examples**::
 
@@ -1189,9 +1205,36 @@ class MSSQL(_Base):
             query = sqlalchemy.text(f'SELECT COUNT(*) FROM {table_name_};')
             result = connection.execute(query)
 
-        row_count = result.fetchone()[0]
+        row_count = result.fetchone()
 
-        return row_count
+        return row_count[0] if row_count else None
+
+    def get_column_info(self, table_name, schema_name=None, as_dict=True):
+        """
+        Retrieves information about columns of a table.
+
+        :param table_name: Name of the table to retrieve column information from.
+        :type table_name: str
+        :param schema_name: Name of the schema where the table is located;
+            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
+            if ``schema_name=None``.
+        :type schema_name: str | None
+        :param as_dict: Whether to return the column information as a dictionary;
+            defaults to ``True``.
+        :type as_dict: bool
+        :return: Information about all columns of the specified table in the currently-connected
+            database.
+        :rtype: pandas.DataFrame | dict
+
+        .. seealso::
+
+            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
+        """
+
+        column_info = super().get_column_info(
+            table_name=table_name, schema_name=schema_name, as_dict=as_dict)
+
+        return column_info
 
     def get_column_names(self, table_name, schema_name=None):
         """
@@ -1236,33 +1279,6 @@ class MSSQL(_Base):
             connection.close()
 
         return col_names
-
-    def get_column_info(self, table_name, schema_name=None, as_dict=True):
-        """
-        Retrieves information about columns of a table.
-
-        :param table_name: Name of the table to retrieve column information from.
-        :type table_name: str
-        :param schema_name: Name of the schema where the table is located;
-            defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
-            if ``schema_name=None``.
-        :type schema_name: str | None
-        :param as_dict: Whether to return the column information as a dictionary;
-            defaults to ``True``.
-        :type as_dict: bool
-        :return: Information about all columns of the specified table in the currently-connected
-            database.
-        :rtype: pandas.DataFrame | dict
-
-        .. seealso::
-
-            - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.create_table`.
-        """
-
-        column_info = super().get_column_info(
-            table_name=table_name, schema_name=schema_name, as_dict=as_dict)
-
-        return column_info
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
@@ -1544,35 +1560,69 @@ class MSSQL(_Base):
         """
 
         schema_name_ = self.DEFAULT_SCHEMA if schema_name is None else schema_name
-        column_type_query = \
-            f"SELECT DATA_TYPE, CHARACTER_OCTET_LENGTH AS OCTET_LENGTH " \
-            f"FROM INFORMATION_SCHEMA.COLUMNS " \
-            f"WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name_}' " \
-            f"AND COLUMN_NAME = '{column_name}';"
-
-        with self.engine.connect() as connection:
-            col_typ_ = connection.execute(sqlalchemy.text(column_type_query))
-            data_type, octet_len = col_typ_.fetchone()
 
         table_name_ = self._table_name(table_name=table_name, schema_name=schema_name_)
 
         with self.engine.connect() as connection:
-            if data_type == 'varchar' and (octet_len == -1 or octet_len > 900):
-                alter_column_query = \
-                    f"ALTER TABLE {table_name_} ALTER COLUMN {column_name} VARCHAR(500) NOT NULL;"
-                connection.execute(sqlalchemy.text(alter_column_query))
+            column_type_query = \
+                f"SELECT DATA_TYPE, CHARACTER_OCTET_LENGTH AS OCTET_LENGTH " \
+                f"FROM INFORMATION_SCHEMA.COLUMNS " \
+                f"WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name_}' " \
+                f"AND COLUMN_NAME = '{column_name}';"
+            res = connection.execute(sqlalchemy.text(column_type_query)).fetchone()
 
-            query = f'ALTER TABLE {table_name_} ADD PRIMARY KEY ({column_name});'
-            connection.execute(sqlalchemy.text(query))
+            if res:
+                data_type, max_len = res
+                data_type = data_type.upper()
 
-    def varchar_to_geometry_dtype(self, table_name, geom_column_name, srid=None, schema_name=None):
+                # nvarchar/nchar = 2 bytes per char; varchar/char = 1 byte per char
+                multiplier = 2 if data_type.startswith('N') and data_type.endswith('VARCHAR') else 1
+                byte_len = max_len * multiplier if max_len != -1 else float('inf')
+
+                # Determine safe PK length
+                if byte_len > 900:
+                    # For varchar, 900 is the absolute maximum; otherwise, 450 for nvarchar
+                    target_type = f"{data_type}({450 if multiplier == 2 else 900})"
+                else:
+                    # Otherwise, keep the existing type but append NOT NULL
+                    type_dim = f"({max_len})" if max_len > 0 else ""
+                    target_type = f"{data_type}{type_dim}"
+
+                # Identify and drop existing indices on the specific column
+                find_idx_query = f"""
+                    SELECT i.name
+                    FROM sys.indexes i
+                    JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                    JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                    WHERE i.object_id = OBJECT_ID('{table_name}')
+                    AND c.name = '{column_name}';
+                """
+                indices = connection.execute(sqlalchemy.text(find_idx_query)).fetchall()
+                for idx in indices:
+                    idx_name = idx[0]
+                    # Drop the index so we can modify the column
+                    connection.execute(sqlalchemy.text(f"DROP INDEX [{idx_name}] ON {table_name};"))
+
+                # Always set to NOT NULL before PK creation
+                alter_query = (
+                    f"ALTER TABLE {table_name_}"
+                    f" ALTER COLUMN [{column_name}] {target_type} NOT NULL;"
+                )
+                connection.execute(sqlalchemy.text(alter_query))
+
+                # Add the primary key
+                pk_query = f'ALTER TABLE {table_name_} ADD PRIMARY KEY ([{column_name}]);'
+                connection.execute(sqlalchemy.text(pk_query))
+
+    def varchar_to_geometry_dtype(self, table_name, geom_column_name=None, srid=None,
+                                  schema_name=None, verbose=True, raise_error=False):
         """
-        Alters a ``VARCHAR`` column containing geometry data to a geometry data type.
+        Alters a ``VARCHAR`` column to a ``GEOMETRY`` type (MSSQL Specific).
 
         :param table_name: Name of the table where the column exists.
         :type table_name: str
         :param geom_column_name: Name of the VARCHAR column to convert to geometry data type.
-        :type geom_column_name: str
+        :type geom_column_name: str | None
         :param srid: Spatial Reference Identifier (SRID) associated with the coordinate system,
             tolerance and resolution; defaults to ``None``.
         :type srid: int | None
@@ -1580,38 +1630,61 @@ class MSSQL(_Base):
             defaults to :attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` (i.e. ``'master'``)
             if ``schema_name=None``.
         :type schema_name: str | None
+        :param verbose: Whether to print error information if any. Defaults to ``True``.
+        :type verbose: bool | int
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
+
+        .. seealso::
+
+            - Reference: [`DBMS-MS-4 <https://stackoverflow.com/questions/64257958/>`_].
+            - Examples for :meth:`~pyhelpers.dbms.MSSQL.import_data`.
         """
 
-        if geom_column_name:
-            table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+        if not geom_column_name:
+            return
 
-            temp_col_name = 'temp_geom'
-            srid_ = srid if srid else 0
+        table_name_ = self._table_name(table_name=table_name, schema_name=schema_name)
+        temp_col_name = f"temp_geom_{int(time.time())}"  # Unique name to avoid collisions
+        srid_ = srid if srid is not None else 0
 
-            # Reference: https://stackoverflow.com/questions/64257958/
+        # Consolidate into a single transaction
+        try:
+            # with self.engine.connect() as connection:
+            with self.engine.begin() as connection:
+                # Add temporary geometry column
+                add_temp_col = f"ALTER TABLE {table_name_} ADD [{temp_col_name}] GEOMETRY;"
+                connection.execute(sqlalchemy.text(add_temp_col))
 
-            add_temp_col = f"ALTER TABLE {table_name_} ADD [{temp_col_name}] GEOMETRY;"
+                # Convert VARCHAR (WKT) to Geometry
+                update_dtype = (
+                    f"UPDATE {table_name_} "
+                    f"SET [{temp_col_name}] = geometry::STGeomFromText(CONVERT(varchar(max),"
+                    f" [{geom_column_name}]), {srid_}) "
+                    f"FROM {table_name_};"
+                )
+                connection.execute(sqlalchemy.text(update_dtype))
 
-            update_dtype = \
-                f"UPDATE {table_name_} " \
-                f"SET [{temp_col_name}] = " \
-                f"geometry::STGeomFromText(CONVERT(varchar(max), [{geom_column_name}]), {srid_}) " \
-                f"FROM {table_name_};"
+                # Swap columns
+                full_temp_path = f"{table_name_}.[{temp_col_name}]"
+                alter_column = \
+                    f"ALTER TABLE {table_name_} DROP COLUMN [{geom_column_name}]; " \
+                    f"EXEC sp_rename '{full_temp_path}', '{geom_column_name}', 'COLUMN';"
+                connection.execute(sqlalchemy.text(alter_column))
 
-            alter_column = \
-                f"ALTER TABLE {table_name_} DROP COLUMN [{geom_column_name}]; " \
-                f"EXEC sp_rename '{table_name_}.{temp_col_name}', '{geom_column_name}', 'COLUMN';"
-
-            with self.engine.connect() as connection:
-                for query in [add_temp_col, update_dtype, alter_column]:
-                    connection.execute(sqlalchemy.text(query))
+        except Exception as e:
+            # If any step fails, the transaction rolls back automatically because of .begin()
+            _print_failure_message(
+                e, prefix="Spatial conversion failed. Table reverted.", verbose=verbose,
+                raise_error=raise_error)
 
     def import_data(self, data, table_name, schema_name=None, if_exists='fail',
-                    force_replace=False, chunk_size=None, col_type=None, method='multi',
+                    force_replace=False, chunk_size=None, dtype=None, method='multi',
                     index=False, geom_column_name=None, srid=None, confirmation_required=True,
                     verbose=False, **kwargs):
         """
-        Imports tabular data into a table.
+        Imports tabular data into the database.
 
         See also [`DBMS-MS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_].
@@ -1636,8 +1709,8 @@ class MSSQL(_Base):
         :type force_replace: bool
         :param chunk_size: Number of rows to insert at a time; defaults to ``None`` (all at once).
         :type chunk_size: int | None
-        :param col_type: Dictionary specifying column data types; defaults to ``None``.
-        :type col_type: dict | None
+        :param dtype: Dictionary specifying column data types; defaults to ``None``.
+        :type dtype: dict | None
         :param method: Method for SQL insertion clause:
 
             - ``None``: Uses standard SQL ``INSERT`` clause (one per row).
@@ -1667,7 +1740,7 @@ class MSSQL(_Base):
 
             >>> from pyhelpers.dbms import MSSQL
             >>> from pyhelpers._cache import example_dataframe
-            >>> testdb = MSSQL(database_name='testdb')
+            >>> testdb = MSSQL(database_name='testdb', verbose=True)
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
             >>> example_df = example_dataframe()
@@ -1712,20 +1785,34 @@ class MSSQL(_Base):
             - Examples for the method :meth:`~pyhelpers.dbms.MSSQL.read_table`.
         """
 
-        dat = data.reset_index() if index is True else data
-
+        # noinspection PyTypeChecker
         with warnings.catch_warnings():
             warnings.simplefilter('ignore', category=sqlalchemy.exc.SAWarning)
 
-            self._import_data(
-                data=dat, table_name=table_name, schema_name=schema_name, if_exists=if_exists,
-                force_replace=force_replace, chunk_size=chunk_size, col_type=col_type,
-                method=method, index=False, confirmation_required=confirmation_required,
-                verbose=verbose, **kwargs)
+            col_dtype = dtype or {}
 
-        self.varchar_to_geometry_dtype(
-            table_name=table_name, schema_name=schema_name, geom_column_name=geom_column_name,
-            srid=srid)
+            str_index_col_dtype = get_adaptive_index_dtypes(data=data, index=index, verbose=verbose)
+            col_dtype = col_dtype | str_index_col_dtype
+
+            self._import_data(
+                data=data, table_name=table_name, schema_name=schema_name, if_exists=if_exists,
+                force_replace=force_replace, chunk_size=chunk_size, dtype=col_dtype, method=method,
+                index=index, confirmation_required=confirmation_required, verbose=verbose,
+                **kwargs
+            )
+
+        # Spatial conversion (Server-side)
+        if geom_column_name:
+            if verbose:
+                msg = f"Converting '{geom_column_name}' to Geometry (SRID {srid or 0})"
+                print(msg, end=" ... ", flush=True)
+
+            self.varchar_to_geometry_dtype(
+                table_name=table_name, schema_name=schema_name, geom_column_name=geom_column_name,
+                srid=srid, verbose=verbose, raise_error=True)
+
+            if verbose:
+                print("Done.")
 
     @staticmethod
     def _dtype_read_fmt(dtype):
@@ -1757,14 +1844,14 @@ class MSSQL(_Base):
         :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
         :param schema_name: Name of the schema containing the table.
-        :type schema_name: str
+        :type schema_name: str | None
         :param column_names: Name(s) of the column(s) to be included in the SQL query.
-        :type column_names: str | list
+        :type column_names: str | list | tuple
         :return: Original column names and formatted column names for SQL query.
         :rtype: tuple[list, str]
         """
 
-        col_names = [column_names] if isinstance(column_names, str) else column_names.copy()
+        col_names = [column_names] if isinstance(column_names, str) else list(column_names)
 
         column_info = self.get_column_info(table_name=table_name, schema_name=schema_name)
         # column_info_col_names = list(map(str.lower, column_info['COLUMN_NAME']))
@@ -1779,6 +1866,7 @@ class MSSQL(_Base):
 
         return col_names, col_names_
 
+    @_lazy_check_dependencies('shapely')
     def read_columns(self, table_name, column_names, dtype=None, schema_name=None, chunk_size=None,
                      **kwargs):
         """
@@ -1832,17 +1920,18 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(f'SELECT {col_names_} FROM {table_name_};')
+            # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
         if chunk_size:
             data = pd.concat(data, ignore_index=True)
 
         if dtype == 'geometry':
-            shapely_wkt = _check_dependencies('shapely.wkt')
-            data[col_names] = data[col_names].map(shapely_wkt.loads)
+            data[col_names] = data[col_names].map(shapely.wkt.loads)  # noqa
 
         return data
 
+    @_lazy_check_dependencies('pyhelpers')
     def read_table(self, table_name, schema_name=None, column_names=None, conditions=None,
                    chunk_size=None, save_as=None, data_dir=None, save_args=None, verbose=False,
                    **kwargs):
@@ -1966,24 +2055,21 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(sql_query)
+            # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
-        if chunk_size:
-            data = pd.concat(objs=data, axis=0, ignore_index=True)
+        data = pd.concat(data, axis=0, ignore_index=True) if chunk_size else pd.DataFrame(data)
 
         # Sort the order of columns
         data = data[[x for x in column_names_ if x not in data.index.names]]
 
         if save_as:
-            from pyhelpers.dirs import validate_dir
-            from pyhelpers.store import save_data
-
-            data_dir_ = validate_dir(data_dir)
+            data_dir_ = pyhelpers.dirs.resolve_dir(data_dir)  # noqa
             path_to_file = os.path.join(data_dir_, table_name + save_as)
 
             save_args_ = {} if save_args is None else save_args
             save_args_.update({'data': data, 'path_to_file': path_to_file, 'verbose': verbose})
-            save_data(**save_args_)
+            pyhelpers.store.save_data(**save_args_)  # noqa
 
         return data
 

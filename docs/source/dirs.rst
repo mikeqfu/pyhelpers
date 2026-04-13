@@ -28,8 +28,8 @@ Directory validation
     :template: function.rst
 
     normalize_pathname
-    is_dir
-    validate_dir
+    is_path_to_dir
+    resolve_dir
     validate_filename
     get_file_pathnames
     check_files_exist

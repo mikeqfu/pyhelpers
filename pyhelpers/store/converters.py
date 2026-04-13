@@ -431,6 +431,7 @@ def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None):
 
 def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace', vbscript=None,
                 sheet_name='1', ret_null=False, verbose=False, raise_error=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
     Converts a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 

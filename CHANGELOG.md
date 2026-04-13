@@ -1,11 +1,40 @@
 # Changelog / Release notes
 
 
+## [2.4.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.4.0)
+
+(*13 April 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.4...2.4.0) since [2.3.4](https://pypi.org/project/pyhelpers/2.3.4/):
+
+- **Geospatial enhancements:**
+  * Introduced a new `viz.maps` submodule for generating interactive maps using Folium. Features include `create_base_folium_map()` for automated map initialization and `get_base_map_center()` for dynamic centering logic (#129).
+  * Added native **GeoPackage (.gpkg)** support in the `store` module with dedicated `load_geopackage()` and `save_geopackage()` functions, integrated directly into the `load_data()` dispatcher (#128).
+  * Improved coordinate extraction and decimal manipulation utilities in the `geom` module.
+- **File handling & API refactoring:**
+  * Fixed file extension detection to support **multi-suffix files** (e.g. `.pkl.xz`, `.gold.parquet`) by transitioning from exact set-matching to `pathlib`-based suffix analysis (#124).
+  * Standardized parameter naming across the library (e.g. `path_to_file` → `path`, `col_type` → `dtype`) for a cleaner, more intuitive API (#130).
+  * Refactored `cd()` to skip `None` values, preventing the creation of malformed directory paths (#126).
+- **System performance & utilities:**
+  * Added `benchmark_functions()` to the `ops` module, allowing for high-fidelity performance comparisons of callables using `timeit` (#127).
+  * Optimized directory resolution logic and implemented a `NullHandler` for the root logger to ensure silent operation when used as a downstream dependency.
+  * Enhanced console UX with semantic string wrapping for long file paths and standardized exception formatting (#128).
+- **Documentation & infrastructure update:**
+  * Upgraded CI/CD pipelines to **Python 3.12** to maintain compatibility with Sphinx 9.1+ requirements (#132).
+  * Refined documentation structure by migrating from "modules" to a more accurate "subpackages" hierarchy.
+  * Polished LaTeX/PDF output by suppressing redundant chapter numbering for meta-pages (License and Contributors).
+- **Testing & stability:**
+  * Comprehensive expansion of test suites to cover interactive maps, GeoPackage I/O, and compound file extensions.
+  * Migrated directory testing to `tmp_path` fixtures for better cross-platform reliability.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.4.0 documentation](https://pyhelpers.readthedocs.io/en/2.4.0/).**
+
+
 ## [2.3.4](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.4)
 
 (*11 February 2026*)
 
-### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.3...2.3.4) since [2.3.3](https://www.google.com/search?q=https://pypi.org/project/pyhelpers/2.3.3/):
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.3.3...2.3.4) since [2.3.3](https://pypi.org/project/pyhelpers/2.3.3/):
 
 - **Lazy loading & dependency resolution:**
   * Fixed a submodule resolution bug within `_LazyModule`. Submodules are now resolved dynamically, preventing `AttributeError` when accessing nested package components (#119). This resolves issues reported in #118.
@@ -21,7 +50,7 @@
 - **Testing & infrastructure:**
   * Modernized test suites for the `downloads`, `management` and `savers` modules to validate adaptive indentation logic and lazy loading stability.
 
-**For more information and detailed specifications, check out the [PyHelpers 2.3.4 documentation](https://www.google.com/search?q=https://pyhelpers.readthedocs.io/en/2.3.4/).**
+**For more information and detailed specifications, check out the [PyHelpers 2.3.4 documentation](https://pyhelpers.readthedocs.io/en/2.3.4/).**
 
 
 ## [2.3.3](https://github.com/mikeqfu/pyhelpers/releases/tag/2.3.3)

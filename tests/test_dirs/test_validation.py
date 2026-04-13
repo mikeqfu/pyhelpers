@@ -2,12 +2,19 @@
 Tests the :mod:`~pyhelpers.dirs.validation` submodule.
 """
 
-import importlib.resources
+import os
 import tempfile
+from pathlib import Path
 
 import pytest
 
-from pyhelpers.dirs.validation import *
+from pyhelpers.dirs.validation import check_files_exist, check_relative_pathname, \
+    get_file_pathnames, is_path_to_dir, normalize_pathname, resolve_dir, validate_filename
+
+
+@pytest.fixture(scope='module')
+def test_dir_name():
+    return Path(__file__).resolve().parents[1] / "data"
 
 
 def test_normalize_pathname():
@@ -20,7 +27,7 @@ def test_normalize_pathname():
     pathname = normalize_pathname("tests//data/dat.csv".encode('utf-8'))
     assert pathname == 'tests/data/dat.csv'
 
-    pathname = pathlib.Path("tests\\data/dat.csv")
+    pathname = Path("tests\\data/dat.csv")
     pathname_1 = normalize_pathname(pathname, sep=os.path.sep)
     pathname_2 = normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
     if os.name == 'nt':
@@ -31,30 +38,30 @@ def test_normalize_pathname():
         assert pathname_2 == './tests/data/dat.csv'
 
 
-def test_is_dir():
+def test_is_path_to_dir():
     # noinspection PyTypeChecker
-    assert not is_dir(1)
-    assert not is_dir("tests")
-    assert is_dir("/tests")
+    assert not is_path_to_dir(1)
+    assert not is_path_to_dir("tests")
+    assert is_path_to_dir("/tests")
 
     if os.name == 'nt':
-        assert is_dir("\\tests")
+        assert is_path_to_dir("\\tests")
 
 
-def test_validate_dir():
-    dat_dir = validate_dir()
+def test_resolve_dir():
+    dat_dir = resolve_dir()
     assert os.path.relpath(dat_dir) == '.'
-    dat_dir = validate_dir(os.getcwd())
+    dat_dir = resolve_dir(os.getcwd())
     assert os.path.relpath(dat_dir) == '.'
 
-    dat_dir = validate_dir("tests")
+    dat_dir = resolve_dir("tests")
     assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = validate_dir(b"tests")
+    dat_dir = resolve_dir(b"tests")
     assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = validate_dir(pathlib.Path("tests"))
+    dat_dir = resolve_dir(Path("tests"))
     assert os.path.relpath(dat_dir) == 'tests'
 
-    dat_dir = validate_dir(subdir="data")
+    dat_dir = resolve_dir(subdir="data")
     assert os.path.relpath(dat_dir) == 'data'
 
 
@@ -76,52 +83,29 @@ def test_validate_filename():
     os.remove(temp_pathname_1)
 
 
-def test_get_file_pathnames():
-    test_dir_name_ = importlib.resources.files(__package__).joinpath("..", "data")
+def test_get_file_pathnames(test_dir_name):
+    dat_filenames = os.listdir(test_dir_name)
 
-    dat_filenames = [
-        'csr_mat.npz',
-        'dat.csv',
-        'dat.feather',
-        'dat.joblib',
-        'dat.json',
-        'dat.ods',
-        'dat.parquet',
-        'dat.pickle',
-        'dat.pickle.bz2',
-        'dat.pickle.gz',
-        'dat.pickle.xz',
-        'dat.txt',
-        'dat.xlsx',
-        'zipped',
-        'zipped.7z',
-        'zipped.txt',
-        'zipped.zip',
-    ]
+    result_1 = get_file_pathnames(test_dir_name)
+    assert isinstance(result_1, list)
+    assert all(os.path.basename(x) in dat_filenames for x in result_1)
 
-    with importlib.resources.as_file(test_dir_name_) as test_dir_name:
-        result_1 = get_file_pathnames(test_dir_name)
-        assert isinstance(result_1, list)
-        assert all(os.path.basename(x) in dat_filenames for x in result_1)
+    result_2 = get_file_pathnames(test_dir_name, incl_subdir=True)
+    assert all(os.path.basename(x) in dat_filenames for x in result_2)
 
-        result_2 = get_file_pathnames(test_dir_name, incl_subdir=True)
-        assert all(os.path.basename(x) in dat_filenames for x in result_2)
+    result_3 = get_file_pathnames(test_dir_name, file_ext=".txt")
+    assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_3)
 
-        result_3 = get_file_pathnames(test_dir_name, file_ext=".txt")
-        assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_3)
-
-        result_4 = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
-        assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_4)
+    result_4 = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
+    assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_4)
 
 
-def test_check_files_exist(capfd):
-    test_dir_name_ = importlib.resources.files(__package__).joinpath("..", "data")
-    with importlib.resources.as_file(test_dir_name_) as test_dir_name:
-        assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
-        rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name, verbose=True)
-        out, _ = capfd.readouterr()
-        assert rslt is False
-        assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
+def test_check_files_exist(test_dir_name, capfd):
+    assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
+    rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name, verbose=True)
+    out, _ = capfd.readouterr()
+    assert rslt is False
+    assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
 
 
 def test_check_relative_pathname():

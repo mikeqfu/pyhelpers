@@ -4,7 +4,6 @@ Test the module ``_cache.py``
 
 import os
 import sys
-import unittest.mock
 
 import pytest
 
@@ -23,40 +22,51 @@ def test_example_dataframe(osgb36):
         assert data.columns.tolist() == ['Longitude', 'Latitude']
 
 
-def test__check_dependency():
+def test__check_dependency(mocker):
     from pyhelpers._cache import _check_dependencies
 
     result = _check_dependencies('os')
     assert result.__name__ == 'os'
 
-    # 2. Test Alias Resolution (BeautifulSoup4 -> bs4)
-    with unittest.mock.patch('importlib.import_module') as mock_import:
-        mock_bs4 = unittest.mock.MagicMock()
-        mock_import.return_value = mock_bs4
+    # Test alias resolution (beautifulSoup4 -> bs4)
+    mock_import = mocker.patch('pyhelpers._cache.importlib.import_module')
 
-        # Should resolve 'beautifulsoup4' to 'bs4' via _DEPENDENCY_MAP
-        result = _check_dependencies('beautifulsoup4')
-        mock_import.assert_called_with('bs4')
-        assert result == mock_bs4
+    mock_bs4 = mocker.MagicMock()
+    mock_bs4.__name__ = 'bs4'
+    mock_import.return_value = mock_bs4
 
-    # 3. Test GDAL Fallback (osgeo.gdal -> gdal -> Error)
-    with unittest.mock.patch('importlib.import_module') as mock_import:
-        # Simulate osgeo.gdal missing, but legacy gdal existing
-        def side_effect(name, *args, **kwargs):  # noqa
-            if name == 'osgeo.gdal':
-                raise ModuleNotFoundError("No osgeo")
-            if name == 'gdal':
-                return unittest.mock.MagicMock(__name__='gdal')
-            raise ModuleNotFoundError()
+    mocker.patch.dict(sys.modules, values={}, clear=False)
+    sys.modules.pop('bs4', None)
 
-        mock_import.side_effect = side_effect
-        result = _check_dependencies('gdal')
-        assert result.__name__ == 'gdal'
+    result = _check_dependencies('beautifulsoup4')
 
-    # 4. Test Missing Dependency Error Message
-    with unittest.mock.patch('importlib.util.find_spec', return_value=None):
-        with pytest.raises(ModuleNotFoundError, match="pip install unknown"):
-            _check_dependencies('unknown')
+    mock_import.assert_called_once_with('bs4')
+    assert result.__name__ == 'bs4'
+
+    # Test GDAL fallback (osgeo.gdal -> gdal -> Error)
+    mock_import.reset_mock(return_value=True, side_effect=True)
+    # Simulate osgeo.gdal missing, but legacy gdal existing
+    def side_effect(name, *args, **kwargs):  # noqa
+        if name == 'osgeo.gdal':
+            raise ModuleNotFoundError("No osgeo")
+        if name == 'gdal':
+            m = mocker.MagicMock()
+            # MANUALLY assign __name__ (constructor assignment fails for magic attributes)
+            m.__name__ = 'gdal'
+            return m
+        raise ModuleNotFoundError()
+
+    mock_import.side_effect = side_effect
+    result = _check_dependencies('gdal')
+    # Check that it called both osgeo.gdal (failed) and gdal (success)
+    assert mock_import.call_count == 2
+    assert result.__name__ == 'gdal'
+
+    # Test missing dependency error message
+    mock_import.reset_mock(side_effect=True)
+    mock_import.side_effect = ModuleNotFoundError("Not found")
+    with pytest.raises(ModuleNotFoundError, match="pip install unknown"):
+        _check_dependencies('unknown')
 
 
 def test__lazy_check_dependencies(monkeypatch):
@@ -229,16 +239,16 @@ def test__check_file_pathname():
     assert path_to_test_exe is None  # Should return input name
 
 
-def test__format_error_message():
-    from pyhelpers._cache import _format_error_message
+def test__format_exception_message():
+    from pyhelpers._cache import _format_exception_message
 
-    res = _format_error_message(None)
+    res = _format_exception_message(None)
     assert res == ''
 
-    res = _format_error_message("test")
+    res = _format_exception_message("test")
     assert res == 'test.'
 
-    res = _format_error_message("test", prefix="Failed.")
+    res = _format_exception_message("test", prefix="Failed.")
     assert res == 'Failed. test.'
 
 

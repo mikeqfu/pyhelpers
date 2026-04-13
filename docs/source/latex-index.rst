@@ -18,7 +18,7 @@ PyHelpers Documentation
     :includehidden:
     :caption: Usage & Reference
 
-    modules
+    subpackages
 
 .. toctree::
     :maxdepth: 1

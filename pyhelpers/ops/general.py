@@ -9,6 +9,7 @@ import inspect
 import os
 import re
 import subprocess  # nosec
+import timeit
 
 import pandas as pd
 
@@ -44,6 +45,7 @@ def confirmed(prompt=None, confirmation_required=True, resp=False):
 
 
 def get_obj_attr(obj, col_names=None, as_dataframe=False):
+    # noinspection PyUnresolvedReferences
     """
     Retrieves main attributes of an object.
 
@@ -134,7 +136,56 @@ def eval_dtype(str_val):
     return val
 
 
+def is_visual_object(obj):
+    """
+    Determines if an object is a known figure or image type.
+
+    This function checks for visual objects post-conversion, supporting
+    Matplotlib Figures/Axes, Seaborn grids, Plotly figures, and PIL Images.
+    It is designed to be library-agnostic by checking for common methods
+    ('.show' or '.savefig') and using string-based type inspection to
+    avoid explicit imports of heavy libraries.
+
+    :param obj: The object to inspect.
+    :type obj: Any
+    :return: True if the object is identified as a figure or image, else False.
+    :rtype: bool
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import is_visual_object
+        >>> import matplotlib.pyplot as plt
+        >>> from PIL import Image
+        >>> import numpy as np
+
+        >>> # Case 1: Matplotlib Figure
+        >>> fig, ax = plt.subplots()
+        >>> is_visual_object(fig)
+        True
+
+        >>> # Case 2: PIL Image converted from array
+        >>> img = Image.fromarray(np.zeros((10, 10), dtype=np.uint8))
+        >>> is_visual_object(img)
+        True
+
+        >>> # Case 3: Raw data (not converted)
+        >>> is_visual_object([1, 2, 3])
+        False
+    """
+
+    # Matplotlib / Seaborn / Plotly (Objects with dedicated plotting methods)
+    if hasattr(obj, 'savefig') or hasattr(obj, 'show'):
+        return True
+
+    # PIL Image (Checking for the specific internal Image class is safest)
+    if 'PIL' in str(type(obj)):
+        return True
+
+    return False
+
+
 def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash=True, **kwargs):
+    # noinspection PyShadowingNames,PyUnresolvedReferences
     """
     Hashes a password using `hashlib.pbkdf2_hmac
     <https://docs.python.org/3/library/hashlib.html#hashlib.pbkdf2_hmac>`_
@@ -171,8 +222,8 @@ def hash_password(password, salt=None, salt_size=None, iterations=None, ret_hash
         >>> from pyhelpers.ops import hash_password, verify_password
         >>> test_pwd = 'test%123'
         >>> salt_size_ = 16
-        >>> sk = hash_password(password=test_pwd, salt_size=salt_size_)  # salt and key
-        >>> salt_data, key_data = sk[:salt_size_].hex(), sk[salt_size_:].hex()
+        >>> salt_and_key = hash_password(password=test_pwd, salt_size=salt_size_)  # salt and key
+        >>> salt_data, key_data = salt_and_key[:salt_size_].hex(), salt_and_key[salt_size_:].hex()
         >>> verify_password(password=test_pwd, salt=salt_data, key=key_data)
         True
         >>> test_pwd = b'test%123'
@@ -281,6 +332,81 @@ def func_running_time(func):
         return res
 
     return inner
+
+
+def benchmark_functions(func_map, test_value, iterations=10_000, verbose=True):
+    # noinspection PyShadowingNames,PyUnresolvedReferences
+    """
+    Compares the execution time of multiple functions using a single test value.
+
+    This function iterates through a mapping of names to callables, times their
+    execution over a specified number of iterations, and prints the results
+    to the console in a formatted table.
+
+    :param func_map: A dictionary where keys are display names and values are the functions
+        to be tested.
+    :type func_map: dict[str, typing.Callable]
+    :param test_value: The input argument to be passed to each function.
+        Should be immutable or not modified by the tested functions.
+    :type test_value: typing.Any
+    :param iterations: Number of times to execute each function. Defaults to ``10_000``.
+    :type iterations: int
+    :param verbose: Whether to print results to console. Defaults to ``True``.
+    :type verbose: bool
+    :return: A dictionary mapping function names to their total execution time (in seconds).
+    :rtype: dict[str, float]
+
+    **Example**::
+
+        >>> from pyhelpers.ops import benchmark_functions
+        >>> func_map = {
+        ...     'list_comp': lambda x: [i for i in range(x)],
+        ...     'list_cast': lambda x: list(range(x))
+        ... }
+        >>> benchmark_functions(func_map, test_value=1_000)
+        Method    | Total Time (s)  | Avg Time (ms)
+        ---------------------------------------------------
+        list_comp | 0.201340        | 0.020134
+        list_cast | 0.113083        | 0.011308
+        {'list_comp': 0.20134030003100634, 'list_cast': 0.11308330000611022}
+
+        >>> # Without console output (just get results)
+        >>> results = benchmark_functions(func_map, test_value=1_000, verbose=False)
+        >>> results
+        {'list_comp': 0.20846570003777742, 'list_cast': 0.10316660004900768}
+    """
+
+    # Validate inputs
+    if not func_map:
+        raise ValueError("`func_map` cannot be empty")
+    if not all(callable(f) for f in func_map.values()):
+        raise TypeError("All values in `func_map` must be callable")
+    if not isinstance(iterations, int) or iterations < 1:
+        raise ValueError("`iterations` must be a positive integer")
+    if not isinstance(verbose, bool):
+        raise TypeError("`verbose` must be a boolean")
+
+    results = {}
+    max_name_len = max((len(name) for name in func_map.keys()), default=10)
+
+    if verbose:
+        print(f"{'Method':<{max_name_len}} | {'Total Time (s)':<15} | {'Avg Time (ms)':<13}")
+        print("-" * (max_name_len + 42))
+
+    for name, func in func_map.items():
+        timer = timeit.Timer(lambda f=func: f(test_value))
+
+        try:
+            execution_time = timer.timeit(number=iterations)
+            avg_time_ms = (execution_time / iterations) * 1000
+            results[name] = execution_time
+            if verbose:
+                print(f"{name:<{max_name_len}} | {execution_time:<15.6f} | {avg_time_ms:<13.6f}")
+        except Exception as e:
+            if verbose:
+                print(f"{name:<{max_name_len}} | Failed: {str(e)}")
+
+    return results
 
 
 def get_git_branch(verbose=False):
