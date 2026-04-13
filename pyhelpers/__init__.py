@@ -24,7 +24,7 @@ __email__ = metadata['Email']
 
 __version__ = metadata['Version']
 __license__ = metadata['License']
-__copyright__ = f'2019-{datetime.datetime.now().year}, {__author__}'
+__copyright__ = f'2019-{datetime.datetime.now().year} {__author__}'
 
 __first_release__ = metadata['First release']
 
