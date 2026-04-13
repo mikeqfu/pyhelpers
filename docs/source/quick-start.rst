@@ -2,7 +2,7 @@
 Quick Start
 ===========
 
-This quick-start tutorial provides some simple examples for each of the :doc:`modules`. These examples demonstrate the capabilities of `pyhelpers`_ in assisting with data manipulation tasks.
+This quick-start tutorial provides some simple examples for each of the :doc:`subpackages`. These examples demonstrate the capabilities of `pyhelpers`_ in assisting with data manipulation tasks.
 
 .. _quickstart-preparation:
 
@@ -769,7 +769,7 @@ Now we have removed all the databases created in this notebook and restored the 
 
 Any issues regarding the use of pyhelpers are welcome and should be logged/reported onto `Issue Tracker`_.
 
-For more details and examples, check :doc:`modules`.
+For more details and examples, check :doc:`subpackages`.
 
 
 .. _`pyhelpers`: https://pypi.org/project/pyhelpers/
