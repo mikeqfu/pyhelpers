@@ -1,4 +1,4 @@
-build==1.4.2
+build==1.4.3
 fastparquet==2026.3.0
 fiona==1.10.1
 folium==0.20.0

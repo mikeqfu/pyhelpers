@@ -1,3 +1,7 @@
+.. raw:: latex
+
+    \setcounter{secnumdepth}{-1}
+
 ============
 Contributors
 ============
@@ -29,3 +33,8 @@ Contributors
 
     - `Qian Fu <https://github.com/mikeqfu>`_
     - `Xiangyong Luo <https://github.com/xyluo25>`_
+
+
+.. raw:: latex
+
+    \setcounter{secnumdepth}{2}

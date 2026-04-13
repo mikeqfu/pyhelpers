@@ -52,7 +52,7 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
     :includehidden:
     :caption: Usage & Reference
 
-    modules
+    subpackages
 
 .. toctree::
     :maxdepth: 1

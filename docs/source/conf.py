@@ -247,7 +247,7 @@ latex_engine = 'pdflatex'
 
 # Grouping the document tree into LaTeX files:
 latex_documents = [
-    ('latexindex',  # source start file
+    ('latex-index',  # source start file
      f'{__pkgname__}.tex',  # target name
      f'{__project__} Documentation',  # title
      __author__,  # author

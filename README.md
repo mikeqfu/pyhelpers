@@ -26,7 +26,7 @@ For more information, see the [Installation](https://pyhelpers.readthedocs.io/en
 
 ## Quick start
 
-For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/modules.html).
+For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/subpackages.html).
 
 These examples briefly demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining work processes.
 
