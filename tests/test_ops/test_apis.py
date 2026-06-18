@@ -11,19 +11,23 @@ from pyhelpers.ops.apis import *
 
 class TestCrossRefOrcid:
 
+    # noinspection PyNestedDecorators
     @pytest.fixture(scope='class')
-    def co(self):
+    @classmethod
+    def co(cls):
         return CrossRefOrcid(my_name="Fu, Qian")
 
+    # noinspection PyNestedDecorators
     @pytest.fixture(scope='class')
-    def orcid_id(self):
+    @classmethod
+    def orcid_id(cls):
         return '0000-0002-6502-9934'
 
     def test_init(self, co):
         assert co.my_name == "Fu, Qian"
 
     def test_get_orcid_profile(self, co, orcid_id, capfd):
-        profile_data = co.get_orcid_profile(orcid_id)
+        profile_data: dict = co.get_orcid_profile(orcid_id)
         assert list(profile_data.keys()) == [
             'orcid-identifier',
             'preferences',
