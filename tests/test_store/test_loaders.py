@@ -57,9 +57,6 @@ def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd):
         # Should trigger ValueError -> pq.read_table -> to_pandas()
         with pytest.warns(UserWarning, match="Falling back to PyArrow"):
             retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
-    elif engine == 'fastparquet' and data_type == 'df':
-        with pytest.warns(UserWarning, match="retried and resolved using `pyarrow`"):
-            retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
     else:
         retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
         out, _ = capfd.readouterr()

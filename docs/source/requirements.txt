@@ -1,11 +1,11 @@
 furo==2025.12.19
-numpy==2.4.4
-pandas==3.0.2
+numpy==2.4.6
+pandas==3.0.3
 pyproj==3.7.2
-requests==2.33.1
+requests==2.34.2
 shapely==2.1.2
 Sphinx==9.1.0
 sphinx-copybutton==0.5.2
 sphinx-new-tab-link==0.8.1
 sphinx-toggleprompt==0.6.0
-SQLAlchemy==2.0.49
+SQLAlchemy==2.0.51
