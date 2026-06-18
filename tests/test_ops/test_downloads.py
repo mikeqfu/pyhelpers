@@ -28,7 +28,7 @@ def test__download_file_from_url(total_records, validate, content_length, tmp_pa
     # Mock response with Content-Length: 0
     mock_response = Mock()
     mock_response.status_code = 200  # Success!
-    mock_response.headers = {'Content-Length': content_length}  # No Content-Length
+    mock_response.headers = {'Content-Length': str(content_length)}  # No Content-Length
     mock_response.content = b''
     mock_response.url = 'http://test_download_file_from_url.com/test.txt'
     mock_response.__enter__ = Mock(return_value=mock_response)
