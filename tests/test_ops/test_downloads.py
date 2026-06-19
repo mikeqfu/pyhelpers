@@ -53,6 +53,21 @@ def test__download_file_from_url(total_records, validate, content_length, tmp_pa
                     assert "Warning" in out and "validation skipped" not in out
 
 
+def test__download_file_from_url_with_compressed_content_encoding(tmp_path, capfd):
+    path_to_file = tmp_path / "test.txt"
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = {'Content-Length': 1, 'Content-Encoding': 'gzip'}
+    mock_response.url = 'http://test_download_file_from_url.com/test.txt'
+    mock_response.iter_content = Mock(return_value=[b'col1,col2\nval1,val2\n'])
+
+    _download_file_from_url(mock_response, path_to_file, disable=True)
+
+    out, _ = capfd.readouterr()
+    assert "Byte-count validation skipped" in out
+    assert path_to_file.read_bytes() == b'col1,col2\nval1,val2\n'
+
+
 @pytest.mark.parametrize('verbose', [True, False])
 @pytest.mark.parametrize('stream_download', [True, False])
 def test_download_file_from_url(verbose, stream_download, tmp_path, capfd):

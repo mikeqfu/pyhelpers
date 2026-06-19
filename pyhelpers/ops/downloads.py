@@ -160,7 +160,18 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     return file_size, chunk_size, total_rec, pbar_args, pbar_indent
 
 
-def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent):
+def _has_compressed_content_encoding(response):
+    """
+    Whether ``requests`` may yield decoded bytes for a compressed response body.
+    """
+
+    content_encoding = response.headers.get('Content-Encoding', '').lower()
+    encodings = (x.strip() for x in content_encoding.split(','))
+    return any(x in {'br', 'deflate', 'gzip'} for x in encodings)
+
+
+def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent,
+                              skip_byte_count=False):
     """
     Validate the integrity of the downloaded file against expected metrics.
 
@@ -176,6 +187,8 @@ def _validate_downloaded_file(validate, file_size, written, total_rec, actual_re
     :type actual_records: int
     :param indent: Formatted indentation string for messages.
     :type indent: str
+    :param skip_byte_count: Whether to skip strict byte-count matching.
+    :type skip_byte_count: bool
     :raises ValueError: If byte counts do not match when ``file_size > 0``.
     """
 
@@ -184,7 +197,10 @@ def _validate_downloaded_file(validate, file_size, written, total_rec, actual_re
         return
 
     if file_size > 0:
-        if written != file_size:
+        if skip_byte_count:
+            print(f"Done.\n"
+                  f"{indent}(Byte-count validation skipped for compressed response content.)")
+        elif written != file_size:
             print("Failed.")
             raise ValueError(
                 f"Byte count mismatch. Expected {file_size} bytes, but received {written} bytes.")
@@ -387,7 +403,8 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 
         _validate_downloaded_file(
             validate=validate, file_size=file_size, written=written,
-            total_rec=total_rec, actual_records=actual_records, indent=validate_indent
+            total_rec=total_rec, actual_records=actual_records, indent=validate_indent,
+            skip_byte_count=_has_compressed_content_encoding(response)
         )
 
     except Exception as e:
