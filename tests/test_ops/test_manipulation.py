@@ -246,5 +246,36 @@ def test_flatten_columns():
     assert flatten_columns([('A',), ('B', 'C')], ignore_linear_level=True) == ['A', 'B']
 
 
+def test_standardize_column_names():
+    """
+    Verify the column standardization pipeline across diverse DataFrame configurations.
+
+    Validates casing transformations, custom prefix insertions, token separations and column
+    exclusion tracking against structural modifications.
+    """
+
+    raw_df = example_dataframe()
+
+    cols = standardize_column_names(raw_df).columns.tolist()
+    assert cols == ['longitude', 'latitude']
+
+    raw_df = pd.DataFrame(columns=['EstablishmentType', 'Rating-Value', '2026?'])
+    cols = standardize_column_names(raw_df).columns.tolist()
+    assert cols == ['establishment_type', 'rating_value', '2026']
+
+    cols = standardize_column_names(raw_df, prefix='col_').columns.tolist()
+    assert cols == ['establishment_type', 'rating_value', 'col_2026']
+
+    cols = standardize_column_names(raw_df, uppercase=True).columns.tolist()
+    assert cols == ['ESTABLISHMENT_TYPE', 'RATING_VALUE', '2026']
+
+    cols = standardize_column_names(raw_df, sep='-').columns.tolist()
+    assert cols == ['establishment-type', 'rating-value', '2026']
+
+    # Exclude specific columns from being altered by formatting transformations
+    cols = standardize_column_names(raw_df, exclude=['Rating-Value']).columns.tolist()
+    assert cols == ['establishment_type', 'Rating-Value', '2026']
+
+
 if __name__ == '__main__':
     pytest.main()
