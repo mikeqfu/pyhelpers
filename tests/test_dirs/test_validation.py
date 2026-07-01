@@ -9,7 +9,8 @@ from pathlib import Path
 import pytest
 
 from pyhelpers.dirs.validation import check_files_exist, check_relative_pathname, \
-    get_file_pathnames, is_path_to_dir, normalize_pathname, resolve_dir, validate_filename
+    get_file_pathnames, is_path_to_dir, normalize_pathname, resolve_dir, standardize_pathname, \
+    validate_filename
 
 
 @pytest.fixture(scope='module')
@@ -131,6 +132,32 @@ def test_check_relative_pathname():
     subdir = os.path.join(os.getcwd(), "test_dir")
     rel_path = check_relative_pathname(subdir)
     assert rel_path == "test_dir"
+
+
+def test_standardize_pathname():
+    # Test clean string name transformation to lowercase with separators
+    path = standardize_pathname("Random Evaluation Name")
+    assert path == Path("random-evaluation-name")
+
+    # Test preservation of leading punctuation markers on single files
+    path = standardize_pathname("-license.txt")
+    assert path == Path("-license.txt")
+
+    # Test relative Windows-style subpath evaluation across directory depths
+    path = standardize_pathname("Users/Username/ProjectData/schema-v2.json")
+    assert path.parent.name == "ProjectData"
+
+    # Test custom separator override processing with path objects
+    path = standardize_pathname(Path("/Archive/Old Folders/MyScript.py"), sep="_")
+    assert path.name == "my_script.py"
+
+    # Test parent directory preservation when parents parameter is False
+    path = standardize_pathname("/Archive/Old Folders/MyScript.py", parents=False)
+    assert path == Path("/Archive/Old Folders/my-script.py")
+
+    # Test deep path standardization across all nodes when parents is True
+    path = standardize_pathname("/Archive/Old Folders/MyScript.py", parents=True)
+    assert path == Path("/archive/old-folders/my-script.py")
 
 
 if __name__ == '__main__':
