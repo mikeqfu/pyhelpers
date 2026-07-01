@@ -10,7 +10,7 @@ import math
 import numpy as np
 import pandas as pd
 
-from .._cache import _lazy_check_dependencies
+from .._cache import _lazy_check_dependencies, _normalize_token
 
 
 # ==================================================================================================
@@ -596,7 +596,7 @@ def create_rotation_matrix(theta):
 
         - The rotation matrix is defined as:
 
-            .. code-block:: python
+            .. code-block::
 
                 [[cos(theta), -sin(theta)],
                  [sin(theta), cos(theta)]]
@@ -963,3 +963,103 @@ def flatten_columns(columns, ignore_linear_level=False):
             flattened_columns.append('_'.join(col))
 
     return flattened_columns
+
+
+def standardize_column_names(df, prefix='', uppercase=False, sep='_', exclude=None):
+    # noinspection PyShadowingNames
+    """
+    Standardize DataFrame column names to a clean, production-ready format.
+
+    This function handles ``camelCase``, ``PascalCase``, spaces and non-ASCII characters by
+    cleaning column tokens, resolving formatting duplicates and applying consistent casing
+    transformations.
+
+    :param df: The target DataFrame whose columns require renaming.
+    :type df: pandas.DataFrame
+    :param prefix: An optional string to prepend to columns starting with digits.
+        Defaults to an empty string ``''``.
+    :type prefix: str
+    :param uppercase: If ``True``, converts the final output columns to UPPERCASE.
+        Defaults to ``False``.
+    :type uppercase: bool
+    :param sep: The string character used to separate name terms. Defaults to ``'_'``.
+    :type sep: str
+    :param exclude: An optional sequence of column labels to preserve in their exact raw form.
+        Defaults to ``None``.
+    :type exclude: collections.abc.Iterable | None
+    :return: A copy of the DataFrame with clean standardized column identifiers.
+    :rtype: pandas.DataFrame
+
+    **Examples**::
+
+        >>> from pyhelpers.ops import standardize_column_names
+        >>> from pyhelpers._cache import example_dataframe
+        >>> import pandas as pd
+
+        >>> raw_df = example_dataframe()
+        >>> standardize_column_names(raw_df).columns.tolist()
+        ['longitude', 'latitude']
+
+        >>> raw_df = pd.DataFrame(columns=['EstablishmentType', 'Rating-Value', '2026?'])
+        >>> standardize_column_names(raw_df).columns.tolist()
+        ['establishment_type', 'rating_value', '2026']
+
+        >>> standardize_column_names(raw_df, prefix="col_").columns.tolist()
+        ['establishment_type', 'rating_value', 'col_2026']
+
+        >>> standardize_column_names(raw_df, uppercase=True).columns.tolist()
+        ['ESTABLISHMENT_TYPE', 'RATING_VALUE', '2026']
+
+        >>> standardize_column_names(raw_df, sep='-').columns.tolist()
+        ['establishment-type', 'rating-value', '2026']
+
+        >>> # Exclude specific columns from being altered by the pipeline formatting
+        >>> standardize_column_names(raw_df, exclude=['Rating-Value']).columns.tolist()
+        ['establishment_type', 'Rating-Value', '2026']
+    """
+
+    # Cast exclude parameter into a set layout to ensure high-performance O(1) membership lookups
+    exclude_set = set(exclude) if exclude is not None else set()
+
+    final_columns = []
+    seen = {}
+
+    for idx, col in enumerate(df.columns):
+        # Operational bypass check for columns explicitly targeted for exclusion
+        if col in exclude_set:
+            final_columns.append(col)
+            continue
+
+        col_str = str(col).strip()
+        if not col_str or pd.isna(col):
+            name = f'{prefix}{idx}' if prefix else f'col_{idx}'
+        else:  # Clean the column token string structure safely
+            name = _normalize_token(col_str, preserve_dot=False)
+
+            # Prepend chosen prefix if the cleaned token begins with a digit
+            if name and name[0].isdigit() and prefix:
+                name = f'{prefix}{name}'
+
+            # Fallback handling if character cleaning leaves an empty string token
+            if not name:
+                name = f'{prefix}{idx}' if prefix else f'col_{idx}'
+
+        # Map internal underscores to the designated separator character
+        if sep != '_':
+            name = name.replace('_', sep)
+
+        if uppercase:
+            name = name.upper()
+
+        if name in seen:  # Resolve column naming collisions by tracking duplicates
+            seen[name] += 1
+            name = f'{name}{sep}{seen[name]}'
+        else:
+            seen[name] = 0
+
+        final_columns.append(name)
+
+    df_transformed = df.copy()
+    df_transformed.columns = final_columns
+
+    return df_transformed
