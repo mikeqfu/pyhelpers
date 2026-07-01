@@ -5,9 +5,10 @@ Utilities for directory/file validation.
 import errno
 import os
 import re
+from pathlib import Path
 
 from .navigation import cd
-from .._cache import _check_relative_pathname, _normalize_pathname
+from .._cache import _check_relative_pathname, _normalize_pathname, _normalize_token
 
 
 def normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
@@ -421,3 +422,79 @@ def check_relative_pathname(pathname, normalized=True):
     """
 
     return _check_relative_pathname(pathname=pathname, normalized=normalized)
+
+
+def standardize_pathname(path, sep="-", parents=False):
+    """
+    Standardize file and directory paths.
+
+    This function handles camelCase, spaces and special characters while preserving file extensions
+    (``"."``) and operating system path anchors (``"/"`` or ``"C:\\"``).
+
+    :param path: The target file or directory path ``str`` or ``pathlib.Path`` object to clean.
+    :type path: str | pathlib.Path
+    :param sep: The character used to separate words. Defaults to ``"-"``.
+    :type sep: str
+    :param parents: If ``True``, standardizes all parent directories in the path layout.
+        If ``False`` (default), only standardizes the final file or folder name.
+    :type parents: bool
+    :return: A standardized operating system path object.
+    :rtype: pathlib.Path
+
+    **Examples**::
+
+        >>> from pyhelpers.dirs import standardize_pathname
+        >>> from pathlib import Path
+
+        >>> standardize_pathname('Random Evaluation Name')  # On Windows
+        WindowsPath('random-evaluation-name')
+
+        >>> standardize_pathname("-license.txt")
+        WindowsPath('-license.txt')
+
+        >>> standardize_pathname('C:/Users/Username/ProjectData/schema-v2.json')
+        WindowsPath('C:/Users/Username/ProjectData/schema-v2.json')
+
+        >>> standardize_pathname(Path('/Archive/Old Folders/MyScript.py'), sep="_")
+        WindowsPath('/Archive/Old Folders/my_script.py')
+
+        >>> # Only standardize the filename, leave the directories alone
+        >>> standardize_pathname('/Archive/Old Folders/MyScript.py', parents=True)
+        WindowsPath('/archive/old-folders/my-script.py')
+    """
+
+    path_obj = Path(path)
+    cleaned_parts = []
+
+    for idx, part in enumerate(path_obj.parts):
+        # Protect OS root anchors (e.g. "C:\\" or "/")
+        if idx == 0 and (part.endswith(":\\") or part == "/" or part == "\\"):
+            cleaned_parts.append(part)
+            continue
+
+        # Skip parent processing if explicitly requested by configuration
+        if not parents and idx < len(path_obj.parts) - 1:
+            cleaned_parts.append(part)
+            continue
+
+        # Clean the segment using the internal tracking normalizer
+        name = _normalize_token(part, preserve_dot=True)
+
+        # Substitute standard underscores with the designated connector
+        if sep != "_":
+            name = name.replace("_", sep)
+
+        # Condense consecutive accidental separators along token boundaries
+        if len(name) > 1:
+            if name.startswith(sep * 2):
+                name = f"{sep}{name.lstrip(sep)}"
+            if name.endswith(sep * 2):
+                name = f"{name.rstrip(sep)}{sep}"
+
+        # Fallback safeguard to prevent returning empty path tokens
+        if not name or name == "." or name == sep:
+            name = f"name_{idx}"
+
+        cleaned_parts.append(name)
+
+    return Path(*cleaned_parts)
