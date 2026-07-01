@@ -405,6 +405,64 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
+def _normalize_token(text, preserve_dot=False):
+    """
+    Normalize a single string token to ``snake_case`` format.
+
+    This function handles ``camelCase`` and ``PascalCase`` structural splits, forces lowercase,
+    swaps common spacing symbols to underscores and strips out illegal punctuation characters.
+
+    :param text: The raw ``str`` token or name segment to clean.
+    :type text: str
+    :param preserve_dot: If ``True``, protects the dot character (``.``) from being stripped to
+        safeguard file extensions. Defaults to ``False``.
+    :type preserve_dot: bool
+    :return: A cleaned, lowercase snake_case representation of the ``text`` parameter.
+    :rtype: str
+    """
+
+    if not text:
+        return ''
+
+    # Isolate leading and trailing hyphens, underscores and spaces immediately
+    leading_match = re.match(r'^[\s\-_]+', text)
+    trailing_match = re.search(r'[\s\-_]+$', text)
+
+    leading_prefix = leading_match.group(0) if leading_match else ''
+    trailing_suffix = trailing_match.group(0) if trailing_match else ''
+
+    # Strip boundaries off the core text so conversions can run safely
+    core_text = text[len(leading_prefix):]
+    if trailing_suffix:
+        core_text = core_text[:-len(trailing_suffix)]
+
+    # Handle camelCase and PascalCase splitting transformations cleanly
+    txt = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', core_text)
+    txt = re.sub(r'([A-Z]+)(?=[A-Z][a-z])', r'\1_', txt)
+    txt = txt.lower()  # Cast everything to lowercase
+
+    # Convert spaces, hyphens and slashes to underscores
+    txt = re.sub(r'[\s\-/\\]+', '_', txt)
+
+    # Strip punctuation (conditionally keeping the dot for file extensions)
+    if preserve_dot and '.' in core_text:
+        txt = re.sub(r'[^\w.]', '', txt)
+        txt = re.sub(r'\.+', '.', txt)  # Condense duplicate consecutive dots if present
+    else:
+        txt = re.sub(r'\W', '', txt)
+
+    # Condense duplicate consecutive underscores and strip interior edges
+    txt = re.sub(r'_+', '_', txt).strip('_')
+
+    # Re-attach raw boundaries using underscores as placeholder flags
+    if leading_prefix:
+        txt = f'_{txt}'
+    if trailing_suffix and not txt.endswith('.'):  # Don't append past file extensions
+        txt = f'{txt}_'
+
+    return txt
+
+
 def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
     # noinspection PyShadowingNames
     """
