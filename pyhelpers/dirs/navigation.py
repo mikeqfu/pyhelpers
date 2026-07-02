@@ -4,127 +4,146 @@ Utilities for directory/file navigation.
 
 import importlib.resources
 import os
-import re
+from pathlib import Path
 
 from .._cache import _add_slashes, _check_file_pathname, _normalize_pathname
 
 
-def cd(*subdir, mkdir=False, cwd=None, back_check=False, normalized=True, **kwargs):
+def cd(*subdir, mkdir=False, cwd=None, back_check=False, as_str=False, normalized=True, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Specifies the pathname of a directory (or file).
+    Specify and resolve the pathname of a directory or file.
+
+    This function constructs an operating system-agnostic path object. Handles missing directories
+    and resolves parent path traversal dynamically.
 
     :param subdir: Name of a directory or directories (and/or a filename).
-        ``None`` values are ignored.
+        ``None`` values are safely ignored.
     :type subdir: str | bytes | pathlib.Path | os.PathLike | None
-    :param mkdir: Whether to create the directory; defaults to ``False``.
+    :param mkdir: Whether to create the directory if it does not exist. Defaults to ``False``.
     :type mkdir: bool
-    :param cwd: Current working directory; defaults to ``None``.
+    :param cwd: Current working directory fallback. Defaults to ``None``.
     :type cwd: str | bytes | pathlib.Path | os.PathLike | None
-    :param back_check: Whether to check if a parent directory exists; defaults to ``False``.
+    :param back_check: Whether to check if a parent directory exists. Defaults to ``False``.
     :type back_check: bool
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :param as_str: If ``True``, forces the return type to be a standard string instead of
+        a path object. Defaults to ``False``.
+    :type as_str: bool
+    :param normalized: Whether to normalize the returned pathname structurally.
+        Defaults to ``True``.
     :type normalized: bool
-    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
-        `os.makedirs`_.
-    :return: Pathname of the directory or file.
-    :rtype: str
+    :param kwargs: Optional parameters (e.g. ``mode=0o777``) passed to `pathlib.Path.mkdir`_.
+    :return: A standardized path object representing the target directory or file.
+    :rtype: Path | str
 
-    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
+    .. _`pathlib.Path.mkdir`: https://docs.python.org/3/library/pathlib.html#pathlib.Path.mkdir
 
     **Examples**::
 
         >>> from pyhelpers.dirs import cd
-        >>> import os
-        >>> import pathlib
-        >>> current_wd = cd()  # Current working directory
-        >>> os.path.relpath(current_wd)
-        '.'
-        >>> os.path.relpath(cd(None))
-        '.'
+        >>> from pathlib import Path
+
+        >>> cur_dir = cd()  # Current working directory
+        >>> cur_dir.name
+        'pyhelpers'
+
+        >>> cd(None).relative_to(cur_dir)  # On Windows OS
+        WindowsPath('.')
+
         >>> # The directory will be created if it does not exist
-        >>> path_to_tests_dir = cd("tests")
-        >>> os.path.relpath(path_to_tests_dir)
-        'tests'
-        >>> path_to_tests_dir = cd(pathlib.Path("tests"))
-        >>> os.path.relpath(path_to_tests_dir)
-        'tests'
-        >>> path_to_tests_dir = cd("tests\\folder1/folder2")  # on Windows
-        >>> os.path.relpath(path_to_tests_dir)  # on Windows
-        'tests\\folder1\\folder2'
+        >>> test_path = cd("tests")
+        >>> test_path.relative_to(cur_dir)
+        WindowsPath('tests')
+
+        >>> test_path = cd("tests\\folder1/folder2")
+        >>> test_path.relative_to(cur_dir)
+        WindowsPath('tests/folder1/folder2')
+
+        >>> test_path = cd(Path("tests\\folder1"), as_str=True, normalized=False)
+        >>> test_path  # On Windows OS
+        'X:\\pyhelpers\\tests\\folder1'
     """
 
     # Current working directory
-    path = os.getcwd() if cwd in {None, "."} else os.fsdecode(cwd)
+    path = Path.cwd() if cwd in {None, ".", ""} else Path(os.fsdecode(cwd)).resolve()
 
     if back_check:
-        while not os.path.exists(path):
-            parent = os.path.dirname(path)
-            if parent == path:  # Reached root (e.g. / or C:\)
-                break
-            path = parent
+        while not path.exists() and path.parent != path:
+            path = path.parent
 
     for f in subdir:
         if f is None:
             continue
 
-        f = os.fsdecode(f)  # f.decode() if isinstance(f, bytes) else str(f)
-        if f == "..":
-            path = os.path.dirname(path)
-        else:
-            path = os.path.join(path, re.sub(r"[\\/]+", re.escape(os.sep), f))
+        # Replace backslashes dynamically to ensure cross-OS string injection works safely
+        f_str = os.fsdecode(f).replace("\\", "/")
+        path = path.parent if f_str == ".." else path.joinpath(f_str)
 
     if mkdir:
-        # Check if the path looks like a file (has an extension)
-        base = os.path.basename(path)
-        dir_to_make = os.path.dirname(path) if ('.' in base and not base.startswith('.')) else path
+        kwargs.setdefault('exist_ok', True)
+        kwargs.setdefault('parents', True)
 
-        if dir_to_make:
-            kwargs['exist_ok'] = True
-            os.makedirs(dir_to_make, **kwargs)
+        # Check if the path targets a file (contains an extension and is not hidden-only)
+        if path.suffix and "." in path.name:
+            path.parent.mkdir(**kwargs)
+        else:
+            path.mkdir(**kwargs)
 
-    return _normalize_pathname(path) if normalized else path
+    if as_str:
+        return _normalize_pathname(path) if normalized else str(path)
+
+    return path
 
 
-def cdd(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
+def cdd(*subdir, mkdir=False, data_dir="data", **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Specifies the pathname of a directory (or file) under `data_dir`.
+    Specify and resolve the pathname of a directory (or file) under the designated ``data_dir``.
 
     :param subdir: Name of a directory or directories (and/or a filename).
-    :type subdir: str | os.PathLike | bytes
-    :param data_dir: Name of the directory where data is (or will be) stored;
-        defaults to ``"data"``.
-    :type data_dir: str | os.PathLike | bytes
-    :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
+    :type subdir: str | bytes | pathlib.Path | os.PathLike | None
+    :param mkdir: Whether to create the directory if it does not exist. Defaults to ``False``.
     :type mkdir: bool
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
-    :type normalized: bool
-    :param kwargs: [Optional] Additional parameters for the function :func:`~pyhelpers.dirs.cd`.
+    :param data_dir: Name of the directory where data is stored. Defaults to ``"data"``.
+    :type data_dir: str | bytes | pathlib.Path | os.PathLike
+    :param kwargs: Optional parameters passed to :func:`~pyhelpers.dirs.cd`.
     :return: Pathname of a directory or file under ``data_dir``.
-    :rtype: str
+    :rtype: pathlib.Path | str
 
     **Examples**::
 
-        >>> from pyhelpers.dirs import cdd, delete_dir
-        >>> import os
-        >>> path_to_dat_dir = cdd()
-        >>> # As `mkdir=False`, `path_to_dat_dir` will NOT be created if it doesn't exist
-        >>> os.path.relpath(path_to_dat_dir)
-        'data'
-        >>> path_to_dat_dir = cdd(data_dir="test_cdd", mkdir=True)
-        >>> # As `mkdir=True`, `path_to_dat_dir` will be created if it doesn't exist
-        >>> os.path.relpath(path_to_dat_dir)
-        'test_cdd'
+        >>> from pyhelpers.dirs import cd, cdd, delete_dir
+        >>> from pathlib import Path
+
+        >>> cur_dir = cd()
+        >>> cur_dir == Path.cwd()
+        True
+
+        >>> test_path = cdd()
+        >>> # As `mkdir=False`, `test_path` will NOT be created if it doesn't exist
+        >>> test_path.relative_to(cur_dir)
+        WindowsPath('data')
+
+        >>> test_path = cdd(data_dir="test_cdd", mkdir=True)
+        >>> # As `mkdir=True`, `test_path` will be created if it doesn't exist
+        >>> test_path.is_dir()
+        True
+        >>> test_path.relative_to(cur_dir)
+        WindowsPath('test_cdd')
+
         >>> # Delete the "test_cdd" folder
-        >>> delete_dir(path_to_dat_dir, verbose=True)
+        >>> delete_dir(test_path, verbose=True)
         To delete the directory "./test_cdd/"
         ? [No]|Yes: yes
         Deleting "./test_cdd/" ... Done.
+
         >>> # Set `data_dir` to be `"tests"`
-        >>> path_to_dat_dir = cdd("data", data_dir="test_cdd", mkdir=True)
-        >>> os.path.relpath(path_to_dat_dir)
-        'test_cdd\\data'
+        >>> test_path = cdd("data", data_dir="test_cdd", mkdir=True)
+        >>> test_path.relative_to(cur_dir)
+        WindowsPath('test_cdd/data')
+
         >>> # Delete the "test_cdd" folder and the sub-folder "data"
-        >>> test_cdd = os.path.dirname(path_to_dat_dir)
+        >>> test_cdd = test_path.parent
         >>> delete_dir(test_cdd, verbose=True)
         To delete the directory "./test_cdd/" (Not empty)
         ? [No]|Yes: yes
@@ -134,15 +153,13 @@ def cdd(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
         >>> # shutil.rmtree(test_cdd)
     """
 
-    kwargs.update({'mkdir': mkdir})
-    path = cd(data_dir, *subdir, normalized=normalized, **kwargs)
-
-    return path
+    return cd(data_dir, *subdir, mkdir=mkdir, **kwargs)
 
 
-def cd_data(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
+def cd_data(*subdir, data_dir="data", mkdir=False, as_str=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Specifies the pathname of a directory (or file) under ``data_dir`` of a package.
+    Specify and resolve the pathname of a directory (or file) under ``data_dir`` of a package.
 
     :param subdir: Name of a directory or directories (and/or a filename).
     :type subdir: str | os.PathLike | bytes
@@ -150,42 +167,45 @@ def cd_data(*subdir, data_dir="data", mkdir=False, normalized=True, **kwargs):
     :type data_dir: str | os.PathLike | bytes
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
     :type mkdir: bool
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
-    :type normalized: bool
-    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the function
-        `os.makedirs`_.
-    :return: Pathname of a directory or file under ``data_dir`` of a package.
-    :rtype: str
+    :param as_str: If ``True``, forces the return type to be a standard string instead of
+        a path object. Defaults to ``False``.
+    :type as_str: bool
+    :param kwargs: [Optional] Additional parameters (e.g. ``mode=0o777``) for the method
+        `pathlib.Path.mkdir`_.
+    :return: A normalized ``pathlib.Path`` object (or ``str``) of the requested target.
+    :rtype: pathlib.Path | str
 
     .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
 
     **Examples**::
 
         >>> from pyhelpers.dirs import cd_data
-        >>> import os
-        >>> path_to_dat_dir = cd_data("tests", mkdir=False)
-        >>> os.path.relpath(path_to_dat_dir)  # on Windows
-        'pyhelpers\\data\\tests'
+        >>> from pathlib import Path
+        >>> test_path = cd_data("tests", mkdir=False)
+        >>> test_path.relative_to(Path.cwd())  # on Windows
+        WindowsPath('pyhelpers/data/tests')
     """
 
-    data_dir_ = data_dir.decode() if isinstance(data_dir, bytes) else str(data_dir)
-    path = importlib.resources.files(__package__).joinpath(f"../{data_dir_}")
+    data_dir_ = os.fsdecode(data_dir).replace("\\", "/")
+    path = Path(importlib.resources.files(__package__)).joinpath("..", f"{data_dir_}").resolve()
 
     for x in subdir:
-        x = re.sub(
-            r"[\\/]+", re.escape(os.path.sep), x.decode() if isinstance(x, bytes) else str(x))
-        path = os.path.join(path, x)
+        if x is None:
+            continue
+
+        x_str = os.fsdecode(x).replace("\\", "/")
+        path = path.parent if x_str == ".." else path / x_str
 
     if mkdir:
-        path_to_file, ext = os.path.splitext(path)
+        kwargs.setdefault('exist_ok', True)
+        kwargs.setdefault('parents', True)
 
-        kwargs.update({'exist_ok': True})
-        if ext == '' or ext == b'':
-            os.makedirs(path_to_file, **kwargs)
+        if path.suffix and "." in path.name:
+            path.parent.mkdir(**kwargs)
         else:
-            os.makedirs(os.path.dirname(path_to_file), **kwargs)
+            path.mkdir(**kwargs)
 
-    return _normalize_pathname(path) if normalized else path
+    return str(path) if as_str else path
 
 
 def find_executable(name, options=None, target=None, normalized=True):
