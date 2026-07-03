@@ -722,6 +722,8 @@ def _find_file_path(name, options=None, target=None, as_str=False):
         if target_path.is_file() and name_str.lower() in target_path.name.lower():
             return True, (str(target_path) if as_str else target_path)
 
+        return False, None
+
     # Direct absolute/relative path lookup
     direct_path = pathlib.Path(name).resolve()
     if direct_path.is_file():  # Check if `name` itself is already a valid direct path

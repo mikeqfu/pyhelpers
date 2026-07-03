@@ -332,7 +332,8 @@ def test__find_file_path():
     # An invalid `target` (a directory, not a file) now falls through to the rest of the
     # search rather than giving up immediately, so this still finds it via PATH
     python_exe_exists, path_to_python_exe = _find_file_path(python_exe, target=os.getcwd())
-    assert python_exe_exists
+    assert not python_exe_exists
+    assert path_to_python_exe is None
 
     # Searching within a directory passed via `options` (the option-is-a-directory branch)
     python_exe_exists, path_to_python_exe = _find_file_path(python_exe, options=[python_dir])
