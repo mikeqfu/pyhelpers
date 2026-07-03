@@ -4,14 +4,21 @@ Test the module ``_cache.py``
 
 import os
 import sys
+from pathlib import Path
 
+import numpy as np
 import pytest
+import requests
+import shapely.geometry
+
+from pyhelpers._cache import _check_dependencies, _check_url_scheme, _confirmed, _find_file_path, \
+    _format_display_path, _format_exception_message, _get_ansi_color_code, _get_relative_path, \
+    _init_requests_session, _lazy_check_dependencies, _load_ansi_escape_codes, _normalize_path, \
+    _normalize_token, _print_failure_message, _transform_point_type, example_dataframe
 
 
 @pytest.mark.parametrize('osgb36', [False, True])
 def test_example_dataframe(osgb36):
-    from pyhelpers._cache import example_dataframe
-
     data = example_dataframe(osgb36=osgb36)
     assert data.shape == (4, 2)
     assert data.index.tolist() == ['London', 'Birmingham', 'Manchester', 'Leeds']
@@ -23,8 +30,6 @@ def test_example_dataframe(osgb36):
 
 
 def test__check_dependency(mocker):
-    from pyhelpers._cache import _check_dependencies
-
     result = _check_dependencies('os')
     assert result.__name__ == 'os'
 
@@ -45,6 +50,7 @@ def test__check_dependency(mocker):
 
     # Test GDAL fallback (osgeo.gdal -> gdal -> Error)
     mock_import.reset_mock(return_value=True, side_effect=True)
+
     # Simulate osgeo.gdal missing, but legacy gdal existing
     def side_effect(name, *args, **kwargs):  # noqa
         if name == 'osgeo.gdal':
@@ -70,11 +76,6 @@ def test__check_dependency(mocker):
 
 
 def test__lazy_check_dependencies(monkeypatch):
-    """
-    Test the decorator's ability to inject proxies and load modules on demand.
-    """
-    from pyhelpers._cache import _lazy_check_dependencies
-
     @_lazy_check_dependencies('numpy', 'pandas')  # No aliases
     def _test_import_numpy_pandas():
         return numpy.__name__ == 'numpy' and pandas.__name__ == 'pandas'  # noqa
@@ -133,8 +134,6 @@ def test__lazy_check_dependencies(monkeypatch):
 
 
 def test__confirmed(monkeypatch, capfd):
-    from pyhelpers._cache import _confirmed
-
     monkeypatch.setattr('builtins.input', lambda _: 'yes')
     if _confirmed(prompt="Testing if the function works?", resp=True):
         print("Passed.")
@@ -143,105 +142,216 @@ def test__confirmed(monkeypatch, capfd):
     assert "Passed." in out
 
 
-def test__normalize_pathname():
-    from pyhelpers._cache import _normalize_pathname
-    import pathlib
+def test__normalize_token():
+    """Test :func:`~pyhelpers._cache._normalize_token`."""
 
-    pathname = _normalize_pathname("tests\\data\\dat.csv")
-    assert pathname == 'tests/data/dat.csv'
+    # Empty input returns empty string
+    assert _normalize_token('') == ''
 
-    pathname = _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
-    assert pathname == './tests/data/dat.csv'
+    # camelCase and PascalCase are split on case transitions and lowercased
+    assert _normalize_token('camelCase') == 'camel_case'
+    assert _normalize_token('PascalCase') == 'pascal_case'
 
-    pathname = _normalize_pathname("tests//data/dat.csv".encode('utf-8'))
-    assert pathname == 'tests/data/dat.csv'
+    # Consecutive uppercase letters (acronyms) are split before the trailing word
+    assert _normalize_token('myHTTPServer') == 'my_http_server'
+    assert _normalize_token('HTTPServer') == 'http_server'
 
-    pathname = pathlib.Path("tests\\data/dat.csv")
-    pathname_1 = _normalize_pathname(pathname, sep=os.path.sep)
-    pathname_2 = _normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
-    if os.name == 'nt':
-        assert pathname_1 == 'tests\\data\\dat.csv'
-        assert pathname_2 == '.\\tests\\data\\dat.csv'
+    # Spaces, hyphens and slashes are converted to underscores
+    assert _normalize_token('my token name') == 'my_token_name'
+    assert _normalize_token('my-token-name') == 'my_token_name'
+    assert _normalize_token('my/token\\name') == 'my_token_name'
+
+    # Punctuation is stripped by default
+    assert _normalize_token('token!@#name') == 'tokenname'  # noqa
+
+    # Consecutive underscores (from collapsing or stripped punctuation) are condensed
+    assert _normalize_token('token   name') == 'token_name'
+    assert _normalize_token('token___name') == 'token_name'
+
+    # `preserve_dot=False` (default) strips dots along with other punctuation
+    assert _normalize_token('data.csv') == 'datacsv'
+
+    # `preserve_dot=True` keeps a single dot and condenses repeated dots
+    assert _normalize_token('data.csv', preserve_dot=True) == 'data.csv'
+    assert _normalize_token('data..csv', preserve_dot=True) == 'data.csv'
+
+    # Leading/trailing boundary characters (space, hyphen, underscore) are collapsed
+    # to a single flag underscore rather than preserved verbatim
+    assert _normalize_token('  token') == '_token'
+    assert _normalize_token('token  ') == 'token_'
+    assert _normalize_token('--token--') == '_token_'
+
+    # A trailing flag underscore is not appended past a preserved file extension
+    assert _normalize_token('data.csv  ', preserve_dot=True) == 'data.csv'
+
+    # A token consisting solely of boundary characters collapses to a single underscore,
+    # rather than doubling up from both the leading- and trailing-flag logic
+    assert _normalize_token('_') == '_'
+    assert _normalize_token('   ') == '_'
+
+    # Mixed case, spacing and punctuation combined
+    assert _normalize_token('  My Data-File!!') == '_my_data_file'
+
+
+def test__normalize_path():
+    """Test :func:`~pyhelpers._cache._normalize_path`."""
+
+    test_path_1 = "tests\\data\\dat.csv"
+    # Default behavior: mixed/backslash separators normalized to forward slashes
+    path = _normalize_path(test_path_1)
+    assert path == "tests/data/dat.csv"
+
+    # `add_slash=True` prepends "./" to a bare relative path
+    path = _normalize_path(test_path_1, add_slash=True)
+    assert path == "./tests/data/dat.csv"
+
+    # Repeated separators are collapsed; bytes input is decoded correctly
+    test_path_2 = "tests//data/dat.csv"
+    path = _normalize_path(test_path_2.encode("utf-8"))
+    assert path == "tests/data/dat.csv"
+
+    # `add_slash=True` is a no-op when the path already has a relative/absolute prefix
+    assert _normalize_path("./tests/data", add_slash=True) == "./tests/data"
+    assert _normalize_path("/tests/data", add_slash=True) == "/tests/data"
+    assert _normalize_path("C:/tests/data", add_slash=True) == "C:/tests/data"
+
+    # `sep` controls the separator used in the string output, and is platform-dependent
+    test_path_3 = Path("tests\\data/dat.csv")
+    path_1 = _normalize_path(test_path_3, sep=os.sep)
+    path_2 = _normalize_path(test_path_3, sep=os.sep, add_slash=True)
+    if os.name == "nt":
+        assert path_1 == test_path_1
+        assert path_2 == ".\\tests\\data\\dat.csv"
     else:
-        assert pathname_1 == 'tests/data/dat.csv'
-        assert pathname_2 == './tests/data/dat.csv'
+        assert path_1 == "tests/data/dat.csv"
+        assert path_2 == "./tests/data/dat.csv"
+
+    # `as_str=False` returns a `pathlib.Path`, and ignores `sep`/`add_slash` entirely
+    path_obj = _normalize_path(test_path_1, as_str=False)
+    assert isinstance(path_obj, Path)
+    assert path_obj == Path("tests/data/dat.csv")
+    assert _normalize_path(test_path_1, sep="\\", add_slash=True, as_str=False) == path_obj
 
 
-def test__add_slashes():
-    from pyhelpers._cache import _add_slashes
+def test__format_display_path():
+    """Test :func:`~pyhelpers._cache._format_display_path`."""
 
-    path = _add_slashes("pyhelpers\\data")
-    assert path == '"./pyhelpers/data/"'
+    # Default: forward-slash normalized, no leading "./" (prepend_dot=False by default);
+    # trailing slash added because "pyhelpers\data" has no extension (heuristically a dir)
+    path = _format_display_path("pyhelpers\\data")
+    assert path == '"pyhelpers/data/"'
 
-    path = _add_slashes("pyhelpers\\data", normalized=False)
+    # `normalized=False` preserves the raw separators; only the OS-native trailing slash is added
+    path = _format_display_path("pyhelpers\\data", normalized=False)
     if os.name == 'nt':
-        assert path == '".\\pyhelpers\\data\\"'
+        assert path == '"pyhelpers\\data\\"'
     else:
-        assert path == '"./pyhelpers/data/"'
+        assert path == '"pyhelpers\\data/"'
 
-    path = _add_slashes("pyhelpers\\data\\pyhelpers.dat", surrounded_by='')
+    # A path with an extension is not treated as a directory: no trailing slash
+    path = _format_display_path("pyhelpers\\data\\pyhelpers.dat", surrounded_by='')
+    assert path == 'pyhelpers/data/pyhelpers.dat'
+
+    # `prepend_dot=True` adds "./" to a bare relative path
+    path = _format_display_path("pyhelpers\\data\\pyhelpers.dat", prepend_dot=True, surrounded_by='')
     assert path == './pyhelpers/data/pyhelpers.dat'
 
+    # `prepend_dot=True` is a no-op when the path is already relative-prefixed or absolute
+    path = _format_display_path("./pyhelpers/data", prepend_dot=True, surrounded_by='')
+    assert path == './pyhelpers/data/'
+    path = _format_display_path("/pyhelpers/data", prepend_dot=True, surrounded_by='')
+    assert path == '/pyhelpers/data/'
 
-def test__check_relative_pathname():
-    from pyhelpers._cache import _check_relative_pathname
+    # `is_dir` overrides both the filesystem check and the extension heuristic
+    path = _format_display_path("pyhelpers.dat", is_dir=True, surrounded_by='')
+    assert path == 'pyhelpers.dat/'
+    path = _format_display_path("pyhelpers_data", is_dir=False, surrounded_by='')
+    assert path == 'pyhelpers_data'
 
-    pathname = ""
-    rel_path = _check_relative_pathname(pathname=pathname)
-    assert rel_path == pathname
+    # `surrounded_by` can wrap the output in any string, not just quotes
+    path = _format_display_path("pyhelpers.dat", is_dir=False, surrounded_by='**')
+    assert path == '**pyhelpers.dat**'
 
-    pathname = os.path.curdir
-    rel_path = _check_relative_pathname(os.path.curdir)
-    assert rel_path == pathname
+
+def test__get_relative_path():
+    """Test :func:`~pyhelpers._cache._get_relative_path`."""
+
+    # `pathlib.Path("")` resolves to the current working directory itself
+    assert _get_relative_path(path="") == '.'
+    assert _get_relative_path(path=os.path.curdir) == '.'
 
     if os.name == 'nt':
-        pathname = "C:\\Windows"
-        rel_path = _check_relative_pathname(pathname)
-        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
+        path = "C:\\Windows"
+        rel_path = _get_relative_path(path)
+        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(path)[0]
 
-    # Test an absolute path outside the working directory
+    # An absolute path outside the working directory is returned unchanged (as a `Path`
+    # when `normalized=False`); compare via `Path` equality rather than raw string equality,
+    # since `.resolve()` may alter the string (e.g. symlinks, trailing slashes)
     home_dir = os.path.expanduser("~")  # Cross-platform home directory
-    rel_path = _check_relative_pathname(home_dir, normalized=False)
-    assert rel_path == home_dir  # Should return unchanged
+    rel_path = _get_relative_path(home_dir, normalized=False)
+    assert isinstance(rel_path, Path)
+    assert rel_path == Path(home_dir).resolve()
 
-    # Test a relative path within the current working directory
+    # A relative path within the current working directory
     subdir = os.path.join(os.getcwd(), "test_dir")
-    rel_path = _check_relative_pathname(subdir)
+    rel_path = _get_relative_path(subdir)
     assert rel_path == "test_dir"
 
+    # `normalized=False` on a path within the CWD also returns a `Path`, not a string
+    rel_path_obj = _get_relative_path(subdir, normalized=False)
+    assert isinstance(rel_path_obj, Path)
+    assert rel_path_obj == Path("test_dir")
 
-def test__check_file_pathname():
-    from pyhelpers._cache import _check_file_pathname
 
-    python_exe = os.path.basename(sys.executable)
+def test__find_file_path():
+    """Test :func:`~pyhelpers._cache._find_file_path`."""
 
-    python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
+    python_exe = Path(sys.executable).name
+    python_dir = Path(sys.executable).parent
+
+    # Bare basename resolved via PATH; only check that *a* match was found with the expected
+    # basename -- `shutil.which()` isn't guaranteed to resolve to the exact same binary as
+    # `sys.executable` in shimmed/managed environments (pyenv, conda, venvs)
+    python_exe_exists, path_to_python_exe = _find_file_path(python_exe)
+    assert python_exe_exists
+    assert isinstance(path_to_python_exe, Path)
+    assert path_to_python_exe.name == python_exe
+
+    # Passing the full path directly is deterministic (hits the direct-path-lookup branch)
+    python_exe_exists, path_to_python_exe = _find_file_path(sys.executable)
     assert python_exe_exists
     assert str(path_to_python_exe) == sys.executable
 
-    # Use the directory containing Python
-    python_dir = os.path.dirname(sys.executable)
-    possible_paths = [python_dir, sys.executable]
-
-    # Check if specifying Python's actual path works
-    python_exe_exists, path_to_python_exe = _check_file_pathname(sys.executable)
+    # `as_str=True` returns an actual `str`, not just something convertible to one
+    python_exe_exists, path_to_python_exe = _find_file_path(sys.executable, as_str=True)
     assert python_exe_exists
-    assert str(path_to_python_exe) == sys.executable
-    python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=os.getcwd())
-    assert not python_exe_exists
-    python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
+    assert isinstance(path_to_python_exe, str)
+    assert path_to_python_exe == sys.executable
+
+    # An invalid `target` (a directory, not a file) now falls through to the rest of the
+    # search rather than giving up immediately, so this still finds it via PATH
+    python_exe_exists, path_to_python_exe = _find_file_path(python_exe, target=os.getcwd())
     assert python_exe_exists
 
-    # Check non-existent file
+    # Searching within a directory passed via `options` (the option-is-a-directory branch)
+    python_exe_exists, path_to_python_exe = _find_file_path(python_exe, options=[python_dir])
+    assert python_exe_exists
+    assert path_to_python_exe.name == python_exe
+
+    # `None` entries in `options` are skipped rather than raising
+    python_exe_exists, path_to_python_exe = _find_file_path(python_exe, options=[None, python_dir])
+    assert python_exe_exists
+
+    # A genuinely non-existent name, with no `options`/`target` able to resolve it, returns False
     text_exe = "pyhelpers.exe"
-    test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, options=possible_paths)
+    test_exe_exists, path_to_test_exe = _find_file_path(
+        text_exe, options=[python_dir, sys.executable])
     assert not test_exe_exists
-    assert path_to_test_exe is None  # Should return input name
+    assert path_to_test_exe is None  # Should return None when nothing matches
 
 
 def test__format_exception_message():
-    from pyhelpers._cache import _format_exception_message
-
     res = _format_exception_message(None)
     assert res == ''
 
@@ -253,8 +363,6 @@ def test__format_exception_message():
 
 
 def test__print_failure_message(capfd):
-    from pyhelpers._cache import _print_failure_message
-
     _print_failure_message('test', prefix="Failed.")
     out, _ = capfd.readouterr()
     assert out == 'Failed. test.\n'
@@ -262,8 +370,6 @@ def test__print_failure_message(capfd):
 
 @pytest.mark.parametrize('allowed_schemes', [None, {'https'}])
 def test__check_url_scheme(allowed_schemes):
-    from pyhelpers._cache import _check_url_scheme
-
     url = 'https://github.com/mikeqfu/pyhelpers'
     parsed_url = _check_url_scheme(url, allowed_schemes=allowed_schemes)
     assert parsed_url.netloc == 'github.com'
@@ -275,9 +381,6 @@ def test__check_url_scheme(allowed_schemes):
 
 @pytest.mark.parametrize('retry_status', ['default', 123])
 def test__init_requests_session(retry_status):
-    from pyhelpers._cache import _init_requests_session
-    import requests
-
     logo_url = 'https://www.python.org/static/community_logos/python-logo-master-v3-TM.png'
     s = _init_requests_session(logo_url, retry_status=retry_status)
     assert isinstance(s, requests.sessions.Session)
@@ -287,8 +390,6 @@ def test__init_requests_session(retry_status):
 @pytest.mark.parametrize("show_valid_colors", [False, True])
 @pytest.mark.parametrize('concatenated', [True, False])
 def test__get_ansi_color_code(colors, show_valid_colors, concatenated):
-    from pyhelpers._cache import _get_ansi_color_code, _load_ansi_escape_codes
-
     if colors == 'invalid_color':
         with pytest.raises(ValueError, match=f"'{colors}' is not a valid color name."):
             _ = _get_ansi_color_code(
@@ -322,10 +423,6 @@ def test__get_ansi_color_code(colors, show_valid_colors, concatenated):
 
 
 def test__transform_point_type():
-    from pyhelpers._cache import _transform_point_type, example_dataframe
-    import numpy as np
-    import shapely.geometry
-
     example_df = example_dataframe()
 
     pt1 = example_df.loc['London'].values  # array([-0.1276474, 51.5073219])
