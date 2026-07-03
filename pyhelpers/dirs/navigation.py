@@ -6,7 +6,7 @@ import importlib.resources
 import os
 from pathlib import Path
 
-from .._cache import _find_file_path, _format_display_path, _normalize_path
+from .._cache import _find_file_path, _normalize_path
 
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, as_str=False, normalized=True, **kwargs):
@@ -208,57 +208,78 @@ def cd_data(*subdir, data_dir="data", mkdir=False, as_str=False, **kwargs):
     return str(path) if as_str else path
 
 
-def find_executable(name, options=None, target=None, normalized=True):
+def find_executable(name, options=None, target=None, normalized=True, as_str=True):
     # noinspection PyShadowingNames
     """
-    Finds the pathname of an executable file for a specified application.
+    Find the pathname of an executable file for a specified application.
+
+    This function relies on :func:`~pyhelpers._cache._find_file_path` to check a known
+    ``target`` pathname, search through ``options``, and fall back to the system's PATH, in
+    that order.
 
     :param name: Name or filename of the application that is to be called.
     :type name: str
     :param options: Possible pathnames or directories to search for the executable;
         defaults to ``None``.
     :type options: list | set | None
-    :param target: Specific pathname of the executable file (if already known);
-        defaults to ``None``.
+    :param target: Specific pathname of the executable file (if already known); this is
+        checked first and, if it does not resolve to a valid match, the function stops
+        and does not search ``options`` or the system PATH. Defaults to ``None``.
     :type target: str | None
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :param normalized: Whether to format the returned pathname for display via
+        :func:`~pyhelpers._cache._format_display_path`. If ``True``, the pathname is
+        returned as a formatted ``str``; if ``False``, it is returned unformatted as
+        a ``pathlib.Path``. Defaults to ``True``.
     :type normalized: bool
+    :param as_str: Whether to return the path as a string;
+        if ``False``, a ``pathlib.Path`` object is returned instead. Defaults to ``True``.
+    :type as_str: bool
     :return: Whether the specified executable file exists (i.e. a boolean indicating existence),
-        together with its pathname.
-    :rtype: tuple[bool, str]
+        together with its pathname, or ``None`` if it was not found.
+    :rtype: tuple[bool, pathlib.Path | str | None]
 
     **Examples**::
 
         >>> from pyhelpers.dirs import find_executable
         >>> import os
         >>> import sys
+
         >>> python_exe = "python.exe"
         >>> python_exe_exists, path_to_python_exe = find_executable(python_exe)
         >>> python_exe_exists
         True
+
         >>> possible_paths = [os.path.dirname(sys.executable), sys.executable]
-        >>> target = possible_paths[0]
+        >>> target = possible_paths[0]  # a directory, not a file - not a valid target
         >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, target=target)
         >>> python_exe_exists
         False
+
         >>> target = possible_paths[1]
         >>> python_exe_exists, path_to_python_exe = find_executable(python_exe, target=target)
         >>> python_exe_exists
         True
+
         >>> python_exe_exists, path_to_python_exe = find_executable(possible_paths[1])
         >>> python_exe_exists
         True
+
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
         >>> test_exe_exists, path_to_test_exe = find_executable(text_exe, possible_paths)
         >>> test_exe_exists
         False
-        >>> os.path.relpath(path_to_test_exe)
-        'pyhelpers.exe'
+        >>> path_to_test_exe is None
+        True
     """
 
-    file_exists, file_pathname = _find_file_path(name=name, options=options, target=target)
+    file_exists, file_pathname = _find_file_path(
+        name=name,
+        options=options,
+        target=target,
+        as_str=as_str
+    )
 
     if file_exists and normalized:
-        file_pathname = _format_display_path(file_pathname, normalized=normalized, surrounded_by="")
+        file_pathname = _normalize_path(file_pathname, as_str=as_str)
 
     return file_exists, file_pathname
