@@ -492,7 +492,7 @@ def _normalize_path(path, sep="/", as_str=True, add_slash=False):
         ``pathlib.Path`` based on the current platform. Defaults to ``"/"``.
     :type sep: str
     :param as_str: Whether to return the normalized path as a string; if ``False``,
-        a ``pathlib.Path`` object is returned instead. Defaults to ``False``.
+        a ``pathlib.Path`` object is returned instead. Defaults to ``True``.
     :type as_str: bool
     :param add_slash: Whether to prepend ``"./"`` to a relative path that does not already begin
         with ``"./"``, ``"../"`` or an absolute path prefix (e.g. ``"/"`` or a Windows drive letter
@@ -501,7 +501,7 @@ def _normalize_path(path, sep="/", as_str=True, add_slash=False):
         Defaults to ``False``.
     :type add_slash: bool
     :return: Pathname formatted to a consistent standard,
-        either as a ``pathlib.Path`` object (default) or as a string when ``as_str=True``.
+        either as a ``pathlib.Path`` object or as a string (default) when ``as_str=True``.
     :rtype: str | pathlib.Path
 
     **Examples**::
@@ -575,7 +575,7 @@ def _format_display_path(path, normalized=True, surrounded_by='"', is_dir=None, 
         >>> from pyhelpers._cache import _format_display_path
 
         >>> _format_display_path("pyhelpers\\data")
-        '"./pyhelpers/data/"'
+        '"/pyhelpers/data/"'
 
         >>> _format_display_path("pyhelpers\\data", normalized=False)  # on Windows
         '"pyhelpers\\data\\"'
