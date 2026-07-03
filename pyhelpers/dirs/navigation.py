@@ -6,7 +6,7 @@ import importlib.resources
 import os
 from pathlib import Path
 
-from .._cache import _add_slashes, _check_file_pathname, _normalize_pathname
+from .._cache import _find_file_path, _format_display_path, _normalize_path
 
 
 def cd(*subdir, mkdir=False, cwd=None, back_check=False, as_str=False, normalized=True, **kwargs):
@@ -90,7 +90,7 @@ def cd(*subdir, mkdir=False, cwd=None, back_check=False, as_str=False, normalize
             path.mkdir(**kwargs)
 
     if as_str:
-        return _normalize_pathname(path) if normalized else str(path)
+        return _normalize_path(path) if normalized else str(path)
 
     return path
 
@@ -256,9 +256,9 @@ def find_executable(name, options=None, target=None, normalized=True):
         'pyhelpers.exe'
     """
 
-    file_exists, file_pathname = _check_file_pathname(name=name, options=options, target=target)
+    file_exists, file_pathname = _find_file_path(name=name, options=options, target=target)
 
     if file_exists and normalized:
-        file_pathname = _add_slashes(file_pathname, normalized=normalized, surrounded_by="")
+        file_pathname = _format_display_path(file_pathname, normalized=normalized, surrounded_by="")
 
     return file_exists, file_pathname
