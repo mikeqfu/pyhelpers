@@ -197,40 +197,42 @@ def test__normalize_path():
     """Test :func:`~pyhelpers._cache._normalize_path`."""
 
     test_path_1 = "tests\\data\\dat.csv"
-    # Default behavior: mixed/backslash separators normalized to forward slashes
-    path = _normalize_path(test_path_1)
-    assert path == "tests/data/dat.csv"
+    expected_output_1 = "tests/data/dat.csv"
 
-    # `add_slash=True` prepends "./" to a bare relative path
-    path = _normalize_path(test_path_1, add_slash=True)
-    assert path == "./tests/data/dat.csv"
+    # Default behavior: mixed/backslash separators normalized to forward slashes
+    assert _normalize_path(test_path_1) == expected_output_1
+    # `prepend_dot=True` prepends "./" to a bare relative path
+    assert _normalize_path(test_path_1, prepend_dot=True) == "./tests/data/dat.csv"
 
     # Repeated separators are collapsed; bytes input is decoded correctly
-    test_path_2 = "tests//data/dat.csv"
-    path = _normalize_path(test_path_2.encode("utf-8"))
-    assert path == "tests/data/dat.csv"
+    test_path_2 = b"tests//data/dat.csv"
+    assert _normalize_path(test_path_2) == expected_output_1
 
-    # `add_slash=True` is a no-op when the path already has a relative/absolute prefix
-    assert _normalize_path("./tests/data", add_slash=True) == "./tests/data"
-    assert _normalize_path("/tests/data", add_slash=True) == "/tests/data"
-    assert _normalize_path("C:/tests/data", add_slash=True) == "C:/tests/data"
+    # `prepend_dot=True` is a no-op when the path already has a relative/absolute prefix
+    assert _normalize_path("./tests/data", prepend_dot=True) == "./tests/data"
+    assert _normalize_path("/tests/data", prepend_dot=True) == "./tests/data"
+    assert _normalize_path("C:\\tests\\data", prepend_dot=True) == "C:/tests/data"
+
+    # Verify isolated dot and double-dot paths are correctly resolved under prepend instructions
+    assert _normalize_path(".", prepend_dot=True) == "."
+    assert _normalize_path("..", prepend_dot=True) == ".."
 
     # `sep` controls the separator used in the string output, and is platform-dependent
     test_path_3 = Path("tests\\data/dat.csv")
     path_1 = _normalize_path(test_path_3, sep=os.sep)
-    path_2 = _normalize_path(test_path_3, sep=os.sep, add_slash=True)
+    path_2 = _normalize_path(test_path_3, sep=os.sep, prepend_dot=True)
     if os.name == "nt":
         assert path_1 == test_path_1
         assert path_2 == ".\\tests\\data\\dat.csv"
     else:
-        assert path_1 == "tests/data/dat.csv"
+        assert path_1 == expected_output_1
         assert path_2 == "./tests/data/dat.csv"
 
-    # `as_str=False` returns a `pathlib.Path`, and ignores `sep`/`add_slash` entirely
+    # `as_str=False` returns a `pathlib.Path` and ignores string parameters completely
     path_obj = _normalize_path(test_path_1, as_str=False)
     assert isinstance(path_obj, Path)
-    assert path_obj == Path("tests/data/dat.csv")
-    assert _normalize_path(test_path_1, sep="\\", add_slash=True, as_str=False) == path_obj
+    assert path_obj == Path(expected_output_1)
+    assert _normalize_path(test_path_1, sep="\\", as_str=False, prepend_dot=True) == path_obj
 
 
 def test__format_display_path():
@@ -260,7 +262,7 @@ def test__format_display_path():
     path = _format_display_path("./pyhelpers/data", prepend_dot=True, surrounded_by='')
     assert path == './pyhelpers/data/'
     path = _format_display_path("/pyhelpers/data", prepend_dot=True, surrounded_by='')
-    assert path == '/pyhelpers/data/'
+    assert path == './pyhelpers/data/'
 
     # `is_dir` overrides both the filesystem check and the extension heuristic
     path = _format_display_path("pyhelpers.dat", is_dir=True, surrounded_by='')
@@ -277,28 +279,30 @@ def test__get_relative_path():
     """Test :func:`~pyhelpers._cache._get_relative_path`."""
 
     # `pathlib.Path("")` resolves to the current working directory itself
-    assert _get_relative_path(path="") == '.'
-    assert _get_relative_path(path=os.path.curdir) == '.'
+    assert _get_relative_path(path="") == Path(".")
+    assert _get_relative_path(path=Path.cwd()) == Path(".")
 
-    if os.name == 'nt':
+    if os.name == "nt":
         path = "C:\\Windows"
         rel_path = _get_relative_path(path)
         assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(path)[0]
 
-    # An absolute path outside the working directory is returned unchanged (as a `Path`
-    # when `normalized=False`); compare via `Path` equality rather than raw string equality,
-    # since `.resolve()` may alter the string (e.g. symlinks, trailing slashes)
-    home_dir = os.path.expanduser("~")  # Cross-platform home directory
+    # An absolute path outside the working directory is returned unchanged as an absolute Path
+    home_dir = os.path.expanduser("~")
     rel_path = _get_relative_path(home_dir, normalized=False)
     assert isinstance(rel_path, Path)
     assert rel_path == Path(home_dir).resolve()
 
-    # A relative path within the current working directory
+    # A relative path within the current working directory transformed to string representation
     subdir = os.path.join(os.getcwd(), "test_dir")
-    rel_path = _get_relative_path(subdir)
+    rel_path = _get_relative_path(subdir, as_str=True)
     assert rel_path == "test_dir"
 
-    # `normalized=False` on a path within the CWD also returns a `Path`, not a string
+    # Verify that string-formatting pipelines forward arguments from the tracking layer correctly
+    assert _get_relative_path(subdir, as_str=True, quoted=True) == '"test_dir/"'
+    assert _get_relative_path(subdir, as_str=True, prepend_dot=True) == "./test_dir"
+
+    # `normalized=False` on a path within the CWD also returns a Path object, not a string
     rel_path_obj = _get_relative_path(subdir, normalized=False)
     assert isinstance(rel_path_obj, Path)
     assert rel_path_obj == Path("test_dir")
