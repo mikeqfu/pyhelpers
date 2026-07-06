@@ -8,62 +8,22 @@ from pathlib import Path
 
 import pytest
 
-from pyhelpers.dirs.validation import check_files_exist, check_relative_pathname, \
-    get_file_pathnames, is_path_to_dir, normalize_pathname, resolve_dir, standardize_pathname, \
-    validate_filename
+from pyhelpers.dirs.validation import check_files_exist, is_dir_path, validate_filename
 
 
 @pytest.fixture(scope='module')
-def test_dir_name():
+def test_dirname():
     return Path(__file__).resolve().parents[1] / "data"
 
 
-def test_normalize_pathname():
-    pathname = normalize_pathname("tests\\data\\dat.csv")
-    assert pathname == 'tests/data/dat.csv'
-
-    pathname = normalize_pathname("tests\\data\\dat.csv", add_slash=True)
-    assert pathname == './tests/data/dat.csv'
-
-    pathname = normalize_pathname("tests//data/dat.csv".encode('utf-8'))
-    assert pathname == 'tests/data/dat.csv'
-
-    pathname = Path("tests\\data/dat.csv")
-    pathname_1 = normalize_pathname(pathname, sep=os.path.sep)
-    pathname_2 = normalize_pathname(pathname, sep=os.path.sep, add_slash=True)
-    if os.name == 'nt':
-        assert pathname_1 == 'tests\\data\\dat.csv'
-        assert pathname_2 == '.\\tests\\data\\dat.csv'
-    else:
-        assert pathname_1 == 'tests/data/dat.csv'
-        assert pathname_2 == './tests/data/dat.csv'
-
-
-def test_is_path_to_dir():
+def test_is_dir_path():
     # noinspection PyTypeChecker
-    assert not is_path_to_dir(1)
-    assert not is_path_to_dir("tests")
-    assert is_path_to_dir("/tests")
+    assert not is_dir_path(1)
+    assert not is_dir_path("tests")
+    assert is_dir_path("/tests")
 
     if os.name == 'nt':
-        assert is_path_to_dir("\\tests")
-
-
-def test_resolve_dir():
-    dat_dir = resolve_dir()
-    assert os.path.relpath(dat_dir) == '.'
-    dat_dir = resolve_dir(os.getcwd())
-    assert os.path.relpath(dat_dir) == '.'
-
-    dat_dir = resolve_dir("tests")
-    assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = resolve_dir(b"tests")
-    assert os.path.relpath(dat_dir) == 'tests'
-    dat_dir = resolve_dir(Path("tests"))
-    assert os.path.relpath(dat_dir) == 'tests'
-
-    dat_dir = resolve_dir(subdir="data")
-    assert os.path.relpath(dat_dir) == 'data'
+        assert is_dir_path("\\tests")
 
 
 def test_validate_filename():
@@ -84,80 +44,12 @@ def test_validate_filename():
     os.remove(temp_pathname_1)
 
 
-def test_get_file_pathnames(test_dir_name):
-    dat_filenames = os.listdir(test_dir_name)
-
-    result_1 = get_file_pathnames(test_dir_name)
-    assert isinstance(result_1, list)
-    assert all(os.path.basename(x) in dat_filenames for x in result_1)
-
-    result_2 = get_file_pathnames(test_dir_name, incl_subdir=True)
-    assert all(os.path.basename(x) in dat_filenames for x in result_2)
-
-    result_3 = get_file_pathnames(test_dir_name, file_ext=".txt")
-    assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_3)
-
-    result_4 = get_file_pathnames(test_dir_name, file_ext=".txt", incl_subdir=True)
-    assert all(os.path.basename(x) in ['dat.txt', 'zipped.txt'] for x in result_4)
-
-
-def test_check_files_exist(test_dir_name, capfd):
-    assert check_files_exist(["dat.csv", "dat.txt"], test_dir_name)
-    rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dir_name, verbose=True)
+def test_check_files_exist(test_dirname, capfd):
+    assert check_files_exist(["dat.csv", "dat.txt"], test_dirname)
+    rslt = check_files_exist(["dat.csv", "dat.txt", "dat_0.txt"], test_dirname, verbose=True)
     out, _ = capfd.readouterr()
     assert rslt is False
     assert "Error: Required files are not satisfied, missing files are: ['dat_0.txt']" in out
-
-
-def test_check_relative_pathname():
-    pathname = ""
-    rel_path = check_relative_pathname(pathname=pathname)
-    assert rel_path == pathname
-
-    pathname = os.path.curdir
-    rel_path = check_relative_pathname(os.path.curdir)
-    assert rel_path == pathname
-
-    if os.name == 'nt':
-        pathname = "C:/Windows"
-        rel_path = check_relative_pathname(pathname)
-        assert os.path.splitdrive(rel_path)[0] == os.path.splitdrive(pathname)[0]
-
-    # Test an absolute path outside the working directory
-    home_dir = os.path.expanduser("~")  # Cross-platform home directory
-    rel_path = check_relative_pathname(home_dir, normalized=False)
-    assert rel_path == home_dir  # Should return unchanged
-
-    # Test a relative path within the current working directory
-    subdir = os.path.join(os.getcwd(), "test_dir")
-    rel_path = check_relative_pathname(subdir)
-    assert rel_path == "test_dir"
-
-
-def test_standardize_pathname():
-    # Test clean string name transformation to lowercase with separators
-    path = standardize_pathname("Random Evaluation Name")
-    assert path == Path("random-evaluation-name")
-
-    # Test preservation of leading punctuation markers on single files
-    path = standardize_pathname("-license.txt")
-    assert path == Path("-license.txt")
-
-    # Test relative Windows-style subpath evaluation across directory depths
-    path = standardize_pathname("Users/Username/ProjectData/schema-v2.json")
-    assert path.parent.name == "ProjectData"
-
-    # Test custom separator override processing with path objects
-    path = standardize_pathname(Path("/Archive/Old Folders/MyScript.py"), sep="_")
-    assert path.name == "my_script.py"
-
-    # Test parent directory preservation when parents parameter is False
-    path = standardize_pathname("/Archive/Old Folders/MyScript.py", parents=False)
-    assert path == Path("/Archive/Old Folders/my-script.py")
-
-    # Test deep path standardization across all nodes when parents is True
-    path = standardize_pathname("/Archive/Old Folders/MyScript.py", parents=True)
-    assert path == Path("/archive/old-folders/my-script.py")
 
 
 if __name__ == '__main__':

@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 
 from pyhelpers._cache import _normalize_path
-from pyhelpers.dirs.navigation import cd, cd_data, cdd, find_executable
-from pyhelpers.dirs.validation import is_path_to_dir
+from pyhelpers.dirs.navigation import cd, cd_data, cdd, find_executable, resolve_dir_path
+from pyhelpers.dirs.validation import is_dir_path
 
 
 @pytest.mark.parametrize('cwd', [None, ".", os.path.join(os.sep, "some_directory")])
@@ -99,7 +99,7 @@ def test_cd_data(subdir, mkdir):
     """Test :func:`~pyhelpers.dirs.cd_data`."""
 
     path_to_dat_dir = cd_data(*subdir, mkdir=mkdir)
-    if is_path_to_dir(path_to_dat_dir):
+    if is_dir_path(path_to_dat_dir):
         path_to_dat_dir_ = path_to_dat_dir
     else:
         path_to_dat_dir_ = os.path.relpath(os.path.dirname(path_to_dat_dir))
@@ -107,6 +107,23 @@ def test_cd_data(subdir, mkdir):
 
     if mkdir:
         shutil.rmtree(path_to_dat_dir_)
+
+
+def test_resolve_dir_path():
+    dat_dir = resolve_dir_path()
+    assert os.path.relpath(dat_dir) == '.'
+    dat_dir = resolve_dir_path(os.getcwd())
+    assert os.path.relpath(dat_dir) == '.'
+
+    dat_dir = resolve_dir_path("tests")
+    assert os.path.relpath(dat_dir) == 'tests'
+    dat_dir = resolve_dir_path(b"tests")
+    assert os.path.relpath(dat_dir) == 'tests'
+    dat_dir = resolve_dir_path(Path("tests"))
+    assert os.path.relpath(dat_dir) == 'tests'
+
+    dat_dir = resolve_dir_path(subdir="data")
+    assert os.path.relpath(dat_dir) == 'data'
 
 
 def test_find_executable():
@@ -125,7 +142,7 @@ def test_find_executable():
 
     # 2. Test pathlib.Path return structure (as_str=False, normalized=True)
     python_exe_exists_path, path_to_python_obj = find_executable(
-        python_exe, normalized=True,as_str=False)
+        python_exe, normalized=True, as_str=False)
     assert python_exe_exists_path
     assert isinstance(path_to_python_obj, Path)
     assert path_to_python_obj.is_file()
