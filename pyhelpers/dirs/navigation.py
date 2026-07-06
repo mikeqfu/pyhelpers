@@ -1,5 +1,5 @@
 """
-Utilities for directory/file navigation.
+Utilities for directory navigation, context-switching and path resolution.
 """
 
 import importlib.resources
@@ -206,6 +206,74 @@ def cd_data(*subdir, data_dir="data", mkdir=False, as_str=False, **kwargs):
             path.mkdir(**kwargs)
 
     return str(path) if as_str else path
+
+
+def resolve_dir_path(dir_path=None, subdir="", msg="Invalid input!", **kwargs):
+    """
+    Resolve a directory path into an absolute pathname.
+
+    This function accepts a variety of input types and converts them into a standardized directory
+    pathname via :func:`~pyhelpers.dirs.cd`. If ``dir_path`` is not given, ``subdir`` is used
+    instead (or the current directory, if ``subdir`` is also not given).
+
+    .. note::
+
+        Both a relative and an absolute ``dir_path`` are routed through the same call to
+        :func:`~pyhelpers.dirs.cd`, on the assumption that ``cd`` (like ``os.path.join``) treats
+        an absolute argument as replacing any preceding base directory, so ``**kwargs``
+        (e.g. ``mkdir=True``) is applied consistently either way.
+        If ``cd`` does not behave this way for absolute paths, this needs revisiting.
+
+    :param dir_path: Pathname of a data directory; if ``dir_path=None`` (default), ``subdir``
+        is examined instead to construct a valid directory path.
+    :type dir_path: str | bytes | os.PathLike | None
+    :param subdir: Name of a subdirectory to fall back on when ``dir_path=None``.
+        Defaults to ``""``.
+    :type subdir: str | bytes | os.PathLike
+    :param msg: Error message used when ``dir_path`` cannot be decoded into a valid pathname.
+        Defaults to ``"Invalid input!"``.
+    :type msg: str
+    :param kwargs: [Optional] Additional parameters for :func:`~pyhelpers.dirs.cd`
+        (e.g. ``mkdir=True`` to create the directory if it does not already exist).
+    :return: Valid pathname of a directory.
+    :rtype: pathlib.Path
+
+    **Examples**::
+
+        >>> from pyhelpers.dirs import resolve_dir_path, get_relative_path
+        >>> from pathlib import Path
+
+        >>> data_dir = resolve_dir_path()
+        >>> get_relative_path(data_dir)
+        '.'
+
+        >>> data_dir = resolve_dir_path("tests")
+        >>> get_relative_path(data_dir)
+        'tests'
+
+        >>> data_dir = resolve_dir_path(subdir=Path("data"))
+        >>> get_relative_path(data_dir)
+        'data'
+    """
+
+    try:
+        # Uniformly handle str, bytes, pathlib.Path, and os.PathLike
+        path_to_dir_ = os.fsdecode(dir_path) if dir_path is not None else None
+        subdir_ = os.fsdecode(subdir) if subdir else ""
+
+    except (TypeError, ValueError):
+        raise TypeError(msg)
+
+    # Logic for path construction
+    if path_to_dir_:
+        # Normalize to remove redundant separators or dots safely
+        normalized_path = os.path.normpath(path_to_dir_)
+        data_dir_ = cd(normalized_path, **kwargs)
+
+    else:  # Fallback to subdir or the current directory
+        data_dir_ = cd(subdir_, **kwargs) if subdir_ else cd(**kwargs)
+
+    return data_dir_
 
 
 def find_executable(name, options=None, target=None, normalized=True, as_str=True):

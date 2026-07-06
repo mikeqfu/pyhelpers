@@ -1,64 +1,13 @@
 """
-Utilities for directory/file management.
+Utilities for file system discovery, resource management and directory operations.
 """
 
 import collections.abc
 import os
 import shutil
 
-from .._cache import _confirmed, _format_display_path, _get_relative_path, _print_failure_message
-
-
-def format_display_path(path, normalized=True, surrounded_by='"', is_dir=None, prepend_dot=False):
-    """
-    Format a path string for display, logging or printing purposes.
-
-    This function generates a visual representation of a path. It can optionally add
-    trailing slashes for directories, wrap the output in quotes and prepend a dot-slash
-    for relative paths (e.g. when preparing shell commands).
-
-    :param path: The filesystem path to format for display.
-    :type path: str | bytes | pathlib.Path | os.PathLike
-    :param normalized: Whether to standardize slashes via :func:`~pyhelpers._cache._normalize_path`.
-        Defaults to ``True``.
-    :type normalized: bool
-    :param surrounded_by: A string literal used to wrap the output. Defaults to ``'"'``.
-    :type surrounded_by: str
-    :param is_dir: Explicitly treat the path as a directory. If ``None``, the filesystem is checked
-        first; when the path does not exist, this falls back to a heuristic that treats a path
-        without a file extension as a directory (which can misclassify extensionless files such
-        as ``"Makefile"`` or ``"LICENSE"``). Defaults to ``None``.
-    :type is_dir: bool | None
-    :param prepend_dot: If ``True``, prepends a ``./`` (or native OS equivalent) to
-        paths that are not absolute. Defaults to ``False``.
-    :type prepend_dot: bool
-    :return: Formatted pathname with configured slashes and wrappers.
-    :rtype: str
-
-    **Examples**::
-
-        >>> from pyhelpers.dirs import format_display_path
-
-        >>> format_display_path("pyhelpers\\data")
-        '"pyhelpers/data/"'
-
-        >>> format_display_path("pyhelpers\\data", normalized=False)  # on Windows
-        '"pyhelpers\\data\\"'
-
-        >>> format_display_path("pyhelpers\\data\\pyhelpers.dat", prepend_dot=True)
-        '"./pyhelpers/data/pyhelpers.dat"'
-
-        >>> format_display_path("C:\\Windows", prepend_dot=True)  # on Windows
-        '"C:/Windows/"'
-    """
-
-    return _format_display_path(
-        path=path,
-        normalized=normalized,
-        surrounded_by=surrounded_by,
-        is_dir=is_dir,
-        prepend_dot=prepend_dot
-    )
+from .._cache import _confirmed, _format_display_path, _get_relative_path, _normalize_path, \
+    _print_failure_message
 
 
 def _delete_dir(dir_path, confirmation_required=True, verbose=False, indent=None, raise_error=True,
@@ -279,3 +228,106 @@ def delete_dir(dir_path, confirmation_required=True, verbose=False, indent=2, ra
                     verbose_label=None,
                     **kwargs
                 )
+
+
+def get_file_paths(dir_path, file_ext=None, incl_subdir=False, abs_path=False, normalized=True,
+                   prepend_dot=False):
+    """
+    Get the paths of files in a directory, optionally filtered by file extension.
+
+    This function retrieves paths of files within the directory specified by ``dir_path``.
+    Files are optionally filtered by the exact ``file_ext`` given, matched against each
+    file's actual extension (via ``os.path.splitext``) rather than a trailing-substring
+    comparison. If ``file_ext`` is ``None``, ``"*"`` or ``"all"``, all files are returned.
+    If ``incl_subdir=True``, subdirectories are traversed recursively.
+
+    :param dir_path: Pathname of the directory to search.
+    :type dir_path: str | os.PathLike
+    :param file_ext: Exact file extension to filter files by, with or without the leading
+        dot (e.g. ``".txt"`` or ``"txt"``). Defaults to ``None``, in which case all files
+        are returned regardless of extension.
+    :type file_ext: str | None
+    :param incl_subdir: Whether to include files from subdirectories; when ``incl_subdir=True``,
+        files from all subdirectories are included recursively. Defaults to ``False``.
+    :type incl_subdir: bool
+    :param abs_path: Whether to return absolute pathname(s). Defaults to ``False``.
+    :type abs_path: bool
+    :param normalized: Whether to normalize the returned pathname(s) via
+        :func:`~pyhelpers._cache._normalize_path`. Defaults to ``True``.
+    :type normalized: bool
+    :param prepend_dot: If ``True``, prepends ``"./"`` to a relative pathname that doesn't
+        already have a dot-relative or absolute prefix. Only takes effect when
+        ``normalized=True``. Defaults to ``False``.
+    :type prepend_dot: bool
+    :return: List of file pathnames matching the criteria.
+    :rtype: list[str]
+
+    **Examples**::
+
+        >>> from pyhelpers.dirs import get_file_paths, delete_dir
+        >>> from pyhelpers.store import unzip
+        >>> import os
+
+        >>> test_dir_name = "tests/data"
+
+        >>> # Get all files in the directory (without subdirectories) on Windows
+        >>> get_file_paths(test_dir_name, prepend_dot=True)
+        ['./tests/data/csr_mat.npz',
+         './tests/data/dat.csv',
+         './tests/data/dat.feather',
+         './tests/data/dat.joblib',
+         './tests/data/dat.json',
+         './tests/data/dat.ods',
+         './tests/data/dat.pickle',
+         './tests/data/dat.pickle.bz2',
+         './tests/data/dat.pickle.gz',
+         './tests/data/dat.pickle.xz',
+         './tests/data/dat.txt',
+         './tests/data/dat.xlsx',
+         './tests/data/zipped.7z',
+         './tests/data/zipped.txt',
+         './tests/data/zipped.zip']
+
+        >>> get_file_paths(test_dir_name, file_ext=".txt")
+        ['tests/data/dat.txt', 'tests/data/zipped.txt']
+
+        >>> output_dir = unzip('tests/data/zipped.zip', ret_output_dir=True)
+        >>> os.listdir(output_dir)
+        ['zipped.txt']
+
+        >>> # Get absolute paths of all files contained in the folder (incl. all subdirectories)
+        >>> get_file_paths(test_dir_name, file_ext="txt", incl_subdir=True, abs_path=True)
+        ['<Parent directories>/tests/data/dat.txt',
+         '<Parent directories>/tests/data/zipped.txt',
+         '<Parent directories>/tests/data/zipped/zipped.txt']
+
+        >>> delete_dir(output_dir, confirmation_required=False, verbose=True)
+        Deleting "tests/data/zipped/" ... Done.
+    """
+
+    if incl_subdir:
+        file_pathnames = [
+            os.path.normpath(os.path.join(root, file))
+            for root, _, files in os.walk(dir_path)
+            for file in files
+        ]
+    else:
+        file_pathnames = [
+            os.path.normpath(os.path.join(dir_path, file))
+            for file in os.listdir(dir_path)
+            if os.path.isfile(os.path.join(dir_path, file))
+        ]
+
+    if file_ext not in {None, "*", "all"}:
+        # Match against the actual extension, not just a trailing substring, so that e.g.
+        # `file_ext="txt"` doesn't also match a file such as "notes.mytxt"
+        target_ext = file_ext if file_ext.startswith(".") else f".{file_ext}"
+        file_pathnames = [p for p in file_pathnames if os.path.splitext(p)[1] == target_ext]
+
+    if abs_path:
+        file_pathnames = [os.path.abspath(p) for p in file_pathnames]
+
+    if normalized:
+        file_pathnames = [_normalize_path(p, prepend_dot=prepend_dot) for p in file_pathnames]
+
+    return file_pathnames
