@@ -58,7 +58,7 @@ def _resolve_dependency_info(name):
     :return: A tuple of ``(<actual_import_path>, <pip_install_name>)``.
     :rtype: tuple[str, str]
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _resolve_dependency_info
         >>> _resolve_dependency_info('beautifulsoup4')
@@ -119,7 +119,7 @@ def _check_dependencies(*names):
     :raises ModuleNotFoundError: If the package is not installed.
     :raises ImportError: If the package exists but fails to load correctly.
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _check_dependencies
         >>> psycopg2 = _check_dependencies('psycopg2')
@@ -304,7 +304,7 @@ def example_dataframe(osgb36=False):
     :return: An example dataframe with geographical coordinates.
     :rtype: pandas.DataFrame
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import example_dataframe
         >>> example_dataframe()
@@ -371,7 +371,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
     :return: ``True`` if confirmed, ``False`` otherwise.
     :rtype: bool
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _confirmed
         >>> if _confirmed(prompt="Testing if the function works?", resp=True):
@@ -470,7 +470,7 @@ def _normalize_token(text, preserve_dot=False):
     return txt
 
 
-def _normalize_path(path, sep="/", as_str=True, prepend_dot=False):
+def _normalize_path(path, as_str=True, sep="/", prepend_dot=False):
     # noinspection PyShadowingNames
     """
     Convert a path into a consistent format for cross-platform compatibility.
@@ -487,13 +487,13 @@ def _normalize_path(path, sep="/", as_str=True, prepend_dot=False):
 
     :param path: The filesystem path to normalize.
     :type path: str | bytes | pathlib.Path | os.PathLike
+    :param as_str: Whether to return the normalized path as a string; if ``False``,
+        a ``pathlib.Path`` object is returned instead. Defaults to ``True``.
+    :type as_str: bool
     :param sep: Path separator used when the result is returned as a string; this is ignored when
         ``as_str=False``, in which case the separator is determined automatically by
         ``pathlib.Path`` based on the current platform. Defaults to ``"/"``.
     :type sep: str
-    :param as_str: Whether to return the normalized path as a string; if ``False``,
-        a ``pathlib.Path`` object is returned instead. Defaults to ``True``.
-    :type as_str: bool
     :param prepend_dot: If ``True``, prepends ``"./"`` to a relative path that does not already
         begin with ``"./"``, ``"../"``, or a path that ``pathlib`` considers absolute *on the
         current platform*. Note that on Windows, a path with a leading separator but no drive
@@ -680,7 +680,7 @@ def _get_relative_path(path, as_str=False, normalized=True, quoted=False, is_dir
         the working space; otherwise, a resolved copy of the absolute ``path``.
     :rtype: pathlib.Path | str
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _get_relative_path
         >>> from pyhelpers.dirs import cd
@@ -747,7 +747,7 @@ def _find_file_path(name, options=None, target=None, as_str=False):
     :return: Tuple containing a boolean indicating existence, and the resolved path if found.
     :rtype: tuple[bool, pathlib.Path | str | None]
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _find_file_path
         >>> from pathlib import Path
@@ -845,7 +845,7 @@ def _format_exception_message(exception=None, prefix=""):
     :return: Formatted error message.
     :rtype: str
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _format_exception_message
         >>> _format_exception_message("test")
@@ -888,7 +888,7 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
     :return: None.
     :rtype: None
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _print_failure_message
         >>> try:
