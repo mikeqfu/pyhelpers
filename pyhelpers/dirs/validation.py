@@ -7,7 +7,6 @@ import os
 import re
 
 from .management import get_file_paths
-from .navigation import cd
 
 
 def is_dir_path(dir_path):
