@@ -175,7 +175,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, as_str=False, **kwargs):
     :return: A normalized ``pathlib.Path`` object (or ``str``) of the requested target.
     :rtype: pathlib.Path | str
 
-    .. _`os.makedirs`: https://docs.python.org/3/library/os.html#os.makedirs
+    .. _`pathlib.Path.mkdir`: https://docs.python.org/3/library/pathlib.html#pathlib.Path.mkdir
 
     **Examples**::
 
