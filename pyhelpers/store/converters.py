@@ -109,27 +109,27 @@ def seven_zip(zip_file_path, output_dir=None, mode='aoa', return_output_dir=Fals
               raise_error=False, seven_zip_exe=None):
     # noinspection PyShadowingNames
     """
-        Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
+    Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
-        :param zip_file_path: The path where the compressed file is saved.
-        :type zip_file_path: str | os.PathLike
-        :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
-        :type output_dir: str | None
-        :param mode: The extraction mode; defaults to ``'aoa'``.
-        :type mode: str
-        :param return_output_dir: Whether to return the path to output directory; defaults to ``False``.
-        :type return_output_dir: bool
-        :param verbose: Whether to print relevant information to the console; defaults to ``False``.
-        :type verbose: bool | int
-        :param raise_error: Whether to raise the provided exception;
-            if ``raise_error=False`` (default), the error will be suppressed.
-        :type raise_error: bool
-        :param seven_zip_exe: The path to the executable "*7z.exe*";
-            If ``seven_zip_exe=None`` (default), the default installation path will be used, e.g.
-            "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" (on Windows).
-        :type seven_zip_exe: str | None
+    :param zip_file_path: The path where the compressed file is saved.
+    :type zip_file_path: str | os.PathLike
+    :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
+    :type output_dir: str | None
+    :param mode: The extraction mode; defaults to ``'aoa'``.
+    :type mode: str
+    :param return_output_dir: Whether to return the path to output directory; defaults to ``False``.
+    :type return_output_dir: bool
+    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :type verbose: bool | int
+    :param raise_error: Whether to raise the provided exception;
+        if ``raise_error=False`` (default), the error will be suppressed.
+    :type raise_error: bool
+    :param seven_zip_exe: The path to the executable "*7z.exe*";
+        If ``seven_zip_exe=None`` (default), the default installation path will be used, e.g.
+        "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" (on Windows).
+    :type seven_zip_exe: str | None
 
-        **Examples**::
+    **Examples**::
 
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dirs import cd, delete_dir
