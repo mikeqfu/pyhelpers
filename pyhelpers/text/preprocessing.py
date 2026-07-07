@@ -658,3 +658,56 @@ def calculate_tfidf(documents, **kwargs):
         if token in corpus_idf}
 
     return tfidf
+
+
+def standardize_name(name, sep='_'):
+    """
+    Standardize a string token or variable name into a clean separated layout.
+
+    This function removes bracketed annotations, splits ``camelCase`` boundaries,
+    normalizes whitespace and transforms the text into a lowercase format
+    using the designated separator.
+
+    :param name: The raw string or object to be standardized.
+    :type name: typing.Any
+    :param sep: The separator character used to join tokens. Defaults to ``"_"``.
+    :type sep: str
+    :return: A cleaned, lowercase representation of the ``name`` parameter.
+    :rtype: str
+
+    **Examples**::
+
+        >>> from pyhelpers.text import standardize_name
+
+        >>> standardize_name('Total\\nConsumption')
+        'total_consumption'
+
+        >>> standardize_name('Fuel-Type [Note 1]')
+        'fuel_type'
+
+        >>> standardize_name('camelCaseInput')
+        'camel_case_input'
+    """
+
+    if name is None:
+        return ''
+
+    # Convert input to string and strip bracketed citations or notes
+    content = re.sub(r'\[.*?]', '', str(name))
+
+    # Handle camelCase and PascalCase boundaries by inserting an underscore
+    content = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', content)
+
+    # Normalize separators by converting newlines, tabs, hyphens and underscores to spaces
+    content = re.sub(r'(\\n|\\r|\\t|[\n\r\t\-_ \s])+', ' ', content)
+
+    # Convert text to lowercase and strip boundary whitespace
+    content = content.lower().strip()
+
+    # Strip remaining special characters, leaving only alphanumeric tokens and spaces
+    content = re.sub(r'[^a-z0-9\s]', '', content)
+
+    # Replace spaces with the target separator character
+    content = re.sub(r'\s+', sep, content)
+
+    return content.strip(sep)

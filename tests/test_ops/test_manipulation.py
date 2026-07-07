@@ -229,13 +229,21 @@ def test_downcast_numeric_columns():
     df11, df21 = downcast_numeric_columns(df1, df2)
     assert df11.dtypes.values[0].name == df21.dtypes.values[0].name == 'float32'
 
+    df11_long: pd.Series = downcast_numeric_columns(df1['Longitude'])
+    assert df11_long.dtypes == 'float32'
+
     # noinspection PyUnresolvedReferences
     df1, df2 = map(pl.from_pandas, (df1, df2))
     df21, df22 = downcast_numeric_columns(df1, df2)
+
     # noinspection PyUnresolvedReferences
     assert df21.dtypes == [pl.Float32, pl.Float32]
     # noinspection PyUnresolvedReferences
     assert df22.dtypes == [pl.Float32, pl.Float32, pl.Float32, pl.Float32]
+
+    df22_long: pd.Series = downcast_numeric_columns(df1['Longitude'])
+    # noinspection PyUnresolvedReferences
+    assert df22_long.dtype == pl.Float32
 
 
 def test_flatten_columns():
@@ -244,6 +252,37 @@ def test_flatten_columns():
             ['A_B_C', 'A_B_D'])
     assert flatten_columns([('A', 'C'), ('B', 'C')], ignore_linear_level=True) == ['A', 'B']
     assert flatten_columns([('A',), ('B', 'C')], ignore_linear_level=True) == ['A', 'B']
+
+
+def test_standardize_column_names():
+    """
+    Verify the column standardization pipeline across diverse DataFrame configurations.
+
+    Validates casing transformations, custom prefix insertions, token separations and column
+    exclusion tracking against structural modifications.
+    """
+
+    raw_df = example_dataframe()
+
+    cols = standardize_column_names(raw_df).columns.tolist()
+    assert cols == ['longitude', 'latitude']
+
+    raw_df = pd.DataFrame(columns=['EstablishmentType', 'Rating-Value', '2026?'])
+    cols = standardize_column_names(raw_df).columns.tolist()
+    assert cols == ['establishment_type', 'rating_value', '2026']
+
+    cols = standardize_column_names(raw_df, prefix='col_').columns.tolist()
+    assert cols == ['establishment_type', 'rating_value', 'col_2026']
+
+    cols = standardize_column_names(raw_df, uppercase=True).columns.tolist()
+    assert cols == ['ESTABLISHMENT_TYPE', 'RATING_VALUE', '2026']
+
+    cols = standardize_column_names(raw_df, sep='-').columns.tolist()
+    assert cols == ['establishment-type', 'rating-value', '2026']
+
+    # Exclude specific columns from being altered by formatting transformations
+    cols = standardize_column_names(raw_df, exclude=['Rating-Value']).columns.tolist()
+    assert cols == ['establishment_type', 'Rating-Value', '2026']
 
 
 if __name__ == '__main__':

@@ -14,8 +14,8 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_relative_pathname, _check_url_scheme, \
-    _get_ansi_color_code, _init_requests_session, _lazy_check_dependencies, _load_package_data, \
+from .._cache import _check_url_scheme, _format_display_path, _get_ansi_color_code, \
+    _get_relative_path, _init_requests_session, _lazy_check_dependencies, _load_package_data, \
     _print_failure_message
 from ..store import _check_saving_path
 
@@ -272,6 +272,7 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, is_compr
             try:  # Write chunk to file
                 f.write(chunk)
             except TypeError:
+                # noinspection PyUnresolvedReferences
                 f.write(chunk.encode())
 
             chunk_len = len(chunk)
@@ -303,7 +304,7 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, is_compr
             else:
                 progress.update(chunk_len)  # Clean unbounded tracking increment
 
-        # Handle stream completion clean-ups
+        # Handle stream completion cleanups
         if not is_compressed and file_size > 0:
             remaining = file_size - progress.n
             if remaining > 0:
@@ -557,7 +558,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         return None
 
     else:
-        # Initialise session
+        # Initialize session
         requests_session_args = requests_session_args or {}
         session = _init_requests_session(url=url, max_retries=max_retries, **requests_session_args)
 
@@ -615,7 +616,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
             # Validate download if necessary
             if validate and file_path.stat().st_size == 0:
-                rel_file_path = _add_slashes(_check_relative_pathname(file_path))
+                rel_file_path = _format_display_path(_get_relative_path(file_path))
                 raise ValueError(
                     f"Error: The downloaded file at {rel_file_path} is empty. "
                     f"Check the `url` or the network connection.")
@@ -831,12 +832,14 @@ class GitHubFileDownloader:
         if self.flatten:
             dir_out_ = os.path.basename(dir_out)
             if self.output_dir == os.path.relpath(os.getcwd()):
-                print(f"Downloaded to: {_add_slashes(dir_out_)}")
+                print(f"Downloaded to: {_format_display_path(dir_out_)}")
             else:
-                print(f"Downloaded to: {_add_slashes(os.path.join(self.output_dir, dir_out_))}")
+                print(
+                    f"Downloaded to: "
+                    f"{_format_display_path(os.path.join(self.output_dir, dir_out_))}")
 
         else:
-            print(f"Downloaded to: {_add_slashes(dir_out)}")
+            print(f"Downloaded to: {_format_display_path(dir_out)}")
 
     def _get_response(self, api_url_local):
         response, _ = urllib.request.urlretrieve(api_url_local)  # nosec

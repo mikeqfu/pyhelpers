@@ -15,15 +15,14 @@ import subprocess  # nosec
 import pandas as pd
 
 from .utils import _autofit_column_width, _check_saving_path, _resolve_json_engine
-from .._cache import _check_file_pathname, _lazy_check_dependencies, \
-    _print_failure_message
+from .._cache import _find_file_path, _lazy_check_dependencies, _print_failure_message
 from ..ops.general import is_visual_object
 from ..ops.web import is_url
 
 
 def save_pickle(data, path_to_file, verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
-    Saves data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
+    Save data to a `pickle <https://docs.python.org/3/library/pickle.html>`_ file.
 
     :param data: Data to be saved, compatible with the built-in `pickle.dump()`_ function.
     :type data: typing.Any
@@ -106,7 +105,7 @@ def save_spreadsheet(data, path_to_file, sheet_name="Sheet1", index=False, engin
                      delimiter=',', autofit_column_width=True, writer_kwargs=None,
                      verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
-    Saves data to a spreadsheet file format
+    Save data to a spreadsheet file format
     (e.g. `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_,
     `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ or
     `OpenDocument <https://en.wikipedia.org/wiki/OpenDocument>`_).
@@ -354,7 +353,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
                       print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Saves multiple dataframes to a multi-sheet `Microsoft Excel`_ (.xlsx, .xls) or
+    Save multiple dataframes to a multi-sheet `Microsoft Excel`_ (.xlsx, .xls) or
     `OpenDocument`_ (.ods) format file.
 
     The function wraps ``pandas.ExcelWriter`` and ``pandas.DataFrame.to_excel``, adding features
@@ -516,7 +515,7 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
 def save_json(data, path_to_file, engine=None, verbose=False, print_kwargs=None, raise_error=False,
               **kwargs):
     """
-    Saves data to a `JSON <https://www.json.org/json-en.html>`_ file.
+    Save data to a `JSON <https://www.json.org/json-en.html>`_ file.
 
     :param data: Data to be serialized and
         saved as a `JSON <https://www.json.org/json-en.html>`_ file.
@@ -619,7 +618,7 @@ def save_json(data, path_to_file, engine=None, verbose=False, print_kwargs=None,
 @_lazy_check_dependencies('joblib')
 def save_joblib(data, path_to_file, verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     """
-    Saves data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
+    Save data to a `Joblib <https://pypi.org/project/joblib/>`_ file.
 
     :param data: The data to be serialized and saved using `joblib.dump()`_.
     :type data: typing.Any
@@ -685,7 +684,7 @@ def save_joblib(data, path_to_file, verbose=False, print_kwargs=None, raise_erro
 def save_feather(data, path_to_file, index=True, verbose=False, print_kwargs=None,
                  raise_error=False, **kwargs):
     """
-    Saves a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
+    Save a dataframe to a `Feather <https://arrow.apache.org/docs/python/feather.html>`_ file.
 
     .. note::
 
@@ -764,7 +763,7 @@ def save_feather(data, path_to_file, index=True, verbose=False, print_kwargs=Non
 def save_parquet(data, path_to_file, engine=None, verbose=False, print_kwargs=None,
                  raise_error=False, **kwargs):
     """
-    Saves a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
+    Save a dataframe to a `Parquet <https://arrow.apache.org/docs/python/parquet.html>`_ file.
 
     This function supports saving via Pandas/GeoPandas (default) or directly using the
     PyArrow engine.
@@ -864,7 +863,7 @@ def save_geopackage(data, path_to_file, driver='GPKG', layer_name=None, mode='w'
                     print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Saves a GeoDataFrame or a dictionary of GeoDataFrames to a GeoPackage file.
+    Save a GeoDataFrame or a dictionary of GeoDataFrames to a GeoPackage file.
 
     This function handles both single-layer and multi-layer datasets. It uses
     a file-level reset for 'w' mode to prevent SQLite 'ghost layer' artifacts.
@@ -936,9 +935,9 @@ def save_geopackage(data, path_to_file, driver='GPKG', layer_name=None, mode='w'
 
 def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, print_kwargs=None,
                     raise_error=False):
-    # noinspection PyShadowingNames
+    # noinspection PyShadowingNames,PyUnresolvedReferences
     """
-    Saves a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
+    Save a `SVG <https://en.wikipedia.org/wiki/Scalable_Vector_Graphics>`_ file (.svg) as
     a `EMF <https://en.wikipedia.org/wiki/Windows_Metafile#EMF>`_ file (.emf)
     using `Inkscape <https://inkscape.org/>`_.
 
@@ -1009,7 +1008,7 @@ def save_svg_as_emf(path_to_svg, path_to_emf, inkscape_exe=None, verbose=False, 
         "/Applications/Inkscape.app/Contents/MacOS/inkscape",
     }
 
-    inkscape_exists, inkscape_exe_ = _check_file_pathname(
+    inkscape_exists, inkscape_exe_ = _find_file_path(
         name=exe_name, options=optional_pathnames, target=inkscape_exe)
 
     if not inkscape_exists and raise_error:
@@ -1068,8 +1067,9 @@ def _convert_svg_to_emf(conv_svg_to_emf, func, file_ext, file_path, common_args,
 @_lazy_check_dependencies(plt='matplotlib.pyplot')
 def save_fig(path_to_file, dpi=None, conv_svg_to_emf=False, verbose=False, print_kwargs=None,
              raise_error=False, **kwargs):
+    # noinspection PyUnresolvedReferences
     """
-    Saves a figure object to a file in a supported format.
+    Save a figure object to a file in a supported format.
 
     This function utilizes the `matplotlib.pyplot.savefig()`_ function and
     optionally `Inkscape`_ for SVG to EMF conversion.
@@ -1162,9 +1162,9 @@ def save_fig(path_to_file, dpi=None, conv_svg_to_emf=False, verbose=False, print
 
 def save_figure(data, path_to_file, conv_svg_to_emf=False, verbose=False, print_kwargs=None,
                 raise_error=False, **kwargs):
-    # noinspection PyShadowingNames
+    # noinspection PyShadowingNames,PyUnresolvedReferences
     """
-    Saves a figure object to a file in a supported format (with the figure object specified).
+    Save a figure object to a file in a supported format (with the figure object specified).
 
     This function serves an alternative to the :func:`~pyhelpers.store.save_fig` function.
 
@@ -1262,7 +1262,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                      verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Saves a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
+    Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
     :param data: The URL of a web page or the pathname of an HTML file.
@@ -1352,7 +1352,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         f"/usr/local/bin/{exe_name}",
     }
 
-    wkhtmltopdf_exists, wkhtmltopdf_exe = _check_file_pathname(
+    wkhtmltopdf_exists, wkhtmltopdf_exe = _find_file_path(
         name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
 
     if not wkhtmltopdf_exists and raise_error:
@@ -1460,7 +1460,7 @@ def save_data(data, path_to_file, verbose=False, print_kwargs=None, show_warning
               raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Saves data to a file in a specific format.
+    Save data to a file in a specific format.
 
     :param data: The data to be saved, which can be:
 

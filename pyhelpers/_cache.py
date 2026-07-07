@@ -58,7 +58,7 @@ def _resolve_dependency_info(name):
     :return: A tuple of ``(<actual_import_path>, <pip_install_name>)``.
     :rtype: tuple[str, str]
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _resolve_dependency_info
         >>> _resolve_dependency_info('beautifulsoup4')
@@ -119,7 +119,7 @@ def _check_dependencies(*names):
     :raises ModuleNotFoundError: If the package is not installed.
     :raises ImportError: If the package exists but fails to load correctly.
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _check_dependencies
         >>> psycopg2 = _check_dependencies('psycopg2')
@@ -304,7 +304,7 @@ def example_dataframe(osgb36=False):
     :return: An example dataframe with geographical coordinates.
     :rtype: pandas.DataFrame
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import example_dataframe
         >>> example_dataframe()
@@ -371,7 +371,7 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
     :return: ``True`` if confirmed, ``False`` otherwise.
     :rtype: bool
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _confirmed
         >>> if _confirmed(prompt="Testing if the function works?", resp=True):
@@ -405,253 +405,430 @@ def _confirmed(prompt=None, confirmation_required=True, resp=False):
         return True
 
 
-def _normalize_pathname(pathname, sep="/", add_slash=False, **kwargs):
+def _normalize_token(text, preserve_dot=False):
+    """
+    Normalize a single string token to ``snake_case`` format.
+
+    This function handles ``camelCase`` and ``PascalCase`` structural splits, forces lowercase,
+    swaps common spacing symbols to underscores and strips out illegal punctuation characters.
+
+    :param text: The raw ``str`` token or name segment to clean.
+    :type text: str
+    :param preserve_dot: If ``True``, protects the dot character (``.``) from being stripped to
+        safeguard file extensions. Defaults to ``False``.
+    :type preserve_dot: bool
+    :return: A cleaned, lowercase snake_case representation of the ``text`` parameter.
+    :rtype: str
+    """
+
+    if not text:
+        return ''
+
+        # Isolate leading and trailing hyphens, underscores and spaces immediately
+    leading_match = re.match(r'^[\s\-_]+', text)
+    trailing_match = re.search(r'[\s\-_]+$', text)
+
+    leading_prefix = leading_match.group(0) if leading_match else ''
+    trailing_suffix = trailing_match.group(0) if trailing_match else ''
+
+    # Strip boundaries off the core text so conversions can run safely
+    core_text = text[len(leading_prefix):]
+    if trailing_suffix:
+        core_text = core_text[:-len(trailing_suffix)]
+
+    # If the entire token is boundary characters (e.g. "_", "  "), `leading_prefix` and
+    # `trailing_suffix` overlap the same span; without this guard the reattachment logic
+    # below would double-count that span (e.g. "_" would incorrectly become "__")
+    if not core_text:
+        return '_' if (leading_prefix or trailing_suffix) else ''
+
+    # Handle camelCase and PascalCase splitting transformations cleanly
+    txt = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', core_text)
+    txt = re.sub(r'([A-Z]+)(?=[A-Z][a-z])', r'\1_', txt)
+    txt = txt.lower()  # Cast everything to lowercase
+
+    # Convert spaces, hyphens and slashes to underscores
+    txt = re.sub(r'[\s\-/\\]+', '_', txt)
+
+    # Strip punctuation (conditionally keeping the dot for file extensions)
+    if preserve_dot and '.' in core_text:
+        txt = re.sub(r'[^\w.]', '', txt)
+        txt = re.sub(r'\.+', '.', txt)  # Condense duplicate consecutive dots if present
+    else:
+        txt = re.sub(r'\W', '', txt)
+
+    # Condense duplicate consecutive underscores and strip interior edges
+    txt = re.sub(r'_+', '_', txt).strip('_')
+
+    # Re-attach raw boundaries using underscores as placeholder flags
+    if leading_prefix:
+        txt = f'_{txt}'
+    if trailing_suffix and not (preserve_dot and '.' in txt):
+        # Do not append past a preserved extension
+        txt = f'{txt}_'
+
+    return txt
+
+
+def _normalize_path(path, as_str=True, sep="/", prepend_dot=False):
     # noinspection PyShadowingNames
     """
-    Converts a pathname to a consistent file path format for cross-platform compatibility.
+    Convert a path into a consistent format for cross-platform compatibility.
 
-    This function formats a file (or an OS-specific) path to ensure compatibility across
-    Windows and Ubuntu (and other Unix-like systems).
+    This function converts all path separators (``"\\"`` and ``"/"``) into a single,
+    consistent separator and collapses consecutive separators, so that the resulting
+    path is consistent across systems (e.g. Windows and Unix-like operating systems).
 
-    :param pathname: A pathname.
-    :type pathname: str | bytes | pathlib.Path | os.PathLike
-    :param sep: File path separator used by the operating system; defaults to ``"/"``
-        (forward slash) for both Windows and Ubuntu (and other Unix-like systems).
+    .. note::
+
+        A run of *leading* separators (e.g. a Windows UNC prefix such as ``"\\\\server\\share"``)
+        is also collapsed to a single separator. This function does not preserve UNC-style
+        double-slash prefixes; avoid it for network-share paths.
+
+    :param path: The filesystem path to normalize.
+    :type path: str | bytes | pathlib.Path | os.PathLike
+    :param as_str: Whether to return the normalized path as a string; if ``False``,
+        a ``pathlib.Path`` object is returned instead. Defaults to ``True``.
+    :type as_str: bool
+    :param sep: Path separator used when the result is returned as a string; this is ignored when
+        ``as_str=False``, in which case the separator is determined automatically by
+        ``pathlib.Path`` based on the current platform. Defaults to ``"/"``.
     :type sep: str
-    :param add_slash:  If ``True``, adds a leading slash (and, if appropriate, a trailing slash)
-        to the returned pathname; defaults to ``False``.
-    :type add_slash: bool
-    :return: Pathname of a consistent file path format.
-    :rtype: str
+    :param prepend_dot: If ``True``, prepends ``"./"`` to a relative path that does not already
+        begin with ``"./"``, ``"../"``, or a path that ``pathlib`` considers absolute *on the
+        current platform*. Note that on Windows, a path with a leading separator but no drive
+        letter (e.g. ``"/pyhelpers/data"``) is drive-relative, not absolute, and will have
+        ``"./"`` prepended; on POSIX systems, that same path is absolute and is left untouched.
+        Only takes effect when ``as_str=True``, since ``pathlib.Path`` normalizes away a leading
+        ``"./"`` when constructing a ``Path`` object. Defaults to ``False``.
+    :type prepend_dot: bool
+    :return: Pathname formatted to a consistent standard, either as a string (default)
+        or as a ``pathlib.Path`` object when ``as_str=False``.
+    :rtype: str | pathlib.Path
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _normalize_pathname
+        >>> from pyhelpers._cache import _normalize_path
+        >>> from pathlib import Path
         >>> import os
-        >>> import pathlib
-        >>> _normalize_pathname("tests\\data\\dat.csv")
+
+        >>> path = "tests\\data\\dat.csv"
+        >>> _normalize_path(path)
         'tests/data/dat.csv'
-        >>> _normalize_pathname("tests\\data\\dat.csv", add_slash=True)
+
+        >>> _normalize_path(path, prepend_dot=True)
         './tests/data/dat.csv'
-        >>> _normalize_pathname("tests//data/dat.csv")
+
+        >>> path = "tests//data/dat.csv"
+        >>> _normalize_path(path)
         'tests/data/dat.csv'
-        >>> pathname = pathlib.Path("tests\\data/dat.csv")
-        >>> _normalize_pathname(pathname, sep=os.sep)  # On Windows
+
+        >>> path = Path("tests\\data/dat.csv")  # Assuming Windows OS
+        >>> _normalize_path(path, sep=os.sep)
         'tests\\data\\dat.csv'
-        >>> _normalize_pathname(pathname, sep=os.sep, add_slash=True)  # On Windows
-        '.\\tests\\data\\dat.csv'
+        >>> _normalize_path(path, sep=os.sep, as_str=False)
+        WindowsPath('tests/data/dat.csv')
+
+        >>> # on POSIX: absolute, untouched
+        >>> _normalize_path("/usr/bin", prepend_dot=True)
+        '/usr/bin'
+        >>> # on Windows: drive-relative, not absolute
+        >>> _normalize_path("/usr/bin", prepend_dot=True)
+        './usr/bin'
     """
 
-    pathname_ = pathname.decode(**kwargs) if isinstance(pathname, bytes) else str(pathname)
+    path_str = os.fsdecode(path)
 
-    pathname_ = _add_slashes(pathname_, surrounded_by='') if add_slash else pathname_
+    # Normalize any mix of "\" and "/" to a single "/"
+    path_str = re.sub(r"[\\/]+", "/", path_str)
 
-    return re.sub(r"[\\/]+", re.escape(sep), pathname_)
+    if not as_str:
+        return pathlib.Path(path_str)
+
+    already_dot_relative = re.match(r"^\.{1,2}(/|$)", path_str) is not None
+    if prepend_dot and not already_dot_relative and not pathlib.PurePath(path_str).is_absolute():
+        # Concatenate without duplicating an existing leading separator (relevant on Windows,
+        # where a drive-relative path such as "/foo" is not absolute but already has a "/")
+        path_str = f".{path_str}" if path_str.startswith("/") else f"./{path_str}"
+
+    return path_str if sep == "/" else path_str.replace("/", sep)
 
 
-def _add_slashes(pathname, normalized=True, surrounded_by='"', is_dir=None):
+def _format_display_path(path, normalized=True, surrounded_by='"', is_dir=None, prepend_dot=False):
     """
-    Adds leading and/or trailing slashes to a given pathname for formatting or display purposes.
+    Format a path string for display, logging or printing purposes.
 
-    :param pathname: The pathname of a file or directory.
-    :type pathname: str | bytes | pathlib.Path | os.PathLike
-    :param normalized: Whether to use forward slashes
-        (via :func:`~pyhelpers._cache._normalize_pathname`). Defaults to ``True``.
+    This function generates a visual representation of a path. It can optionally add
+    trailing slashes for directories, wrap the output in quotes and prepend a dot-slash
+    for relative paths (e.g. when preparing shell commands).
+
+    :param path: The filesystem path to format for display.
+    :type path: str | bytes | pathlib.Path | os.PathLike
+    :param normalized: Whether to standardize slashes via :func:`~pyhelpers._cache._normalize_path`.
+        Defaults to ``True``.
     :type normalized: bool
-    :param surrounded_by: A string by which the returned pathname is surrounded.
-        Defaults to ``'"'``.
+    :param surrounded_by: A string literal used to wrap the output. Defaults to ``'"'``.
     :type surrounded_by: str
-    :param is_dir: Explicitly treat as a directory. If ``None``, it checks
-        the filesystem or guesses via extensions. Defaults to ``None``.
+    :param is_dir: Explicitly treat the path as a directory. If ``None``, the filesystem is checked
+        first; when the path does not exist, this falls back to a heuristic that treats a path
+        without a file extension as a directory (which can misclassify extensionless files such
+        as ``"Makefile"`` or ``"LICENSE"``). Defaults to ``None``.
     :type is_dir: bool | None
-    :return: Formatted pathname.
+    :param prepend_dot: If ``True``, prepends a ``./`` (or native OS equivalent) to a relative path
+        that does not already begin with a dot-relative prefix (``"./"``, ``"../"``) or a path
+        that ``pathlib`` considers absolute *on the current platform*. Note that on Windows, a
+        path with a leading separator but no drive letter (e.g. ``"/pyhelpers/data"``) is
+        drive-relative, not absolute, and will have the dot prefix prepended; on POSIX systems,
+        that same path is absolute and is left untouched. Defaults to ``False``.
+    :type prepend_dot: bool
+    :return: Formatted pathname with configured slashes and wrappers. If ``surrounded_by``
+        occurs within the formatted path itself, its occurrences are doubled to keep the
+        wrapping unambiguous; this is intended for display only and is not meant to be
+        parsed back into a valid path.
     :rtype: str
 
     **Examples**::
 
-        >>> from pyhelpers._cache import _add_slashes
-        >>> _add_slashes("pyhelpers\\data")
-        '"./pyhelpers/data/"'
-        >>> _add_slashes("pyhelpers\\data", normalized=False)  # on Windows
-        '".\\pyhelpers\\data\\"'
-        >>> _add_slashes("pyhelpers\\data\\pyhelpers.dat")
+        >>> from pyhelpers._cache import _format_display_path
+
+        >>> _format_display_path("pyhelpers\\data")
+        '"pyhelpers/data/"'
+
+        >>> _format_display_path("pyhelpers\\data", normalized=False)  # on Windows
+        '"pyhelpers\\data\\"'
+
+        >>> _format_display_path("pyhelpers\\data\\pyhelpers.dat", prepend_dot=True)
         '"./pyhelpers/data/pyhelpers.dat"'
-        >>> _add_slashes("C:\\Windows")  # on Windows
+
+        >>> _format_display_path("C:\\Windows", prepend_dot=True)  # on Windows
         '"C:/Windows/"'
+
+        >>> # on POSIX: absolute
+        >>> _format_display_path("/pyhelpers/data", prepend_dot=True)
+        '"/pyhelpers/data/"'
+        >>> # on Windows: drive-relative
+        >>> _format_display_path("/pyhelpers/data", prepend_dot=True)
+        '"./pyhelpers/data/"'
     """
 
-    # String conversion
-    path_str = os.fsdecode(pathname)
+    path_str = os.fsdecode(path)
 
     if is_dir is None:
         if os.path.exists(path_str):
             is_dir = os.path.isdir(path_str)
-        else:  # Guess: no extension usually means directory
+        else:  # Heuristic fallback: assume no extension means a directory
             is_dir = os.path.splitext(path_str)[1] == ''
 
-    # Handle leading slash/dot (for relative paths)
-    if not os.path.isabs(path_str) and not path_str.startswith(('.', os.sep, '/')):
-        path_str = f".{os.sep}{path_str}"
+    already_dot_relative = re.match(r"^\.{1,2}([\\/]+|$)", path_str) is not None
+    if prepend_dot and not already_dot_relative and not pathlib.PurePath(path_str).is_absolute():
+        # Concatenate without duplicating an existing leading separator (relevant on Windows,
+        # where a drive-relative path such as "/foo" is not absolute but already has one)
+        if path_str.startswith(("/", "\\")):
+            path_str = f"{os.curdir}{path_str}"
+        else:
+            path_str = f"{os.curdir}{os.sep}{path_str}"
 
-    # Handle trailing slash
-    if not path_str.endswith(os.sep) and is_dir:
-        path_str += os.sep  # Add a trailing slash
+    if is_dir and not path_str.endswith((os.sep, "/")):
+        path_str += os.sep
 
     if normalized:
-        path_str = _normalize_pathname(path_str)
+        path_str = _normalize_path(path_str, sep="/", as_str=True, prepend_dot=False)
 
-    s = surrounded_by or ""
+    if surrounded_by:
+        # Double any occurrence of the wrapping delimiter within the path itself, so the
+        # boundary stays unambiguous; this output is for display only, not for reuse as
+        # a real filesystem path
+        escaped_path = path_str.replace(surrounded_by, surrounded_by * 2)
+        return f"{surrounded_by}{escaped_path}{surrounded_by}"
 
-    return f'{s}{path_str}{s}'
+    return path_str
 
 
-def _check_relative_pathname(pathname, normalized=True):
+def _get_relative_path(path, as_str=False, normalized=True, quoted=False, is_dir=None,
+                       prepend_dot=False):
     """
-    Checks if the pathname is relative to the current working directory.
+    Check if the pathname is relative to the current working directory.
 
-    This function returns a relative pathname of the input ``pathname`` to the current working
-    directory if ``pathname`` is within the current working directory;
-    otherwise, it returns a copy of the input.
+    If the specified ``path`` resides within the current working directory, this function
+    returns its relative path counterpart. Otherwise, it returns the original absolute path.
 
-    :param pathname: Pathname (of a file or directory).
-    :type pathname: str | bytes | pathlib.Path | os.PathLike
-    :param normalized: Whether to normalize the returned pathname; defaults to ``True``.
+    :param path: Pathname of a file or directory.
+    :type path: str | bytes | pathlib.Path | os.PathLike
+    :param as_str: Whether to return the path as a string; if ``False``, a ``pathlib.Path``
+        object is returned instead and ``normalized``, ``quoted``, ``is_dir`` and
+        ``prepend_dot`` are all ignored. Defaults to ``False``.
+    :type as_str: bool
+    :param normalized: Whether to run the path through
+        :func:`~pyhelpers._cache._normalize_path` (or, when ``quoted=True``,
+        :func:`~pyhelpers._cache._format_display_path`) before returning it as a string.
+        If ``False``, the string is returned using the native OS separator, unnormalized.
+        Only takes effect when ``as_str=True``. Defaults to ``True``.
     :type normalized: bool
-    :return: A location relative to the current working directory
-        if ``pathname`` is within the current working directory; otherwise, a copy of ``pathname``.
-    :rtype: str
+    :param quoted: Whether to format and wrap the returned string via
+        :func:`~pyhelpers._cache._format_display_path` (double-quoted, with a trailing
+        separator for directories) instead of :func:`~pyhelpers._cache._normalize_path`.
+        Only takes effect when ``as_str=True``. Defaults to ``False``.
+    :type quoted: bool
+    :param is_dir: Explicitly treat the path as a directory; passed through to
+        :func:`~pyhelpers._cache._format_display_path`. Only takes effect when
+        ``as_str=True`` and ``quoted=True``. Defaults to ``None``.
+    :type is_dir: bool | None
+    :param prepend_dot: Whether to prepend a dot-relative prefix to a relative path.
+        Only takes effect when ``as_str=True``. Defaults to ``False``.
+    :type prepend_dot: bool
+    :return: A location relative to the current working directory if ``path`` is within
+        the working space; otherwise, a resolved copy of the absolute ``path``.
+    :rtype: pathlib.Path | str
 
-    **Tests**::
+    **Examples**::
 
-        >>> from pyhelpers._cache import _check_relative_pathname
+        >>> from pyhelpers._cache import _get_relative_path
         >>> from pyhelpers.dirs import cd
-        >>> _check_relative_pathname(pathname=".")
+
+        >>> _get_relative_path(path=".")  # on Windows
+        WindowsPath('.')
+
+        >>> _get_relative_path(path=cd(), as_str=True)
         '.'
-        >>> _check_relative_pathname(pathname=cd())
-        '.'
-        >>> _check_relative_pathname(pathname="C:/Windows")
+
+        >>> _get_relative_path(path="C:/Windows", as_str=True)
         'C:/Windows'
-        >>> _check_relative_pathname(pathname="C:\\Program Files", normalized=False)
+
+        >>> _get_relative_path(path="C:\\Program Files", as_str=True, normalized=False)
         'C:\\Program Files'
     """
 
-    if isinstance(pathname, (bytes, bytearray)):
-        pathname_ = str(pathname, encoding='utf-8')
-    else:
-        pathname_ = str(pathname)
+    path_str = os.fsdecode(path)
 
-    abs_pathname = os.path.abspath(pathname_)
-    abs_cwd = os.getcwd()
+    path_obj = pathlib.Path(path_str).resolve()
+    cwd_obj = pathlib.Path.cwd()
 
-    if os.name == "nt":  # Handle different drive letters on Windows
-        if os.path.splitdrive(abs_pathname)[0] != os.path.splitdrive(abs_cwd)[0]:
-            # Return absolute path if drives differ
-            return _normalize_pathname(abs_pathname) if normalized else abs_pathname
+    # Return original absolute path if outside CWD
+    rel_path = path_obj.relative_to(cwd_obj) if path_obj.is_relative_to(cwd_obj) else path_obj
 
-    # Check if the pathname is inside the current working directory
-    if os.path.commonpath([abs_pathname, abs_cwd]) == abs_cwd:
-        try:
-            rel_path = os.path.relpath(pathname_)
-        except ValueError:
-            rel_path = copy.copy(pathname_)
+    if not as_str:
+        return rel_path
 
-    else:
-        rel_path = abs_pathname  # Return original absolute path if outside CWD
+    if quoted:
+        return _format_display_path(
+            rel_path,
+            normalized=normalized,
+            surrounded_by='"',
+            is_dir=is_dir,
+            prepend_dot=prepend_dot
+        )
 
-    return _normalize_pathname(rel_path) if normalized else rel_path
+    if not normalized:
+        return str(rel_path)
+
+    return _normalize_path(rel_path, as_str=True, prepend_dot=prepend_dot)
 
 
-def _check_file_pathname(name, options=None, target=None):
+def _find_file_path(name, options=None, target=None, as_str=False):
     # noinspection PyShadowingNames
     """
-    Checks the pathname of a specified file given its name or filename.
+    Check the pathname of a specified file given its name or filename.
 
-    This function determines if a specified executable exists by checking a target path,
-    searching through provided options, or looking in the system's PATH.
+    This function determines if a specified executable or file exists by verifying an explicit
+    target path, searching through a provided list of options, or checking the system's PATH.
+    The checks run in order (``target``, direct lookup of ``name`` itself, ``options``, PATH).
+    An explicit ``target`` is authoritative: if it does not resolve to a valid match, the
+    function stops and does not search ``options`` or the system PATH.
 
-    :param name: Name or filename of the executable file.
+    :param name: Name or filename of the file/executable.
     :type name: str
-    :param options: Possible pathnames or directories to search for ``name``; defaults to ``None``.
+    :param options: Possible pathnames or directories to search for ``name``. Defaults to ``None``.
     :type options: list | set | None
-    :param target: Specific pathname that may already be known and is to validate first;
-        defaults to ``None``.
+    :param target: Specific known pathname to validate first. Defaults to ``None``.
     :type target: str | None
-    :return: Tuple containing: a boolean variable indicating whether the file exists and
-        a Path object of file's the absolute path (if it exists).
-    :rtype: tuple[bool, pathlib.Path | None]
+    :param as_str: If ``True``, returns the output path as a string instead of a ``pathlib.Path``
+        object. Defaults to ``False``.
+    :type as_str: bool
+    :return: Tuple containing a boolean indicating existence, and the resolved path if found.
+    :rtype: tuple[bool, pathlib.Path | str | None]
 
-    **Tests**::
+    **Examples**::
 
-        >>> from pyhelpers._cache import _check_file_pathname
-        >>> import os
+        >>> from pyhelpers._cache import _find_file_path
+        >>> from pathlib import Path
         >>> import sys
+
         >>> python_exe = "python.exe"
-        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe)
+        >>> python_exe_exists, path_to_python_exe = _find_file_path(python_exe)
         >>> python_exe_exists
         True
-        >>> possible_paths = [os.path.dirname(sys.executable), sys.executable]
+
+        >>> possible_paths = [Path(sys.executable).parent, sys.executable]
         >>> target = possible_paths[0]
-        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=target)
+        >>> python_exe_exists, path_to_python_exe = _find_file_path(python_exe, target=target)
         >>> python_exe_exists
         False
+
         >>> target = possible_paths[1]
-        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(python_exe, target=target)
+        >>> python_exe_exists, path_to_python_exe = _find_file_path(python_exe, target=target)
         >>> python_exe_exists
         True
-        >>> python_exe_exists, path_to_python_exe = _check_file_pathname(possible_paths[1])
+
+        >>> python_exe_exists, path_to_python_exe = _find_file_path(possible_paths[1])
         >>> python_exe_exists
         True
+
         >>> text_exe = "pyhelpers.exe"  # This file does not actually exist
-        >>> test_exe_exists, path_to_test_exe = _check_file_pathname(text_exe, possible_paths)
+        >>> test_exe_exists, path_to_test_exe = _find_file_path(text_exe, possible_paths)
         >>> test_exe_exists
         False
     """
 
+    def _matches(target_name, candidate_name):
+        # Case-insensitive substring match; this allows e.g. `name="python"` to match a
+        # versioned binary such as "python3.12", but note it can also produce false
+        # positives for short names (e.g. "a.exe" matching "ba.exe") -- prefer passing
+        # a full/exact filename via `name` where that risk matters.
+        return target_name.lower() in candidate_name.lower()
+
+    name_str = str(name)
+
+    # Target priority path: an explicit `target` is authoritative - if it fails
+    # validation, stop here rather than searching `options`/PATH
     if target:  # Check `target` if provided
         target_path = pathlib.Path(target).resolve()
 
         # Verify it's a file and the name matches (case-insensitive for safety)
-        if target_path.is_file() and name.lower() in target_path.name.lower():
-            file_exists, pathname = True, target_path
-        else:
-            file_exists, pathname = False, None
+        if target_path.is_file() and _matches(name_str, target_path.name):
+            return True, (str(target_path) if as_str else target_path)
 
-    else:  # Check if `name` itself is already a valid direct path
-        pathname = pathlib.Path(name).resolve()
-        if pathname.is_file():
-            file_exists = True
+        return False, None
 
-        else:  # Build search list (Options + System PATH)
-            file_exists, pathname = False, None
+    # Direct absolute/relative path lookup
+    direct_path = pathlib.Path(name).resolve()
+    if direct_path.is_file():  # Check if `name` itself is already a valid direct path
+        return True, (str(direct_path) if as_str else direct_path)
 
-            search_paths = []
-            if options:  # Flatten options into a list of strings/paths
-                search_paths.extend(list(options))
+    # Dynamic search pipeline
+    search_paths = []
+    if options:
+        search_paths.extend(list(options))
 
-            filename = str(name)
+    # Add system PATH lookup
+    system_match = shutil.which(name_str)  # noqa
+    if system_match:
+        search_paths.append(system_match)
 
-            # Add system PATH lookup
-            system_match = shutil.which(filename)  # noqa
-            if system_match:
-                search_paths.append(system_match)
+    # Iterate and validate
+    for p in search_paths:
+        if p is None:
+            continue
 
-            # Iterate and validate
-            for p in search_paths:
-                if p is None:
-                    continue
+        p_obj = pathlib.Path(p).resolve()
+        # If the option is a directory, look for 'name' inside it
+        potential_file = (p_obj / name_str) if p_obj.is_dir() else p_obj
 
-                p_obj = pathlib.Path(p).resolve()
-                # If the option is a directory, look for 'name' inside it
-                potential_file = (p_obj / filename) if p_obj.is_dir() else p_obj
+        if potential_file.is_file():
+            # Validate name match to prevent spoofed/random file resolutions
+            if _matches(name_str, potential_file.name):
+                return True, (str(potential_file) if as_str else potential_file)
 
-                # Final validation
-                if potential_file.is_file():
-                    # Check for name overlap to ensure we didn't find a random file
-                    if filename.lower() in potential_file.name.lower():
-                        file_exists, pathname = True, potential_file
-                        break  # Stop at the first valid match found
-
-    return file_exists, pathname
+    return False, None
 
 
 def _format_exception_message(exception=None, prefix=""):
@@ -668,7 +845,7 @@ def _format_exception_message(exception=None, prefix=""):
     :return: Formatted error message.
     :rtype: str
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _format_exception_message
         >>> _format_exception_message("test")
@@ -711,7 +888,7 @@ def _print_failure_message(e, prefix="Error:", verbose=True, raise_error=False):
     :return: None.
     :rtype: None
 
-    **Tests**::
+    **Examples**::
 
         >>> from pyhelpers._cache import _print_failure_message
         >>> try:
