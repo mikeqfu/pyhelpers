@@ -8,6 +8,29 @@ dirs
     :no-members:
     :no-inherited-members:
 
+Path formatting
+---------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    normalize_path
+    standardize_path
+    get_relative_path
+    format_display_path
+
+Path validation
+---------------
+
+.. autosummary::
+    :toctree: _generated/
+    :template: function.rst
+
+    is_dir_path
+    validate_filename
+    check_files_exist
+
 Directory navigation
 --------------------
 
@@ -18,29 +41,15 @@ Directory navigation
     cd
     cdd
     cd_data
+    resolve_dir_path
     find_executable
 
-Directory validation
+Directory management
 --------------------
 
 .. autosummary::
     :toctree: _generated/
     :template: function.rst
 
-    normalize_pathname
-    is_path_to_dir
-    resolve_dir
-    validate_filename
-    get_file_pathnames
-    check_files_exist
-    check_relative_pathname
-
-Directory/file management
--------------------------
-
-.. autosummary::
-    :toctree: _generated/
-    :template: function.rst
-
-    add_slashes
     delete_dir
+    get_file_paths
