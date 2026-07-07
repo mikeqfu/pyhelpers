@@ -14,8 +14,8 @@ import subprocess  # nosec
 import tempfile
 import zipfile
 
-from .._cache import _add_slashes, _check_dependencies, _check_file_pathname, \
-    _check_relative_pathname, _print_failure_message
+from .._cache import _check_dependencies, _find_file_path, _format_display_path, \
+    _get_relative_path, _print_failure_message
 
 
 # ==================================================================================================
@@ -25,12 +25,12 @@ from .._cache import _add_slashes, _check_dependencies, _check_file_pathname, \
 def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False, raise_error=False,
           **kwargs):
     """
-    Unzips data from a `Zip
+    Unzip data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
     (compressed) file.
 
     :param path_to_zip_file: The path where the Zip file is saved.
-    :type path_to_zip_file: str | os.PathLike
+    :type path_to_zip_file: str | pathlib.Path | os.PathLike
     :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
     :type output_dir: str | None
     :param ret_output_dir: Whether to return the path to output directory; defaults to ``False``.
@@ -48,30 +48,34 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
 
         >>> from pyhelpers.store import unzip
         >>> from pyhelpers.dirs import cd, delete_dir
+
         >>> zip_file_path = cd("tests", "data", "zipped.zip")
         >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
-        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped/" ... Done.
+        Extracting "tests/data/zipped.zip" to "tests/data/zipped/" ... Done.
+
         >>> output_dir_1 = cd("tests", "data", "zipped")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
+
         >>> output_dir_2 = cd("tests", "data", "zipped_alt")
         >>> unzip(path_to_zip_file=zip_file_path, output_dir=output_dir_2, verbose=True)
-        Extracting "./tests/data/zipped.zip" to "./tests/data/zipped_alt\\" ... Done.
+        Extracting "tests/data/zipped.zip" to "tests/data/zipped_alt\\" ... Done.
         >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
-        >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
-        To delete the following directories:
-            "./tests/data/zipped/" (Not empty)
-            "./tests/data/zipped_alt/" (Not empty)
-        ? [No]|Yes: yes
-        Deleting "./tests/data/zipped/" ... Done.
-        Deleting "./tests/data/zipped_alt/" ... Done.
 
+        >>> # Delete the directories "tests/data/zipped/" and "tests/data/zipped_alt/"
+        >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
+        Confirm deletion of the following directories:
+          "tests/data/zipped/" (Not empty)
+          "tests/data/zipped_alt/" (Not empty)
+        ? [No]|Yes: yes
+        Deleting:
+          "tests/data/zipped/" ... Done.
+          "tests/data/zipped_alt/" ... Done.
     """
 
     if output_dir is None:
@@ -84,7 +88,7 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
 
     if verbose:
         rel_path, out_dir = map(
-            lambda x: _add_slashes(_check_relative_pathname(x)), [path_to_zip_file, output_dir_])
+            lambda x: _format_display_path(_get_relative_path(x)), [path_to_zip_file, output_dir_])
         print(f'Extracting {rel_path} to {out_dir}', end=" ... ")
 
     try:
@@ -101,19 +105,20 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
 
-def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=False, verbose=False,
+def seven_zip(zip_file_path, output_dir=None, mode='aoa', return_output_dir=False, verbose=False,
               raise_error=False, seven_zip_exe=None):
+    # noinspection PyShadowingNames
     """
-    Extracts data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
+    Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
-    :param path_to_zip_file: The path where the compressed file is saved.
-    :type path_to_zip_file: str | os.PathLike
+    :param zip_file_path: The path where the compressed file is saved.
+    :type zip_file_path: str | os.PathLike
     :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
     :type output_dir: str | None
     :param mode: The extraction mode; defaults to ``'aoa'``.
     :type mode: str
-    :param ret_output_dir: Whether to return the path to output directory; defaults to ``False``.
-    :type ret_output_dir: bool
+    :param return_output_dir: Whether to return the path to output directory; defaults to ``False``.
+    :type return_output_dir: bool
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
     :param raise_error: Whether to raise the provided exception;
@@ -128,8 +133,9 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
 
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dirs import cd, delete_dir
-        >>> zip_file_pathname = cd("tests", "data", "zipped.zip")
-        >>> seven_zip(path_to_zip_file=zip_file_pathname, verbose=True)
+
+        >>> zip_file_path = cd("tests", "data", "zipped.zip")
+        >>> seven_zip(zip_file_path=zip_file_path, verbose=True)
 
         7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
 
@@ -148,47 +154,52 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
         Compressed: 158
 
         Done.
+
         >>> output_dir_1 = cd("tests", "data", "zipped")
-        >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
-        >>> with open(out_file_pathname) as f:
+        >>> out_file_path = cd(output_dir_1, "zipped.txt")
+        >>> with open(out_file_path) as f:
         ...     print(f.read())
         test
+
         >>> output_dir_2 = cd("tests", "data", "zipped_alt")
-        >>> seven_zip(path_to_zip_file=zip_file_pathname, output_dir=output_dir_2, verbose=False)
+        >>> seven_zip(zip_file_path=zip_file_path, output_dir=output_dir_2, verbose=True)
         >>> out_file_pathname = cd("tests", "data", "zipped_alt", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
+
         >>> # Extract a .7z file
         >>> zip_file_path = cd("tests", "data", "zipped.7z")
-        >>> seven_zip(path_to_zip_file=zip_file_path, output_dir=output_dir_2)
+        >>> seven_zip(zip_file_path=zip_file_path, output_dir=output_dir_2)
         >>> out_file_pathname = cd("tests", "data", "zipped", "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
-        >>> # Delete the directories "./tests/data/zipped/" and "./tests/data/zipped_alt/"
+
+        >>> # Delete the directories "tests/data/zipped/" and "tests/data/zipped_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
-        To delete the following directories:
-            "./tests/data/zipped/" (Not empty)
-            "./tests/data/zipped_alt/" (Not empty)
+        Confirm deletion of the following directories:
+          "tests/data/zipped/" (Not empty)
+          "tests/data/zipped_alt/" (Not empty)
         ? [No]|Yes: yes
-        Deleting "./tests/data/zipped/" ... Done.
-        Deleting "./tests/data/zipped_alt/" ... Done.
+        Deleting:
+          "tests/data/zipped/" ... Done.
+          "tests/data/zipped_alt/" ... Done.
     """
 
     exe_name = "7z"
     optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/7-Zip/{exe_name}.exe"}
-    seven_zip_exists, seven_zip_exe_ = _check_file_pathname(
-        name=exe_name, options=optional_pathnames, target=seven_zip_exe)
+    seven_zip_exists, seven_zip_exe_ = _find_file_path(
+        name=exe_name, options=optional_pathnames, target=seven_zip_exe, as_str=True)
 
     if seven_zip_exists:
         if output_dir is None:
-            output_dir_ = os.path.splitext(path_to_zip_file)[0]
+            output_dir_ = os.path.splitext(zip_file_path)[0]
         else:
-            output_dir_ = copy.deepcopy(output_dir)
+            output_dir_ = os.path.normpath(output_dir)
 
         try:
-            command_args = [seven_zip_exe_, 'x', path_to_zip_file, '-o' + output_dir_, '-' + mode]
+            command_args = [seven_zip_exe_, 'x', zip_file_path, '-o' + output_dir_, '-' + mode]
             if not verbose:
                 command_args += ['-bso0', '-bsp0']
 
@@ -197,7 +208,7 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
             if verbose:
                 print("\nDone." if rslt.returncode == 0 else "\nFailed.")
 
-            if ret_output_dir:
+            if return_output_dir:
                 return output_dir_
 
         except Exception as e:
@@ -220,12 +231,14 @@ def seven_zip(path_to_zip_file, output_dir=None, mode='aoa', ret_output_dir=Fals
 def _markdown_to_rst_print(abs_input_path, abs_output_path, verbose):
     if verbose:
         rel_input_path, rel_output_path = map(
-            lambda x: pathlib.Path(_check_relative_pathname(x)), (abs_input_path, abs_output_path))
+            lambda x: pathlib.Path(_get_relative_path(x)), (abs_input_path, abs_output_path))
 
         if not os.path.exists(abs_output_path):
-            msg = f'Converting {_add_slashes(rel_input_path)} to {_add_slashes(rel_output_path)}'
+            msg = (f'Converting {_format_display_path(rel_input_path)} '
+                   f'to {_format_display_path(rel_output_path)}')
         else:
-            msg = f'Updating "{rel_output_path.name}" in {_add_slashes(rel_output_path.parent)}'
+            msg = (f'Updating "{rel_output_path.name}" '
+                   f'in {_format_display_path(rel_output_path.parent)}')
         print(msg, end=" ... ")
 
 
@@ -268,7 +281,7 @@ def _markdown_to_rst_by_pypandoc(abs_input_path, arg_t, abs_output_path, **kwarg
 def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_exe=None,
                     verbose=False, raise_error=False, **kwargs):
     """
-    Converts a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
+    Convert a `Markdown <https://daringfireball.net/projects/markdown/>`_ (.md) file to a
     `reStructuredText <https://docutils.readthedocs.io/en/sphinx-docs/user/rst/quickstart.html>`_
     (.rst) file.
 
@@ -303,19 +316,22 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
         >>> from pyhelpers.store import markdown_to_rst
         >>> from pyhelpers.dirs import cd
+
         >>> dat_dir = cd("tests", "documents")
         >>> path_to_md_file = cd(dat_dir, "readme.md")
         >>> path_to_rst_file = cd(dat_dir, "readme.rst")
+
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True)
-        Converting "./tests/documents/readme.md" to "./tests/documents/readme.rst" ... Done.
+        Converting "tests/documents/readme.md" to "tests/documents/readme.rst" ... Done.
+
         >>> markdown_to_rst(path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True)
-        Updating "readme.rst" in "./tests/documents/" ... Done.
+        Updating "readme.rst" in "tests/documents/" ... Done.
     """
 
     exe_name = "pandoc"
     optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/Pandoc/{exe_name}.exe"}
-    pandoc_exists, pandoc_exe_ = _check_file_pathname(
-        name=exe_name, options=optional_pathnames, target=pandoc_exe)
+    pandoc_exists, pandoc_exe_ = _find_file_path(
+        name=exe_name, options=optional_pathnames, target=pandoc_exe, as_str=True)
 
     input_path, output_path = path_to_md, path_to_rst
     arg_f, arg_t = 'markdown+smart', 'rst+smart'
@@ -358,7 +374,7 @@ def markdown_to_rst(path_to_md, path_to_rst, reverse=False, engine=None, pandoc_
 
 def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
     """
-    Prepares paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
+    Prepare paths and VBScript for converting an Excel spreadsheet (*.xlsx*/*.xls*) to a
     `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file.
 
     :param path_to_xlsx: The path of the Excel spreadsheet (in .xlsx format).
@@ -396,7 +412,7 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
 
 def _xlsx_to_csv(xlsx_pathname, csv_pathname, sheet_name='1', vbscript=None):
     """
-    Converts a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
+    Convert a `Microsoft Excel <https://en.wikipedia.org/wiki/Microsoft_Excel>`_ spreadsheet
     (*.xlsx*/*.xls*) to a `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`_ file
     using `VBScript <https://en.wikipedia.org/wiki/VBScript>`_.
 
@@ -433,7 +449,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
                 sheet_name='1', ret_null=False, verbose=False, raise_error=False, **kwargs):
     # noinspection PyUnresolvedReferences
     """
-    Converts a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
+    Convert a `Microsoft Excel`_ spreadsheet to a `CSV`_ file.
 
     See also [`STORE-XTC-1 <https://stackoverflow.com/questions/1858195/>`_].
 
@@ -495,11 +511,14 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         >>> from pyhelpers.store import xlsx_to_csv, load_csv
         >>> from pyhelpers.dirs import cd
         >>> import os
+
         >>> path_to_test_xlsx = cd("tests", "data", "dat.xlsx")
         >>> path_to_temp_csv = xlsx_to_csv(path_to_test_xlsx, verbose=True)
-        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
+
         >>> os.path.isfile(path_to_temp_csv)
         True
+
         >>> data = load_csv(path_to_temp_csv, index_col=0)
         >>> data
                      Longitude    Latitude
@@ -508,9 +527,11 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Birmingham  -1.9026911  52.4796992
         Manchester  -2.2451148  53.4794892
         Leeds       -1.5437941  53.7974185
+
         >>> # Set `engine='xlsx2csv'`
         >>> temp_csv_buffer = xlsx_to_csv(path_to_test_xlsx, engine='xlsx2csv', verbose=True)
-        Converting "./tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
+        Converting "tests/data/dat.xlsx" to a (temporary) CSV file ... Done.
+
         >>> # import pandas as pd; data_ = pandas.read_csv(io_buffer, index_col=0)
         >>> data_ = load_csv(temp_csv_buffer, index_col=0)
         >>> data_
@@ -520,15 +541,17 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
+
         >>> data.astype('float16').equals(data_.astype('float16'))
         True
+
         >>> # Remove the temporary CSV file
         >>> os.remove(path_to_temp_csv)
     """
 
     if verbose:
-        rel_path = _check_relative_pathname(path_to_xlsx)
-        print(f'Converting {_add_slashes(rel_path)} to a (temporary) CSV file', end=" ... ")
+        rel_path = _get_relative_path(path_to_xlsx)
+        print(f'Converting {_format_display_path(rel_path)} to a (temporary) CSV file', end=" ... ")
 
     try:
         if engine is None:

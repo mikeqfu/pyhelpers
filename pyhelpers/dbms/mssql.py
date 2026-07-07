@@ -266,7 +266,7 @@ class MSSQL(_Base):
 
     def create_engine(self, database_name=None, auth=None, password=None):
         """
-        Creates a SQLAlchemy connectable engine for connecting to a SQL Server database.
+        Create a SQLAlchemy connectable engine for connecting to a SQL Server database.
 
         This method generates and returns a *SQLAlchemy* engine configured to connect to a
         SQL Server database using the provided or default database name, authentication method and
@@ -323,7 +323,7 @@ class MSSQL(_Base):
     def create_connection(self, database_name=None, mode=None):
         # noinspection PyTypeChecker
         """
-        Creates a SQLAlchemy connection to a Microsoft SQL Server database.
+        Create a SQLAlchemy connection to a Microsoft SQL Server database.
 
         This method establishes and returns a connection to the specified database using either
         SQLAlchemy or pyodbc, depending on the specified ``mode``.
@@ -374,7 +374,7 @@ class MSSQL(_Base):
 
     def create_cursor(self, database_name=None):
         """
-        Creates a `pyodbc <https://pypi.org/project/pyodbc/>`_ cursor.
+        Create a `pyodbc <https://pypi.org/project/pyodbc/>`_ cursor.
 
         :param database_name: Name of the database to connect to;
             defaults to the name of the currently-connected database if ``database_name=None``.
@@ -412,7 +412,7 @@ class MSSQL(_Base):
 
     def get_database_names(self, names_only=True):
         """
-        Gets names of all existing databases.
+        Get names of all existing databases.
 
         :param names_only: Whether to return only the names of the databases; defaults to ``True``.
         :type names_only: bool
@@ -442,7 +442,7 @@ class MSSQL(_Base):
 
     def database_exists(self, database_name=None):
         """
-        Checks whether a database exists.
+        Check whether a database exists.
 
         :param database_name: Name of the database to check; defaults to ``None``.
         :type database_name: str | None
@@ -492,7 +492,7 @@ class MSSQL(_Base):
 
     def create_database(self, database_name, verbose=False):
         """
-        Creates a database.
+        Create a database.
 
         :param database_name: Name of the database to be created.
         :type database_name: str
@@ -531,7 +531,7 @@ class MSSQL(_Base):
 
     def connect_database(self, database_name=None, verbose=False, raise_error=False):
         """
-        Establishes a connection to a database.
+        Establish a connection to a database.
 
         :param database_name: Name of the database to connect to;
             if ``database_name=None`` (default), the database name is input manually.
@@ -603,7 +603,7 @@ class MSSQL(_Base):
 
     def disconnect_database(self, database_name=None, verbose=False, raise_error=False):
         """
-        Disconnects from a database.
+        Disconnect from a database.
 
         :param database_name: Name of the database to disconnect from;
             if ``database_name=None`` (default), disconnects from the current database.
@@ -672,7 +672,7 @@ class MSSQL(_Base):
     def drop_database(self, database_name=None, confirmation_required=True, verbose=False,
                       raise_error=False):
         """
-        Deletes/drops a database.
+        Delete/drop a database.
 
         :param database_name: Name of the database to be dropped;
             if ``database_name=None`` (default), drops the currently-connected database.
@@ -714,7 +714,7 @@ class MSSQL(_Base):
 
     def schema_exists(self, schema_name):
         """
-        Checks whether a schema exists.
+        Check whether a schema exists.
 
         :param schema_name: Name of the schema to check.
         :type schema_name: str
@@ -748,7 +748,7 @@ class MSSQL(_Base):
 
     def create_schema(self, schema_name, verbose=False, raise_error=False):
         """
-        Creates a schema.
+        Create a schema.
 
         :param schema_name: Name of the schema to be created.
         :type schema_name: str
@@ -795,10 +795,9 @@ class MSSQL(_Base):
         else:
             print(f"The schema {s_name} already exists.")
 
-    def get_schema_info(self, names_only=True, include_all=False, column_names=None,
-                        verbose=False):
+    def get_schema_info(self, names_only=True, include_all=False, column_names=None, verbose=False):
         """
-        Retrieves information about existing schemas.
+        Retrieve information about existing schemas.
 
         :param names_only: Whether to return only the names of the schemas; defaults to ``True``.
         :type names_only: bool
@@ -901,7 +900,7 @@ class MSSQL(_Base):
 
     def drop_schema(self, schema_names, confirmation_required=True, verbose=False, **kwargs):
         """
-        Deletes/drops one or multiple schemas.
+        Delete/drop one or multiple schemas.
 
         :param schema_names: Name of a single schema or names of multiple schemas to be dropped.
         :type schema_names: str | typing.Iterable[str]
@@ -982,7 +981,7 @@ class MSSQL(_Base):
 
     def get_table_names(self, schema_name=None, verbose=False):
         """
-        Gets names of all tables stored in one or multiple schemas.
+        Get names of all tables stored in one or multiple schemas.
 
         :param schema_name: Name of a single schema, or names of multiple schemas;
             defaults to :py:attr:`~pyhelpers.dbms.MSSQL.DEFAULT_SCHEMA` when ``schema_name=None``.
@@ -1042,7 +1041,7 @@ class MSSQL(_Base):
                      raise_error=False):
         # noinspection PyUnresolvedReferences
         """
-        Creates a table with specified columns.
+        Create a table with specified columns.
 
         :param table_name: Name of the table to be created.
         :type table_name: str
@@ -1101,7 +1100,7 @@ class MSSQL(_Base):
 
     def table_exists(self, table_name, schema_name=None):
         """
-        Checks whether a table exists.
+        Check whether a table exists.
 
         :param table_name: Name of the table to check.
         :type table_name: str
@@ -1145,7 +1144,7 @@ class MSSQL(_Base):
 
     def get_file_tables(self, names_only=True):
         """
-        Retrieves information about *FileTables* from the database (if available).
+        Retrieve information about *FileTables* from the database (if available).
 
         :param names_only: Whether to return only the names of *FileTables*; defaults to ``True``.
         :type names_only: bool
@@ -1175,7 +1174,7 @@ class MSSQL(_Base):
 
     def get_row_count(self, table_name, schema_name=None):
         """
-        Gets the row count of a table.
+        Get the row count of a table.
 
         :param table_name: Name of the table to get row count from.
         :type table_name: str
@@ -1211,7 +1210,7 @@ class MSSQL(_Base):
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
-        Retrieves information about columns of a table.
+        Retrieve information about columns of a table.
 
         :param table_name: Name of the table to retrieve column information from.
         :type table_name: str
@@ -1238,7 +1237,7 @@ class MSSQL(_Base):
 
     def get_column_names(self, table_name, schema_name=None):
         """
-        Retrieves column names of a table.
+        Retrieve column names of a table.
 
         :param table_name: Name of the table to retrieve column names from.
         :type table_name: str
@@ -1282,7 +1281,7 @@ class MSSQL(_Base):
 
     def validate_column_names(self, table_name, schema_name=None, column_names=None):
         """
-        Validates column names for use in a SQL query statement.
+        Validate column names for use in a SQL query statement.
 
         :param table_name: Name of the table.
         :type table_name: str
@@ -1305,7 +1304,7 @@ class MSSQL(_Base):
 
     def _has_dtypes(self, table_name, dtypes, schema_name=None):
         """
-        Checks whether a table contains columns of specified data types.
+        Check whether a table contains columns of specified data types.
 
         :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
@@ -1361,7 +1360,7 @@ class MSSQL(_Base):
 
     def has_dtypes(self, table_name, dtypes, schema_name=None):
         """
-        Checks whether a table contains columns of specified data types.
+        Check whether a table contains columns of specified data types.
 
         :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
@@ -1434,7 +1433,7 @@ class MSSQL(_Base):
     def _column_names_in_query(self, table_name, column_names=None, schema_name=None,
                                exclude=None):
         """
-        Formats column names for use in a SQL query statement.
+        Format column names for use in a SQL query statement.
 
         :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
@@ -1492,7 +1491,7 @@ class MSSQL(_Base):
 
     def get_primary_keys(self, table_name=None, schema_name=None, table_type='TABLE'):
         """
-        Retrieves the primary keys of table(s) from the currently-connected database.
+        Retrieve the primary keys of table(s) from the currently-connected database.
 
         :param table_name: Name of a specific table to retrieve primary keys from;
             when ``table_name=None`` (default), retrieves primary keys for all tables.
@@ -1549,7 +1548,7 @@ class MSSQL(_Base):
 
     def add_primary_key(self, column_name, table_name, schema_name=None):
         """
-        Adds a primary key constraint to a table.
+        Add a primary key constraint to a table.
 
         :param column_name: Name of the column to set as the primary key.
         :type column_name: str
@@ -1617,7 +1616,7 @@ class MSSQL(_Base):
     def varchar_to_geometry_dtype(self, table_name, geom_column_name=None, srid=None,
                                   schema_name=None, verbose=True, raise_error=False):
         """
-        Alters a ``VARCHAR`` column to a ``GEOMETRY`` type (MSSQL Specific).
+        Alter a ``VARCHAR`` column to a ``GEOMETRY`` type (MSSQL Specific).
 
         :param table_name: Name of the table where the column exists.
         :type table_name: str
@@ -1684,7 +1683,7 @@ class MSSQL(_Base):
                     index=False, geom_column_name=None, srid=None, confirmation_required=True,
                     verbose=False, **kwargs):
         """
-        Imports tabular data into the database.
+        Import tabular data into the database.
 
         See also [`DBMS-MS-ID-1
         <https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html#io-sql-method/>`_].
@@ -1740,9 +1739,11 @@ class MSSQL(_Base):
 
             >>> from pyhelpers.dbms import MSSQL
             >>> from pyhelpers._cache import example_dataframe
+
             >>> testdb = MSSQL(database_name='testdb', verbose=True)
             Creating a database: [testdb] ... Done.
             Connecting <server_name>@localhost:1433/testdb ... Successfully.
+
             >>> example_df = example_dataframe()
             >>> example_df
                         Longitude   Latitude
@@ -1751,6 +1752,7 @@ class MSSQL(_Base):
             Birmingham  -1.902691  52.479699
             Manchester  -2.245115  53.479489
             Leeds       -1.543794  53.797418
+
             >>> test_table_name = 'example_df'
             >>> testdb.import_data(example_df, test_table_name, index=True, verbose=2)
             To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
@@ -1767,13 +1769,14 @@ class MSSQL(_Base):
 
             The table *[dbo].[example_df]* in the database *[testdb]*.
 
-        .. code-block:: python
+        .. code-block::
 
             >>> # Drop/delete the table [dbo].[example_df]
             >>> testdb.drop_table(table_name=test_table_name, verbose=True)
             To drop the table [dbo].[example_df] from <server_name>@localhost:1433/testdb
             ? [No]|Yes: yes
             Dropping [dbo].[example_df] ... Done.
+
             >>> # Drop/delete the database [testdb]
             >>> testdb.drop_database(verbose=True)
             To drop the database [testdb] from <server_name>@localhost:1433
@@ -1817,7 +1820,7 @@ class MSSQL(_Base):
     @staticmethod
     def _dtype_read_fmt(dtype):
         """
-        Generates SQL format string based on data type.
+        Generate SQL format string based on data type.
 
         :param dtype: Data type identifier, e.g. ``'hierarchyid'``, ``'varbinary'``,
             ``'geometry'`` or others.
@@ -1839,7 +1842,7 @@ class MSSQL(_Base):
 
     def _read_column_names(self, table_name, schema_name, column_names):
         """
-        Generates formatted column names for a SQL query statement.
+        Generate formatted column names for a SQL query statement.
 
         :param table_name: Name of the table in the currently-connected database.
         :type table_name: str
@@ -1870,7 +1873,7 @@ class MSSQL(_Base):
     def read_columns(self, table_name, column_names, dtype=None, schema_name=None, chunk_size=None,
                      **kwargs):
         """
-        Reads data of specific columns of a table.
+        Read data of specific columns of a table.
 
         :param table_name: Name of a table in the currently-connected database.
         :type table_name: str
@@ -1936,7 +1939,7 @@ class MSSQL(_Base):
                    chunk_size=None, save_as=None, data_dir=None, save_args=None, verbose=False,
                    **kwargs):
         """
-        Reads data from a specified table.
+        Read data from a specified table.
 
         :param table_name: Name of the table to read data from in the currently-connected database.
         :type table_name: str
@@ -2064,7 +2067,7 @@ class MSSQL(_Base):
         data = data[[x for x in column_names_ if x not in data.index.names]]
 
         if save_as:
-            data_dir_ = pyhelpers.dirs.resolve_dir(data_dir)  # noqa
+            data_dir_ = pyhelpers.dirs.resolve_dir_path(data_dir)  # noqa
             path_to_file = os.path.join(data_dir_, table_name + save_as)
 
             save_args_ = {} if save_args is None else save_args
@@ -2076,7 +2079,7 @@ class MSSQL(_Base):
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
                    raise_error=False):
         """
-        Deletes/drops a table.
+        Delete/drop a table.
 
         :param table_name: Name of the table to be deleted.
         :type table_name: str

@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from pyhelpers._cache import _normalize_pathname
+from pyhelpers._cache import _normalize_path
 from pyhelpers.ops.downloads import *
 from pyhelpers.ops.downloads import _download_file_from_url
 
@@ -28,7 +28,7 @@ def test__download_file_from_url(total_records, validate, content_length, tmp_pa
     # Mock response with Content-Length: 0
     mock_response = Mock()
     mock_response.status_code = 200  # Success!
-    mock_response.headers = {'Content-Length': content_length}  # No Content-Length
+    mock_response.headers = {'Content-Length': str(content_length)}  # No Content-Length
     mock_response.content = b''
     mock_response.url = 'http://test_download_file_from_url.com/test.txt'
     mock_response.__enter__ = Mock(return_value=mock_response)
@@ -93,7 +93,7 @@ class TestGitHubFileDownloader:
         downloader = GitHubFileDownloader(test_url, output_dir=tmp_path)
         downloader.download()
         out, _ = capfd.readouterr()
-        assert _normalize_pathname("tests/data/dat.csv") in out
+        assert _normalize_path("tests/data/dat.csv") in out
         assert downloader.total_files == 1
 
         test_url = 'https://github.com/mikeqfu/smart-home-product-reviews-analysis/tree/master/tests'

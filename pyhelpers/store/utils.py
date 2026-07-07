@@ -11,13 +11,13 @@ import textwrap
 import warnings
 from pathlib import Path
 
-from .._cache import _add_slashes, _check_dependencies, _check_relative_pathname, _normalize_pathname
+from .._cache import _check_dependencies, _format_display_path, _get_relative_path, _normalize_path
 
 
 @functools.lru_cache(maxsize=8)
 def _get_indent_str(indent=None):
     """
-    Returns a standardized indentation string.
+    Return a standardized indentation string.
 
     :param indent: Number of spaces (int) or a literal prefix string; defaults to ``None``.
     :type indent: int | str | None
@@ -37,7 +37,7 @@ def _print_wrapped_string(message, indent=None, base_indent="  ", end=" ... ", w
                           **kwargs):
     # noinspection PyShadowingNames
     """
-    Prints a message, wrapping it into multiple lines if it exceeds a length threshold.
+    Print a message, wrapping it into multiple lines if it exceeds a length threshold.
 
     This function uses ``textwrap.TextWrapper`` to break long strings (e.g. file paths)
     into multiple lines while maintaining a clear visual hierarchy through indentation
@@ -129,7 +129,7 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
                        msg_wrap_limit=None, return_info=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Verifies a file path before saving, creates directories, and manages console output.
+    Verify a file path before saving, creates directories, and manages console output.
 
     :param path: Destination file path.
     :type path: str | pathlib.Path | os.PathLike
@@ -223,7 +223,7 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
         if rel_dir == Path('.') or rel_dir == Path(''):
             msg = f'{base_msg}{msg_suffix}'
         else:
-            msg = f'{base_msg} {state_prep} {_add_slashes(rel_dir)}{msg_suffix}'
+            msg = f'{base_msg} {state_prep} {_format_display_path(rel_dir)}{msg_suffix}'
 
         # Print message
         kwargs['flush'] = True
@@ -235,7 +235,7 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
 
         if verbose == 2:
             logging.getLogger(__name__).warning(
-                f'  {indent_str}Warning: "{_normalize_pathname(file_path)}" '
+                f'  {indent_str}Warning: "{_normalize_path(file_path)}" '
                 f'is outside the current working directory.')
 
     if return_info:
@@ -248,7 +248,7 @@ def _check_saving_path(path, verbose=False, msg_prefix="", state_verb="Saving", 
 
 def _autofit_column_width(excel_writer, writer_kwargs, sheet_name):
     """
-    Adjusts the column widths in an Excel spreadsheet based on the content length.
+    Adjust the column widths in an Excel spreadsheet based on the content length.
 
     This function is specifically designed for *openpyxl* engine when working with
     `pandas.ExcelWriter`_.
@@ -309,7 +309,7 @@ def _check_loading_path(path, verbose=False, msg_prefix="", state_verb="Loading"
                         end=" ... ", indent=None, return_info=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Verifies a file path for loading and prints status to the console.
+    Verify a file path for loading and prints status to the console.
 
     :param path_to_file: Path to the target file.
     :type path_to_file: str | bytes | pathlib.Path
@@ -333,36 +333,39 @@ def _check_loading_path(path, verbose=False, msg_prefix="", state_verb="Loading"
     **Tests**::
 
         >>> from pyhelpers.store import _check_loading_path
-        >>> from pyhelpers._cache import _check_relative_pathname
-        >>> from pyhelpers.dirs import cd
+        >>> from pyhelpers.dirs import cd, get_relative_path
         >>> from pathlib import Path
-        >>> path_to_file = cd("test_func.py")
+
+        >>> path = cd("test_func.py")
         >>> _check_loading_path(path, verbose=True); print("Passed.")
         Loading "./test_func.py" ... Passed.
+
         >>> file_path, rel_dir, file_ext = _check_loading_path(path, return_info=True)
-        >>> _check_relative_pathname(file_path)
-        'test_func.py'
-        >>> _check_relative_pathname(rel_dir)
-        '.'
+        >>> get_relative_path(file_path)
+        Path('test_func.py')
+        >>> get_relative_path(rel_dir)
+        Path('.')
         >>> file_ext
         '.py'
-        >>> path_to_file = Path("C:\\Windows\\pyhelpers.pkg")
+
+        >>> path = Path("C:\\Windows\\pyhelpers.pkg")
         >>> _check_loading_path(path, verbose=True); print("Passed.")
         Loading "C:/Windows/pyhelpers.pkg" ... Passed.
+
         >>> file_path, rel_dir, file_ext = _check_loading_path(path, return_info=True)
-        >>> _check_relative_pathname(file_path)
-        'C:/Windows/pyhelpers.pkg'
-        >>> _check_relative_pathname(rel_dir)
-        'C:/Windows'
+        >>> get_relative_path(file_path)
+        Path('C:/Windows/pyhelpers.pkg')
+        >>> get_relative_path(rel_dir)
+        Path('C:/Windows')
         >>> file_ext
         '.pkg'
     """
 
-    rel_dir = _check_relative_pathname(path)
+    rel_dir = _get_relative_path(path)
 
     if verbose:
         indent_str = _get_indent_str(indent)
-        prt_msg = f'{indent_str}{msg_prefix}{state_verb} {_add_slashes(rel_dir)}{msg_suffix}'
+        prt_msg = f'{indent_str}{msg_prefix}{state_verb} {_format_display_path(rel_dir)}{msg_suffix}'
 
         print(prt_msg, end=end, **kwargs)
 
@@ -376,7 +379,7 @@ def _check_loading_path(path, verbose=False, msg_prefix="", state_verb="Loading"
 
 def _set_index(data, index_col=None):
     """
-    Sets the index of a dataframe using column names or integer positions.
+    Set the index of a dataframe using column names or integer positions.
 
     :param data: The dataframe to update.
     :type data: pandas.DataFrame
@@ -528,7 +531,7 @@ def _resolve_json_engine(func):
 
 def _is_parquet_geospatial(path, pq_module):
     """
-    Detects if a file is GeoParquet via metadata or extension.
+    Detect whether a file is GeoParquet via metadata or extension.
     """
 
     try:

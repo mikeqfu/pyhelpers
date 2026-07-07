@@ -14,8 +14,8 @@ import urllib.request
 
 import requests.adapters
 
-from .._cache import _add_slashes, _check_relative_pathname, _check_url_scheme, \
-    _get_ansi_color_code, _init_requests_session, _lazy_check_dependencies, _load_package_data, \
+from .._cache import _check_url_scheme, _format_display_path, _get_ansi_color_code, \
+    _get_relative_path, _init_requests_session, _lazy_check_dependencies, _load_package_data, \
     _print_failure_message
 from ..store import _check_saving_path
 
@@ -76,7 +76,7 @@ def is_downloadable(url, request_field='content-type', **kwargs):
 
 
 def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier=1, pbar_desc=None,
-                    pbar_format=None, pbar_color=None, indent=None):
+                    pbar_format=None, pbar_color=None, indent=None, is_compressed=False):
     """
     Prepare arguments for the ``tqdm`` progress bar based on the response headers.
 
@@ -100,7 +100,10 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
     :rtype: tuple
     """
 
-    file_size = int(response.headers.get('Content-Length', 0))  # Total size in bytes
+    # Extract Content-Length safely
+    cl = response.headers.get('Content-Length')
+
+    file_size = int(cl) if cl and cl.isdigit() else 0  # Total size in bytes
     total_rec = int(total_records) if total_records else 0
 
     block_size = 1024 ** 2  # 1 MB
@@ -113,27 +116,32 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
 
     # Resolve the base indentation string
     pbar_indent = " " * indent if isinstance(indent, int) else (indent or "")
+    desc_str = pbar_desc or f'{pbar_indent}Downloading "{os.path.basename(path_to_file)}"'
 
     pbar_args = {
-        'desc': pbar_desc or f'{pbar_indent}Downloading "{os.path.basename(path_to_file)}"',
+        'desc': desc_str,
         'unit': 'B',
         'unit_scale': True,
         'leave': True,  # Ensures bar stays visible after completion
         'miniters': 1,  # Forces update even for small changes
     }
 
-    if file_size > 0:
+    # Determine tracking mode
+    #   If compressed, the decompressed stream size will deviate from Content-Length,
+    #   making total byte size unknown.
+    if file_size > 0 and not is_compressed:
         pbar_args.update({
             'total': file_size,  # total_iter = file_size // chunk_size
             'bar_format':
                 pbar_format or (
                     f'{color_code}'
                     f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
-                    f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                    f'{{n_fmt}}/{{total_fmt}} | {{rate_fmt}} | Elapsed: {{elapsed:<8}} | '
+                    f'ETA: {{remaining:<8}}'
                     f'{reset_color}'
                 )
         })
-    elif total_records:  # 'Content-Length' is missing, but record count is known (Fallback)
+    elif total_rec > 0:  # 'Content-Length' is missing, but record count is known (Fallback)
         pbar_args.update({  # Use a line-counting mechanism to simulate record progress
             'total': total_rec + 1,  # +1 for header
             'unit': ' rec',
@@ -142,25 +150,37 @@ def _prep_pbar_args(response, path_to_file, total_records=None, chunk_multiplier
                 pbar_format or (
                     f'{color_code}'
                     f'{{desc}} {{percentage:3.0f}}%|{{bar:10}}| '
-                    f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | ETA: {{remaining:<8}}'
+                    f'{{n_fmt}}/{{total_fmt}} rec | {{rate_fmt}} | Elapsed: {{elapsed:<8}} | '
+                    f'ETA: {{remaining:<8}}'
                     f'{reset_color}'
                 )
         })
-    else:
+    else:  # Unbounded stream / Chunked transfer encoding / Compressed stream
         pbar_args.update({
             'total': None,
             'bar_format':
                 pbar_format or (
                     f'{color_code}'
-                    f'{{desc}} | {{n_fmt}} downloaded | {{elapsed}} elapsed | {{rate_fmt}}'
+                    f'{{desc}} | {{n_fmt}} downloaded | {{rate_fmt}} | Elapsed: {{elapsed:<8}}'
                     f'{reset_color}'
                 )
         })
 
+    # Sanity check: If a custom bar_format was passed but total is unknown, clean it up dynamically
+    if pbar_args['total'] is None and pbar_args.get('bar_format'):
+        bf = pbar_args['bar_format']
+        bf = re.sub(r'\{percentage[:\d.]*f}%\|\{bar:\d*}\|', '', bf)
+        bf = re.sub(r'\{percentage[:\d.]*f}%\|\{bar}\|', '', bf)
+        bf = bf.replace('|{bar:10}|', '|').replace('|{bar}|', '|')
+        bf = re.sub(r'\|\s*ETA:\s*\{remaining[:\d.<]*}', '', bf)
+        bf = re.sub(r'\s*ETA:\s*\{remaining[:\d.<]*}', '', bf)
+        pbar_args['bar_format'] = re.sub(r'\|\s*\|', '|', bf).strip().rstrip('|').strip()
+
     return file_size, chunk_size, total_rec, pbar_args, pbar_indent
 
 
-def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent):
+def _validate_downloaded_file(validate, file_size, written, total_rec, actual_records, indent,
+                              is_compressed=False, end="\n"):
     """
     Validate the integrity of the downloaded file against expected metrics.
 
@@ -183,31 +203,44 @@ def _validate_downloaded_file(validate, file_size, written, total_rec, actual_re
         print("Done.")
         return
 
-    if file_size > 0:
+    # If transparent decompression was used, written bytes match decompressed size,
+    #   which will mismatch file_size (wire size). Skip strict byte check.
+    if file_size > 0 and not is_compressed:
         if written != file_size:
             print("Failed.")
             raise ValueError(
                 f"Byte count mismatch. Expected {file_size} bytes, but received {written} bytes.")
         else:
-            print("Done.")
+            print("Done.", end=end)
 
-    elif (file_size <= 0) and (total_rec > 0):
+    elif (file_size <= 0 or is_compressed) and (total_rec > 0):
         expected = total_rec + 1
         if actual_records != expected:
             print(f"Done.\n"
                   f"{indent}(Warning: Expected {expected} lines, "
                   f"but received {actual_records}, likely due to embedded newlines in the data.)")
         else:
-            print("Done.")
+            print("Done.", end=end)
 
     else:  # Cases where both `file_size` and `total_records` are missing.
         # Assume success if no exception was raised above.
         print(f"Done.\n"
-              f"{indent}(Stream completed, validation skipped due to unknown size/records.)")
+              f"{indent}(Stream completed, strict size validation skipped "
+              f"due to compression or chunked encoding.)")
+
+
+def _check_if_compressed(response):
+    """
+    Check if the response header indicates a compressed content encoding.
+    """
+
+    content_encoding = response.headers.get('Content-Encoding', '').lower()
+
+    return any(enc in content_encoding for enc in ['gzip', 'deflate', 'br'])
 
 
 @_lazy_check_dependencies('tqdm')
-def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs):
+def _download(response, path_to_file, chunk_size, file_size, total_rec, is_compressed, **kwargs):
     """
     Core download loop that writes chunks to disk and updates the progress bar.
 
@@ -226,7 +259,7 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs
     :rtype: tuple[int, int]
     """
 
-    # Variables for Validation Tracking
+    # Variables for validation tracking
     written = 0  # Total bytes written
     buffer = b''
     actual_records = 0
@@ -239,12 +272,15 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs
             try:  # Write chunk to file
                 f.write(chunk)
             except TypeError:
+                # noinspection PyUnresolvedReferences
                 f.write(chunk.encode())
 
-            written += len(chunk)
+            chunk_len = len(chunk)
+            written += chunk_len
 
-            if file_size > 0:
-                progress.update(len(chunk))  # Bytes tracking
+            # Update progress bar cleanly based on tracking target
+            if file_size > 0 and not is_compressed:
+                progress.update(chunk_len)  # Bytes tracking
 
             elif total_rec > 0:
                 buffer += chunk
@@ -266,9 +302,15 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs
                     buffer = buffer.rsplit(b'\n', 1)[-1]  # buffer.split(b'\n', lines - 1)[-1]
 
             else:
-                progress.update(len(chunk))  # Unbounded bytes
+                progress.update(chunk_len)  # Clean unbounded tracking increment
 
-        if (file_size <= 0) and (total_rec > 0):
+        # Handle stream completion cleanups
+        if not is_compressed and file_size > 0:
+            remaining = file_size - progress.n
+            if remaining > 0:
+                progress.update(remaining)
+
+        if total_rec > 0:
             if buffer.strip():
                 actual_records += 1  # Count the final record
 
@@ -284,7 +326,7 @@ def _download(response, path_to_file, chunk_size, file_size, total_rec, **kwargs
 
 def _download_file_from_url(response, path_to_file, total_records=None, chunk_multiplier=1,
                             pbar_desc=None, pbar_format=None, pbar_color=None, validate=True,
-                            print_wrap_limit=None, indent=None, **kwargs):
+                            print_wrap_limit=None, indent=None, end="\n", **kwargs):
     # noinspection PyShadowingNames
     """
     Internal wrapper for downloading with an adaptive hierarchical progress bar.
@@ -355,11 +397,13 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
     belated = False if os.path.isfile(path_to_file) else True
 
     try:
-        # Prepare a progress bar
+        is_compressed = _check_if_compressed(response)
+
+        # Prepare progress bar configurations matching stream state
         file_size, chunk_size, total_rec, pbar_args, pbar_indent = _prep_pbar_args(
             response=response, path_to_file=path_to_file, total_records=total_records,
             chunk_multiplier=chunk_multiplier, pbar_desc=pbar_desc, pbar_format=pbar_format,
-            pbar_color=pbar_color, indent=indent)
+            pbar_color=pbar_color, indent=indent, is_compressed=is_compressed)
 
         kwargs.update(pbar_args)
 
@@ -370,24 +414,23 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
             chunk_size=chunk_size,
             file_size=file_size,
             total_rec=total_rec,
+            is_compressed=is_compressed,
             **kwargs
         )
 
         # Level 1 (Saving): Two spaces more than the progress bar
         saving_indent = f"  {pbar_indent}"
-
-        # Print "Saving/Updating..." message using sub-indent
-        _check_saving_path(
+        _check_saving_path(  # Print "Saving/Updating..." message using sub-indent
             path=path_to_file, verbose=True, msg_prefix=saving_indent,
             msg_wrap_limit=print_wrap_limit, skip_updating_state=belated
         )
 
         # Level 2 (Validation): Two spaces more than Level 1 (Four more than pbar)
         validate_indent = f"  {saving_indent}"
-
         _validate_downloaded_file(
             validate=validate, file_size=file_size, written=written,
-            total_rec=total_rec, actual_records=actual_records, indent=validate_indent
+            total_rec=total_rec, actual_records=actual_records, indent=validate_indent,
+            is_compressed=is_compressed, end=end,
         )
 
     except Exception as e:
@@ -397,7 +440,7 @@ def _download_file_from_url(response, path_to_file, total_records=None, chunk_mu
 def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5,
                            requests_session_args=None, requests_headers=None, verbose=False,
                            print_wrap_limit=None, total_records=None, chunk_multiplier=1,
-                           pbar_desc=None, pbar_format=None, pbar_color=None,
+                           pbar_desc=None, pbar_format=None, pbar_color='green',
                            validate=True, stream_download=False, indent=None, **kwargs):
     # noinspection PyShadowingNames
     """
@@ -418,10 +461,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         options include ``'replace'`` (default - downloads and replaces the existing file) and
         ``'pass'`` (cancels the download and returns ``None``).
     :type if_exists: str
-    :param max_retries: Maximum number of retries in case of download failures; defaults to ``5``.
+    :param max_retries: Maximum number of retries in case of download failures. Defaults to ``5``.
     :type max_retries: int
     :param requests_session_args: [Optional] Additional parameters for initializing
-        the requests session (e.g. `proxies`, `verify`); defaults to ``None``.
+        the requests session (e.g. `proxies`, `verify`). Defaults to ``None``.
     :type requests_session_args: dict | None
     :param requests_headers: [Optional] Custom headers to be included in the HTTP request.
         A default 'User-Agent' is automatically generated unless overridden.
@@ -439,14 +482,15 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
         defaults to ``None``.
     :type total_records: int | None
     :param chunk_multiplier: A factor by which the default chunk size (1MB) is multiplied;
-        this can be adjusted to optimize download performance based on file size; defaults to ``1``.
+        this can be adjusted to optimize download performance based on file size. Defaults to ``1``.
     :type chunk_multiplier: int | float
     :param pbar_desc: Custom description for the progress bar;
         when ``desc=None``, it defaults to the filename.
     :type pbar_desc: str | None
     :param pbar_format: Custom format for the progress bar.
     :type pbar_format: str | None
-    :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow'); defaults to ``None``.
+    :param pbar_color: Custom color of the progress bar (e.g. 'green', 'yellow').
+        Defaults to ``'green'``.
     :type pbar_color: str | None
     :param validate: Whether to validate the download integrity
         (check whether the downloaded file size matches the expected content length);
@@ -455,7 +499,7 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
     :param stream_download: When `stream_download=True`, use streaming download
         (memory-efficient, preferred for large files or when `verbose=False`);
         When `stream_download=False`, the entire file content is loaded into memory first
-        (simpler/faster for small files); defaults to ``False``.
+        (simpler/faster for small files). Defaults to ``False``.
     :type stream_download: bool
     :param indent: Indentation level for the progress bar.
         Status messages (``"Saving..."``, ``"Done"``) will be automatically indented further
@@ -535,6 +579,8 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                 print(f"Failed to retrieve file. HTTP Status Code: {response.status_code}.")
                 return None
 
+            is_compressed = _check_if_compressed(response)
+
             if verbose:  # Handle verbose output with progress bar
                 _download_file_from_url(
                     response=response,
@@ -550,10 +596,15 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
                     **kwargs
                 )
 
+                # Inform user that validation was safely bypassed due to compression encoding
+                if is_compressed and validate:
+                    indent_str = " " * indent if isinstance(indent, int) else (indent or "")
+                    print(f"    {indent_str}(Note: Strict wire-size matching skipped "
+                          f"due to automatic stream decompression.)")
+
             else:
                 if stream_download_:
-                    encoding = response.headers.get('Content-Encoding', '')
-                    if encoding and ('gzip' in encoding or 'deflate' in encoding):
+                    if is_compressed:
                         response.raw.decode_content = True
 
                     with open(file_path, mode='wb') as f:  # Open the file in binary write mode
@@ -565,10 +616,10 @@ def download_file_from_url(url, path_to_file, if_exists='replace', max_retries=5
 
             # Validate download if necessary
             if validate and file_path.stat().st_size == 0:
-                rel_file_path = _add_slashes(_check_relative_pathname(file_path))
+                rel_file_path = _format_display_path(_get_relative_path(file_path))
                 raise ValueError(
                     f"Error: The downloaded file at {rel_file_path} is empty. "
-                    f"Check the URL or network connection.")
+                    f"Check the `url` or the network connection.")
 
             return None
 
@@ -781,12 +832,14 @@ class GitHubFileDownloader:
         if self.flatten:
             dir_out_ = os.path.basename(dir_out)
             if self.output_dir == os.path.relpath(os.getcwd()):
-                print(f"Downloaded to: {_add_slashes(dir_out_)}")
+                print(f"Downloaded to: {_format_display_path(dir_out_)}")
             else:
-                print(f"Downloaded to: {_add_slashes(os.path.join(self.output_dir, dir_out_))}")
+                print(
+                    f"Downloaded to: "
+                    f"{_format_display_path(os.path.join(self.output_dir, dir_out_))}")
 
         else:
-            print(f"Downloaded to: {_add_slashes(dir_out)}")
+            print(f"Downloaded to: {_format_display_path(dir_out)}")
 
     def _get_response(self, api_url_local):
         response, _ = urllib.request.urlretrieve(api_url_local)  # nosec
