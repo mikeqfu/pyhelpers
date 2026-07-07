@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pyhelpers._cache import _add_slashes, example_dataframe
+from pyhelpers._cache import _format_display_path, example_dataframe
 from pyhelpers.store.utils import _check_loading_path, _check_saving_path, _set_index
 
 
@@ -43,7 +43,7 @@ def test__check_loading_path(tmp_path, capfd):
     path = tmp_path / "pyhelpers.txt"
     _check_loading_path(path, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Loading {_add_slashes(path)}' in out
+    assert f'Loading {_format_display_path(path)}' in out
 
 
 def test__set_index():

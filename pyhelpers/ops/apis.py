@@ -10,7 +10,7 @@ import re
 import secrets
 import string
 
-from .._cache import _add_slashes, _confirmed, _init_requests_session, _load_package_data, \
+from .._cache import _confirmed, _format_display_path, _init_requests_session, _load_package_data, \
     _print_failure_message
 
 
@@ -73,7 +73,7 @@ class CrossRefOrcid:
     def get_orcid_profile(self, orcid_id, section=None, verbose=False):
         # noinspection PyShadowingNames,PyUnresolvedReferences
         """
-        Fetches the ORCID profile for a given ORCID ID.
+        Get the ORCID profile for a given ORCID ID.
 
         :param orcid_id: ORCID iD of the researcher.
         :type orcid_id: str
@@ -115,7 +115,7 @@ class CrossRefOrcid:
     def get_list_of_works(self, orcid_id):
         # noinspection PyShadowingNames
         """
-        Fetches a list of works from an ORCID profile.
+        Get a list of works from an ORCID profile.
 
         :param orcid_id: ORCID ID of the researcher.
         :type orcid_id: str
@@ -203,7 +203,7 @@ class CrossRefOrcid:
     def get_metadata_from_doi(self, doi):
         # noinspection PyShadowingNames
         """
-        Fetch full metadata from CrossRef using DOI.
+        Get full metadata from CrossRef using DOI.
 
         :param doi: The DOI of the publication.
         :type doi: str
@@ -319,7 +319,7 @@ class CrossRefOrcid:
 
     def _format_author_names(self, author_str, corresponding_author=None):
         """
-        Converts full author names to "Surname, F." format.
+        Convert full author names to "Surname, F." format.
 
         :param author_str: A string of author names.
         :type author_str: str
@@ -355,7 +355,7 @@ class CrossRefOrcid:
     @staticmethod
     def _preprocess_doi(doi):
         """
-        Ensures the DOI is formatted correctly with ``'https://doi.org/'``.
+        Ensure the DOI is formatted correctly with ``'https://doi.org/'``.
 
         :param doi: The DOI to preprocess.
         :type doi: str
@@ -369,7 +369,7 @@ class CrossRefOrcid:
     @staticmethod
     def _clean_punctuation(text):
         """
-        Cleans up extra punctuation, spaces, and unnecessary symbols left by missing placeholders.
+        Clean up extra punctuation, spaces and unnecessary symbols left by missing placeholders.
 
         :param text: The text to clean.
         :type text: str
@@ -392,7 +392,7 @@ class CrossRefOrcid:
     def _format_reference(self, ref_dat, style='APA', index=1):
         # noinspection PyShadowingNames
         """
-        Formats a citation string (without missing placeholders).
+        Format a citation string (without missing placeholders).
 
         :param ref_dat: The reference data to format.
         :type ref_dat: dict
@@ -462,7 +462,7 @@ class CrossRefOrcid:
     def format_references(self, ref_data, style='APA'):
         # noinspection PyShadowingNames
         """
-        Formats multiple references in a given citation style.
+        Format multiple references in a given citation style.
 
         :param ref_data: A collection of reference dictionaries or a single reference.
         :type ref_data: list | dict | typing.Iterable
@@ -498,7 +498,7 @@ class CrossRefOrcid:
     def fetch_references(self, orcid_id, work_types=None, recent_years=2, style='APA'):
         # noinspection PyShadowingNames
         """
-        Fetches and formats references from an ORCID profile.
+        Fetch and format references from an ORCID profile.
 
         :param orcid_id: ORCID iD of the researcher.
         :type orcid_id: str
@@ -537,7 +537,7 @@ class CrossRefOrcid:
                            max_entries=100):
         # noinspection PyShadowingNames
         """
-        Updates the "Recent publications" section in a Markdown file with a new list of citations.
+        Update the "Recent publications" section in a Markdown file with a new list of citations.
 
         :param references: A list of reference strings to add to the
             ``"Recent publications"`` section.
@@ -608,7 +608,7 @@ class CrossRefOrcid:
                           confirmation_required=True, verbose=False, raise_error=False):
         # noinspection PyShadowingNames
         """
-        Orchestrates the fetching and writing of references to a Markdown file.
+        Orchestrate the fetching and writing of references to a Markdown file.
 
         :param orcid_id: ORCID iD of the researcher.
         :type orcid_id: str
@@ -658,13 +658,13 @@ class CrossRefOrcid:
 
         # Standardize path and handle confirmation
         action_ = "update" if os.path.isfile(file_path) else "write"
-        file_path_ = _add_slashes(file_path)
+        display_path = _format_display_path(file_path)
 
-        if not _confirmed(f"To {action_} references in {file_path_}\n?", confirmation_required):
+        if not _confirmed(f"To {action_} references in {display_path}?\n", confirmation_required):
             return None
 
         if verbose:
-            print(f'{action_.rstrip("e").title()}ing "{heading}" in {file_path_}', end=" ... ")
+            print(f'{action_.rstrip("e").title()}ing "{heading}" in {display_path}', end=" ... ")
 
         try:  # Fetch data
             references = self.fetch_references(

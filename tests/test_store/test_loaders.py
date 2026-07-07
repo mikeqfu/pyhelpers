@@ -4,6 +4,7 @@ Test the module :mod:`~pyhelpers.store.loaders`.
 
 import importlib.resources
 import logging
+import warnings
 from pathlib import Path
 
 import geopandas as gpd
@@ -12,7 +13,7 @@ import pytest
 import sklearn.linear_model
 from shapely.geometry import Point
 
-from pyhelpers._cache import _add_slashes, _check_relative_pathname, example_dataframe
+from pyhelpers._cache import _format_display_path, _get_relative_path, example_dataframe
 from pyhelpers.store.loaders import load_csr_matrix, load_data, load_geopackage, load_parquet, \
     load_spreadsheets
 
@@ -23,7 +24,7 @@ def test_load_spreadsheets(capfd):
     with importlib.resources.as_file(path_to_xlsx_) as path_to_xlsx:
         wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
         out, _ = capfd.readouterr()
-        assert f'Loading {_add_slashes(_check_relative_pathname(str(path_to_xlsx_)))} ... \n' \
+        assert f'Loading {_format_display_path(_get_relative_path(str(path_to_xlsx_)))} ... \n' \
                '  \'TestSheet1\'. ... Done.\n' \
                '  \'TestSheet2\'. ... Done.\n' \
                '  \'TestSheet11\'. ... Done.\n' \
@@ -38,9 +39,17 @@ def test_load_spreadsheets(capfd):
 
 
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
-@pytest.mark.parametrize('file_ext', ['.parquet', '.geoparquet'])
+@pytest.mark.parametrize('file_ext', [".parquet", ".geoparquet"])
 @pytest.mark.parametrize('data_type', ['df', 'gdf'])
 def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd):
+    # Suppress the fastparquet generic timedelta warning
+    warnings.filterwarnings(
+        action="ignore",
+        category=DeprecationWarning,
+        message=".*generic.*unit for NumPy timedelta is deprecated"
+    )
+
+    # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
     original_data = example_dataframe()
     path_to_parquet = tmp_path / f"test_data{file_ext}"
 
@@ -134,7 +143,7 @@ def test_load_csr_matrix(capfd):
     with importlib.resources.as_file(path_to_csr_npz_) as path_to_csr_npz:
         csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
         out, _ = capfd.readouterr()
-        assert f"Loading {_add_slashes(_check_relative_pathname(path_to_csr_npz))}" in out
+        assert f"Loading {_format_display_path(_get_relative_path(path_to_csr_npz))}" in out
         assert "Done." in out
 
     rslt = csr_mat != csr_mat_
@@ -156,6 +165,13 @@ def test_load_csr_matrix(capfd):
 )
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
 def test_load_data(file_ext, engine, capfd, caplog):
+    # Suppress the joblib NumPy array shape assignment warning
+    warnings.filterwarnings(
+        action="ignore",
+        category=DeprecationWarning,
+        message=".*Setting the shape on a NumPy array has been deprecated"
+    )
+
     original_data = example_dataframe()
 
     path_to_file = Path(__file__).resolve().parents[1] / "data" / f"dat{file_ext}"
@@ -174,7 +190,7 @@ def test_load_data(file_ext, engine, capfd, caplog):
 
     out, _ = capfd.readouterr()
 
-    assert f"Loading {_add_slashes(_check_relative_pathname(path_to_file))} ... " in out
+    assert f"Loading {_format_display_path(_get_relative_path(path_to_file))} ... " in out
     assert "Done." in out
 
     if file_ext.endswith((".xlsx", ".ods")):
