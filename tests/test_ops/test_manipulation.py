@@ -229,13 +229,21 @@ def test_downcast_numeric_columns():
     df11, df21 = downcast_numeric_columns(df1, df2)
     assert df11.dtypes.values[0].name == df21.dtypes.values[0].name == 'float32'
 
+    df11_long: pd.Series = downcast_numeric_columns(df1['Longitude'])
+    assert df11_long.dtypes == 'float32'
+
     # noinspection PyUnresolvedReferences
     df1, df2 = map(pl.from_pandas, (df1, df2))
     df21, df22 = downcast_numeric_columns(df1, df2)
+
     # noinspection PyUnresolvedReferences
     assert df21.dtypes == [pl.Float32, pl.Float32]
     # noinspection PyUnresolvedReferences
     assert df22.dtypes == [pl.Float32, pl.Float32, pl.Float32, pl.Float32]
+
+    df22_long: pd.Series = downcast_numeric_columns(df1['Longitude'])
+    # noinspection PyUnresolvedReferences
+    assert df22_long.dtype == pl.Float32
 
 
 def test_flatten_columns():
