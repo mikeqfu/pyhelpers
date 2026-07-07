@@ -1,6 +1,32 @@
 # Changelog / Release notes
 
 
+## [2.5.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.0)
+
+(*7 July 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.4.0...2.5.0) since [2.4.0](https://pypi.org/project/pyhelpers/2.4.0/):
+
+- **Path normalization & API standardization:**
+  * Migrated path navigation and validation utilities across the package to `pathlib.Path` architectures, establishing standard validation signatures and structural consistency (#139).
+  * Added a new `standardize_path()` utility within the `dirs` subpackage to secure and unify filesystem interactions (#139). 
+  * Introduced `standardize_name()` and `standardize_column_names()` utilities to enforce clean, uniform character structures in text processing and operation pipelines (#139). 
+  * Extended `find_executable()` with an optional `as_str` parameter toggle for flexible, string-based return schemas (#139).
+- **Bug fixes & execution stability:**
+  * Fixed execution bottlenecks and edge cases in the data download functions, supplementing the fixes with expanded test assertions (#137).
+  * Resolved a critical numeric downcasting edge case within `downcast_numeric_columns` to support standalone Series inputs across both pandas and polars engines (#139).
+- **Subpackage layout & documentation structure:**
+  * Reorganized the internal layout of the `dirs` subpackage, deprecating redundant pathways and updating downstream imports globally (#139).
+  * Updated `dirs.rst` and aligned external reference endpoints in docstrings to match the new API topology (#139).
+- **Release configuration & maintenance:**
+  * Synchronized core dependencies in the root-level `requirements.txt` along with the Sphinx build dependencies in `docs/source/requirements.txt` (#140).
+  * Refreshed the distributed `user-agent-strings.json` asset (#140).
+- **Testing suite expansion:**
+  * Expanded unit test modules to ensure comprehensive coverage for all new standardization utilities and cache helpers (#137, #139).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.5.0 documentation](https://pyhelpers.readthedocs.io/en/2.5.0/).**
+
+
 ## [2.4.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.4.0)
 
 (*13 April 2026*)
