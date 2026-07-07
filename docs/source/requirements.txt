@@ -1,5 +1,5 @@
 furo==2025.12.19
-numpy==2.4.6
+numpy==2.5.1
 pandas==3.0.3
 pyproj==3.7.2
 requests==2.34.2
