@@ -800,41 +800,42 @@ def np_shift(array, step, fill_value=np.nan):
 
 
 @_lazy_check_dependencies(pl='polars')
-def downcast_numeric_columns(*dataframes, return_copy=True):
+def downcast_numeric_columns(*data, return_copy=True):
     # noinspection PyShadowingNames,PyUnresolvedReferences
     """
-    Downcasts numeric columns to optimal dtypes.
+    Downcast numeric types in pandas or polars DataFrames and Series to their optimal sizes.
 
-    This function processes multiple DataFrames in one pass, converting:
+    This function processes multiple objects in one pass, converting integer columns to the
+    smallest signed integer dtype (e.g. ``int8``, ``int16``) and floating-point columns to the
+    smallest floating dtype (e.g. ``float16``, ``float32``) that can safely represent their
+    values without data loss.
 
-        - Integer columns to the smallest signed integer dtype (int8, int16, int32, or int64)
-        - Floating-point columns to the smallest floating dtype (float32 or float64)
-          that can safely represent their values.
-
-    :param dataframes: One or more pandas DataFrames to optimize.
-    :type dataframes: pandas.DataFrame | polars.DataFrame
-    :param return_copy: Whether to return a copy or modify the input (where possible).
+    :param data: One or more pandas or polars DataFrames/Series to optimize.
+    :type data: pandas.DataFrame | pandas.Series | polars.DataFrame | polars.Series
+    :param return_copy: Whether to return a copy or modify the input in-place (where possible).
         Defaults to ``True``.
     :type return_copy: bool
-    :return: New DataFrame(s) with downcasted numeric columns.
-    :rtype: None | pandas.DataFrame | polars.DataFrame | tuple[pandas.DataFrame | polars.DataFrame]
+    :return: New DataFrame(s) or Series with downcasted numeric columns.
+    :rtype: None | pandas.DataFrame | pandas.Series | polars.DataFrame | polars.Series | tuple
 
     .. note::
 
-        - Modifies DataFrames in place for memory efficiency.
-        - Skips non-numeric columns automatically.
-        - Uses pandas' built-in optimizations for batch processing.
+        - Non-numeric and timedelta columns are automatically skipped.
+        - For polars, operations are inherently out-of-place, so ``return_copy=False`` primarily
+          avoids an explicit early clone, but structural changes still yield new objects.
 
     **Examples**::
 
         >>> from pyhelpers.ops import downcast_numeric_columns
         >>> from pyhelpers._cache import example_dataframe
         >>> import polars as pl
+
         >>> df1 = example_dataframe().copy()
         >>> df1.dtypes
         Longitude    float64
         Latitude     float64
         dtype: object
+
         >>> df2 = example_dataframe().T.copy()
         >>> df2.dtypes
         City
@@ -845,10 +846,12 @@ def downcast_numeric_columns(*dataframes, return_copy=True):
         dtype: object
 
         >>> df11, df21 = downcast_numeric_columns(df1, df2)
+
         >>> df11.dtypes
         Longitude    float32
         Latitude     float32
         dtype: object
+
         >>> df21.dtypes
         City
         London        float32
@@ -858,10 +861,12 @@ def downcast_numeric_columns(*dataframes, return_copy=True):
         dtype: object
 
         >>> df1, df2 = map(pl.from_pandas, (df1, df2))
+
         >>> df1.dtypes
         [Float64, Float64]
         >>> df2.dtypes
         [Float64, Float64, Float64, Float64]
+
         >>> df21, df22 = downcast_numeric_columns(df1, df2)
         >>> df21.dtypes
         [Float32, Float32]
@@ -871,32 +876,46 @@ def downcast_numeric_columns(*dataframes, return_copy=True):
 
     results = []
 
-    for df in dataframes:
-        if isinstance(df, pd.DataFrame):
+    for obj in data:
+        if isinstance(obj, (pd.DataFrame, pd.Series)):  # Handle pandas DataFrame and Series
             # noinspection PyUnresolvedReferences
-            _df = df.copy() if return_copy else df
+            _obj = obj.copy() if return_copy else obj
 
-            # Process all integer and float columns
-            for dtype in ['integer', 'float']:
+            if isinstance(_obj, pd.Series):
+                if (pd.api.types.is_integer_dtype(_obj) and
+                        not pd.api.types.is_timedelta64_dtype(_obj)):
+                    _obj = pd.to_numeric(_obj, downcast='integer')
+                elif pd.api.types.is_float_dtype(_obj):
+                    _obj = pd.to_numeric(_obj, downcast='float')
+
+            else:  # Process all integer and float columns
+                for dtype in ['integer', 'float']:  # Extract target columns, ignoring timedeltas
+                    # noinspection PyUnresolvedReferences
+                    cols = _obj.select_dtypes(include=[dtype], exclude=['timedelta']).columns
+                    for col in cols:
+                        _obj[col] = pd.to_numeric(_obj[col], downcast=dtype)
+
+            results.append(_obj)
+
+        # Handle polars DataFrame and Series
+        elif isinstance(obj, (pl.DataFrame, pl.Series)):  # noqa
+            _obj = obj.clone() if return_copy else obj
+
+            if isinstance(_obj, pl.Series):  # noqa
                 # noinspection PyUnresolvedReferences
-                cols = _df.select_dtypes(include=[dtype], exclude=['timedelta']).columns
-                for col in cols:
-                    _df[col] = pd.to_numeric(_df[col], downcast=dtype)
+                if _obj.dtype.is_numeric():
+                    # noinspection PyUnresolvedReferences
+                    _obj = _obj.shrink_dtype()
 
-            results.append(_df)
+            else:
+                # noinspection PyUnresolvedReferences
+                _obj = _obj.with_columns(
+                    pl.selectors.numeric().map_batches(lambda s: s.shrink_dtype()))  # noqa
 
-        # Handle polars DataFrames
-        elif isinstance(df, pl.DataFrame):  # noqa
-            _df = df.clone() if return_copy else df
-
-            # Process integer columns
-            _df = _df.with_columns(
-                pl.selectors.numeric().map_batches(lambda s: s.shrink_dtype()))  # noqa
-
-            results.append(_df)
+            results.append(_obj)
 
         else:
-            raise TypeError(f"Unsupported DataFrame type: '{type(df)}'")
+            raise TypeError(f"Unsupported data type: '{type(obj)}'")
 
     return results[0] if len(results) == 1 else tuple(results)
 
