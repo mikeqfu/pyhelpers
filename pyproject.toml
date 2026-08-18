@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=70", "wheel", "build"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pyhelpers"
-dynamic = [
-    "version",
-    "description",
-    "urls",
-    "authors",
-    "license"
+version = "2.5.1rc1"
+description = "Python utilities for data preprocessing, manipulation and workflow automation."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Qian Fu", email = "q.fu@bham.ac.uk" }
 ]
-readme = { file = "README.md", content-type = "text/markdown" }
 keywords = [
     "Python",
     "Utilities",
@@ -20,16 +20,6 @@ keywords = [
     "Python utilities",
     "Python utils",
     "Python utility"
-]
-requires-python = ">=3.12"
-dependencies = [
-    "numpy",
-    "pandas",
-    "psycopg2",
-    "pyproj",
-    "requests",
-    "shapely",
-    "sqlalchemy"
 ]
 classifiers = [
     "Intended Audience :: Developers",
@@ -43,11 +33,176 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux"
 ]
+dependencies = [
+    "numpy",
+    "pandas",
+    "psycopg2",
+    "pyproj",
+    "requests",
+    "shapely",
+    "sqlalchemy"
+]
 
-[tool.setuptools]
-include-package-data = true
+[project.optional-dependencies]
+full = [
+    "fastparquet",
+    "fiona",
+    "folium",
+    "gdal",
+    "geopandas",
+    "joblib",
+    "jsonschema[format]",
+    "matplotlib",
+    "networkx",
+    "nltk",
+    "odfpy",
+    "openpyxl",
+    "orjson",
+    "pdfkit",
+    "pillow",
+    "polars",
+    "pyarrow",
+    "pyodbc",
+    "pypandoc",
+    "python-rapidjson",
+    "rapidfuzz",
+    "rfc3987-syntax",
+    "scikit-learn",
+    "scipy",
+    "tqdm",
+    "ujson",
+    "xlsx2csv",
+    "XlsxWriter"
+]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["pyhelpers*"]
-exclude = ["build*", "dist*", "docs*", "tests*", "tutorials*", "venv*", ".venv*"]
+# Install everything
+all = [
+    "pyhelpers[full]"
+]
+
+
+[project.urls]
+Homepage = "https://github.com/mikeqfu/pyhelpers"
+Documentation = "https://pyhelpers.readthedocs.io/en/latest/"
+Source = "https://github.com/mikeqfu/pyhelpers"
+"Bug Tracker" = "https://github.com/mikeqfu/pyhelpers/issues"
+
+
+# -----------------------
+# Local developer tooling
+# -----------------------
+[dependency-groups]
+dev = [
+    "notebook",
+    "twine"
+]
+docs = [
+    "furo",
+    "sphinx",
+    "sphinx-copybutton",
+    "sphinx-new-tab-link",
+    "sphinx-toggleprompt"
+]
+test = [
+    "coverage",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+]
+
+
+# -----------------
+# UV configuration
+# -----------------
+[[tool.uv.index]]
+name = "geospatial-wheels"
+url = "https://nathanjmcdougall.github.io/geospatial-wheels-index/"
+explicit = true
+
+[tool.uv.sources]
+gdal = [
+    { index = "geospatial-wheels", marker = "sys_platform == 'win32'" },
+]
+
+
+# --------------------
+# Build configuration
+# --------------------
+[tool.hatch.build.targets.sdist]
+include = [
+    "/pyhelpers",
+    "/pyproject.toml",
+    "/CHANGELOG.md",
+    "/CITATION.cff",
+    "/LICENSE",
+    "/README.md"
+]
+exclude = [
+    "/.venv",
+    "/docs",
+    "/tests",
+    "/tutorials"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["pyhelpers"]
+
+
+# --------------------
+# Pytest configuration
+# --------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "-v",
+    "-ra",               # summary of ALL non-passed outcomes (skips, xfails, errors)
+    "--strict-markers",  # typo'd markers fail loudly instead of silently skipping
+    "--strict-config",   # unknown/mistyped ini options become errors
+    "--cov=pyhelpers",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-report=html",
+]
+xfail_strict = true      # XPASS (unexpected pass) fails the suite - no stale xfails
+
+filterwarnings = [
+    "error",
+    "ignore:Support for class-based `config` is deprecated:UserWarning",
+    "ignore:distutils Version classes are deprecated:DeprecationWarning",
+]
+
+
+# ----------------------
+# Coverage configuration
+# ----------------------
+[tool.coverage.run]
+source = ["pyhelpers"]
+branch = true            # measure branch coverage, not just lines
+parallel = true          # separate data files per process; pytest-cov combines them
+relative_files = true    # portable paths - required for combining across CI machines/containers
+
+[tool.coverage.paths]
+source = [
+    "pyhelpers",
+    "*/site-packages/pyhelpers",
+    "*/pyhelpers",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+exclude_also = [
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "@overload",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+# Report destinations
+[tool.coverage.xml]
+output = "reports/coverage.xml"
+
+[tool.coverage.html]
+directory = "reports/htmlcov"
