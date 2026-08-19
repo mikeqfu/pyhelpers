@@ -87,34 +87,39 @@ def test_save_spreadsheets(tmp_path, capfd):
     filename = "test_save_spreadsheets.xlsx"
     path_to_file = tmp_path / filename
 
+    # Test initial save
     save_spreadsheets(dat, path_to_file=path_to_file, sheet_names=sheets, verbose=True)
     out, _ = capfd.readouterr()
     assert all(x in out for x in [f'Saving "{filename}"', "Done."] + sheets)
 
+    # Test updating with replace
     save_spreadsheets(
         dat, path_to_file=path_to_file, sheet_names=sheets, mode='a', if_sheet_exists='replace',
         verbose=True)
     out, _ = capfd.readouterr()
     assert all(x in out for x in [f'Updating "{filename}"', "Done."] + sheets)
 
+    # Test updating with new sheet names
     save_spreadsheets(
         dat, path_to_file=path_to_file, sheet_names=sheets, mode='a', if_sheet_exists='new',
         verbose=True)
     out, _ = capfd.readouterr()
     assert all(x in out for x in [f'Updating "{filename}"', " saved as ", "Done."] + sheets)
 
-    os.remove(path_to_file)
-
+    # Test overwrite on existing file path using a distinct filename
+    new_filename = "test_save_spreadsheets_recreate.xlsx"
+    new_path = tmp_path / new_filename
     save_spreadsheets(
-        dat, path_to_file=path_to_file, sheet_names=sheets, mode='a', if_sheet_exists='replace',
+        dat, path_to_file=new_path, sheet_names=sheets, mode='a', if_sheet_exists='replace',
         verbose=True)
     out, _ = capfd.readouterr()
-    assert all(x in out for x in [f'Saving "{filename}"', "Done."] + sheets)
+    assert all(x in out for x in [f'Saving "{new_filename}"', "Done."] + sheets)
 
-    dat = threading.Thread(target=lambda: print("Hello"))
-    with pytest.raises(Exception):
+    # Test exception handling with invalid data object
+    invalid_dat = threading.Thread(target=lambda: print("Hello"))
+    with pytest.raises((TypeError, ValueError)):
         # noinspection PyTypeChecker
-        save_spreadsheets(dat, path_to_file=path_to_file, sheet_names=sheets, raise_error=True)
+        save_spreadsheets(invalid_dat, path_to_file=new_path, sheet_names=sheets, raise_error=True)
 
 
 @pytest.mark.parametrize('engine', [None, 'orjson', 'ujson', 'rapidjson'])
