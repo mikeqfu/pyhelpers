@@ -22,23 +22,29 @@ from .._cache import _check_dependencies, _find_file_path, _format_display_path,
 # Uncompress data
 # ==================================================================================================
 
-def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False, raise_error=False,
+def unzip(zip_file_path, output_dir=None, return_output_dir=False, verbose=False, raise_error=False,
           **kwargs):
+    # noinspection shadowing-names
     """
     Unzip data from a `Zip
     <https://support.microsoft.com/en-gb/help/14200/windows-compress-uncompress-zip-files>`_
     (compressed) file.
 
-    :param path_to_zip_file: The path where the Zip file is saved.
-    :type path_to_zip_file: str | pathlib.Path | os.PathLike
-    :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
-    :type output_dir: str | None
-    :param ret_output_dir: Whether to return the path to output directory; defaults to ``False``.
-    :type ret_output_dir: bool
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    This function extracts all contents of a Zip archive to a specified directory.
+    If no output directory is provided, a directory named after the Zip file
+    (without extension) is created in the same location.
+
+    :param zip_file_path: Path where the Zip file is saved.
+    :type zip_file_path: str | pathlib.Path | os.PathLike
+    :param output_dir: Directory where extracted data will be saved. Defaults to ``None``.
+    :type output_dir: str | pathlib.Path | None
+    :param return_output_dir: Whether to return the path to the output directory.
+        Defaults to ``False``.
+    :type return_output_dir: bool
+    :param verbose: Whether to print relevant information to the console. Defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+    :param raise_error: Whether to raise an exception on failure. Defaults to ``False``.
+    :type raise_error: bool
     :param kwargs: [Optional] Additional parameters for the method `zipfile.ZipFile.extractall()`_.
 
     .. _`zipfile.ZipFile.extractall()`:
@@ -49,56 +55,56 @@ def unzip(path_to_zip_file, output_dir=None, ret_output_dir=False, verbose=False
         >>> from pyhelpers.store import unzip
         >>> from pyhelpers.dirs import cd, delete_dir
 
-        >>> zip_file_path = cd("tests", "data", "zipped.zip")
-        >>> unzip(path_to_zip_file=zip_file_path, verbose=True)
-        Extracting "tests/data/zipped.zip" to "tests/data/zipped/" ... Done.
+        >>> zip_file_path = cd("tests/data", "dat.zip")
+        >>> unzip(zip_file_path, verbose=True)
+        Extracting "tests/data/dat.zip" to "tests/data/dat/" ... Done.
 
-        >>> output_dir_1 = cd("tests", "data", "zipped")
+        >>> output_dir_1 = cd("tests/data", "dat")
         >>> out_file_pathname = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
 
-        >>> output_dir_2 = cd("tests", "data", "zipped_alt")
-        >>> unzip(path_to_zip_file=zip_file_path, output_dir=output_dir_2, verbose=True)
-        Extracting "tests/data/zipped.zip" to "tests/data/zipped_alt\\" ... Done.
+        >>> output_dir_2 = cd("tests/data", "dat_alt")
+        >>> unzip(zip_file_path, output_dir=output_dir_2, verbose=True)
+        Extracting "tests/data/dat.zip" to "tests/data/dat_alt/" ... Done.
         >>> out_file_pathname = cd(output_dir_2, "zipped.txt")
         >>> with open(out_file_pathname) as f:
         ...     print(f.read())
         test
 
-        >>> # Delete the directories "tests/data/zipped/" and "tests/data/zipped_alt/"
+        >>> # Delete the directories "tests/data/dat/" and "tests/data/dat_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         Confirm deletion of the following directories:
-          "tests/data/zipped/" (Not empty)
-          "tests/data/zipped_alt/" (Not empty)
+          "tests/data/dat/" (Not empty)
+          "tests/data/dat_alt/" (Not empty)
         ? [No]|Yes: yes
         Deleting:
-          "tests/data/zipped/" ... Done.
-          "tests/data/zipped_alt/" ... Done.
+          "tests/data/dat/" ... Done.
+          "tests/data/dat_alt/" ... Done.
     """
 
     if output_dir is None:
-        output_dir_ = os.path.splitext(path_to_zip_file)[0]
+        output_dir_ = os.path.splitext(os.fspath(zip_file_path))[0]
     else:
-        output_dir_ = copy.deepcopy(output_dir)
+        output_dir_ = os.fspath(output_dir)
 
-    if not os.path.exists(output_dir_):
-        os.makedirs(name=output_dir_)
+    os.makedirs(output_dir_, exist_ok=True)
 
     if verbose:
         rel_path, out_dir = map(
-            lambda x: _format_display_path(_get_relative_path(x)), [path_to_zip_file, output_dir_])
+            lambda x: _format_display_path(_get_relative_path(x)), [zip_file_path, output_dir_]
+        )
         print(f'Extracting {rel_path} to {out_dir}', end=" ... ")
 
     try:
-        with zipfile.ZipFile(file=path_to_zip_file) as zf:
+        with zipfile.ZipFile(file=zip_file_path) as zf:
             zf.extractall(path=output_dir_, **kwargs)
 
         if verbose:
             print("Done.")
 
-        if ret_output_dir:
+        if return_output_dir:
             return output_dir_
 
     except Exception as e:
@@ -111,19 +117,24 @@ def seven_zip(zip_file_path, output_dir=None, mode='aoa', return_output_dir=Fals
     """
     Extract data from a compressed file using `7-Zip <https://www.7-zip.org/>`_.
 
-    :param zip_file_path: The path where the compressed file is saved.
-    :type zip_file_path: str | os.PathLike
-    :param output_dir: The directory where the extracted data will be saved; defaults to ``None``.
-    :type output_dir: str | None
-    :param mode: The extraction mode; defaults to ``'aoa'``.
+    This function extracts contents from supported compressed archives using the 7-Zip
+    executable. If no output directory is specified, an extraction directory named
+    after the archive is generated automatically.
+
+    :param zip_file_path: Path where the compressed file is saved.
+    :type zip_file_path: str | pathlib.Path | os.PathLike
+    :param output_dir: Directory where extracted data will be saved. Defaults to ``None``.
+    :type output_dir: str | pathlib.Path | None
+    :param mode: Extraction mode flag passed to 7-Zip. Defaults to ``'aoa'``.
     :type mode: str
-    :param return_output_dir: Whether to return the path to output directory; defaults to ``False``.
+    :param return_output_dir: Whether to return the path to the output directory. Defaults to ``False``.
     :type return_output_dir: bool
-    :param verbose: Whether to print relevant information to the console; defaults to ``False``.
+    :param verbose: Whether to print relevant information to the console. Defaults to ``False``.
     :type verbose: bool | int
-    :param raise_error: Whether to raise the provided exception;
-        if ``raise_error=False`` (default), the error will be suppressed.
+    :param raise_error: Whether to raise an exception on failure. Defaults to ``False``.
     :type raise_error: bool
+    :param seven_zip_exe: Path to the 7-Zip executable (e.g. "*7z.exe*"). Defaults to ``None``.
+    :type seven_zip_exe: str | pathlib.Path | None
     :param seven_zip_exe: The path to the executable "*7z.exe*";
         If ``seven_zip_exe=None`` (default), the default installation path will be used, e.g.
         "*C:\\\\Program Files\\\\7-Zip\\\\7z.exe*" (on Windows).
@@ -134,72 +145,72 @@ def seven_zip(zip_file_path, output_dir=None, mode='aoa', return_output_dir=Fals
         >>> from pyhelpers.store import seven_zip
         >>> from pyhelpers.dirs import cd, delete_dir
 
-        >>> zip_file_path = cd("tests", "data", "zipped.zip")
-        >>> seven_zip(zip_file_path=zip_file_path, verbose=True)
-
-        7-Zip 24.09 (x64) : Copyright (c) 1999-2024 Igor Pavlov : 2024-11-29
-
+        >>> zip_file_path = cd("tests", "data", "dat.zip")
+        >>> seven_zip(zip_file_path, verbose=True)
+        7-Zip 26.01 (x64) : Copyright (c) 1999-2026 Igor Pavlov : 2026-04-27
         Scanning the drive for archives:
         1 file, 158 bytes (1 KiB)
-
-        Extracting archive: .\\tests\\data\\zipped.zip
+        Extracting archive: .\\tests\\data\\dat.zip
         --
-        Path = .\\tests\\data\\zipped.zip
+        Path = .\\tests\\data\\dat.zip
         Type = zip
         Physical Size = 158
-
         Everything is Ok
-
         Size:       4
         Compressed: 158
-
         Done.
 
-        >>> output_dir_1 = cd("tests", "data", "zipped")
+        >>> output_dir_1 = cd("tests/data", "dat")
         >>> out_file_path = cd(output_dir_1, "zipped.txt")
         >>> with open(out_file_path) as f:
         ...     print(f.read())
         test
 
-        >>> output_dir_2 = cd("tests", "data", "zipped_alt")
-        >>> seven_zip(zip_file_path=zip_file_path, output_dir=output_dir_2, verbose=True)
-        >>> out_file_pathname = cd("tests", "data", "zipped_alt", "zipped.txt")
-        >>> with open(out_file_pathname) as f:
+        >>> output_dir_2 = cd("tests", "data", "dat_alt")
+        >>> seven_zip(zip_file_path, output_dir=output_dir_2, verbose=True)
+        >>> out_file_path = cd("tests/data/dat_alt", "zipped.txt")
+        >>> with open(out_file_path) as f:
         ...     print(f.read())
         test
 
         >>> # Extract a .7z file
-        >>> zip_file_path = cd("tests", "data", "zipped.7z")
-        >>> seven_zip(zip_file_path=zip_file_path, output_dir=output_dir_2)
-        >>> out_file_pathname = cd("tests", "data", "zipped", "zipped.txt")
-        >>> with open(out_file_pathname) as f:
+        >>> zip_file_path = cd("tests", "data", "dat.7z")
+        >>> seven_zip(zip_file_path, output_dir=output_dir_2)
+        >>> out_file_path = cd("tests/data/dat", "zipped.txt")
+        >>> with open(out_file_path) as f:
         ...     print(f.read())
         test
 
-        >>> # Delete the directories "tests/data/zipped/" and "tests/data/zipped_alt/"
+        >>> # Delete the directories "tests/data/dat/" and "tests/data/dat_alt/"
         >>> delete_dir([output_dir_1, output_dir_2], verbose=True)
         Confirm deletion of the following directories:
-          "tests/data/zipped/" (Not empty)
-          "tests/data/zipped_alt/" (Not empty)
+          "tests/data/dat/" (Not empty)
+          "tests/data/dat_alt/" (Not empty)
         ? [No]|Yes: yes
         Deleting:
-          "tests/data/zipped/" ... Done.
-          "tests/data/zipped_alt/" ... Done.
+          "tests/data/dat/" ... Done.
+          "tests/data/dat_alt/" ... Done.
     """
 
-    exe_name = "7z"
-    optional_pathnames = {exe_name, f"{exe_name}.exe", f"C:/Program Files/7-Zip/{exe_name}.exe"}
-    seven_zip_exists, seven_zip_exe_ = _find_file_path(
-        name=exe_name, options=optional_pathnames, target=seven_zip_exe, as_str=True)
+    zf_path = os.fspath(zip_file_path)
 
-    if seven_zip_exists:
+    exe_name = "7z"
+    optional_pathnames = {exe_name, f'{exe_name}.exe', f'C:/Program Files/7-Zip/{exe_name}.exe'}
+    exe_exists, exe = _find_file_path(
+        name=exe_name,
+        options=optional_pathnames,
+        target=seven_zip_exe,
+        as_str=True
+    )
+
+    if exe_exists:
         if output_dir is None:
-            output_dir_ = os.path.splitext(zip_file_path)[0]
+            output_dir = os.path.splitext(zf_path)[0]
         else:
-            output_dir_ = os.path.normpath(output_dir)
+            output_dir = os.path.normpath(os.fspath(output_dir))
 
         try:
-            command_args = [seven_zip_exe_, 'x', zip_file_path, '-o' + output_dir_, '-' + mode]
+            command_args = [exe, 'x', zf_path, f'-o{output_dir}', f'-{mode}']
             if not verbose:
                 command_args += ['-bso0', '-bsp0']
 
@@ -209,16 +220,17 @@ def seven_zip(zip_file_path, output_dir=None, mode='aoa', return_output_dir=Fals
                 print("\nDone." if rslt.returncode == 0 else "\nFailed.")
 
             if return_output_dir:
-                return output_dir_
+                return output_dir
 
         except Exception as e:
-            _print_failure_message(e=e, prefix="Error:", verbose=verbose, raise_error=raise_error)
+            _print_failure_message(e, "Error:", verbose=verbose, raise_error=raise_error)
 
     else:
         if raise_error:
             raise FileNotFoundError(
                 '"7-Zip" (https://www.7-zip.org/) is required to run this function; '
-                'however, it is not found on this device.\nInstall it and then try again.')
+                'however, it is not found on this device.\nInstall it and then try again.'
+            )
 
         return None
 
