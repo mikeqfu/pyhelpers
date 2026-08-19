@@ -3,7 +3,6 @@ Tests the :mod:`~pyhelpers.store.converters` submodule.
 """
 
 import importlib.resources
-import os.path
 import shutil
 
 import pandas as pd
@@ -15,72 +14,66 @@ from pyhelpers.store.converters import *
 from pyhelpers.store.loaders import load_csv
 
 
-def test_unzip(capfd):
-    path_to_zip_file_ = importlib.resources.files("tests").joinpath("data", "zipped.zip")
-    out_dir = tempfile.mkdtemp()
+def test_unzip(dat_dir, tmp_path, capfd):
+    path_to_zip_file_ = dat_dir / "dat.zip"
 
     with importlib.resources.as_file(path_to_zip_file_) as path_to_zip_file:
-        unzip(path_to_zip_file=path_to_zip_file, output_dir=out_dir, verbose=True)
+        unzip(zip_file_path=path_to_zip_file, output_dir=tmp_path, verbose=True)
         out, _ = capfd.readouterr()
         assert f'Extracting {_format_display_path(_get_relative_path(path_to_zip_file))}' in out
-        assert f' to "{_normalize_path(out_dir)}' in out and "Done." in out
+        assert f' to "{_normalize_path(tmp_path)}' in out and "Done." in out
 
 
+@pytest.mark.parametrize('file_ext', [".zip", ".7z"])
 @pytest.mark.parametrize('verbose', [True, False])
-def test_seven_zip(capfd, verbose):
-    path_to_zip_file_ = importlib.resources.files("tests").joinpath("data", "zipped.zip")
-    output_dir = tempfile.mkdtemp()
+def test_seven_zip(dat_dir, file_ext, tmp_path, verbose, capfd):
+    # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
+    path_to_zip_file_ = dat_dir / f"dat{file_ext}"
 
     with importlib.resources.as_file(path_to_zip_file_) as path_to_zip_file:
-        seven_zip(zip_file_path=path_to_zip_file, output_dir=output_dir, verbose=verbose)
+        seven_zip(zip_file_path=path_to_zip_file, output_dir=tmp_path, verbose=verbose)
         out, _ = capfd.readouterr()
         if verbose:
             assert "Everything is Ok" in out and "Done." in out
         else:
-            assert os.path.isfile(os.path.join(output_dir, "zipped.txt"))
+            assert (tmp_path / "zipped.txt").is_file()
 
         with pytest.raises(FileNotFoundError) as exc_info:
-            seven_zip(path_to_zip_file, output_dir, raise_error=True, seven_zip_exe='one_zip.exe')
+            seven_zip(path_to_zip_file, tmp_path, raise_error=True, seven_zip_exe='one_zip.exe')
             assert '"7-Zip" (https://www.7-zip.org/) is required' in exc_info.value
 
 
 @pytest.mark.parametrize('engine', [None, 'pypandoc'])
-def test_markdown_to_rst(capfd, engine):
+def test_markdown_to_rst(engine, tmp_path, capfd):
     md_filename, rst_filename = "readme.md", "readme.rst"
 
-    path_to_md_file, path_to_rst_file = map(
-        importlib.resources.files("tests").joinpath,
-        [os.path.join("documents", md_filename), os.path.join("documents", rst_filename)])
+    test_dir = importlib.resources.files("tests").joinpath("documents")
+    shutil.copy(str(test_dir.joinpath(md_filename)), tmp_path)
+    shutil.copy(str(test_dir.joinpath(rst_filename)), tmp_path)
 
-    temp_dir = tempfile.TemporaryDirectory()
-    shutil.copy(str(path_to_md_file), temp_dir.name)
-    shutil.copy(str(path_to_rst_file), temp_dir.name)
+    path_to_md_file = tmp_path / md_filename
+    path_to_rst_file = tmp_path / rst_filename
 
-    path_to_md_file = os.path.join(temp_dir.name, md_filename)
-    path_to_rst_file = os.path.join(temp_dir.name, rst_filename)
-
-    out_path = _get_relative_path(os.path.dirname(path_to_rst_file.__str__()))
-    prt_info = f'Updating "{rst_filename}" in {_format_display_path(out_path)} ... Done.\n'
+    out_path = _get_relative_path(str(tmp_path))
 
     markdown_to_rst(path_to_md_file, path_to_rst_file, engine=engine, verbose=True)  # noqa
     out, _ = capfd.readouterr()
-    assert prt_info in out
+    assert f'Updating "{rst_filename}" in {_format_display_path(out_path)} ... Done.' in out
 
-    markdown_to_rst(
-        path_to_md_file, path_to_rst_file, engine='pypandoc', verbose=True, reverse=True)
+    markdown_to_rst(path_to_md_file, path_to_rst_file, engine=engine, verbose=True, reverse=True)
     out, _ = capfd.readouterr()
-    assert f'Updating "{md_filename}" in {_format_display_path(out_path)} ... Done.\n'
+    assert f'Updating "{md_filename}" in {_format_display_path(out_path)} ... Done.' in out
 
-    markdown_to_rst(
-        path_to_md_file, path_to_rst_file, verbose=True, pandoc_exe='test_pandoc.exe')  # noqa
+    pandoc_exe = 'test_pandoc.exe'
+    markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True, pandoc_exe=pandoc_exe)  # noqa
     out, _ = capfd.readouterr()
     assert "Failed." in out and '"Pandoc" (https://pandoc.org/) is required to proceed' in out
 
 
 @pytest.mark.parametrize('engine', [None, 'xlsx2csv'])
 @pytest.mark.parametrize('header', [0, None])
-def test_xlsx_to_csv(engine, header, capfd):
-    path_to_test_xlsx_ = importlib.resources.files("tests").joinpath("data", "dat.xlsx")
+def test_xlsx_to_csv(dat_dir, engine, header, capfd):
+    path_to_test_xlsx_ = dat_dir / "dat.xlsx"
 
     with importlib.resources.as_file(path_to_test_xlsx_) as path_to_test_xlsx:
         with pytest.raises(Exception):
