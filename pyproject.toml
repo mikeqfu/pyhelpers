@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pyhelpers"
 version = "2.5.1rc1"
-description = "Python utilities for data preprocessing, manipulation and workflow automation."
+description = "An open-source toolkit for facilitating Python users' data manipulation tasks"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
@@ -72,7 +72,7 @@ full = [
     "tqdm",
     "ujson",
     "xlsx2csv",
-    "XlsxWriter"
+    "xlsxwriter"
 ]
 
 # Install everything
@@ -130,22 +130,31 @@ gdal = [
 # --------------------
 [tool.hatch.build.targets.sdist]
 include = [
-    "/pyhelpers",
-    "/pyproject.toml",
-    "/CHANGELOG.md",
-    "/CITATION.cff",
-    "/LICENSE",
-    "/README.md"
+    "pyhelpers",
+    "pyproject.toml",
+    "CHANGELOG.md",
+    "CITATION.cff",
+    "LICENSE",
+    "README.md"
 ]
 exclude = [
-    "/.venv",
-    "/docs",
-    "/tests",
-    "/tutorials"
+    ".venv",
+    "docs",
+    "tests",
+    "tutorials"
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["pyhelpers"]
+
+
+# Custom metadata section
+[tool.custom.metadata]
+funder = ""
+project_start = "September 2019"
+corresponding_author = [
+    { name = "Qian Fu", affiliation = "Birmingham Energy Institute, University of Birmingham", email = "q.fu@bham.ac.uk" },
+]
 
 
 # --------------------
@@ -156,15 +165,15 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = [
     "-v",
-    "-ra",               # summary of ALL non-passed outcomes (skips, xfails, errors)
-    "--strict-markers",  # typo'd markers fail loudly instead of silently skipping
-    "--strict-config",   # unknown/mistyped ini options become errors
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
     "--cov=pyhelpers",
     "--cov-report=term-missing",
     "--cov-report=xml",
     "--cov-report=html",
 ]
-xfail_strict = true      # XPASS (unexpected pass) fails the suite - no stale xfails
+xfail_strict = true
 
 filterwarnings = [
     "error",
@@ -178,9 +187,9 @@ filterwarnings = [
 # ----------------------
 [tool.coverage.run]
 source = ["pyhelpers"]
-branch = true            # measure branch coverage, not just lines
-parallel = true          # separate data files per process; pytest-cov combines them
-relative_files = true    # portable paths - required for combining across CI machines/containers
+branch = true
+parallel = true
+relative_files = true
 
 [tool.coverage.paths]
 source = [
