@@ -5,7 +5,6 @@ Tests the :mod:`~pyhelpers.store.savers` submodule.
 import gc
 import json
 import os
-import tempfile
 import threading
 
 import matplotlib.pyplot as plt
@@ -17,18 +16,6 @@ from pyhelpers.store.loaders import load_geopackage, load_parquet, load_pickle
 from pyhelpers.store.savers import save_data, save_feather, save_fig, save_figure, \
     save_geopackage, save_html_as_pdf, save_joblib, save_json, save_parquet, save_pickle, \
     save_spreadsheet, save_spreadsheets, save_svg_as_emf
-
-
-def _test_save(func, dat, file_ext, capfd):
-    with tempfile.NamedTemporaryFile() as f:
-        pathname = f.name + file_ext
-        filename = os.path.basename(pathname)
-
-        func(dat, pathname, verbose=True)
-        out, _ = capfd.readouterr()
-        assert f'Saving "{filename}"' in out and "Done." in out
-
-        os.remove(pathname)
 
 
 @pytest.mark.parametrize('ext', [".pickle", ".pkl", ".gz", ".xz", ".bz2"])
