@@ -476,12 +476,26 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
           'TestSheet2' ... saved as 'TestSheet22' ... Done.
     """
 
+    # Early validation of inputs before opening resources
+    try:
+        _ = list(data)
+    except TypeError:
+        raise TypeError(f"Expected 'data' to be an iterable, got '{type(data).__name__}'")
+
+    try:
+        _ = list(sheet_names)
+    except TypeError:
+        raise TypeError(
+            f"Expected 'sheet_names' to be an iterable, got '{type(sheet_names).__name__}'"
+        )
+
     file_path = pathlib.Path(path_to_file).resolve()
 
     supported_ext_set = {".xlsx", ".xls", ".ods"}
     if file_path.suffix not in supported_ext_set:
         raise ValueError(
-            f"Unsupported file format '{file_path.suffix}'. Must be one of {supported_ext_set}")
+            f"Unsupported file format '{file_path.suffix}'. Must be one of {supported_ext_set}"
+        )
 
     _check_saving_path(file_path, verbose=verbose, **(print_kwargs or {}))
 
@@ -497,11 +511,13 @@ def save_spreadsheets(data, path_to_file, sheet_names, mode='w', if_sheet_exists
 
     write_args = writer_kwargs or {}
     write_args.update(
-        {'path': path_to_file, 'engine': engine, 'mode': mode, 'if_sheet_exists': if_sheet_exists})
+        {'path': path_to_file, 'engine': engine, 'mode': mode, 'if_sheet_exists': if_sheet_exists}
+    )
 
     with pd.ExcelWriter(**write_args) as writer:
         if verbose:
             print("")
+
         _save_spreadsheets(
             data=data, sheet_names=sheet_names, cur_sheet_names=cur_sheet_names,
             excel_writer=writer, if_sheet_exists=if_sheet_exists,
