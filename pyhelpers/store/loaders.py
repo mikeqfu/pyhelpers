@@ -996,9 +996,9 @@ def load_csr_matrix(path_to_file, verbose=False, prt_kwargs=None, raise_error=Fa
         >>> csr_mat
         <3x3 sparse matrix of type '<class 'numpy.int32'>'
             with 6 stored elements in Compressed Sparse Row format>
-        >>> path_to_csr_npz = cd("tests", "data", "csr_mat.npz")
+        >>> path_to_csr_npz = cd("tests", "data", "dat.npz")
         >>> csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
-        Loading "tests/data/csr_mat.npz" ... Done.
+        Loading "tests/data/dat.npz" ... Done.
         >>> # .nnz gets the count of explicitly-stored values (non-zeros)
         >>> (csr_mat != csr_mat_).count_nonzero() == 0
         np.True_
