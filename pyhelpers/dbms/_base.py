@@ -659,8 +659,8 @@ class _Base:
         :type verbose: bool | int
         :param indent: Indentation level; if an integer, represents the number of spaces;
             If a string, used as the indentation character (e.g. ``'\\t'``);
-            defaults to ``0`` (no space).
-        :type indent: int | str
+            defaults to ``None`` (no space).
+        :type indent: int | str | None
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool
@@ -701,7 +701,7 @@ class _Base:
             _print_failure_message(e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
 
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
-                   indent=0):
+                   indent=None, raise_error=True):
         """
         Drops a table from a specified schema.
 
@@ -718,7 +718,11 @@ class _Base:
             If a string, used as the indentation character (e.g. ``'\\t'``);
             defaults to ``0`` (no space).
         :type indent: int | str
+        :param raise_error: Whether to raise the provided exception;
+            if ``raise_error=False`` (default), the error will be suppressed.
+        :type raise_error: bool
         """
+
         return None
 
     @_lazy_check_dependencies(pd_io_parsers='pandas.io.parsers')
