@@ -269,7 +269,7 @@ def mpl_preferences(reset=False, backend=None, font_name='Times New Roman', font
     legend spacing and figure style.
 
     :param reset: Whether to reset all parameters to their default settings; defaults to ``False``.
-    :type reset: bool
+    :type reset: bool | str
     :param backend: Specify the backend used for rendering and GUI integration;
         defaults to ``None``.
     :type backend: str | None
