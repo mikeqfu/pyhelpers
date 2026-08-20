@@ -313,7 +313,7 @@ def update_dict_keys(dictionary, replacements=None):
     [`OPS-UDK-2 <https://stackoverflow.com/questions/38491318/>`_].
 
     :param dictionary: The (nested) dictionary in which certain keys are to be updated.
-    :type dictionary: dict
+    :type dictionary: dict | list
     :param replacements: A dictionary in the form of ``{<current_key>: <new_key>}``
         describing which keys are to be updated; defaults to ``None``.
     :type replacements: dict | None

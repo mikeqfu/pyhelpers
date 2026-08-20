@@ -524,9 +524,6 @@ class CrossRefOrcid:
         ref_data = self.fetch_orcid_works(
             orcid_id=orcid_id, work_types=work_types, recent_years=recent_years)
 
-        if isinstance(ref_data, dict):
-            ref_data = [ref_data]  # Convert single dictionary to list
-
         references = self.format_references(ref_data, style=style)
 
         return references
