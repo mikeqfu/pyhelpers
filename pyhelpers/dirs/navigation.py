@@ -162,7 +162,7 @@ def cd_data(*subdir, data_dir="data", mkdir=False, as_str=False, **kwargs):
     Specify and resolve the pathname of a directory (or file) under ``data_dir`` of a package.
 
     :param subdir: Name of a directory or directories (and/or a filename).
-    :type subdir: str | os.PathLike | bytes
+    :type subdir: str | os.PathLike | bytes | None
     :param data_dir: Name of the directory to store data; defaults to ``"data"``.
     :type data_dir: str | os.PathLike | bytes
     :param mkdir: Whether to create the directory if it does not exist; defaults to ``False``.
