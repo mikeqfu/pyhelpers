@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master]
   pull_request:  # validate docs build on PRs (build only, no deploy)
   release:
     types: [published]
