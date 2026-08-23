@@ -2,27 +2,25 @@
 Configuration file for the Sphinx documentation builder.
 """
 
-# == Path setup ====================================================================================
 import os
 import sys
 
-# If the directory is relative to the documentation root, use os.path.abspath to make it absolute:
+from pygments.formatters.latex import LatexFormatter
+from sphinx.highlighting import PygmentsBridge
+
+from pyhelpers import __affiliation__, __author__, __copyright__, __description__, \
+    __first_release__, __pkgname__, __project__, __version__
+
+# == Path setup ====================================================================================
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../pyhelpers'))
 
-
 # == Project information ===========================================================================
-from pyhelpers import __affil__, __author__, __copyright__, __desc__, __first_release__, \
-    __pkgname__, __project__, __version__
-
-# General information about the project:
 project = __project__
-copyright = __copyright__
+copyright = __copyright__.replace('Copyright (c) ', '')
 
-# The version info for the project:
 version = __version__  # The short X.Y.Z version
 release = version  # The full version, including alpha/beta/rc tags
-
 
 # == General configuration =========================================================================
 extensions = [  # Sphinx extension module names, which can be named 'sphinx.ext.*' or custom ones:
@@ -110,7 +108,7 @@ def linkcode_resolve(domain, info):
     return url
 
 
-# noinspection PyUnusedLocal
+# noinspection unused-parameter
 def remove_module_docstring(app, what, name, obj, options, lines):
     if what == "module" and name == "pyhelpers.dbms.utils":
         del lines[:]
@@ -149,7 +147,6 @@ autoclass_content = 'both'  # ['class', 'init']
 
 # Automatically documented members are sorted by source order ('bysource'):
 autodoc_member_order = 'bysource'
-
 
 # == Options for HTML and HTMLHelp output ==========================================================
 html_theme = 'furo'  # The theme to use for HTML & HTML Help pages  # 'sphinx_rtd_theme'
@@ -216,7 +213,7 @@ html_js_files = ['custom.js']
 toggleprompt_offset_right = -30
 
 # Output file base name for HTML help builder:
-htmlhelp_basename = __project__ + 'doc'  # Defaults to 'pydoc'
+htmlhelp_basename = __package__ + 'doc'  # Defaults to 'pydoc'
 
 # Do not execute cells
 jupyter_execute_notebooks = "off"
@@ -230,10 +227,6 @@ copybutton_prompt_is_regexp = True
 
 
 # == Options for LaTeX output ======================================================================
-from pygments.formatters.latex import LatexFormatter
-from sphinx.highlighting import PygmentsBridge
-
-
 class CustomLatexFormatter(LatexFormatter):
     def __init__(self, **options):
         super(CustomLatexFormatter, self).__init__(**options)
@@ -248,8 +241,8 @@ latex_engine = 'pdflatex'
 # Grouping the document tree into LaTeX files:
 latex_documents = [
     ('latex-index',  # source start file
-     f'{__pkgname__}.tex',  # target name
-     f'{__project__} Documentation',  # title
+     f'{__pkgname__}.tex',
+     f'{__project__} Documentation',
      __author__,  # author
      'manual',  # document class ['howto', 'manual', or own class]
      1  # toctree only
@@ -309,13 +302,13 @@ latex_maketitle = r'''
 
     \clearpage
     \pagenumbering{arabic}
-    ''' % (project,
-           __desc__,
+    ''' % (__project__,
+           __description__,
            __version__,
            __author__,
-           __affil__,
+           __affiliation__,
            __first_release__,
-           __copyright__)
+           __copyright__.replace('Copyright (c) ', ''))
 
 latex_preamble = r'''
     \setlength{\headheight}{14pt}

@@ -2,10 +2,8 @@
 Test the module :mod:`~pyhelpers.store.loaders`.
 """
 
-import importlib.resources
 import logging
 import warnings
-from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
@@ -18,24 +16,23 @@ from pyhelpers.store.loaders import load_csr_matrix, load_data, load_geopackage,
     load_spreadsheets
 
 
-def test_load_spreadsheets(capfd):
-    path_to_xlsx_ = importlib.resources.files("tests").joinpath("data", "dat.xlsx")
+def test_load_spreadsheets(dat_dir, capfd):
+    path_to_xlsx = dat_dir / "dat.xlsx"
 
-    with importlib.resources.as_file(path_to_xlsx_) as path_to_xlsx:
-        wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
-        out, _ = capfd.readouterr()
-        assert f'Loading {_format_display_path(_get_relative_path(str(path_to_xlsx_)))} ... \n' \
-               '  \'TestSheet1\'. ... Done.\n' \
-               '  \'TestSheet2\'. ... Done.\n' \
-               '  \'TestSheet11\'. ... Done.\n' \
-               '  \'TestSheet21\'. ... Done.\n' \
-               '  \'TestSheet12\'. ... Done.\n' \
-               '  \'TestSheet22\'. ... Done.\n' in out
-        assert isinstance(wb_data, dict)
+    wb_data = load_spreadsheets(path_to_xlsx, verbose=True, index_col=0)
+    out, _ = capfd.readouterr()
+    assert f'Loading {_format_display_path(_get_relative_path(path_to_xlsx))} ... \n' \
+           '  \'TestSheet1\'. ... Done.\n' \
+           '  \'TestSheet2\'. ... Done.\n' \
+           '  \'TestSheet11\'. ... Done.\n' \
+           '  \'TestSheet21\'. ... Done.\n' \
+           '  \'TestSheet12\'. ... Done.\n' \
+           '  \'TestSheet22\'. ... Done.\n' in out
+    assert isinstance(wb_data, dict)
 
-        wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
-        assert isinstance(wb_data, list)
-        assert all(isinstance(x, pd.DataFrame) for x in wb_data)
+    wb_data = load_spreadsheets(path_to_xlsx, as_dict=False, index_col=0)
+    assert isinstance(wb_data, list)
+    assert all(isinstance(x, pd.DataFrame) for x in wb_data)
 
 
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
@@ -125,7 +122,7 @@ def test_load_geopackage(tmp_path):
         load_geopackage(non_existent_path, raise_error=True)
 
 
-def test_load_csr_matrix(capfd):
+def test_load_csr_matrix(dat_dir, capfd):
     import scipy.sparse
 
     data_ = [1, 2, 3, 4, 5, 6]
@@ -138,13 +135,12 @@ def test_load_csr_matrix(capfd):
     assert list(csr_mat.indices) == indices_
     assert list(csr_mat.indptr) == indptr_
 
-    path_to_csr_npz_ = importlib.resources.files("tests").joinpath("data", "csr_mat.npz")
+    path_to_csr_npz = dat_dir / "dat.npz"
 
-    with importlib.resources.as_file(path_to_csr_npz_) as path_to_csr_npz:
-        csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
-        out, _ = capfd.readouterr()
-        assert f"Loading {_format_display_path(_get_relative_path(path_to_csr_npz))}" in out
-        assert "Done." in out
+    csr_mat_ = load_csr_matrix(path_to_csr_npz, verbose=True)
+    out, _ = capfd.readouterr()
+    assert f"Loading {_format_display_path(_get_relative_path(path_to_csr_npz))}" in out
+    assert "Done." in out
 
     rslt = csr_mat != csr_mat_
     assert isinstance(rslt, scipy.sparse.csr_matrix)
@@ -164,7 +160,7 @@ def test_load_csr_matrix(capfd):
     ]
 )
 @pytest.mark.parametrize('engine', ['ujson', 'orjson', 'rapidjson', None])
-def test_load_data(file_ext, engine, capfd, caplog):
+def test_load_data(dat_dir, file_ext, engine, capfd, caplog):
     # Suppress the joblib NumPy array shape assignment warning
     warnings.filterwarnings(
         action="ignore",
@@ -174,7 +170,7 @@ def test_load_data(file_ext, engine, capfd, caplog):
 
     original_data = example_dataframe()
 
-    path_to_file = Path(__file__).resolve().parents[1] / "data" / f"dat{file_ext}"
+    path_to_file = dat_dir / f"dat{file_ext}"
 
     args = {'path_to_file': path_to_file, 'verbose': True}
     if file_ext.endswith((".csv", ".xlsx", ".ods", ".feather")):

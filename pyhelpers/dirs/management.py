@@ -268,41 +268,43 @@ def get_file_paths(dir_path, file_ext=None, incl_subdir=False, abs_path=False, n
         >>> from pyhelpers.store import unzip
         >>> import os
 
-        >>> test_dir_name = "tests/data"
+        >>> test_dat_dir = "tests/data"
 
         >>> # Get all files in the directory (without subdirectories) on Windows
-        >>> get_file_paths(test_dir_name, prepend_dot=True)
-        ['./tests/data/csr_mat.npz',
+        >>> get_file_paths(test_dat_dir, prepend_dot=True)
+        ['./tests/data/dat.7z',
          './tests/data/dat.csv',
          './tests/data/dat.feather',
+         './tests/data/dat.gold.parquet',
+         './tests/data/dat.gpkg',
          './tests/data/dat.joblib',
          './tests/data/dat.json',
+         './tests/data/dat.npz',
          './tests/data/dat.ods',
+         './tests/data/dat.parquet',
          './tests/data/dat.pickle',
          './tests/data/dat.pickle.bz2',
          './tests/data/dat.pickle.gz',
          './tests/data/dat.pickle.xz',
+         './tests/data/dat.processed.pkl.xz',
          './tests/data/dat.txt',
          './tests/data/dat.xlsx',
-         './tests/data/zipped.7z',
-         './tests/data/zipped.txt',
-         './tests/data/zipped.zip']
+         './tests/data/dat.zip']
 
-        >>> get_file_paths(test_dir_name, file_ext=".txt")
-        ['tests/data/dat.txt', 'tests/data/zipped.txt']
+        >>> get_file_paths(test_dat_dir, file_ext=".txt")
+        ['tests/data/dat.txt']
 
-        >>> output_dir = unzip('tests/data/zipped.zip', ret_output_dir=True)
+        >>> output_dir = unzip('tests/data/dat.zip', return_output_dir=True)
         >>> os.listdir(output_dir)
         ['zipped.txt']
 
         >>> # Get absolute paths of all files contained in the folder (incl. all subdirectories)
-        >>> get_file_paths(test_dir_name, file_ext="txt", incl_subdir=True, abs_path=True)
+        >>> get_file_paths(test_dat_dir, file_ext="txt", incl_subdir=True, abs_path=True)
         ['<Parent directories>/tests/data/dat.txt',
-         '<Parent directories>/tests/data/zipped.txt',
-         '<Parent directories>/tests/data/zipped/zipped.txt']
+         '<Parent directories>/tests/data/dat/zipped.txt']
 
         >>> delete_dir(output_dir, confirmation_required=False, verbose=True)
-        Deleting "tests/data/zipped/" ... Done.
+        Deleting "tests/data/dat/" ... Done.
     """
 
     if incl_subdir:

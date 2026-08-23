@@ -2077,7 +2077,7 @@ class MSSQL(_Base):
         return data
 
     def drop_table(self, table_name, schema_name=None, confirmation_required=True, verbose=False,
-                   raise_error=False):
+                   indent=None, raise_error=False):
         """
         Delete/drop a table.
 
@@ -2092,6 +2092,10 @@ class MSSQL(_Base):
         :type confirmation_required: bool
         :param verbose: Whether to print relevant information in the console; defaults to ``False``.
         :type verbose: bool | int
+        :param indent: Indentation level; if an integer, represents the number of spaces;
+            If a string, used as the indentation character (e.g. ``'\\t'``);
+            defaults to ``None`` (no space).
+        :type indent: int | str | None
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool

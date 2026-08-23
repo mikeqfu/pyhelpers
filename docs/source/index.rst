@@ -2,6 +2,8 @@
 PyHelpers
 =========
 
+*An open-source toolkit for facilitating Python users' data manipulation tasks.*
+
 |PyPI| |Python| |License| |Docs| |Build| |Codacy| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers

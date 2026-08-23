@@ -1492,8 +1492,10 @@ class PostgreSQL(_Base):
         :type delimiter: str
         :param tempfile_kwargs: [Optional] Additional parameters for `tempfile.TemporaryFile()`_ or
             `tempfile.SpooledTemporaryFile()`_; defaults to ``None``.
+        :type tempfile_kwargs: dict | None
         :param stringio_kwargs: [Optional] Additional parameters for `io.StringIO()`_,
             e.g. ``initial_value``; defaults to ``None``.
+        :type stringio_kwargs: dict | None
         :param kwargs: [Optional] Additional parameters for the function `pandas.read_csv()`_.
         :return: Data queried by the statement ``sql_query``.
         :rtype: pandas.DataFrame
@@ -1721,8 +1723,8 @@ class PostgreSQL(_Base):
         :type verbose: bool | int
         :param indent: Indentation level; if an integer, represents the number of spaces;
             If a string, used as the indentation character (e.g. ``'\\t'``);
-            defaults to ``0`` (no space).
-        :type indent: int | str
+            defaults to ``None`` (no space).
+        :type indent: int | str | None
         :param raise_error: Whether to raise the provided exception;
             if ``raise_error=False`` (default), the error will be suppressed.
         :type raise_error: bool

@@ -1,5 +1,7 @@
 # PyHelpers
 
+*An open-source toolkit for facilitating Python users' data manipulation tasks.*
+
 [![PyPI Release Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
 [![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
@@ -16,17 +18,53 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 
 ## Installation
 
-To install the latest version of PyHelpers from [PyPI](https://pypi.org/project/pyhelpers/) using [pip](https://pip.pypa.io/en/stable/cli/pip/):
+PyHelpers can be installed using [`uv`](https://docs.astral.sh/uv/) (recommended) or [`pip`](https://pip.pypa.io/en/stable/cli/pip/).
+
+<details open>
+<summary><b>Using <code>uv</code> (Recommended)</b></summary>
+
+To add PyHelpers to an existing project:
 
 ```bash
-$ pip install --upgrade pyhelpers
+uv add pyhelpers
 ```
 
-For more information, see the [Installation](https://pyhelpers.readthedocs.io/en/latest/installation.html). 
+To include all optional features (e.g. geospatial and database tools):
+
+```bash
+uv add "pyhelpers[full]"
+```
+
+If you are working in an activated virtual environment:
+
+```bash
+uv pip install --upgrade pyhelpers
+```
+
+</details>
+
+<details>
+<summary><b>Using pip</b></summary>
+
+If you prefer standard Python packaging tools, ensure your `virtual environment`_ is activated:
+
+```bash
+pip install --upgrade pyhelpers
+```
+
+To install with all optional dependencies:
+
+```bash
+pip install --upgrade "pyhelpers[full]"
+```
+
+</details>
+
+For detailed options, development setup and Windows troubleshooting (e.g. installing C-extension wheels), see the full [Installation Guide](https://pyhelpers.readthedocs.io/en/latest/installation.html).
 
 ## Quick start
 
-For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [Modules](https://pyhelpers.readthedocs.io/en/latest/subpackages.html).
+For a concise guide on how to use PyHelpers, check out the [Quick Start](https://pyhelpers.readthedocs.io/en/latest/quick-start.html) tutorial, which includes illustrative examples for each of the [subpackages](https://pyhelpers.readthedocs.io/en/latest/subpackages.html).
 
 These examples briefly demonstrate the capabilities of PyHelpers in facilitating data manipulation tasks and streamlining work processes.
 
