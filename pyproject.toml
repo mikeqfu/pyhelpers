@@ -51,7 +51,6 @@ full = [
     "gdal",
     "geopandas",
     "joblib",
-    "jsonschema[format]",
     "matplotlib",
     "networkx",
     "nltk",
@@ -66,7 +65,6 @@ full = [
     "pypandoc",
     "python-rapidjson",
     "rapidfuzz",
-    "rfc3987-syntax",
     "scikit-learn",
     "scipy",
     "tqdm",
@@ -94,7 +92,8 @@ Source = "https://github.com/mikeqfu/pyhelpers"
 [dependency-groups]
 dev = [
     "notebook",
-    "twine"
+    "jsonschema[format]",
+    "rfc3987-syntax",
 ]
 docs = [
     "furo",
