@@ -5,8 +5,6 @@ Preferences.
 import copy
 import os
 
-import packaging.version
-
 from .._cache import _check_dependencies
 
 
@@ -148,6 +146,8 @@ def pd_preferences(reset=False, max_columns=100, min_rows=10, max_rows=40, preci
             pd.set_option(key, registered_options[key].defval)
 
     elif reset == 'all':
+        import packaging.version
+
         if packaging.version.parse(pd.__version__) >= packaging.version.parse("3.0.0"):
             pd.reset_option('all')
         else:
