@@ -2348,7 +2348,7 @@ wheels = [
 
 [[package]]
 name = "pyhelpers"
-version = "2.5.1rc1"
+version = "2.5.1"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
