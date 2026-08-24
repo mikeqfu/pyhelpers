@@ -1,6 +1,25 @@
 # Changelog / Release notes
 
 
+## [2.5.1](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.1)
+
+(*24 August 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.5.0...2.5.1) since [2.5.0](https://pypi.org/project/pyhelpers/2.5.0/):
+
+- **Packaging & metadata resolution:**
+  * Force-included `pyproject.toml` in wheel distribution targets and updated path resolution in `_load_metadata()` to ensure reliable metadata parsing across installed environments (#148).
+  * Migrated internal project build pipelines and packaging management to `uv` (#143).
+  * Deferred `packaging.version` import within the settings module to optimize initial package load performance (#147).
+- **CI/CD & maintenance:**
+  * Configured Dependabot for automated dependency security updates and cleaned up CI workflow triggers (#144).
+  * Updated GitHub Actions dependencies across continuous integration pipelines (#145).
+- **Release configuration:**
+  * Prepared project metadata and version bump for release 2.5.1 (#146).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.5.1 documentation](https://pyhelpers.readthedocs.io/en/2.5.1/).**
+
+
 ## [2.5.0](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.0)
 
 (*7 July 2026*)
