@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyhelpers"
-version = "2.5.1rc1"
+version = "2.5.1"
 description = "An open-source toolkit for facilitating Python users' data manipulation tasks"
 readme = "README.md"
 requires-python = ">=3.12"
