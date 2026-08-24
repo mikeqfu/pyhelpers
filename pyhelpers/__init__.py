@@ -57,9 +57,13 @@ def _load_metadata():
     current_dir = pathlib.Path(__file__).resolve().parent
     pyproject_toml = "pyproject.toml"
 
-    pyproject_path = current_dir.parent / pyproject_toml
-    if not pyproject_path.is_file():  # Fallback: if not found, check the current working directory
-        pyproject_path = pathlib.Path.cwd() / pyproject_toml
+    possible_paths = [
+        current_dir / pyproject_toml,  # Installed wheel location
+        current_dir.parent / pyproject_toml,  # Local repository root
+        pathlib.Path.cwd() / pyproject_toml,  # Working directory fallback
+    ]
+
+    pyproject_path = next((p for p in possible_paths if p.is_file()), None)
 
     if not pyproject_path:
         raise FileNotFoundError(
@@ -69,8 +73,9 @@ def _load_metadata():
 
     with open(pyproject_path, mode='rb') as f:
         cfg = tomllib.load(f)
-        project_info = cfg.get('project', {})
-        custom_info = cfg.get('tool', {}).get('custom', {}).get('metadata', {})
+
+    project_info = cfg.get('project', {})
+    custom_info = cfg.get('tool', {}).get('custom', {}).get('metadata', {})
 
     name = project_info.get('name', package_name)
     version = version or project_info.get('version')
