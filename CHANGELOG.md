@@ -1,6 +1,24 @@
 # Changelog / Release notes
 
 
+## [2.5.2](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.2)
+
+(*25 August 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.5.1...2.5.2) since [2.5.1](https://pypi.org/project/pyhelpers/2.5.1/):
+
+- **Packaging & metadata resolution:**
+  * Standardised `license`, `authors` and `[project.urls]` tables in `pyproject.toml` to fix PyPI metadata rendering.
+  * Standardised `__title__` string formatting in package initialisation module (`__init__.py`).
+- **Documentation & maintenance:**
+  * Standardised copyright format in Sphinx configuration (`docs/conf.py`).
+  * Updated `uv.lock` dependency lockfile.
+- **Release configuration:**
+  * Prepared project metadata and version bump for release 2.5.2.
+
+**For more information and detailed specifications, check out the [PyHelpers 2.5.2 documentation](https://pyhelpers.readthedocs.io/en/2.5.2/).**
+
+
 ## [2.5.1](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.1)
 
 (*24 August 2026*)
