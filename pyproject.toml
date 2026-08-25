@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "pyhelpers"
 version = "2.5.1"
-description = "An open-source toolkit for facilitating Python users' data manipulation tasks"
+description = "An open-source toolkit for facilitating Python users' data manipulation tasks."
 readme = "README.md"
 requires-python = ">=3.12"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
-    { name = "Qian Fu", email = "q.fu@bham.ac.uk" }
+    { name = "Qian Fu" }
 ]
 keywords = [
     "Python",
@@ -82,8 +82,9 @@ all = [
 [project.urls]
 Homepage = "https://github.com/mikeqfu/pyhelpers"
 Documentation = "https://pyhelpers.readthedocs.io/en/latest/"
-Source = "https://github.com/mikeqfu/pyhelpers"
+Repository = "https://github.com/mikeqfu/pyhelpers"
 "Bug Tracker" = "https://github.com/mikeqfu/pyhelpers/issues"
+Changelog = "https://github.com/mikeqfu/pyhelpers/blob/master/CHANGELOG.md"
 
 
 # -----------------------
