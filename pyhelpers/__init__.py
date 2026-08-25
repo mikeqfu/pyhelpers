@@ -120,11 +120,10 @@ def _load_metadata():
 
 METADATA = _load_metadata()
 
-
 __project__ = 'PyHelpers'
 __pkgname__ = METADATA.get('name')
 __description__ = METADATA.get('description')
-__title__ = f"{__project__}: {__description__}" if __description__ else __project__
+__title__ = f"{__project__}: {__description__.strip('.')}" if __description__ else __project__
 __version__ = METADATA.get('version')
 __license__ = METADATA.get('license')
 __copyright__ = METADATA.get('copyright')

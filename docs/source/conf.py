@@ -275,7 +275,7 @@ latex_maketitle = r'''
         \Large {{Last updated:}} \large \textbf{{\MonthYearFormat\today}} \par
         
         \vspace{20mm}
-        \large \textcopyright \space Copyright %s \par
+        \large Copyright \textcopyright\space %s \par
 
     \end{titlepage}
     \restoregeometry
@@ -303,7 +303,7 @@ latex_maketitle = r'''
     \clearpage
     \pagenumbering{arabic}
     ''' % (__project__,
-           __description__,
+           __description__.strip('.'),
            __version__,
            __author__,
            __affiliation__,
