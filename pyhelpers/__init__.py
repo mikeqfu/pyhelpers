@@ -120,7 +120,6 @@ def _load_metadata():
 
 METADATA = _load_metadata()
 
-
 __project__ = 'PyHelpers'
 __pkgname__ = METADATA.get('name')
 __description__ = METADATA.get('description')
