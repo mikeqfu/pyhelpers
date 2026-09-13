@@ -2,8 +2,9 @@
 
 *An open-source toolkit for facilitating Python users' data manipulation tasks.*
 
-[![PyPI Release Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
-[![Python Version](https://img.shields.io/pypi/pyversions/pyhelpers)](https://docs.python.org/3/)
+[![PyPI Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/pyhelpers)](https://anaconda.org/channels/conda-forge/packages/pyhelpers/overview)
+[![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fmikeqfu%2Fpyhelpers%2Frefs%2Fheads%2Fmaster%2Fpyproject.toml)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![ReadTheDocs Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&branch=master)](https://github.com/mikeqfu/pyhelpers/actions)
@@ -18,18 +19,18 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 
 ## Installation
 
-PyHelpers can be installed using [`uv`](https://docs.astral.sh/uv/) (recommended) or [`pip`](https://pip.pypa.io/en/stable/cli/pip/).
+PyHelpers can be installed using [`uv`](https://docs.astral.sh/uv/) (recommended for speed, reliability and modern dependency resolution), [`conda-forge`](https://anaconda.org/conda-forge/pyhelpers) (including [`pixi`](https://pixi.sh/)) or traditional [`pip`](https://pip.pypa.io/en/stable/cli/pip/).
 
 <details open>
 <summary><b>Using <code>uv</code> (Recommended)</b></summary>
 
-To add PyHelpers to an existing project:
+To add PyHelpers to an existing project managed by [`uv`](https://docs.astral.sh/uv/):
 
 ```bash
 uv add pyhelpers
 ```
 
-To include all optional features (e.g. geospatial and database tools):
+To include all optional features (e.g. geospatial drivers and database connectors):
 
 ```bash
 uv add "pyhelpers[full]"
@@ -41,12 +42,39 @@ If you are working in an activated virtual environment:
 uv pip install --upgrade pyhelpers
 ```
 
+To install all optional features inside an active virtual environment:
+
+```bash
+uv pip install --upgrade "pyhelpers[full]"
+```
 </details>
 
 <details>
-<summary><b>Using pip</b></summary>
+<summary><b>Using <code>pixi</code></b></summary>
 
-If you prefer standard Python packaging tools, ensure your `virtual environment`_ is activated:
+To add the core PyHelpers package to a workspace using [`pixi`](https://pixi.sh/):
+
+```bash
+pixi add pyhelpers
+```
+
+To add PyHelpers along with optional dependencies (e.g. `gdal`, `pyarrow`, `fiona` and so on) via `pixi`:
+
+```bash
+pixi add pyhelpers gdal pyarrow fiona
+```
+
+Alternatively, to install PyHelpers with PyPI extras inside a `pixi` project:
+
+```bash
+pixi add --pypi "pyhelpers[full]"
+```
+</details>
+
+<details>
+<summary><b>Using <code>pip</code></b></summary>
+
+To install PyHelpers into an active environment using [`pip`](https://pip.pypa.io/en/stable/cli/pip/):
 
 ```bash
 pip install --upgrade pyhelpers
@@ -57,7 +85,20 @@ To install with all optional dependencies:
 ```bash
 pip install --upgrade "pyhelpers[full]"
 ```
+</details>
 
+<details>
+<summary><b>Using <code>conda</code></b></summary>
+
+To install PyHelpers into an active environment using [`conda`](https://docs.conda.io/) (or [`mamba`](https://mamba.readthedocs.io/)):
+
+```bash
+# Core package
+conda install -c conda-forge pyhelpers
+
+# Full suite with binary C-extensions
+conda install -c conda-forge pyhelpers gdal pyarrow fiona
+```
 </details>
 
 For detailed options, development setup and Windows troubleshooting (e.g. installing C-extension wheels), see the full [Installation Guide](https://pyhelpers.readthedocs.io/en/latest/installation.html).
