@@ -96,7 +96,7 @@ def get_base_map_center(gdf, center_method='bounds'):
 
 @_lazy_check_dependencies('folium', 'folium.plugins')
 def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=None,
-                           initial_tile_name=None, add_mini_map=True, **kwargs):
+                           attr=None, initial_tile_name=None, add_mini_map=True, **kwargs):
     # noinspection PyShadowingNames,PyTypeChecker
     """
     Initializes a Folium map centered on the extent of a GeoDataFrame.
@@ -107,7 +107,7 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
 
     :param gdf: Input GeoDataFrame containing the geographical features.
     :type gdf: geopandas.GeoDataFrame
-    :param center_method: The method used to calculate the map center.
+    :param center_method: The method used to calculate the map center:
 
         - ``'bounds'``: Calculates the center based on the arithmetic mean of the bounding box
           corners (quickest method).
@@ -120,18 +120,22 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     :param fit_bounds: Whether to automatically adjust the map view to
         fit the full extent of the data bounds. Defaults to ``True``.
     :type fit_bounds: bool
-    :param tiles: The tile layer(s) to use. Can be a string (e.g. ``'CartoDB positron'``) or a list
-        of strings for multiple tile layers.
+    :param tiles: The tile layer(s) to use. Can be a string
+        (e.g. ``'OpenStreetMap'``, ``'CartoDB positron'``) or a list of strings for multiple
+        tile layers. When ``tiles=None``, it defaults to ``'OpenStreetMap'``.
     :type tiles: str | list[str] | None
+    :param attr: Custom tile attribution string required when supplying raw tile URLs.
+        Defaults to ``None``.
+    :type attr: str | None
     :param initial_tile_name: Optional custom name to display for the first (default) tile layer
-        in the map's Layer Control. If None, the default tile name is used.
+        in the map's Layer Control. If ``None``, the default tile name is used.
     :type initial_tile_name: str | None
     :param add_mini_map: If ``True``, a small inset map is added to the bottom-right corner
         using ``folium.plugins.MiniMap``.
     :type add_mini_map: bool
     :param kwargs: Additional arguments passed to the ``folium.Map`` constructor.
     :type kwargs: dict
-    :return: Tuple of (re-projected GeoDataFrame, Folium Map object).
+    :return: Tuple of (Folium Map object, re-projected GeoDataFrame).
     :rtype: tuple[folium.Map, geopandas.GeoDataFrame]
 
     **Examples**::
@@ -140,9 +144,12 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
         >>> from pyhelpers._cache import example_dataframe
         >>> from shapely.geometry import Point
         >>> import geopandas as gpd
+
         >>> df = example_dataframe()
         >>> df['geometry'] = df.apply(lambda x: Point([x.Longitude, x.Latitude]), axis=1)
+
         >>> gdf = gpd.GeoDataFrame(df, geometry='geometry', crs=4326)
+
         >>> m, gdf_proj = create_base_folium_map(gdf, fit_bounds=False, zoom_start=7)
         >>> m.show_in_browser()
     """
@@ -150,8 +157,8 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     center_lat_lon, ll_lat_lon, ur_lat_lon, gdf_proj = get_base_map_center(
         gdf=gdf, center_method=center_method)
 
-    # Handle tiles logic
-    tiles_list = tiles if isinstance(tiles, list) else [tiles or 'CartoDB Positron']
+    # Handle tiles logic - default to keyless OpenStreetMap tile provider
+    tiles_list = tiles if isinstance(tiles, list) else [tiles or 'OpenStreetMap']
     if not all(isinstance(t, str) for t in tiles_list):
         raise TypeError("`tiles` must be a string or a list of strings.")
 
@@ -170,17 +177,32 @@ def create_base_folium_map(gdf, center_method='bounds', fit_bounds=True, tiles=N
     # Create map
     m = folium.Map(**map_args)  # noqa
 
-    # Add Tile Layers
+    # Resolve tile attribution for custom URL templates
+    def _resolve_attr(tile_str: str) -> str | None:
+        if attr:
+            return attr
+        if tile_str.startswith(('http://', 'https://')):
+            return '&copy; OpenStreetMap contributors'
+        return None
+
+    # Add primary tile layer
     folium.TileLayer(  # noqa
         tiles=primary_tile,
         name=initial_tile_name or primary_tile,
+        attr=_resolve_attr(primary_tile),
         overlay=False,
         control=True
     ).add_to(m)
 
     # Add subsequent tile layers
     for tile in other_tiles:
-        folium.TileLayer(tiles=tile, name=tile, overlay=False, show=False).add_to(m)  # noqa
+        folium.TileLayer(  # noqa
+            tiles=tile,
+            name=tile,
+            attr=_resolve_attr(tile),
+            overlay=False,
+            show=False
+        ).add_to(m)
 
     # Add MiniMap
     if add_mini_map:
