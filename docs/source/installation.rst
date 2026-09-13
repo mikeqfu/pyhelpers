@@ -2,7 +2,7 @@
 Installation
 ============
 
-PyHelpers can be installed via `uv`_ (recommended for speed, reliability and modern dependency resolution), `conda-forge`_ or traditional `pip`_.
+PyHelpers can be installed via `uv`_ (recommended for speed, reliability and modern dependency resolution), `pixi`_, traditional `pip`_ or `conda-forge`_.
 
 
 Using ``uv`` (Recommended)
@@ -10,22 +10,22 @@ Using ``uv`` (Recommended)
 
 `uv`_ is a fast Python package installer and project manager written in Rust.
 
-Adding to a ``uv`` Project
+Adding to a ``uv`` project
 --------------------------
 
-To add the latest release of PyHelpers to your existing project managed by ``uv``:
+To add the latest release of PyHelpers to your existing project managed by `uv`_:
 
 .. code-block:: console
 
     > uv add pyhelpers
 
-To include all optional dependencies (e.g. geospatial and data manipulation libraries):
+To include all optional dependencies (e.g. geospatial drivers and database connectors):
 
 .. code-block:: console
 
     > uv add "pyhelpers[full]"
 
-Installing in a Virtual Environment
+Installing in a virtual environment
 -----------------------------------
 
 If you are working inside an active virtual environment and wish to install PyHelpers directly using ``uv pip``:
@@ -34,6 +34,12 @@ If you are working inside an active virtual environment and wish to install PyHe
 
     > uv pip install --upgrade pyhelpers
 
+To install all optional features inside an active virtual environment:
+
+.. code-block:: console
+
+    > uv pip install --upgrade "pyhelpers[full]"
+
 To install the latest development version directly from `GitHub <https://github.com/mikeqfu/pyhelpers>`_:
 
 .. code-block:: console
@@ -41,38 +47,40 @@ To install the latest development version directly from `GitHub <https://github.
     > uv pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
 
 
-Using ``conda-forge`` (including ``pixi``)
-==========================================
-
-PyHelpers is published on `conda-forge`_ and can be managed using `pixi`_, `conda`_ or `mamba`_.
-
 Using ``pixi``
---------------
+==============
 
-To add PyHelpers to an existing project workspace managed by `pixi`_:
+`pixi`_ is a modern package management tool built on top of `conda-forge`_.
+
+Adding to a ``pixi`` Project
+----------------------------
+
+To add the core PyHelpers package to a workspace using `pixi`_:
 
 .. code-block:: console
 
     > pixi add pyhelpers
+
+To add PyHelpers along with optional dependencies (e.g. ``gdal``, ``pyarrow`` and ``fiona``) via `pixi`_:
+
+.. code-block:: console
+
+    > pixi add pyhelpers gdal pyarrow fiona
+
+Alternatively, to install PyHelpers with PyPI extras inside a `pixi`_ project:
+
+.. code-block:: console
+
+    > pixi add --pypi "pyhelpers[full]"
+
+Installing globally
+-------------------
 
 To install PyHelpers as a globally accessible tool via `pixi`_:
 
 .. code-block:: console
 
     > pixi global install pyhelpers
-
-Using ``conda`` or ``mamba``
-----------------------------
-
-To install PyHelpers into an active environment using `conda`_ or `mamba`_:
-
-.. code-block:: console
-
-    > conda install -c conda-forge pyhelpers
-
-.. code-block:: console
-
-    > mamba install -c conda-forge pyhelpers
 
 
 Using ``pip``
@@ -115,6 +123,38 @@ To install the development version from GitHub:
         > pip install path/to/gdal-3.x.x-cp3x-cp3x-win_amd64.whl
 
 
+Using ``conda`` or ``mamba``
+============================
+
+PyHelpers is published on `conda-forge`_ and can be managed using `conda`_ or `mamba`_.
+
+Installing core package
+-----------------------
+
+To install PyHelpers into an active environment using `conda`_ or `mamba`_:
+
+.. code-block:: console
+
+    > conda install -c conda-forge pyhelpers
+
+.. code-block:: console
+
+    > mamba install -c conda-forge pyhelpers
+
+Installing full binary suite
+----------------------------
+
+To install PyHelpers alongside binary C-extension packages:
+
+.. code-block:: console
+
+    > conda install -c conda-forge pyhelpers gdal pyarrow fiona
+
+.. code-block:: console
+
+    > mamba install -c conda-forge pyhelpers gdal pyarrow fiona
+
+
 Verification
 ============
 
@@ -136,8 +176,8 @@ To verify the installation, import the package in a Python interpreter shell:
     - For general guidelines on Python virtual environments and dependency management, refer to the `Python Packaging User Guide`_.
 
 .. _`uv`: https://docs.astral.sh/uv/
-.. _`conda-forge`: https://anaconda.org/conda-forge/pyhelpers
 .. _`pixi`: https://pixi.sh/
+.. _`conda-forge`: https://anaconda.org/conda-forge/pyhelpers
 .. _`conda`: https://docs.conda.io/
 .. _`mamba`: https://mamba.readthedocs.io/
 .. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
