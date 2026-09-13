@@ -6,13 +6,15 @@ from pathlib import Path
 
 import folium
 import pytest
-
 from pyhelpers.store import load_geopackage
 from pyhelpers.viz import create_base_folium_map
 
 
 @pytest.mark.parametrize('fit_bounds', [True, False])
-@pytest.mark.parametrize('tiles', [None, ['CartoDB Positron', 'OpenStreetMap']])
+@pytest.mark.parametrize('tiles', [
+    None,
+    ['OpenStreetMap', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png']
+])
 def test_create_base_folium_map(fit_bounds, tiles):
     test_data_path = Path(__file__).resolve().parents[1] / "data" / "dat.gpkg"
     gdf = load_geopackage(test_data_path)
