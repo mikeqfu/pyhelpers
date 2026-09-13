@@ -2,7 +2,7 @@
 Installation
 ============
 
-PyHelpers can be installed using `uv`_ (recommended for speed, reliability and modern dependency resolution) or traditional `pip`_.
+PyHelpers can be installed via `uv`_ (recommended for speed, reliability and modern dependency resolution), `conda-forge`_ or traditional `pip`_.
 
 
 Using ``uv`` (Recommended)
@@ -11,7 +11,7 @@ Using ``uv`` (Recommended)
 `uv`_ is a fast Python package installer and project manager written in Rust.
 
 Adding to a ``uv`` Project
----------------------------
+--------------------------
 
 To add the latest release of PyHelpers to your existing project managed by ``uv``:
 
@@ -39,6 +39,40 @@ To install the latest development version directly from `GitHub <https://github.
 .. code-block:: console
 
     > uv pip install --upgrade git+https://github.com/mikeqfu/pyhelpers.git
+
+
+Using ``conda-forge`` (including ``pixi``)
+==========================================
+
+PyHelpers is published on `conda-forge`_ and can be managed using `pixi`_, `conda`_ or `mamba`_.
+
+Using ``pixi``
+--------------
+
+To add PyHelpers to an existing project workspace managed by `pixi`_:
+
+.. code-block:: console
+
+    > pixi add pyhelpers
+
+To install PyHelpers as a globally accessible tool via `pixi`_:
+
+.. code-block:: console
+
+    > pixi global install pyhelpers
+
+Using ``conda`` or ``mamba``
+----------------------------
+
+To install PyHelpers into an active environment using `conda`_ or `mamba`_:
+
+.. code-block:: console
+
+    > conda install -c conda-forge pyhelpers
+
+.. code-block:: console
+
+    > mamba install -c conda-forge pyhelpers
 
 
 Using ``pip``
@@ -102,6 +136,10 @@ To verify the installation, import the package in a Python interpreter shell:
     - For general guidelines on Python virtual environments and dependency management, refer to the `Python Packaging User Guide`_.
 
 .. _`uv`: https://docs.astral.sh/uv/
+.. _`conda-forge`: https://anaconda.org/conda-forge/pyhelpers
+.. _`pixi`: https://pixi.sh/
+.. _`conda`: https://docs.conda.io/
+.. _`mamba`: https://mamba.readthedocs.io/
 .. _`virtual environment`: https://packaging.python.org/glossary/#term-Virtual-Environment
 .. _`pip install`: https://pip.pypa.io/en/stable/cli/pip_install/
 .. _`pip`: https://pip.pypa.io/en/stable/cli/pip/
