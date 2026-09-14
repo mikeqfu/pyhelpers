@@ -2,8 +2,8 @@
 
 *An open-source toolkit for facilitating Python users' data manipulation tasks.*
 
-[![PyPI Version](https://img.shields.io/pypi/v/pyhelpers)](https://pypi.org/project/pyhelpers/)
-[![Conda Version](https://img.shields.io/conda/vn/conda-forge/pyhelpers)](https://anaconda.org/channels/conda-forge/packages/pyhelpers/overview)
+[![PyPI Version](https://img.shields.io/pypi/v/pyhelpers?logo=pypi)](https://pypi.org/project/pyhelpers/)
+[![Conda-Forge Version](https://img.shields.io/conda/vn/conda-forge/pyhelpers?logo=anaconda)](https://anaconda.org/channels/conda-forge/packages/pyhelpers/overview)
 [![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fmikeqfu%2Fpyhelpers%2Frefs%2Fheads%2Fmaster%2Fpyproject.toml)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/github/license/mikeqfu/pyhelpers)](https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE)
 [![ReadTheDocs Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
