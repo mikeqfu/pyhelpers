@@ -4,14 +4,17 @@ PyHelpers
 
 *An open-source toolkit for facilitating Python users' data manipulation tasks.*
 
-|PyPI| |Python| |License| |Docs| |Build| |Codacy| |DOI|
+|PyPI| |Conda-Forge| |Python| |License| |Docs| |Build| |Codacy| |DOI|
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers
-    :alt: PyPI Release Version
+.. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?logo=pypi
+    :alt: PyPI Version
     :target: https://pypi.org/project/pyhelpers/
-.. |Python| image:: https://img.shields.io/pypi/pyversions/pyhelpers
+.. |Conda-Forge| image:: https://img.shields.io/conda/vn/conda-forge/pyhelpers?logo=anaconda
+    :alt: Conda-Forge Version
+    :target: https://anaconda.org/channels/conda-forge/packages/pyhelpers/overview
+.. |Python| image:: https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fmikeqfu%2Fpyhelpers%2Frefs%2Fheads%2Fmaster%2Fpyproject.toml
     :alt: Python Version
-    :target: https://docs.python.org/3/
+    :target: https://www.python.org/downloads/
 .. |License| image:: https://img.shields.io/github/license/mikeqfu/pyhelpers
     :alt: License
     :target: https://github.com/mikeqfu/pyhelpers/blob/master/LICENSE
