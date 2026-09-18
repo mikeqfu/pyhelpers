@@ -3,6 +3,7 @@ Tests the :mod:`~pyhelpers.store.converters` submodule.
 """
 
 import importlib.resources
+import os
 import shutil
 
 import pandas as pd
@@ -10,8 +11,9 @@ import pytest
 
 from pyhelpers._cache import _format_display_path, _get_relative_path, _normalize_path, \
     example_dataframe
-from pyhelpers.store.converters import *
+from pyhelpers.store.converters import markdown_to_rst, seven_zip, unzip, xlsx_to_csv
 from pyhelpers.store.loaders import load_csv
+from tests.conftest import requires_pandoc
 
 
 def test_unzip(dat_dir, tmp_path, capfd):
@@ -43,8 +45,20 @@ def test_seven_zip(dat_dir, file_ext, tmp_path, verbose, capfd):
             assert '"7-Zip" (https://www.7-zip.org/) is required' in exc_info.value
 
 
+@requires_pandoc
 @pytest.mark.parametrize('engine', [None, 'pypandoc'])
 def test_markdown_to_rst(engine, tmp_path, capfd):
+    """
+    Test :func:`~pyhelpers.store.markdown_to_rst`.
+
+    :param engine: Conversion engine to test (``None`` for CLI Pandoc, ``'pypandoc'`` for module).
+    :type engine: str | None
+    :param tmp_path: Temporary directory fixture provided by pytest.
+    :type tmp_path: pathlib.Path
+    :param capfd: Capture fixture for stdout and stderr streams.
+    :type capfd: pytest.CaptureFixture[str]
+    """
+
     md_filename, rst_filename = "readme.md", "readme.rst"
 
     test_dir = importlib.resources.files("tests").joinpath("documents")
@@ -55,19 +69,35 @@ def test_markdown_to_rst(engine, tmp_path, capfd):
     path_to_rst_file = tmp_path / rst_filename
 
     out_path = _get_relative_path(str(tmp_path))
+    display_path = _format_display_path(out_path)
 
-    markdown_to_rst(path_to_md_file, path_to_rst_file, engine=engine, verbose=True)  # noqa
+    # Forward conversion: Markdown to rst
+    markdown_to_rst(path_to_md_file, path_to_rst_file, engine=engine, verbose=True)
     out, _ = capfd.readouterr()
-    assert f'Updating "{rst_filename}" in {_format_display_path(out_path)} ... Done.' in out
+    assert f'Updating "{rst_filename}" in {display_path} ... Done.' in out
 
-    markdown_to_rst(path_to_md_file, path_to_rst_file, engine=engine, verbose=True, reverse=True)
+    # Reverse conversion: rst to Markdown
+    markdown_to_rst(
+        path_to_md_file,
+        path_to_rst_file,
+        engine=engine,
+        verbose=True,
+        reverse=True,
+    )
     out, _ = capfd.readouterr()
-    assert f'Updating "{md_filename}" in {_format_display_path(out_path)} ... Done.' in out
+    assert f'Updating "{md_filename}" in {display_path} ... Done.' in out
 
-    pandoc_exe = 'test_pandoc.exe'
-    markdown_to_rst(path_to_md_file, path_to_rst_file, verbose=True, pandoc_exe=pandoc_exe)  # noqa
+    # Verify invalid executable handling when engine=None
+    invalid_exe = "test_pandoc.exe"
+    markdown_to_rst(
+        path_to_md_file,
+        path_to_rst_file,
+        verbose=True,
+        pandoc_exe=invalid_exe,
+    )
     out, _ = capfd.readouterr()
-    assert "Failed." in out and '"Pandoc" (https://pandoc.org/) is required to proceed' in out
+    assert "Failed." in out
+    assert '"Pandoc" (https://pandoc.org/) is required to proceed' in out
 
 
 @pytest.mark.parametrize('engine', [None, 'xlsx2csv'])

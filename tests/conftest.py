@@ -45,6 +45,11 @@ HAS_INKSCAPE = (
     or os.path.isfile(r"C:\Program Files\Inkscape\bin\inkscape.exe")
 )
 
+HAS_PANDOC = (
+    shutil.which("pandoc") is not None
+    or os.path.isfile(r"C:\Program Files\Pandoc\pandoc.exe")
+)
+
 HAS_WKHTMLTOPDF = (
     shutil.which("wkhtmltopdf") is not None
     or os.path.isfile(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
@@ -60,6 +65,9 @@ requires_7zip = pytest.mark.skipif(
 )
 requires_inkscape = pytest.mark.skipif(
     not HAS_INKSCAPE, reason="Inkscape executable is not installed"
+)
+requires_pandoc = pytest.mark.skipif(
+    not HAS_PANDOC, reason="Pandoc executable is not installed"
 )
 requires_wkhtmltopdf = pytest.mark.skipif(
     not HAS_WKHTMLTOPDF, reason="wkhtmltopdf executable is not installed"
