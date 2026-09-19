@@ -30,6 +30,9 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Utilities",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux"
 ]
@@ -115,6 +118,12 @@ test = [
 # -----------------
 # UV configuration
 # -----------------
+[tool.uv]
+required-environments = [
+    "sys_platform == 'linux'",
+    "sys_platform == 'win32'",
+]
+
 [[tool.uv.index]]
 name = "geospatial-wheels"
 url = "https://nathanjmcdougall.github.io/geospatial-wheels-index/"
