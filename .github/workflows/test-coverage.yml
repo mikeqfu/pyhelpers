@@ -71,7 +71,11 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
-          apt-get install -y 7zip p7zip-full inkscape wkhtmltopdf unixodbc-dev pandoc
+          apt-get install -y 7zip p7zip-full inkscape unixodbc-dev pandoc wget xfonts-75dpi xfonts-base
+          
+          wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.jammy_amd64.deb
+          dpkg -i wkhtmltox_0.12.6.1-3.jammy_amd64.deb || apt-get install -f -y
+          rm wkhtmltox_0.12.6.1-3.jammy_amd64.deb
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@v9.0.0
