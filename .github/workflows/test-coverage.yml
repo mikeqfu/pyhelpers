@@ -87,6 +87,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-extras --all-groups
 
+      - name: Download NLTK data
+        run: |
+          uv run python -c "import nltk; nltk.download('punkt_tab'); nltk.download('punkt')"
+
       - name: Run tests with coverage
         env:
           POSTGRES_SERVER: localhost
