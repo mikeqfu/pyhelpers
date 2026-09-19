@@ -1,0 +1,110 @@
+name: Test & Coverage
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - 'docs/**'
+      - '*.rst'
+      - '*.md'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write  # required for Codecov OIDC
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+        include:
+          - python-version: "3.14"
+            experimental: true
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: TestPassword123!
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: "StrongPassword123!"
+        ports:
+          - 1433:1433
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdal-bin libgdal-dev 7zip p7zip-full inkscape wkhtmltopdf unixodbc-dev pandoc
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          cache-suffix: py${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --all-groups
+
+      - name: Run tests with coverage
+        env:
+          POSTGRES_SERVER: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: TestPassword123!
+          POSTGRES_DB: testdb
+          MSSQL_SERVER: localhost
+          MSSQL_PORT: 1433
+          MSSQL_USER: sa
+          MSSQL_PASSWORD: StrongPassword123!
+          MSSQL_DB: testdb
+        run: |
+          uv run --locked pytest --junitxml=reports/junit.xml
+
+      - name: Upload reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports-py${{ matrix.python-version }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
+          files: reports/coverage.xml
+          flags: py${{ matrix.python-version }}
+          fail_ci_if_error: ${{ matrix.experimental != true }}
