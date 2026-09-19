@@ -40,7 +40,7 @@ dependencies = [
     "pyproj",
     "requests",
     "shapely",
-    "sqlalchemy"
+    "sqlalchemy",
 ]
 
 [project.optional-dependencies]
@@ -95,6 +95,7 @@ dev = [
     "notebook",
     "jsonschema[format]",
     "rfc3987-syntax",
+    "python-dotenv"
 ]
 docs = [
     "furo",
