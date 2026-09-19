@@ -1,0 +1,11 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%        # mirrors [tool.coverage.report] fail_under
+        threshold: 2%      # tolerate tiny fluctuations
+    patch:
+      default:
+        informational: true
+comment:
+  layout: "condensed"
