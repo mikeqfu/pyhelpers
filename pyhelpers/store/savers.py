@@ -1278,40 +1278,41 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
                      verbose=False, print_kwargs=None, raise_error=False, **kwargs):
     # noinspection PyShadowingNames
     """
-    Save a web page as a `PDF <https://en.wikipedia.org/wiki/PDF>`_ file
+    Save a web page or local HTML document as a PDF file
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
-    :param data: The URL of a web page or the pathname of an HTML file.
+    This function wraps the `pdfkit` library to convert a URL or a local HTML file into a PDF.
+    It automatically handles executable discovery, conditional overwriting, and verbose logging.
+
+    :param data: The URL of a web page or the path to a local HTML file.
     :type data: str | os.PathLike
-    :param path_to_file: The path where the PDF file will be saved.
+    :param path_to_file: The destination path where the PDF file will be saved.
     :type path_to_file: str | os.PathLike
-    :param if_exists: Action to take if the .pdf file already exists;
-        options are ``'replace'`` (default) and ``'pass'``.
+    :param if_exists: Action to take if the target PDF file already exists.
+        Options are ``'replace'`` (default) or ``'pass'``.
     :type if_exists: str
-    :param page_size: The page size; defaults to ``'A4'``.
+    :param page_size: The page size configuration. Defaults to ``'A4'``.
     :type page_size: str
-    :param zoom: Magnification for zooming in/out; defaults to ``1.0``.
+    :param zoom: Magnification scale for zooming in or out. Defaults to ``1.0``.
     :type zoom: float
-    :param encoding: The encoding format; defaults to ``'UTF-8'``.
+    :param encoding: The character encoding format. Defaults to ``'UTF-8'``.
     :type encoding: str
     :param wkhtmltopdf_options: Options for `wkhtmltopdf`_; defaults to ``None``.
-        Refer to the description of `pdfkit`_ project for more details.
+        Refer to the documentation of the `pdfkit`_ project for more details.
     :type wkhtmltopdf_options: dict | None
-    :param wkhtmltopdf_path: The path to "*wkhtmltopdf.exe*";
-        when ``wkhtmltopdf_path=None`` (default), the default installation path will be used, e.g.
-        "*C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe*" (on Windows).
-    :param wkhtmltopdf_path: The path to the wkhtmltopdf executable;
-        if ``None`` (default), searches standard installation paths.
+    :param wkhtmltopdf_path: The path to the wkhtmltopdf executable. If ``None`` (default),
+        the function searches standard installation paths, e.g.
+        "C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe" on Windows.
     :type wkhtmltopdf_path: str | None
     :param verbose: Whether to print progress to the console; defaults to ``False``.
-        Set ``verbose=2`` to see full output from wkhtmltopdf.
+        Set to ``2`` to see full diagnostic output from the wkhtmltopdf executable.
     :type verbose: bool | int
-    :param print_kwargs: [Optional] Additional parameters passed to
-        :func:`pyhelpers.store._check_saving_path()`. Defaults to ``None``.
+    :param print_kwargs: Additional keyword arguments passed to
+        :func:`pyhelpers.store._check_saving_path`. Defaults to ``None``.
     :type print_kwargs: dict | None
-    :param raise_error: Whether to raise exceptions on failure; defaults to ``False``.
+    :param raise_error: Whether to raise an exception on failure; defaults to ``False``.
     :type raise_error: bool
-    :param kwargs: [Optional] Additional parameters for `pdfkit.from_url()`_ or
+    :param kwargs: Additional parameters passed to `pdfkit.from_url()`_ or
         `pdfkit.from_file()`_.
 
     .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
@@ -1324,17 +1325,24 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         >>> from pyhelpers.store import save_html_as_pdf
         >>> from pyhelpers.dirs import cd
         >>> import subprocess
+
         >>> pdf_pathname = cd("tests", "documents", "pyhelpers.pdf")
         >>> web_page_url = 'https://pyhelpers.readthedocs.io/en/latest/'
+
         >>> save_html_as_pdf(web_page_url, pdf_pathname)
-        >>> subprocess.Popen(pdf_pathname, shell=True)  # Open the PDF file
+        >>> subprocess.Popen(str(pdf_pathname), shell=True)  # Open the PDF file
+
         >>> # Close the PDF file (if opened with Foxit Reader)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> wkhtmltopdf_options = {'margin-top': '0', 'orientation': 'Landscape'}
+
         >>> # Using custom options for margins and orientation
         >>> save_html_as_pdf(
-        ...     web_page_url, pdf_pathname, wkhtmltopdf_options=wkhtmltopdf_options, verbose=True)
-        >>> subprocess.Popen(pdf_pathname, shell=True)
+        ...     web_page_url, pdf_pathname,
+        ...     wkhtmltopdf_options=wkhtmltopdf_options, verbose=True
+        ... )
+        >>> subprocess.Popen(str(pdf_pathname), shell=True)
+
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> web_page_file = cd("docs", "build", "html", "index.html")
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=2)
@@ -1345,11 +1353,13 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
         Loading headers and footers (5/6)
         Printing pages (6/6)
         Done
-        >>> subprocess.Popen(pdf_pathname, shell=True)
+
+        >>> subprocess.Popen(str(pdf_pathname), shell=True)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
         >>> save_html_as_pdf(web_page_file, pdf_pathname, verbose=True)
         Updating "pyhelpers.pdf" in "./tests/documents/" ... Done.
-        >>> subprocess.Popen(pdf_pathname, shell=True)
+
+        >>> subprocess.Popen(str(pdf_pathname), shell=True)
         >>> # subprocess.call("taskkill /f /im FoxitPDFReader.exe", shell=True)
     """
 
@@ -1369,12 +1379,17 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     }
 
     wkhtmltopdf_exists, wkhtmltopdf_exe = _find_file_path(
-        name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path)
+        name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path
+    )
 
-    if not wkhtmltopdf_exists and raise_error:
-        raise FileNotFoundError(
-            '"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function, '
-            'but was not found.\n  Install "wkhtmltopdf" and then try again.')
+    # Prevent progressing to pdfkit.configuration() with a missing executable
+    if not wkhtmltopdf_exists:
+        if raise_error:
+            raise FileNotFoundError(
+                '"wkhtmltopdf" (https://wkhtmltopdf.org/) is required to run this function, '
+                'but was not found.\n  Install "wkhtmltopdf" and then try again.'
+            )
+        return None
 
     # Handle verbosity levels
     verbose_level = 2 if verbose == 2 else (1 if verbose else 0)
@@ -1386,28 +1401,28 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
 
     # Base options
     options = {
-        'enable-local-file-access': None,  # Crucial for modern versions to load local CSS/images
+        'enable-local-file-access': None,
         'page-size': page_size,
         'zoom': str(float(zoom)),
         'encoding': encoding,
-        # 'margin-top': '0',
-        # 'margin-right': '0',
-        # 'margin-left': '0',
-        # 'margin-bottom': '0',
     }
-    extra_options = wkhtmltopdf_options or {}
-    options.update(extra_options)
+    if wkhtmltopdf_options:
+        options.update(wkhtmltopdf_options)
 
     # Prepare pdfkit configuration
     configuration = pdfkit.configuration(wkhtmltopdf=str(wkhtmltopdf_exe))  # noqa
     # pdfkit internal verbose is a bool; verbose_level 2 shows wkhtmltopdf internal progress
     pdfkit_verbose = True if verbose_level == 2 else False
 
-    kwargs.update({'configuration': configuration, 'options': options, 'verbose': pdfkit_verbose})
+    kwargs.update({
+        'configuration': configuration,
+        'options': options,
+        'verbose': pdfkit_verbose
+    })
 
     try:
         if is_url(data):
-            status = pdfkit.from_url(data, path_to_file, **kwargs)  # noqa
+            status = pdfkit.from_url(data, str(file_path), **kwargs)  # noqa
         else:
             data_path = pathlib.Path(data)
             if data_path.is_file():
@@ -1421,8 +1436,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
             print("Done.")
 
     except Exception as e:
-        _print_failure_message(
-            e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
 
 @functools.lru_cache(maxsize=64)
