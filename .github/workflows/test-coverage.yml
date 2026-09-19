@@ -25,6 +25,7 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    container: ghcr.io/osgeo/gdal:ubuntu-full-3.13.3
     timeout-minutes: 15
     continue-on-error: ${{ matrix.experimental || false }}
     strategy:
@@ -69,8 +70,8 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gdal-bin libgdal-dev 7zip p7zip-full inkscape wkhtmltopdf unixodbc-dev pandoc
+          apt-get update
+          apt-get install -y 7zip p7zip-full inkscape wkhtmltopdf unixodbc-dev pandoc
 
       - name: Install uv and Python
         uses: astral-sh/setup-uv@v9.0.0
