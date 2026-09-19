@@ -2,7 +2,7 @@ name: Test & Coverage
 
 on:
   push:
-    branches: [master]
+    branches: [master, "ci/**", "test/**", "feat/**"]
   pull_request:
     branches: [master]
     paths-ignore:
@@ -57,6 +57,11 @@ jobs:
           MSSQL_SA_PASSWORD: "StrongPassword123!"
         ports:
           - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'StrongPassword123!' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'StrongPassword123!' -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout repository
