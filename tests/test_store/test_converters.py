@@ -4,7 +4,6 @@ Tests the :mod:`~pyhelpers.store.converters` submodule.
 
 import importlib.resources
 import os
-import shutil
 
 import pandas as pd
 import pytest
@@ -61,12 +60,18 @@ def test_markdown_to_rst(engine, tmp_path, capfd):
 
     md_filename, rst_filename = "readme.md", "readme.rst"
 
-    test_dir = importlib.resources.files("tests").joinpath("documents")
-    shutil.copy(str(test_dir.joinpath(md_filename)), tmp_path)
-    shutil.copy(str(test_dir.joinpath(rst_filename)), tmp_path)
-
     path_to_md_file = tmp_path / md_filename
     path_to_rst_file = tmp_path / rst_filename
+
+    # Create dummy document files directly in the temporary test directory
+    path_to_md_file.write_text(
+        "# Sample Title\n\nSample paragraph text.\n",
+        encoding="utf-8"
+    )
+    path_to_rst_file.write_text(
+        "Sample Title\n============\n\nSample paragraph text.\n",
+        encoding="utf-8"
+    )
 
     out_path = _get_relative_path(str(tmp_path))
     display_path = _format_display_path(out_path)
