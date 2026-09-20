@@ -127,30 +127,32 @@ def add_sql_query_condition(sql_query, add_table_name=None, **kwargs):
     **Examples**::
 
         >>> from pyhelpers.dbms.utils import add_sql_query_condition
+
         >>> query = 'SELECT * FROM a_table'
         >>> query
         'SELECT * FROM a_table'
+
         >>> add_sql_query_condition(query)
         'SELECT * FROM a_table'
+
         >>> add_sql_query_condition(query, COL_NAME_1='A')
         'SELECT * FROM a_table WHERE "COL_NAME_1"=\'A\''
+
         >>> add_sql_query_condition(query, COL_NAME_1='A', COL_NAME_2=['B', 'C'])
         'SELECT * FROM a_table WHERE "COL_NAME_1"=\'A\' AND "COL_NAME_2" IN (\'B\', \'C\')'
+
         >>> add_sql_query_condition(query, COL_NAME_1='A', add_table_name='t1')
         'SELECT * FROM a_table WHERE t1."COL_NAME_1"=\'A\''
     """
 
-    locals().update(kwargs)
+    table_prefix = '' if add_table_name is None else f'{add_table_name}.'
 
-    for k, v in locals().items():
-        if k not in {'sql_query', 'add_table_name', 'tbl_name'}:
-            argument = _add_sql_query_args(
-                k, v, '' if add_table_name is None else f'{add_table_name}.')
+    for k, v in kwargs.items():
+        argument = _add_sql_query_args(k, v, table_prefix)
 
-            if argument:
-                sql_query += \
-                    f' {"AND" if re.search(r"where", sql_query, re.IGNORECASE) else "WHERE"}' \
-                    f'{argument}'
+        if argument:
+            clause = 'AND' if re.search(r'where', sql_query, re.IGNORECASE) else 'WHERE'
+            sql_query += f' {clause}{argument}'
 
     return sql_query
 
