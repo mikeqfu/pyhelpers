@@ -71,8 +71,7 @@ class _Base:
 
         with self.engine.connect() as connection:
             result_ = connection.execute(query_)
-
-        result = result_.fetchone()
+            result = result_.fetchone()
 
         return result
 
@@ -897,8 +896,8 @@ class _Base:
                 f"SELECT * FROM information_schema.columns "
                 f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}';")
             res = connection.execute(query)
+            keys, values = list(res.keys()), res.fetchall()
 
-        keys, values = list(res.keys()), res.fetchall()
         idx = ['column_{}'.format(x) for x in range(len(values))]
 
         column_info = pd.DataFrame(values, index=idx, columns=keys).T
