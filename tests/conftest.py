@@ -9,6 +9,20 @@ import socket
 
 import pytest
 
+try:  # local development: read settings from an untracked .env file (never overrides real env vars)
+    from dotenv import load_dotenv
+except ImportError:  # python-dotenv is a dev-only dependency
+    # noinspection unused-parameter
+    def load_dotenv(*args, **kwargs):
+        """No-op fallback used when python-dotenv is not installed."""
+        return False
+
+# Read settings from an untracked .env file for local development;
+# never overrides variables already set in the environment (e.g. by CI)
+load_dotenv()
+
+IN_CI = os.environ.get("CI", "").lower() == "true"
+
 
 def _is_service_reachable(host, port):
     """
@@ -35,48 +49,47 @@ def _is_service_reachable(host, port):
 
 
 # Binary executable availability
-HAS_7ZIP = (
-    shutil.which("7z") is not None
-    or os.path.isfile(r"C:\Program Files\7-Zip\7z.exe")
-)
-
-HAS_INKSCAPE = (
-    shutil.which("inkscape") is not None
-    or os.path.isfile(r"C:\Program Files\Inkscape\bin\inkscape.exe")
-)
-
-HAS_PANDOC = (
-    shutil.which("pandoc") is not None
-    or os.path.isfile(r"C:\Program Files\Pandoc\pandoc.exe")
-)
-
-HAS_WKHTMLTOPDF = (
-    shutil.which("wkhtmltopdf") is not None
-    or os.path.isfile(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-)
+HAS_7ZIP = shutil.which("7z") is not None or os.path.isfile(r"C:\Program Files\7-Zip\7z.exe")
+HAS_INKSCAPE = (shutil.which("inkscape") is not None
+                or os.path.isfile(r"C:\Program Files\Inkscape\bin\inkscape.exe"))
+HAS_PANDOC = (shutil.which("pandoc") is not None
+              or os.path.isfile(r"C:\Program Files\Pandoc\pandoc.exe"))
+HAS_WKHTMLTOPDF = (shutil.which("wkhtmltopdf") is not None
+                   or os.path.isfile(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"))
 
 # Service availability
-HAS_POSTGRES = _is_service_reachable("localhost", 5432)
-HAS_MSSQL = _is_service_reachable("localhost", 1433)
+_POSTGRES_HOST = os.environ.get("POSTGRES_SERVER", "localhost")
+_POSTGRES_PORT = int(os.environ.get("POSTGRES_PORT", 5432))
+_MSSQL_HOST = os.environ.get("MSSQL_SERVER", "localhost")
+_MSSQL_PORT = int(os.environ.get("MSSQL_PORT", 1433))
+
+HAS_POSTGRES = _is_service_reachable(_POSTGRES_HOST, _POSTGRES_PORT)
+HAS_MSSQL = _is_service_reachable(_MSSQL_HOST, _MSSQL_PORT)
 
 # Reusable skip markers for tests
 requires_7zip = pytest.mark.skipif(
-    not HAS_7ZIP, reason="7-Zip executable is not installed"
+    not (HAS_7ZIP or IN_CI),
+    reason="7-Zip executable is not installed"
 )
 requires_inkscape = pytest.mark.skipif(
-    not HAS_INKSCAPE, reason="Inkscape executable is not installed"
+    not (HAS_INKSCAPE or IN_CI),
+    reason="Inkscape executable is not installed"
 )
 requires_pandoc = pytest.mark.skipif(
-    not HAS_PANDOC, reason="Pandoc executable is not installed"
+    not (HAS_PANDOC or IN_CI),
+    reason="Pandoc executable is not installed"
 )
 requires_wkhtmltopdf = pytest.mark.skipif(
-    not HAS_WKHTMLTOPDF, reason="wkhtmltopdf executable is not installed"
+    not (HAS_WKHTMLTOPDF or IN_CI),
+    reason="wkhtmltopdf executable is not installed"
 )
 requires_postgres = pytest.mark.skipif(
-    not HAS_POSTGRES, reason="PostgreSQL service is not reachable on localhost:5432"
+    not (HAS_POSTGRES or IN_CI),
+    reason=f"PostgreSQL service is not reachable on {_POSTGRES_HOST}:{_POSTGRES_PORT}",
 )
 requires_mssql = pytest.mark.skipif(
-    not HAS_MSSQL, reason="MS SQL Server service is not reachable on localhost:1433"
+    not (HAS_MSSQL or IN_CI),
+    reason=f"MS SQL Server service is not reachable on {_MSSQL_HOST}:{_MSSQL_PORT}",
 )
 
 
@@ -132,3 +145,23 @@ def img_dir():
     """
 
     return pathlib.Path(__file__).resolve().parent / "images"
+
+
+@pytest.fixture(scope="session")
+def mssql_kwargs():
+    return {
+        "host": os.environ.get("MSSQL_SERVER"),
+        "port": os.environ.get("MSSQL_PORT"),
+        "username": os.environ.get("MSSQL_USER"),
+        "password": os.environ.get("MSSQL_PASSWORD"),
+    }
+
+
+@pytest.fixture(scope="session")
+def postgres_kwargs():
+    return {
+        "host": os.environ.get("POSTGRES_SERVER"),
+        "port": os.environ.get("POSTGRES_PORT"),
+        "username": os.environ.get("POSTGRES_USER"),
+        "password": os.environ.get("POSTGRES_PASSWORD"),
+    }

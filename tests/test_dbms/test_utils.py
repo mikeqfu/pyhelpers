@@ -2,8 +2,6 @@
 Test the module :mod:`~pyhelpers.dbms`.
 """
 
-import os
-
 import pandas as pd
 import pytest
 from dotenv import load_dotenv
@@ -13,6 +11,7 @@ from pyhelpers.dbms.mssql import MSSQL
 from pyhelpers.dbms.postgresql import PostgreSQL
 from pyhelpers.dbms.utils import add_sql_query_condition, get_default_database_address, \
     import_data, make_database_address, mssql_to_postgresql, read_data
+from tests.conftest import requires_mssql, requires_postgres
 
 load_dotenv()
 
@@ -61,13 +60,14 @@ def test_add_sql_query_condition():
     ) == 'SELECT * FROM a_table WHERE t1."COL_NAME_1"=\'A\''
 
 
-def test_import_and_read_data():
+@requires_postgres
+def test_import_and_read_data(postgres_kwargs):
     """
     Test importing and reading data with custom schemas in PostgreSQL.
     """
 
     test_db_name = 'testdb_import_read'
-    testdb = PostgreSQL(database_name=test_db_name, password=123)
+    testdb = PostgreSQL(database_name=test_db_name, **postgres_kwargs)
 
     example_df = example_dataframe()
 
@@ -103,7 +103,9 @@ def test_import_and_read_data():
         testdb.drop_database(confirmation_required=False)
 
 
-def test_mssql_to_postgresql(capfd):
+@requires_postgres
+@requires_mssql
+def test_mssql_to_postgresql(capfd, mssql_kwargs, postgres_kwargs):
     """
     Test copying tables natively from an MSSQL to a PostgreSQL database.
 
@@ -114,11 +116,8 @@ def test_mssql_to_postgresql(capfd):
     example_df = example_dataframe()
     test_db_name = 'testdb_migration'
 
-    mssql_testdb = MSSQL(database_name=test_db_name)
-    postgres_testdb = PostgreSQL(
-        database_name=test_db_name,
-        password=os.getenv('POSTGRES_PASSWORD', '')
-    )
+    mssql_testdb = MSSQL(database_name=test_db_name, **mssql_kwargs)
+    postgres_testdb = PostgreSQL(database_name=test_db_name, **postgres_kwargs)
 
     try:
         test_table_name = 'test_table'
