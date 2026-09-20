@@ -147,8 +147,16 @@ def img_dir():
     return pathlib.Path(__file__).resolve().parent / "images"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def mssql_kwargs():
+    """
+    Return connection keyword arguments for :class:`~pyhelpers.dbms.MSSQL`, read from the
+    ``MSSQL_*`` environment variables (unset variables give ``None``, i.e. the class defaults).
+
+    :return: Keyword arguments ``host``, ``port``, ``username`` and ``password``.
+    :rtype: dict
+    """
+
     return {
         "host": os.environ.get("MSSQL_SERVER"),
         "port": os.environ.get("MSSQL_PORT"),
@@ -157,8 +165,16 @@ def mssql_kwargs():
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def postgres_kwargs():
+    """
+    Return connection keyword arguments for :class:`~pyhelpers.dbms.PostgreSQL`, read from the
+    ``POSTGRES_*`` environment variables (unset variables give ``None``).
+
+    :return: Keyword arguments ``host``, ``port``, ``username`` and ``password``.
+    :rtype: dict
+    """
+
     return {
         "host": os.environ.get("POSTGRES_SERVER"),
         "port": os.environ.get("POSTGRES_PORT"),
