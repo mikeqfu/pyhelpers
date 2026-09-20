@@ -107,11 +107,16 @@ def test_markdown_to_rst(engine, tmp_path, capfd):
     assert '"Pandoc" (https://pandoc.org/) is required to proceed' in out
 
 
-@pytest.mark.skipif(
-    sys.platform != 'win32' and shutil.which('wine') is None,
-    reason="requires Windows or wine",
-)
-@pytest.mark.parametrize('engine', [None, 'xlsx2csv'])
+@pytest.mark.parametrize('engine', [
+    pytest.param(
+        None,
+        marks=pytest.mark.skipif(
+            sys.platform != 'win32' and shutil.which('wine') is None,
+            reason="VBScript engine requires Windows or wine"
+        )
+    ),
+    'xlsx2csv'
+])
 @pytest.mark.parametrize('header', [0, None])
 def test_xlsx_to_csv(dat_dir, engine, header, capfd):
     test_xlsx_path_ = dat_dir / "dat.xlsx"
