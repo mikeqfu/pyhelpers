@@ -176,6 +176,7 @@ corresponding_author = [
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+markers = ["network: tests that call live external services"]
 addopts = [
     "-v",
     "-ra",
