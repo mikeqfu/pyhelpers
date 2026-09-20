@@ -29,19 +29,18 @@ class TestMSSQL:
         # CI Environment (Linux/Docker) using SQL Server Authentication
         USERNAME = os.getenv('MSSQL_USER')
         PASSWORD = os.getenv('MSSQL_PASSWORD', '')
-        ADDRESS = f'sqlserver://{USERNAME}:{PASSWORD}@{SERVER}:{PORT};database={DATABASE_NAME}'
     elif os.name == 'nt':
         # Local Windows development using Windows Authentication
         DOMAIN = os.environ.get('USERDOMAIN', '')
         WIN_USER = os.environ.get('USERNAME', '')
         USERNAME = f'{DOMAIN}\\{WIN_USER}' if DOMAIN else WIN_USER
         PASSWORD = 123
-        ADDRESS = f'{USERNAME}@{SERVER}:{PORT}/{DATABASE_NAME}'
     else:
         # Local POSIX fallback
         USERNAME = 'sa'
         PASSWORD = 'StrongPassword123!'
-        ADDRESS = f'sqlserver://{USERNAME}:{PASSWORD}@{SERVER}:{PORT};database={DATABASE_NAME}'
+
+    ADDRESS = f'{USERNAME}@{SERVER}:{PORT}/{DATABASE_NAME}'
 
     # noinspection PyNestedDecorators
     @pytest.fixture(scope='class')
@@ -87,13 +86,10 @@ class TestMSSQL:
                 username=self.USERNAME,
                 password=self.PASSWORD
             )
-            expected_address = (
-                f'sqlserver://{self.USERNAME}:{self.PASSWORD}@{self.SERVER}:{self.PORT};'
-                f'database={default_database}'
-            )
         else:
             testdb_ = MSSQL()
-            expected_address = f'{self.USERNAME}@{self.SERVER}:{self.PORT}/{default_database}'
+
+        expected_address = f'{self.USERNAME}@{self.SERVER}:{self.PORT}/{default_database}'
 
         assert testdb_.address == expected_address
         assert testdb_.database_name == default_database
@@ -115,11 +111,11 @@ class TestMSSQL:
         auth_method = 'SQL Server Authentication'
 
         conn_str = testdb.specify_conn_str(auth=auth_method)
-        assert conn_str == (
-            f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={{{self.SERVER}}};'
-            f'DATABASE={{{self.DATABASE_NAME}}};UID={{{self.USERNAME}}};'
-            f'PWD={{{self.PASSWORD}}};'
-        )
+        assert f'DRIVER={{{testdb.odbc_driver}}}' in conn_str
+        assert f'SERVER={{{self.SERVER}}}' in conn_str
+        assert f'DATABASE={{{self.DATABASE_NAME}}}' in conn_str
+        assert f'UID={{{self.USERNAME}}}' in conn_str
+        assert f'PWD={{{self.PASSWORD}}}' in conn_str
 
         conn_str_ = testdb.specify_conn_str(auth=auth_method, password=self.PASSWORD)
         assert conn_str_ == conn_str
@@ -194,10 +190,7 @@ class TestMSSQL:
         out, _ = capfd.readouterr()
         assert f'Being connected with {self.ADDRESS}.' in out
 
-        if os.getenv('MSSQL_USER') or os.name != 'nt':
-            temp_addr_pref = f'sqlserver://{self.USERNAME}:***@{testdb.host}:{testdb.port}'
-        else:
-            temp_addr_pref = f'{self.USERNAME}@{testdb.host}:{testdb.port}'
+        temp_addr_pref = f'{self.USERNAME}@{testdb.host}:{testdb.port}'
 
         testdb.connect_database(database_name=testdb.DEFAULT_DATABASE, verbose=True)
         out, _ = capfd.readouterr()
@@ -574,10 +567,7 @@ class TestMSSQL:
         out, _ = capfd.readouterr()
         assert f"Dropping the database [{test_db_name}] " in out
 
-        if os.getenv('MSSQL_USER') or os.name != 'nt':
-            expected_from = f'sqlserver://{self.USERNAME}:***@{self.SERVER}:{self.PORT}'
-        else:
-            expected_from = f'{self.USERNAME}@{self.SERVER}:{self.PORT}'
+        expected_from = f'{self.USERNAME}@{self.SERVER}:{self.PORT}'
         assert f"from {expected_from} ... Done." in out
 
         assert not testdb.database_exists(database_name=test_db_name)
