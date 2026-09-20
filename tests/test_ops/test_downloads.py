@@ -87,19 +87,45 @@ class TestGitHubFileDownloader:
         assert test_download_path == 'tests/data/dat.csv'
 
     @staticmethod
+    @pytest.mark.network
     @pytest.mark.parametrize('flatten_files', [False, True])
     def test_download(flatten_files, tmp_path, capfd):
-        test_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv'
+        """
+        Test downloading files and directory structures from GitHub repositories.
+
+        :param flatten_files: Whether to flatten directory structures on download.
+        :type flatten_files: bool
+        :param tmp_path: Pytest fixture providing a temporary directory path.
+        :type tmp_path: pathlib.Path
+        :param capfd: Pytest fixture capturing standard stdout and stderr streams.
+        :type capfd: _pytest.capture.CaptureFixture
+        :return: None
+        :rtype: None
+        """
+
+        home_page = 'https://github.com/mikeqfu'
+
+        test_url = f'{home_page}/pyhelpers/blob/master/tests/data/dat.csv'
         downloader = GitHubFileDownloader(test_url, output_dir=tmp_path)
         downloader.download()
         out, _ = capfd.readouterr()
+
+        # Skip test if unauthenticated GitHub API rate limit is reached
+        if "rate limit" in out.lower():
+            pytest.skip("GitHub API rate limit exceeded")
+
         assert _normalize_path("tests/data/dat.csv") in out
         assert downloader.total_files == 1
 
-        test_url = 'https://github.com/mikeqfu/smart-home-product-reviews-analysis/tree/master/tests'
-        downloader = GitHubFileDownloader(test_url, flatten_files=flatten_files, output_dir=tmp_path)
+        test_url = f'{home_page}/smart-home-product-reviews-analysis/tree/master/tests'
+        downloader = GitHubFileDownloader(test_url, flatten_files, output_dir=tmp_path)
         downloader.download()
         out, _ = capfd.readouterr()
+
+        # Skip test if second API request triggers rate limit
+        if "rate limit" in out.lower():
+            pytest.skip("GitHub API rate limit exceeded")
+
         if flatten_files:
             assert "/tests/" not in out
         assert downloader.api_url.endswith('?ref=master')
