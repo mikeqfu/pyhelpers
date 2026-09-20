@@ -76,7 +76,7 @@ class TestMSSQL:
         """
 
         assert testdb.address == self.ADDRESS
-        assert testdb.DEFAULT_ODBC_DRIVER == 'ODBC Driver 17 for SQL Server'
+        assert testdb.DEFAULT_ODBC_DRIVER == 'ODBC Driver 18 for SQL Server'
 
         default_database = 'master'
 
