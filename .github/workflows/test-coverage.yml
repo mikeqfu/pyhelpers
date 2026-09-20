@@ -102,7 +102,7 @@ jobs:
           odbcinst -q -d
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --all-groups --no-install-package gdal
+        run: uv sync --locked --all-extras --all-groups --no-install-package gdal --no-binary-package pyodbc
 
       - name: Install GDAL Python bindings matching system libgdal
         continue-on-error: ${{ matrix.experimental || false }}
@@ -115,6 +115,21 @@ jobs:
           uv pip install setuptools wheel
           uv pip install --no-build-isolation "gdal==${GDAL_VERSION}"
           uv run --no-sync python -c "from osgeo import gdal; print('Python GDAL', gdal.__version__)"
+
+      - name: Debug MSSQL connectivity
+        continue-on-error: true
+        run: |
+          uv run --no-sync python - <<'EOF'
+          import pyodbc
+          print("pyodbc", pyodbc.version, pyodbc.drivers())
+          cn = pyodbc.connect(
+              "DRIVER={ODBC Driver 18 for SQL Server};SERVER=127.0.0.1,1433;"
+              "UID=sa;PWD=StrongPassword123!;TrustServerCertificate=yes",
+              autocommit=True)
+          print(cn.execute("SELECT @@VERSION").fetchone())
+          print(cn.execute("SELECT name FROM sys.databases").fetchall())
+          EOF
+          ldd "$(uv run --no-sync python -c 'import pyodbc; print(pyodbc.__file__)')" | grep -i odbc
 
       - name: Show resolved interpreter
         run: uv run --no-sync python -VV
