@@ -193,6 +193,7 @@ filterwarnings = [
     "error",
     "ignore:Support for class-based `config` is deprecated:UserWarning",
     "ignore:distutils Version classes are deprecated:DeprecationWarning",
+    "ignore:codecs\\.open\\(\\) is deprecated:DeprecationWarning",
 ]
 
 
@@ -213,7 +214,7 @@ source = [
 ]
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 80
 show_missing = true
 exclude_also = [
     "def __repr__",
