@@ -11,6 +11,7 @@ import lzma
 import pathlib
 import pickle  # nosec
 import subprocess  # nosec
+import warnings
 
 import pandas as pd
 
@@ -1282,7 +1283,7 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     using `wkhtmltopdf <https://wkhtmltopdf.org/>`_.
 
     This function wraps the `pdfkit` library to convert a URL or a local HTML file into a PDF.
-    It automatically handles executable discovery, conditional overwriting, and verbose logging.
+    It automatically handles executable discovery, conditional overwriting and verbose logging.
 
     :param data: The URL of a web page or the path to a local HTML file.
     :type data: str | os.PathLike
@@ -1314,6 +1315,8 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     :type raise_error: bool
     :param kwargs: Additional parameters passed to `pdfkit.from_url()`_ or
         `pdfkit.from_file()`_.
+    :return: ``None``
+    :rtype: None
 
     .. _`wkhtmltopdf options`: https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
     .. _`pdfkit`: https://pypi.org/project/pdfkit/
@@ -1379,7 +1382,9 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     }
 
     wkhtmltopdf_exists, wkhtmltopdf_exe = _find_file_path(
-        name=exe_name, options=optional_pathnames, target=wkhtmltopdf_path
+        name=exe_name,
+        options=optional_pathnames,
+        target=wkhtmltopdf_path
     )
 
     # Prevent progressing to pdfkit.configuration() with a missing executable
@@ -1421,16 +1426,18 @@ def save_html_as_pdf(data, path_to_file, if_exists='replace', page_size='A4', zo
     })
 
     try:
-        if is_url(data):
-            status = pdfkit.from_url(data, str(file_path), **kwargs)  # noqa
-        else:
-            data_path = pathlib.Path(data)
-            if data_path.is_file():
-                status = pdfkit.from_file(str(data_path), str(file_path), **kwargs)  # noqa
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            if is_url(data):
+                status = pdfkit.from_url(data, str(file_path), **kwargs)  # noqa
             else:
-                status = False
-                if verbose:
-                    print("Failed. Input is not a valid URL or file.")
+                data_path = pathlib.Path(data)
+                if data_path.is_file():
+                    status = pdfkit.from_file(str(data_path), str(file_path), **kwargs)  # noqa
+                else:
+                    status = False
+                    if verbose:
+                        print("Failed. Input is not a valid URL or file.")
 
         if status and verbose and verbose_level != 2:
             print("Done.")
