@@ -575,7 +575,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
                     os.remove(csv_pathname)
                 elif if_exists == 'pass':
                     if verbose:
-                        print("Cancelled.")
+                        print("Canceled.")
                     return csv_pathname
 
             ret_code = _xlsx_to_csv(

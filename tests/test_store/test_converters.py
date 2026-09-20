@@ -4,6 +4,8 @@ Tests the :mod:`~pyhelpers.store.converters` submodule.
 
 import importlib.resources
 import os
+import shutil
+import sys
 
 import pandas as pd
 import pytest
@@ -105,33 +107,40 @@ def test_markdown_to_rst(engine, tmp_path, capfd):
     assert '"Pandoc" (https://pandoc.org/) is required to proceed' in out
 
 
+@pytest.mark.skipif(
+    sys.platform != 'win32' and shutil.which('wine') is None,
+    reason="requires Windows or wine",
+)
 @pytest.mark.parametrize('engine', [None, 'xlsx2csv'])
 @pytest.mark.parametrize('header', [0, None])
 def test_xlsx_to_csv(dat_dir, engine, header, capfd):
-    path_to_test_xlsx_ = dat_dir / "dat.xlsx"
+    test_xlsx_path_ = dat_dir / "dat.xlsx"
 
-    with importlib.resources.as_file(path_to_test_xlsx_) as path_to_test_xlsx:
+    with importlib.resources.as_file(test_xlsx_path_) as test_xlsx_path:
         with pytest.raises(Exception):
             # noinspection PyTypeChecker
             _ = xlsx_to_csv(
-                path_to_test_xlsx / "123", engine=engine, sheet_name=None, raise_error=True)
+                test_xlsx_path / "123",
+                engine=engine,
+                sheet_name=None,
+                raise_error=True
+            )
 
-        temp_csv = xlsx_to_csv(path_to_test_xlsx, engine=engine, verbose=True)
+        temp_csv = xlsx_to_csv(test_xlsx_path, engine=engine, verbose=True)
         out, _ = capfd.readouterr()
         assert out.startswith("Converting") and "Done." in out
 
         if engine is None:
             temp_csv_ = xlsx_to_csv(
-                path_to_test_xlsx, path_to_csv=temp_csv, if_exists='replace', engine=engine,
-                verbose=True)
+                test_xlsx_path, temp_csv, if_exists='replace', engine=engine, verbose=True
+            )
             out, _ = capfd.readouterr()
             assert out.startswith("Converting") and "Done." in out
             assert temp_csv_ == temp_csv
 
-            _ = xlsx_to_csv(
-                path_to_test_xlsx, path_to_csv="", if_exists='pass', engine=engine, verbose=True)
+            _ = xlsx_to_csv(test_xlsx_path, "", if_exists='pass', engine=engine, verbose=True)
             out, _ = capfd.readouterr()
-            assert out.startswith("Converting") and "Cancelled." in out
+            assert out.startswith("Converting") and "Canceled." in out
 
         data: pd.DataFrame = load_csv(temp_csv, index_col=0, header=header)
 
