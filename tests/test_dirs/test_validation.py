@@ -3,7 +3,6 @@ Tests the :mod:`~pyhelpers.dirs.validation` submodule.
 """
 
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -26,9 +25,8 @@ def test_is_dir_path():
         assert is_dir_path("\\tests")
 
 
-def test_validate_filename():
-    temp_pathname_ = tempfile.NamedTemporaryFile()
-    temp_pathname_0 = temp_pathname_.name + '.txt'
+def test_validate_filename(tmp_path):
+    temp_pathname_0 = tmp_path / "test.tmp"
 
     open(temp_pathname_0, 'w').close()
     assert os.path.isfile(temp_pathname_0)
@@ -39,9 +37,6 @@ def test_validate_filename():
     open(temp_pathname_1, 'w').close()
     temp_pathname_2 = validate_filename(temp_pathname_1)
     assert os.path.splitext(temp_pathname_2)[0].endswith('(2)')
-
-    os.remove(temp_pathname_0)
-    os.remove(temp_pathname_1)
 
 
 def test_check_files_exist(test_dirname, capfd):
