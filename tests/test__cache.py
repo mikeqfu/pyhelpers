@@ -266,7 +266,8 @@ def test__format_display_path():
     path = _format_display_path("./pyhelpers/data", prepend_dot=True, surrounded_by='')
     assert path == './pyhelpers/data/'
     path = _format_display_path("/pyhelpers/data", prepend_dot=True, surrounded_by='')
-    assert path == './pyhelpers/data/'
+    expected = './pyhelpers/data/' if os.name == 'nt' else '/pyhelpers/data/'
+    assert path == expected
 
     # `is_dir` overrides both the filesystem check and the extension heuristic
     path = _format_display_path("pyhelpers.dat", is_dir=True, surrounded_by='')
