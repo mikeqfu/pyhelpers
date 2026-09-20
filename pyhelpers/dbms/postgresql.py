@@ -218,13 +218,12 @@ class PostgreSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text('SELECT datname FROM pg_database;')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        db_names = result.fetchall()
         if names_only:
-            database_names = list(itertools.chain(*db_names))
+            database_names = list(itertools.chain(*result))
         else:
-            database_names = pd.DataFrame(db_names)
+            database_names = pd.DataFrame(result)
 
         return database_names
 
@@ -415,9 +414,7 @@ class PostgreSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(f'SELECT pg_size_pretty(pg_database_size({db_name})) AS size;')
-            result = connection.execute(query)
-
-        db_size = result.fetchone()
+            db_size = connection.execute(query).fetchone()
 
         return db_size[0] if db_size else None
 
@@ -702,10 +699,9 @@ class PostgreSQL(_Base):
                 f"JOIN information_schema.schemata s ON c.nspname = s.schema_name "
                 f"{condition}"
                 f"ORDER BY s.schema_owner;")
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        schema_info_ = result.fetchall()
-        if not schema_info_:
+        if not result:
             schema_info = None
             if verbose:
                 print(f"No schema exists in the currently-connected database "
@@ -713,15 +709,15 @@ class PostgreSQL(_Base):
 
         else:
             if names_only:
-                schema_info = [x[0] for x in schema_info_]
+                schema_info = [x[0] for x in result]
             else:
                 if column_names is None:
                     column_names = ['schema_name', 'schema_owner', 'oid', 'nspowner']
                 else:
-                    assert len(column_names) == len(schema_info_[0]), \
+                    assert len(column_names) == len(result[0]), \
                         f"`column_names` must be a list of strings and " \
-                        f"its length must equal {len(schema_info_[0])}."
-                schema_info = pd.DataFrame(schema_info_, columns=column_names)
+                        f"its length must equal {len(result[0])}."
+                schema_info = pd.DataFrame(result, columns=column_names)
 
         return schema_info
 
@@ -944,9 +940,9 @@ class PostgreSQL(_Base):
                 f"SELECT column_name FROM information_schema.columns "
                 f"WHERE table_schema='{schema_name_}' AND table_name='{table_name}'"
                 f"ORDER BY ordinal_position;")
-            res = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        return list(itertools.chain.from_iterable(res.fetchall()))
+        return list(itertools.chain.from_iterable(result))
 
     def get_column_dtype(self, table_name, column_names=None, schema_name=None):
         """
@@ -984,12 +980,10 @@ class PostgreSQL(_Base):
                 f"SELECT column_name, data_type FROM information_schema.columns "
                 f"WHERE table_name = '{table_name}' "
                 f"AND table_schema = '{schema_name_}'{col_names_query};")
-            result = connection.execute(query)
-
-        column_dtypes_ = result.fetchall()
+            result = connection.execute(query).fetchall()
 
         # noinspection PyTypeChecker
-        column_dtypes = dict(column_dtypes_) if len(column_dtypes_) > 0 else None
+        column_dtypes = dict(result) if len(result) > 0 else None
 
         return column_dtypes
 
@@ -1257,14 +1251,12 @@ class PostgreSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(query_)
-            result = connection.execute(query)
-
-        primary_keys_ = result.fetchall()
+            result = connection.execute(query).fetchall()
 
         if names_only:
-            primary_keys = [x[0] for x in primary_keys_]  # list(zip(*primary_keys_))[0]
+            primary_keys = [x[0] for x in result]  # list(zip(*primary_keys_))[0]
         else:
-            primary_keys = pd.DataFrame(primary_keys_)
+            primary_keys = pd.DataFrame(result)
 
         return primary_keys
 

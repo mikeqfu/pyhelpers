@@ -247,7 +247,7 @@ class MSSQL(_Base):
                 print("Successfully.")
 
         except Exception as e:
-            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+            _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
     @classmethod
     def _odbc_driver_version(cls, name):
@@ -485,13 +485,12 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text('SELECT name, database_id, create_date FROM sys.databases;')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        db_names = result.fetchall()
         if names_only:
-            database_names = [x[0] for x in db_names]
+            database_names = [x[0] for x in result]
         else:
-            database_names = pd.DataFrame(db_names)
+            database_names = pd.DataFrame(result, columns=['name', 'database_id', 'create_date'])
 
         return database_names
 
@@ -541,7 +540,7 @@ class MSSQL(_Base):
                     f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
                 result_ = connection.execute(query)
 
-        result = result_.fetchone()
+            result = result_.fetchone()
 
         return bool(result[0]) if result else False
 
@@ -649,8 +648,7 @@ class MSSQL(_Base):
                 self.database_name = self.credentials['database']
 
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
@@ -696,12 +694,6 @@ class MSSQL(_Base):
                 print(f'Disconnecting the database [{db_name}] ... ', end="")
 
             try:
-                # with self.engine.connect() as connection:
-                #     query = sqlalchemy.text(
-                #         f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
-                #         f'ALTER DATABASE {db_name} SET MULTI_USER;')
-                #     connection.execute(query)
-
                 with self.engine.connect() as connection:
                     query = sqlalchemy.text(
                         f"USE [master]; "
@@ -717,8 +709,7 @@ class MSSQL(_Base):
                 self.connect_database(database_name=self.DEFAULT_DATABASE)
 
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
@@ -844,8 +835,7 @@ class MSSQL(_Base):
                 if verbose:
                     print("Done.")
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             print(f"The schema {s_name} already exists.")
@@ -931,9 +921,9 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             result = connection.execute(query)
+            result = result.fetchall()
 
-        schema_info_ = result.fetchall()
-        if not schema_info_:
+        if not result:
             schema_info = None
             if verbose:
                 print(f"No schema exists in the currently-connected database "
@@ -941,15 +931,15 @@ class MSSQL(_Base):
 
         else:
             if names_only:
-                schema_info = [x[0] for x in schema_info_]
+                schema_info = [x[0] for x in result]
             else:
                 if column_names is None:
                     column_names = ['schema_name', 'schema_owner', 'schema_id']
                 else:
-                    assert len(column_names) == len(schema_info_[0]), \
+                    assert len(column_names) == len(result[0]), \
                         f"`column_names` must be a list of strings and " \
-                        f"its length must equal {len(schema_info_[0])}."
-                schema_info = pd.DataFrame(schema_info_, columns=column_names)
+                        f"its length must equal {len(result[0])}."
+                schema_info = pd.DataFrame(result, columns=column_names)
 
         return schema_info
 
@@ -1191,9 +1181,7 @@ class MSSQL(_Base):
                 f"SELECT * FROM INFORMATION_SCHEMA.TABLES "
                 f"WHERE TABLE_SCHEMA = '{schema_name_}' AND TABLE_NAME = '{table_name}')) "
                 f"SELECT 1 ELSE SELECT 0")
-            result_ = connection.execute(query)
-
-        result = result_.fetchone()
+            result = connection.execute(query).fetchone()
 
         return bool(result[0]) if result else False
 
@@ -1217,13 +1205,12 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text('SELECT * FROM sys.tables WHERE is_filetable = 1;')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        file_tables_ = result.fetchall()
         if names_only:
-            file_tables = [x[0] for x in file_tables_]
+            file_tables = [x[0] for x in result]
         else:
-            file_tables = pd.DataFrame(file_tables_)
+            file_tables = pd.DataFrame(result)
 
         return file_tables
 
@@ -1257,11 +1244,9 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(f'SELECT COUNT(*) FROM {table_name_};')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchone()
 
-        row_count = result.fetchone()
-
-        return row_count[0] if row_count else None
+        return result[0] if result else None
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
@@ -1401,9 +1386,7 @@ class MSSQL(_Base):
                 f"AND DATA_TYPE {dtype_query};"
 
             query = sqlalchemy.text(sql_query_geom_col)
-            result = connection.execute(query)
-
-        col_names = result.fetchall()
+            col_names = connection.execute(query).fetchall()
 
         if len(col_names) > 0:
             has_the_dtypes = True
@@ -1473,9 +1456,7 @@ class MSSQL(_Base):
                     f"AND TABLE_SCHEMA='{schema_name_}' " \
                     f"AND DATA_TYPE='{data_type}'"
                 query = sqlalchemy.text(sql_query_geom_col)
-                result = connection.execute(query)
-
-                col_names = result.fetchall()
+                col_names = connection.execute(query).fetchall()
 
                 if len(col_names) > 0:
                     has_the_dtypes = True
@@ -1730,7 +1711,7 @@ class MSSQL(_Base):
         except Exception as e:
             # If any step fails, the transaction rolls back automatically because of .begin()
             _print_failure_message(
-                e, prefix="Spatial conversion failed. Table reverted.", verbose=verbose,
+                e, "Spatial conversion failed. Table reverted.", verbose=verbose,
                 raise_error=raise_error)
 
     def import_data(self, data, table_name, schema_name=None, if_exists='fail',
@@ -2185,5 +2166,4 @@ class MSSQL(_Base):
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_message(
-                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                    _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
