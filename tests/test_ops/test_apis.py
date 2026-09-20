@@ -3,10 +3,21 @@ Tests the :mod:`~pyhelpers.ops.apis` submodule.
 """
 
 import time
+from unittest.mock import MagicMock
 
 import pytest
 
 from pyhelpers.ops.apis import *
+
+
+def _fake_session(status_code, payload=None):
+    response = MagicMock()
+    response.status_code = status_code
+    response.json.return_value = payload or {}
+    response.__enter__.return_value = response  # `with session.get(...) as response`
+    session = MagicMock()
+    session.get.return_value = response
+    return session
 
 
 class TestCrossRefOrcid:
@@ -38,21 +49,41 @@ class TestCrossRefOrcid:
 
         profile_data = co.get_orcid_profile(orcid_id, section='unknown', verbose=True)
         out, _ = capfd.readouterr()
-        assert profile_data is None
-        assert out.startswith("Error:")
+        assert profile_data is None and out.startswith("Error:")
 
     def test_get_list_of_works(self, co, orcid_id):
         list_of_works = co.get_list_of_works(orcid_id)
         assert isinstance(list_of_works, list)
 
-    def test__get_zenodo_metadata(self, co):
+    def test__get_zenodo_metadata(self, co, mocker):
         doi = '10.5281/zenodo.4017438'
-        metadata = co._get_zenodo_metadata(doi)
-        assert metadata['journal'] == 'Software'
-        assert metadata['publisher'] == 'Zenodo'
+        payload = {"metadata": {
+            "resource_type": {"title": "Software"},
+            "creators": [{"name": "Fu, Qian"}],
+        }}
 
-        metadata = co._get_zenodo_metadata(doi + '123')
-        assert metadata == {}
+        mocker.patch(
+            "pyhelpers.ops.apis._init_requests_session",
+            return_value=_fake_session(200, payload)
+        )
+        metadata = co._get_zenodo_metadata(doi)
+        assert metadata['journal'] == "Software"
+        assert metadata['publisher'] == "Zenodo"
+        assert metadata['authors'] == "Fu, Qian"
+
+        # Non-200 responses give an empty dict
+        mocker.patch(
+            "pyhelpers.ops.apis._init_requests_session",
+            return_value=_fake_session(404)
+        )
+        assert co._get_zenodo_metadata(doi + '123') == {}
+
+    @pytest.mark.network
+    def test__get_zenodo_metadata_live(self, co):
+        metadata = co._get_zenodo_metadata('10.5281/zenodo.4017438')
+        if not metadata:
+            pytest.skip("Zenodo API returned a non-200 response")
+        assert metadata['publisher'] == "Zenodo"
 
     def test_get_metadata_from_doi(self, co):
         doi = 'https://doi.org/10.1016/j.jii.2024.100729'
