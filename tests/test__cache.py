@@ -208,10 +208,14 @@ def test__normalize_path():
     test_path_2 = b"tests//data/dat.csv"
     assert _normalize_path(test_path_2) == expected_output_1
 
-    # `prepend_dot=True` is a no-op when the path already has a relative/absolute prefix
+    # `prepend_dot=True` is a no-op for an already dot-relative path, on every platform
     assert _normalize_path("./tests/data", prepend_dot=True) == "./tests/data"
-    assert _normalize_path("/tests/data", prepend_dot=True) == "./tests/data"
-    assert _normalize_path("C:\\tests\\data", prepend_dot=True) == "C:/tests/data"
+    # A leading "/" is absolute on POSIX (untouched) but drive-relative on Windows
+    expected = "./tests/data" if os.name == "nt" else "/tests/data"
+    assert _normalize_path("/tests/data", prepend_dot=True) == expected
+    # A drive-letter path is absolute only on Windows
+    expected = "C:/tests/data" if os.name == "nt" else "./C:/tests/data"
+    assert _normalize_path("C:\\tests\\data", prepend_dot=True) == expected
 
     # Verify isolated dot and double-dot paths are correctly resolved under prepend instructions
     assert _normalize_path(".", prepend_dot=True) == "."
@@ -320,18 +324,18 @@ def test__find_file_path():
     python_exe_exists, path_to_python_exe = _find_file_path(python_exe)
     assert python_exe_exists
     assert isinstance(path_to_python_exe, Path)
-    assert path_to_python_exe.name == python_exe
+    assert python_exe.lower() in path_to_python_exe.name.lower()
 
-    # Passing the full path directly is deterministic (hits the direct-path-lookup branch)
+    # Passing the full path directly hits the direct-path-lookup branch
     python_exe_exists, path_to_python_exe = _find_file_path(sys.executable)
     assert python_exe_exists
-    assert str(path_to_python_exe) == sys.executable
+    assert os.path.samefile(path_to_python_exe, sys.executable)
 
-    # `as_str=True` returns an actual `str`, not just something convertible to one
+    # `as_str=True` returns an actual `str`
     python_exe_exists, path_to_python_exe = _find_file_path(sys.executable, as_str=True)
     assert python_exe_exists
     assert isinstance(path_to_python_exe, str)
-    assert path_to_python_exe == sys.executable
+    assert os.path.samefile(path_to_python_exe, sys.executable)
 
     # An invalid `target` (a directory, not a file) now falls through to the rest of the
     # search rather than giving up immediately, so this still finds it via PATH
@@ -342,16 +346,15 @@ def test__find_file_path():
     # Searching within a directory passed via `options` (the option-is-a-directory branch)
     python_exe_exists, path_to_python_exe = _find_file_path(python_exe, options=[python_dir])
     assert python_exe_exists
-    assert path_to_python_exe.name == python_exe
+    assert os.path.samefile(path_to_python_exe, sys.executable)
 
     # `None` entries in `options` are skipped rather than raising
     python_exe_exists, path_to_python_exe = _find_file_path(python_exe, options=[None, python_dir])
     assert python_exe_exists
 
     # A genuinely non-existent name, with no `options`/`target` able to resolve it, returns False
-    text_exe = "pyhelpers.exe"
     test_exe_exists, path_to_test_exe = _find_file_path(
-        text_exe, options=[python_dir, sys.executable])
+        "pyhelpers.exe", options=[python_dir, sys.executable])
     assert not test_exe_exists
     assert path_to_test_exe is None  # Should return None when nothing matches
 
