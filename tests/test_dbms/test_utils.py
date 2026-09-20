@@ -142,12 +142,13 @@ def test_mssql_to_postgresql(capfd, mssql_kwargs, postgres_kwargs):
 
         assert postgres_testdb.get_table_names() == {'public': []}
 
-        mssql_to_postgresql(
+        result = mssql_to_postgresql(
             mssql=mssql_testdb,
             postgres=postgres_testdb,
             confirmation_required=False
         )
         out, _ = capfd.readouterr()
+        assert result is None, f"Migration failed: {result}"
 
         # Verify the logs explicitly map to the dynamic test_db_name string
         assert (f'Copying tables from [{test_db_name}] (MSSQL) to "{test_db_name}" (PostgreSQL)'
