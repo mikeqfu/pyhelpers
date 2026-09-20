@@ -34,22 +34,35 @@ class MSSQL(_Base):
     #: The dialect that SQLAlchemy uses to communicate with Microsoft SQL Server; see also
     #: [`DBMS-MS-1 <https://docs.sqlalchemy.org/en/14/dialects/mssql.html>`_].
     DEFAULT_DIALECT: str = 'mssql'
+
     #: Default name of database driver. See also
     #: [`DBMS-MS-2
     #: <https://docs.sqlalchemy.org/dialects/mssql.html#module-sqlalchemy.dialects.mssql.pyodbc>`_].
     DEFAULT_DRIVER: str = 'pyodbc'
+
     #: Default `ODBC <https://en.wikipedia.org/wiki/Open_Database_Connectivity>`_ driver.
-    DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 17 for SQL Server'
+    # ``None`` (the default) means auto-detect the newest installed
+    #: "ODBC Driver N for SQL Server". Set a string to pin a specific driver.
+    DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 18 for SQL Server'
+
+    #: Environment variable that overrides the ODBC driver choice.
+    ODBC_DRIVER_ENV_VAR: str = 'MSSQL_ODBC_DRIVER'
+
     #: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
     DEFAULT_HOST: str = 'localhost'
+
     #: Default listening port used by Microsoft SQL Server.
     DEFAULT_PORT: str | int = 1433
+
     #: Default username.
     DEFAULT_USERNAME: str = 'sa'
+
     #: Default database name.
     DEFAULT_DATABASE: str = 'master'
+
     #: Default schema name.
     DEFAULT_SCHEMA: str = 'dbo'
+
     #: Names of built-in schemas of Microsoft SQL Server.
     BUILTIN_SCHEMAS: set = {
         'db_accessadmin',
@@ -68,7 +81,8 @@ class MSSQL(_Base):
     }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
-                 confirm_db_creation=False, verbose=False, raise_error=False):
+                 confirm_db_creation=False, odbc_driver=None, odbc_options=None, verbose=False,
+                 raise_error=False):
         """
         :param host: Name or IP address of the SQL Server, e.g. ``'localhost'`` or ``'127.0.0.1'``;
             defaults to ``'localhost'`` if not specified.
@@ -89,6 +103,13 @@ class MSSQL(_Base):
             before creating a new database (if the specified database does not exist);
             defaults to ``False``.
         :type confirm_db_creation: bool
+        :param odbc_driver: Name of the ODBC driver, e.g. ``'ODBC Driver 18 for SQL Server'``;
+            if ``None`` (default), the environment variable ``MSSQL_ODBC_DRIVER`` is used if set,
+            otherwise the newest installed SQL Server ODBC driver is auto-detected.
+        :type odbc_driver: str | None
+        :param odbc_options: Extra ODBC connection-string options, e.g.
+            ``{'TrustServerCertificate': 'yes'}``; defaults to ``None``.
+        :type odbc_options: dict | None
         :param verbose: Whether to print connection and operation details to the console;
             defaults to ``False``.
         :type verbose: bool | int
@@ -137,7 +158,10 @@ class MSSQL(_Base):
         if username is None:
             self.auth = 'Windows Authentication'
             domain = os.environ.get('USERDOMAIN')
-            user = os.environ.get('USERNAME') or os.getlogin() or 'user'
+            try:
+                user = os.environ.get('USERNAME') or getpass.getuser()
+            except (KeyError, OSError):  # no passwd entry / no TTY (e.g. containers)
+                user = 'user'
             self.username = f"{domain}\\{user}" if domain else user
             pwd = None
         else:
@@ -158,16 +182,28 @@ class MSSQL(_Base):
         }
 
         # Driver
-        available_drivers = pyodbc.drivers()
-        if self.DEFAULT_ODBC_DRIVER in available_drivers:
+        self.odbc_driver = (
+                odbc_driver
+                or os.environ.get('MSSQL_ODBC_DRIVER')
+                or self._find_odbc_driver(pyodbc.drivers())
+        )
+        if self.odbc_driver is None:
+            warnings.warn(
+                "No ODBC driver for SQL Server was found; install 'msodbcsql18' "
+                "(https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server) "
+                f"or pass `odbc_driver`. Falling back to '{self.DEFAULT_ODBC_DRIVER}'.",
+                stacklevel=2)
             self.odbc_driver = self.DEFAULT_ODBC_DRIVER
-        else:  # Fallback to first available SQL Server driver
-            sql_drivers = [x for x in available_drivers if 'ODBC' in x and 'SQL Server' in x]
-            self.odbc_driver = sql_drivers[0] if sql_drivers else self.DEFAULT_ODBC_DRIVER
 
         url_query = {'driver': self.odbc_driver}
         if pwd is None:
             url_query['trusted_connection'] = 'yes'
+        url_query.update({str(k): str(v) for k, v in (odbc_options or {}).items()})
+
+        ver = self._odbc_driver_version(self.odbc_driver)
+        if (ver and ver[0] >= 18 and self._is_loopback(self.host)
+                and not {k.lower() for k in url_query} & {'encrypt', 'trustservercertificate'}):
+            url_query['TrustServerCertificate'] = 'yes'
 
         url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd, query=url_query)
 
@@ -212,6 +248,25 @@ class MSSQL(_Base):
 
         except Exception as e:
             _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+
+    @classmethod
+    def _odbc_driver_version(cls, name):
+        """Return the version of an ``'ODBC Driver N for SQL Server'`` name as a tuple, or None."""
+        m = re.compile(r"^ODBC Driver (\d+(?:\.\d+)*) for SQL Server$").match(name)
+        return tuple(int(x) for x in m.group(1).split('.')) if m else None
+
+    @classmethod
+    def _find_odbc_driver(cls, available):
+        """Pick the newest 'ODBC Driver N for SQL Server'; else any legacy SQL Server driver."""
+        versioned = [(v, n) for n in available if (v := cls._odbc_driver_version(n))]
+        if versioned:
+            return max(versioned)[1]
+        legacy = [n for n in available if 'SQL Server' in n]  # e.g. 'SQL Server Native Client 11.0'
+        return legacy[0] if legacy else None
+
+    @classmethod
+    def _is_loopback(cls, host):
+        return host.strip().lower() in {'localhost', '127.0.0.1', '::1', '(local)', '.'}
 
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
