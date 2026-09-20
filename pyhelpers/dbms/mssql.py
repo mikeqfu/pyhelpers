@@ -41,8 +41,7 @@ class MSSQL(_Base):
     DEFAULT_DRIVER: str = 'pyodbc'
 
     #: Default `ODBC <https://en.wikipedia.org/wiki/Open_Database_Connectivity>`_ driver.
-    # ``None`` (the default) means auto-detect the newest installed
-    #: "ODBC Driver N for SQL Server". Set a string to pin a specific driver.
+    #: Last-resort driver name used when none is detected
     DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 18 for SQL Server'
 
     #: Environment variable that overrides the ODBC driver choice.
@@ -184,7 +183,7 @@ class MSSQL(_Base):
         # Driver
         self.odbc_driver = (
                 odbc_driver
-                or os.environ.get('MSSQL_ODBC_DRIVER')
+                or os.environ.get(self.ODBC_DRIVER_ENV_VAR)
                 or self._find_odbc_driver(pyodbc.drivers())
         )
         if self.odbc_driver is None:
@@ -204,6 +203,11 @@ class MSSQL(_Base):
         if (ver and ver[0] >= 18 and self._is_loopback(self.host)
                 and not {k.lower() for k in url_query} & {'encrypt', 'trustservercertificate'}):
             url_query['TrustServerCertificate'] = 'yes'
+
+        # Keep the extra ODBC options (e.g. TrustServerCertificate) for connection strings
+        # that are built later
+        self.odbc_options = {
+            k: v for k, v in url_query.items() if k.lower() not in {'driver', 'trusted_connection'}}
 
         url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd, query=url_query)
 
@@ -268,6 +272,11 @@ class MSSQL(_Base):
     def _is_loopback(cls, host):
         return host.strip().lower() in {'localhost', '127.0.0.1', '::1', '(local)', '.'}
 
+    @staticmethod
+    def _make_address(url):
+        """Format a SQLAlchemy URL as ``user@host:port/database``."""
+        return f"{url.username}@{url.host}:{url.port}/{url.database}"
+
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
         Specify the connection string for establishing a connection to a database.
@@ -279,8 +288,8 @@ class MSSQL(_Base):
             defaults to the current authentication method if ``auth=None``.
         :type auth: str | None
         :param password: User's password;
-            if ``password=None`` (default), manual input of the correct password is required to
-            establish the connection.
+            if ``password=None`` (default), the password given at initialization is used;
+            otherwise, manual input of the correct password is required to establish the connection.
         :type password: str | int | None
         :return: Connection string formatted for establishing a connection.
         :rtype: str
@@ -292,17 +301,16 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> conn_str = mssql.specify_conn_str()
             >>> conn_str
-            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};...
+            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};Trust...
         """
 
         # mssql+pyodbc://<username>:<password>@<dsnname>
-        if database_name is None:
-            db_name = copy.copy(self.database_name)
-        else:
-            db_name = copy.copy(database_name)
+        db_name = self.database_name if database_name is None else str(database_name)
+        auth = auth or self.auth  # as documented: default to the current authentication method
 
-        conn_string = \
-            f'DRIVER={{{self.odbc_driver}}};SERVER={{{self.host}}};DATABASE={{{db_name}}};'
+        # Include the port only when it is not the default one
+        server = self.host if self.port == self.DEFAULT_PORT else f'{self.host},{self.port}'
+        conn_string = f'DRIVER={{{self.odbc_driver}}};SERVER={{{server}}};DATABASE={{{db_name}}};'
 
         if auth in {None, 'Windows Authentication'}:
             # The trusted_connection setting indicates whether to use Windows Authentication Mode
@@ -311,11 +319,16 @@ class MSSQL(_Base):
             # In Microsoft implementations, this user account is a Windows user account.
             conn_string += 'Trusted_Connection=yes;'
         else:  # e.g. auth = 'SQL Server Authentication'
-            if password is None:
-                pwd = getpass.getpass(f'Password ({self.username}@{self.host}): ')
-            else:
+            if password is not None:
                 pwd = str(password)
+            elif self.engine.url.password is not None:  # reuse the password given at initialization
+                pwd = self.engine.url.password
+            else:
+                pwd = getpass.getpass(f'Password ({self.username}@{self.host}): ')
             conn_string += f'UID={{{self.username}}};PWD={{{pwd}}};'
+
+        # Extra options such as TrustServerCertificate
+        conn_string += ''.join(f'{k}={v};' for k, v in self.odbc_options.items())
 
         return conn_string
 
@@ -613,8 +626,8 @@ class MSSQL(_Base):
             >>> testdb.database_name
             'testdb'
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
-            To drop the database [testdb] from <server_name>@localhost:1433
-            ? [No]|Yes: yes
+            Drop the database [testdb] from <server_name>@localhost:1433?
+             [No]|Yes: yes
             Dropping [testdb] ... Done.
             >>> testdb.database_name
             'master'
@@ -625,13 +638,18 @@ class MSSQL(_Base):
 
             self.credentials.update({'database': db_name})
 
-            url_query = {'driver': self.odbc_driver}
-            if self.auth == 'Windows Authentication':
-                url_query.update({'Trusted_Connection': 'yes'})
+            # url_query = {'driver': self.odbc_driver}
+            # if self.auth == 'Windows Authentication':
+            #     url_query.update({'Trusted_Connection': 'yes'})
+            #
+            # url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
+            # self.address = re.split(
+            #     r'://|\?', url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
 
-            url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
-            self.address = re.split(
-                r'://|\?', url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
+            # Derive the URL from the current engine, so that the password and the ODBC options
+            # (e.g. TrustServerCertificate) are carried over
+            url = self.engine.url.set(database=db_name)
+            self.address = self._make_address(url)
 
             if verbose:
                 print(f"Connecting {self.address}", end=" ... ")
@@ -1962,8 +1980,8 @@ class MSSQL(_Base):
             # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
-        if chunk_size:
-            data = pd.concat(data, ignore_index=True)
+            if chunk_size:  # chunks are read lazily: consume them before the connection closes
+                data = pd.concat(data, ignore_index=True)
 
         if dtype == 'geometry':
             data[col_names] = data[col_names].map(shapely.wkt.loads)  # noqa
@@ -2097,7 +2115,7 @@ class MSSQL(_Base):
             # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
-        data = pd.concat(data, axis=0, ignore_index=True) if chunk_size else pd.DataFrame(data)
+            data = pd.concat(data, axis=0, ignore_index=True) if chunk_size else pd.DataFrame(data)
 
         # Sort the order of columns
         data = data[[x for x in column_names_ if x not in data.index.names]]
