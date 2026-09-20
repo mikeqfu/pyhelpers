@@ -1,6 +1,25 @@
 # Changelog / Release notes
 
 
+## [2.5.3](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.3)
+
+(*20 September 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.5.2...2.5.3) since [2.5.2](https://pypi.org/project/pyhelpers/2.5.2/):
+
+- **CI/CD & test coverage:**
+  * Added automated test coverage workflow using GitHub Actions and Codecov with an 80% target (#155).
+  * Integrated Codecov status badges into repository `README` and Sphinx documentation index (#156).
+- **Subpackage refinements & bug fixes:**
+  * Extended unit test suites for `dbms`, `store` and `_cache` subpackages, updating default ODBC driver configuration to v18 (#155).
+  * Fixed keyword argument iteration in `add_sql_query_condition` (#155).
+- **Maintenance & dependency management:**
+  * Added `python-dotenv` dependency, updated `.gitignore` rules and synchronized dependency lockfile (`uv.lock`) (#155, #156).
+  * Prepared project metadata and version bump for release 2.5.3 (#156).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.5.3 documentation](https://pyhelpers.readthedocs.io/en/2.5.3/).**
+
+
 ## [2.5.2](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.2)
 
 (*25 August 2026*)
