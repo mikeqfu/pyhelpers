@@ -9,6 +9,7 @@
 [![ReadTheDocs Documentation](https://img.shields.io/readthedocs/pyhelpers?logo=readthedocs)](https://pyhelpers.readthedocs.io/en/latest/?badge=latest)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mikeqfu/pyhelpers/github-pages.yml?logo=github&branch=master)](https://github.com/mikeqfu/pyhelpers/actions)
 [![Codacy - Code Quality](https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9)](https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codecov - Test Coverage](https://codecov.io/gh/mikeqfu/pyhelpers/graph/badge.svg?token=UO1NNE5A42)](https://codecov.io/gh/mikeqfu/pyhelpers)
 [![DOI](https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi)](https://doi.org/10.5281/zenodo.4017438)
 
 PyHelpers is an open-source Python package designed to streamline data (pre-)processing and manipulation tasks. It accommodates a wide range of functions and classes grounded in practical applications, making common data operations more accessible and efficient. This toolkit is particularly useful for Python learners, researchers and data scientists seeking to enhance their workflows.

@@ -4,7 +4,7 @@ PyHelpers
 
 *An open-source toolkit for facilitating Python users' data manipulation tasks.*
 
-|PyPI| |Conda-Forge| |Python| |License| |Docs| |Build| |Codacy| |DOI|
+|PyPI| |Conda-Forge| |Python| |License| |Docs| |Build| |Codacy| |Codecov| |DOI|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyhelpers?logo=pypi
     :alt: PyPI Version
@@ -27,6 +27,9 @@ PyHelpers
 .. |Codacy| image:: https://app.codacy.com/project/badge/Grade/c3ed8571c494450da12cb0c4d3c8c7e9
     :alt: Codacy - Code Quality
     :target: https://app.codacy.com/gh/mikeqfu/pyhelpers/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
+.. |Codecov| image:: https://codecov.io/gh/mikeqfu/pyhelpers/graph/badge.svg?token=UO1NNE5A42
+    :alt: Codecov - Test Coverage
+    :target: https://codecov.io/gh/mikeqfu/pyhelpers
 .. |DOI| image:: https://img.shields.io/badge/10.5281%2Fzenodo.4017438-blue?label=doi
     :alt: DOI
     :target: https://doi.org/10.5281/zenodo.4017438
