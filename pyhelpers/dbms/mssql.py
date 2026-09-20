@@ -34,22 +34,34 @@ class MSSQL(_Base):
     #: The dialect that SQLAlchemy uses to communicate with Microsoft SQL Server; see also
     #: [`DBMS-MS-1 <https://docs.sqlalchemy.org/en/14/dialects/mssql.html>`_].
     DEFAULT_DIALECT: str = 'mssql'
+
     #: Default name of database driver. See also
     #: [`DBMS-MS-2
     #: <https://docs.sqlalchemy.org/dialects/mssql.html#module-sqlalchemy.dialects.mssql.pyodbc>`_].
     DEFAULT_DRIVER: str = 'pyodbc'
+
     #: Default `ODBC <https://en.wikipedia.org/wiki/Open_Database_Connectivity>`_ driver.
-    DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 17 for SQL Server'
+    #: Last-resort driver name used when none is detected
+    DEFAULT_ODBC_DRIVER: str = 'ODBC Driver 18 for SQL Server'
+
+    #: Environment variable that overrides the ODBC driver choice.
+    ODBC_DRIVER_ENV_VAR: str = 'MSSQL_ODBC_DRIVER'
+
     #: Default host (server name). Alternatively, ``os.environ['COMPUTERNAME']``.
     DEFAULT_HOST: str = 'localhost'
+
     #: Default listening port used by Microsoft SQL Server.
     DEFAULT_PORT: str | int = 1433
+
     #: Default username.
     DEFAULT_USERNAME: str = 'sa'
+
     #: Default database name.
     DEFAULT_DATABASE: str = 'master'
+
     #: Default schema name.
     DEFAULT_SCHEMA: str = 'dbo'
+
     #: Names of built-in schemas of Microsoft SQL Server.
     BUILTIN_SCHEMAS: set = {
         'db_accessadmin',
@@ -68,7 +80,8 @@ class MSSQL(_Base):
     }
 
     def __init__(self, host=None, port=None, username=None, password=None, database_name=None,
-                 confirm_db_creation=False, verbose=False, raise_error=False):
+                 confirm_db_creation=False, odbc_driver=None, odbc_options=None, verbose=False,
+                 raise_error=False):
         """
         :param host: Name or IP address of the SQL Server, e.g. ``'localhost'`` or ``'127.0.0.1'``;
             defaults to ``'localhost'`` if not specified.
@@ -89,6 +102,13 @@ class MSSQL(_Base):
             before creating a new database (if the specified database does not exist);
             defaults to ``False``.
         :type confirm_db_creation: bool
+        :param odbc_driver: Name of the ODBC driver, e.g. ``'ODBC Driver 18 for SQL Server'``;
+            if ``None`` (default), the environment variable ``MSSQL_ODBC_DRIVER`` is used if set,
+            otherwise the newest installed SQL Server ODBC driver is auto-detected.
+        :type odbc_driver: str | None
+        :param odbc_options: Extra ODBC connection-string options, e.g.
+            ``{'TrustServerCertificate': 'yes'}``; defaults to ``None``.
+        :type odbc_options: dict | None
         :param verbose: Whether to print connection and operation details to the console;
             defaults to ``False``.
         :type verbose: bool | int
@@ -137,7 +157,10 @@ class MSSQL(_Base):
         if username is None:
             self.auth = 'Windows Authentication'
             domain = os.environ.get('USERDOMAIN')
-            user = os.environ.get('USERNAME') or os.getlogin() or 'user'
+            try:
+                user = os.environ.get('USERNAME') or getpass.getuser()
+            except (KeyError, OSError):  # no passwd entry / no TTY (e.g. containers)
+                user = 'user'
             self.username = f"{domain}\\{user}" if domain else user
             pwd = None
         else:
@@ -158,16 +181,33 @@ class MSSQL(_Base):
         }
 
         # Driver
-        available_drivers = pyodbc.drivers()
-        if self.DEFAULT_ODBC_DRIVER in available_drivers:
+        self.odbc_driver = (
+                odbc_driver
+                or os.environ.get(self.ODBC_DRIVER_ENV_VAR)
+                or self._find_odbc_driver(pyodbc.drivers())
+        )
+        if self.odbc_driver is None:
+            warnings.warn(
+                "No ODBC driver for SQL Server was found; install 'msodbcsql18' "
+                "(https://learn.microsoft.com/sql/connect/odbc/download-odbc-driver-for-sql-server) "
+                f"or pass `odbc_driver`. Falling back to '{self.DEFAULT_ODBC_DRIVER}'.",
+                stacklevel=2)
             self.odbc_driver = self.DEFAULT_ODBC_DRIVER
-        else:  # Fallback to first available SQL Server driver
-            sql_drivers = [x for x in available_drivers if 'ODBC' in x and 'SQL Server' in x]
-            self.odbc_driver = sql_drivers[0] if sql_drivers else self.DEFAULT_ODBC_DRIVER
 
         url_query = {'driver': self.odbc_driver}
         if pwd is None:
             url_query['trusted_connection'] = 'yes'
+        url_query.update({str(k): str(v) for k, v in (odbc_options or {}).items()})
+
+        ver = self._odbc_driver_version(self.odbc_driver)
+        if (ver and ver[0] >= 18 and self._is_loopback(self.host)
+                and not {k.lower() for k in url_query} & {'encrypt', 'trustservercertificate'}):
+            url_query['TrustServerCertificate'] = 'yes'
+
+        # Keep the extra ODBC options (e.g. TrustServerCertificate) for connection strings
+        # that are built later
+        self.odbc_options = {
+            k: v for k, v in url_query.items() if k.lower() not in {'driver', 'trusted_connection'}}
 
         url = sqlalchemy.engine.URL.create(**self.credentials, password=pwd, query=url_query)
 
@@ -211,7 +251,31 @@ class MSSQL(_Base):
                 print("Successfully.")
 
         except Exception as e:
-            _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+            _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
+
+    @classmethod
+    def _odbc_driver_version(cls, name):
+        """Return the version of an ``'ODBC Driver N for SQL Server'`` name as a tuple, or None."""
+        m = re.compile(r"^ODBC Driver (\d+(?:\.\d+)*) for SQL Server$").match(name)
+        return tuple(int(x) for x in m.group(1).split('.')) if m else None
+
+    @classmethod
+    def _find_odbc_driver(cls, available):
+        """Pick the newest 'ODBC Driver N for SQL Server'; else any legacy SQL Server driver."""
+        versioned = [(v, n) for n in available if (v := cls._odbc_driver_version(n))]
+        if versioned:
+            return max(versioned)[1]
+        legacy = [n for n in available if 'SQL Server' in n]  # e.g. 'SQL Server Native Client 11.0'
+        return legacy[0] if legacy else None
+
+    @classmethod
+    def _is_loopback(cls, host):
+        return host.strip().lower() in {'localhost', '127.0.0.1', '::1', '(local)', '.'}
+
+    @staticmethod
+    def _make_address(url):
+        """Format a SQLAlchemy URL as ``user@host:port/database``."""
+        return f"{url.username}@{url.host}:{url.port}/{url.database}"
 
     def specify_conn_str(self, database_name=None, auth=None, password=None):
         """
@@ -224,8 +288,8 @@ class MSSQL(_Base):
             defaults to the current authentication method if ``auth=None``.
         :type auth: str | None
         :param password: User's password;
-            if ``password=None`` (default), manual input of the correct password is required to
-            establish the connection.
+            if ``password=None`` (default), the password given at initialization is used;
+            otherwise, manual input of the correct password is required to establish the connection.
         :type password: str | int | None
         :return: Connection string formatted for establishing a connection.
         :rtype: str
@@ -237,17 +301,16 @@ class MSSQL(_Base):
             Connecting <server_name>@localhost:1433/master ... Successfully.
             >>> conn_str = mssql.specify_conn_str()
             >>> conn_str
-            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};...
+            'DRIVER={ODBC Driver 17 for SQL Server};SERVER={localhost};DATABASE={master};Trust...
         """
 
         # mssql+pyodbc://<username>:<password>@<dsnname>
-        if database_name is None:
-            db_name = copy.copy(self.database_name)
-        else:
-            db_name = copy.copy(database_name)
+        db_name = self.database_name if database_name is None else str(database_name)
+        auth = auth or self.auth  # as documented: default to the current authentication method
 
-        conn_string = \
-            f'DRIVER={{{self.odbc_driver}}};SERVER={{{self.host}}};DATABASE={{{db_name}}};'
+        # Include the port only when it is not the default one
+        server = self.host if self.port == self.DEFAULT_PORT else f'{self.host},{self.port}'
+        conn_string = f'DRIVER={{{self.odbc_driver}}};SERVER={{{server}}};DATABASE={{{db_name}}};'
 
         if auth in {None, 'Windows Authentication'}:
             # The trusted_connection setting indicates whether to use Windows Authentication Mode
@@ -256,11 +319,16 @@ class MSSQL(_Base):
             # In Microsoft implementations, this user account is a Windows user account.
             conn_string += 'Trusted_Connection=yes;'
         else:  # e.g. auth = 'SQL Server Authentication'
-            if password is None:
-                pwd = getpass.getpass(f'Password ({self.username}@{self.host}): ')
-            else:
+            if password is not None:
                 pwd = str(password)
+            elif self.engine.url.password is not None:  # reuse the password given at initialization
+                pwd = self.engine.url.password
+            else:
+                pwd = getpass.getpass(f'Password ({self.username}@{self.host}): ')
             conn_string += f'UID={{{self.username}}};PWD={{{pwd}}};'
+
+        # Extra options such as TrustServerCertificate
+        conn_string += ''.join(f'{k}={v};' for k, v in self.odbc_options.items())
 
         return conn_string
 
@@ -430,13 +498,12 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text('SELECT name, database_id, create_date FROM sys.databases;')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        db_names = result.fetchall()
         if names_only:
-            database_names = [x[0] for x in db_names]
+            database_names = [x[0] for x in result]
         else:
-            database_names = pd.DataFrame(db_names)
+            database_names = pd.DataFrame(result, columns=['name', 'database_id', 'create_date'])
 
         return database_names
 
@@ -486,7 +553,7 @@ class MSSQL(_Base):
                     f"WHERE '[' + name + ']' = '{db_name}' OR name = '{db_name}';")
                 result_ = connection.execute(query)
 
-        result = result_.fetchone()
+            result = result_.fetchone()
 
         return bool(result[0]) if result else False
 
@@ -559,8 +626,8 @@ class MSSQL(_Base):
             >>> testdb.database_name
             'testdb'
             >>> testdb.drop_database(verbose=True)  # Delete the database [testdb]
-            To drop the database [testdb] from <server_name>@localhost:1433
-            ? [No]|Yes: yes
+            Drop the database [testdb] from <server_name>@localhost:1433?
+             [No]|Yes: yes
             Dropping [testdb] ... Done.
             >>> testdb.database_name
             'master'
@@ -571,13 +638,18 @@ class MSSQL(_Base):
 
             self.credentials.update({'database': db_name})
 
-            url_query = {'driver': self.odbc_driver}
-            if self.auth == 'Windows Authentication':
-                url_query.update({'Trusted_Connection': 'yes'})
+            # url_query = {'driver': self.odbc_driver}
+            # if self.auth == 'Windows Authentication':
+            #     url_query.update({'Trusted_Connection': 'yes'})
+            #
+            # url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
+            # self.address = re.split(
+            #     r'://|\?', url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
 
-            url = sqlalchemy.engine.URL.create(**self.credentials, query=url_query)
-            self.address = re.split(
-                r'://|\?', url.render_as_string(hide_password=True))[1].replace('%5C', '\\')
+            # Derive the URL from the current engine, so that the password and the ODBC options
+            # (e.g. TrustServerCertificate) are carried over
+            url = self.engine.url.set(database=db_name)
+            self.address = self._make_address(url)
 
             if verbose:
                 print(f"Connecting {self.address}", end=" ... ")
@@ -594,8 +666,7 @@ class MSSQL(_Base):
                 self.database_name = self.credentials['database']
 
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
@@ -641,12 +712,6 @@ class MSSQL(_Base):
                 print(f'Disconnecting the database [{db_name}] ... ', end="")
 
             try:
-                # with self.engine.connect() as connection:
-                #     query = sqlalchemy.text(
-                #         f'ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;'
-                #         f'ALTER DATABASE {db_name} SET MULTI_USER;')
-                #     connection.execute(query)
-
                 with self.engine.connect() as connection:
                     query = sqlalchemy.text(
                         f"USE [master]; "
@@ -662,8 +727,7 @@ class MSSQL(_Base):
                 self.connect_database(database_name=self.DEFAULT_DATABASE)
 
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             if verbose:
@@ -789,8 +853,7 @@ class MSSQL(_Base):
                 if verbose:
                     print("Done.")
             except Exception as e:
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
         else:
             print(f"The schema {s_name} already exists.")
@@ -876,9 +939,9 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             result = connection.execute(query)
+            result = result.fetchall()
 
-        schema_info_ = result.fetchall()
-        if not schema_info_:
+        if not result:
             schema_info = None
             if verbose:
                 print(f"No schema exists in the currently-connected database "
@@ -886,15 +949,15 @@ class MSSQL(_Base):
 
         else:
             if names_only:
-                schema_info = [x[0] for x in schema_info_]
+                schema_info = [x[0] for x in result]
             else:
                 if column_names is None:
                     column_names = ['schema_name', 'schema_owner', 'schema_id']
                 else:
-                    assert len(column_names) == len(schema_info_[0]), \
+                    assert len(column_names) == len(result[0]), \
                         f"`column_names` must be a list of strings and " \
-                        f"its length must equal {len(schema_info_[0])}."
-                schema_info = pd.DataFrame(schema_info_, columns=column_names)
+                        f"its length must equal {len(result[0])}."
+                schema_info = pd.DataFrame(result, columns=column_names)
 
         return schema_info
 
@@ -1136,9 +1199,7 @@ class MSSQL(_Base):
                 f"SELECT * FROM INFORMATION_SCHEMA.TABLES "
                 f"WHERE TABLE_SCHEMA = '{schema_name_}' AND TABLE_NAME = '{table_name}')) "
                 f"SELECT 1 ELSE SELECT 0")
-            result_ = connection.execute(query)
-
-        result = result_.fetchone()
+            result = connection.execute(query).fetchone()
 
         return bool(result[0]) if result else False
 
@@ -1162,13 +1223,12 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text('SELECT * FROM sys.tables WHERE is_filetable = 1;')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchall()
 
-        file_tables_ = result.fetchall()
         if names_only:
-            file_tables = [x[0] for x in file_tables_]
+            file_tables = [x[0] for x in result]
         else:
-            file_tables = pd.DataFrame(file_tables_)
+            file_tables = pd.DataFrame(result)
 
         return file_tables
 
@@ -1202,11 +1262,9 @@ class MSSQL(_Base):
 
         with self.engine.connect() as connection:
             query = sqlalchemy.text(f'SELECT COUNT(*) FROM {table_name_};')
-            result = connection.execute(query)
+            result = connection.execute(query).fetchone()
 
-        row_count = result.fetchone()
-
-        return row_count[0] if row_count else None
+        return result[0] if result else None
 
     def get_column_info(self, table_name, schema_name=None, as_dict=True):
         """
@@ -1346,9 +1404,7 @@ class MSSQL(_Base):
                 f"AND DATA_TYPE {dtype_query};"
 
             query = sqlalchemy.text(sql_query_geom_col)
-            result = connection.execute(query)
-
-        col_names = result.fetchall()
+            col_names = connection.execute(query).fetchall()
 
         if len(col_names) > 0:
             has_the_dtypes = True
@@ -1418,9 +1474,7 @@ class MSSQL(_Base):
                     f"AND TABLE_SCHEMA='{schema_name_}' " \
                     f"AND DATA_TYPE='{data_type}'"
                 query = sqlalchemy.text(sql_query_geom_col)
-                result = connection.execute(query)
-
-                col_names = result.fetchall()
+                col_names = connection.execute(query).fetchall()
 
                 if len(col_names) > 0:
                     has_the_dtypes = True
@@ -1675,7 +1729,7 @@ class MSSQL(_Base):
         except Exception as e:
             # If any step fails, the transaction rolls back automatically because of .begin()
             _print_failure_message(
-                e, prefix="Spatial conversion failed. Table reverted.", verbose=verbose,
+                e, "Spatial conversion failed. Table reverted.", verbose=verbose,
                 raise_error=raise_error)
 
     def import_data(self, data, table_name, schema_name=None, if_exists='fail',
@@ -1926,8 +1980,8 @@ class MSSQL(_Base):
             # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
-        if chunk_size:
-            data = pd.concat(data, ignore_index=True)
+            if chunk_size:  # chunks are read lazily: consume them before the connection closes
+                data = pd.concat(data, ignore_index=True)
 
         if dtype == 'geometry':
             data[col_names] = data[col_names].map(shapely.wkt.loads)  # noqa
@@ -2061,7 +2115,7 @@ class MSSQL(_Base):
             # noinspection PyTypeChecker
             data = pd.read_sql(sql=query, con=connection, chunksize=chunk_size, **kwargs)
 
-        data = pd.concat(data, axis=0, ignore_index=True) if chunk_size else pd.DataFrame(data)
+            data = pd.concat(data, axis=0, ignore_index=True) if chunk_size else pd.DataFrame(data)
 
         # Sort the order of columns
         data = data[[x for x in column_names_ if x not in data.index.names]]
@@ -2130,5 +2184,4 @@ class MSSQL(_Base):
                         print("Done.")
 
                 except Exception as e:
-                    _print_failure_message(
-                        e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                    _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)

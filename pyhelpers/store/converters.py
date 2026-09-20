@@ -412,8 +412,9 @@ def _xlsx_to_csv_prep(path_to_xlsx, path_to_csv=None, vbscript=None):
         vbscript_ = copy.copy(vbscript)
 
     if path_to_csv is None:
-        temp_file = tempfile.NamedTemporaryFile()
-        csv_pathname = temp_file.name + ".csv"
+        temp_file = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
+        csv_pathname = temp_file.name
+        temp_file.close()  # Close OS handle immediately to avoid resource leak warnings on GC
     elif path_to_csv == "":
         csv_pathname = str(path_to_xlsx).replace(".xlsx", ".csv")
     else:
@@ -575,7 +576,7 @@ def xlsx_to_csv(path_to_xlsx, path_to_csv=None, engine=None, if_exists='replace'
                     os.remove(csv_pathname)
                 elif if_exists == 'pass':
                     if verbose:
-                        print("Cancelled.")
+                        print("Canceled.")
                     return csv_pathname
 
             ret_code = _xlsx_to_csv(

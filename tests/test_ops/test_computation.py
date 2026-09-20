@@ -2,8 +2,6 @@
 Tests the :mod:`~pyhelpers.ops.computation` submodule.
 """
 
-import tempfile
-
 import pytest
 
 from pyhelpers.ops.computation import *
@@ -29,9 +27,8 @@ def test_parse_size():
 
 
 @pytest.mark.parametrize('chunk_size_limit', [0, None, 1, 0.1])
-def test_get_number_of_chunks(chunk_size_limit):
-    temp_file_ = tempfile.NamedTemporaryFile()
-    temp_file_path = temp_file_.name + ".txt"
+def test_get_number_of_chunks(chunk_size_limit, tmp_path):
+    temp_file_path = tmp_path / "test_file.txt"
     with open(temp_file_path, 'w') as f:
         f.write(", ".join(map(str, range(10 ** 5))))
 
@@ -44,8 +41,6 @@ def test_get_number_of_chunks(chunk_size_limit):
     example_obj = np.zeros((1000, 1000))
     number_of_chunks = get_number_of_chunks(example_obj, chunk_size_limit=5)
     assert number_of_chunks == 2
-
-    os.remove(temp_file_path)
 
 
 def test_get_extreme_outlier_bounds():

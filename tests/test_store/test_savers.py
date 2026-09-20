@@ -16,6 +16,7 @@ from pyhelpers.store.loaders import load_geopackage, load_parquet, load_pickle
 from pyhelpers.store.savers import save_data, save_feather, save_fig, save_figure, \
     save_geopackage, save_html_as_pdf, save_joblib, save_json, save_parquet, save_pickle, \
     save_spreadsheet, save_spreadsheets, save_svg_as_emf
+from tests.conftest import requires_inkscape, requires_wkhtmltopdf
 
 
 @pytest.mark.parametrize('ext', [".pickle", ".pkl", ".gz", ".xz", ".bz2"])
@@ -261,28 +262,30 @@ def test_save_geopackage(tmp_path, capfd):
             save_geopackage("not_a_gdf", test_gpkg, raise_error=True)  # noqa
 
 
+@requires_inkscape
 def test_save_svg_as_emf(tmp_path, capfd):
-    x, y = (1, 1), (2, 2)
-    plt.figure()
-    plt.plot([x[0], y[0]], [x[1], y[1]])
+    path_to_svg = tmp_path / "test_save_svg_as_emf.svg"
+    path_to_emf = tmp_path / "test_save_svg_as_emf.emf"
 
-    # path_to_svg = cd("tests/images", "store-save_fig-demo.svg")
-    # path_to_emf = cd("tests/images", "store-save_fig-demo.emf")
-    path_to_svg, path_to_emf = map(
-        lambda ext: tmp_path / f"test_save_svg_as_emf{ext}", [".svg", ".emf"])
+    fig, ax = plt.subplots()
+    try:
+        ax.plot([1, 2], [1, 2])
+        fig.savefig(path_to_svg)
 
-    plt.savefig(path_to_svg)  # Save the figure as a .svg file
+        save_svg_as_emf(path_to_svg=path_to_svg, path_to_emf=path_to_emf, verbose=True)
+        out, _ = capfd.readouterr()
+        assert f'Saving "{os.path.basename(path_to_emf)}"' in out and "Done." in out
 
-    save_svg_as_emf(path_to_svg=path_to_svg, path_to_emf=path_to_emf, verbose=True)
-    out, _ = capfd.readouterr()
-    assert f'Saving "{os.path.basename(path_to_emf)}"' in out and "Done." in out
-
-    with pytest.raises(Exception):
-        save_svg_as_emf(
-            path_to_svg, path_to_emf, verbose=True, inkscape_exe="test_inkscape.exe",
-            raise_error=True)
-
-    plt.close()
+        with pytest.raises(FileNotFoundError):
+            save_svg_as_emf(
+                path_to_svg,
+                path_to_emf,
+                verbose=True,
+                inkscape_exe="test_inkscape.exe",
+                raise_error=True,
+            )
+    finally:
+        plt.close(fig)
 
 
 def test_save_fig_and_figure(tmp_path, capfd):
@@ -337,22 +340,19 @@ def test_save_fig_and_figure(tmp_path, capfd):
     plt.close(fig)
 
 
+@requires_wkhtmltopdf
 def test_save_html_as_pdf(tmp_path, capfd):
     filename = "test_save_html_as_pdf.pdf"
     path_to_file = tmp_path / filename
     web_page_url = 'https://github.com/mikeqfu/pyhelpers#readme'
 
-    # # Check for dependency to avoid hard failure
-    # if not shutil.which("wkhtmltopdf"):
-    #     pytest.skip("wkhtmltopdf not found; skipping PDF conversion test.")
-
-    # Execute save
+    # Test converting a live web page URL
     save_html_as_pdf(web_page_url, path_to_file=path_to_file, verbose=True)
     out, _ = capfd.readouterr()
     assert f'Saving "{filename}"' in out and "Done." in out
 
     # Verify physical file creation
-    assert path_to_file.exists()
+    assert path_to_file.is_file()
     assert path_to_file.stat().st_size > 0  # Ensure the PDF isn't empty
 
     # Test 'if_exists=pass' logic (Optional but recommended)
@@ -360,16 +360,17 @@ def test_save_html_as_pdf(tmp_path, capfd):
     out_skip, _ = capfd.readouterr()
     assert f'Updating "{filename}"' not in out_skip  # Should have skipped
 
+    # Test default overwrite behaviour
     save_html_as_pdf(web_page_url, path_to_file=path_to_file, verbose=True)
     out_skip, _ = capfd.readouterr()
     assert f'Updating "{filename}"' in out_skip
 
-    # Create a dummy local HTML file
+    # Test converting a local HTML file with detailed verbosity
     local_html = tmp_path / "test.html"
     local_html.write_text("<h1>Hello World</h1>", encoding='utf-8')
     save_html_as_pdf(local_html, path_to_file=path_to_file, verbose=2)
-    out, _ = capfd.readouterr()
-    assert f'Updating "{filename}"' in out and "Done" in out
+    out_verbose2, _ = capfd.readouterr()
+    assert f'Updating "{filename}"' in out_verbose2 and "Done" in out_verbose2
 
 
 @pytest.mark.parametrize(

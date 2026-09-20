@@ -9,8 +9,16 @@ With its comprehensive suite of practical tools, PyHelpers simplifies complex da
 
 ## Installation <a name="installation"></a>
 
+In a `uv` project workspace:
+
 ```bash
-$ pip install --upgrade pyhelpers
+uv add pyhelpers
+```
+
+In a standard virtual environment (using `uv` as a pip replacement):
+
+```bash
+uv pip install pyhelpers
 ```
 
 ## Cite as

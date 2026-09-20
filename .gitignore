@@ -1,8 +1,10 @@
 # Environment
-venv/
+.env
 .idea/
+.venv/
 */vscode/
 **/__pycache__/
+venv/
 
 # Sphinx documentation
 */build/
