@@ -200,6 +200,10 @@ def test_xlsx_to_csv_mocked(dat_dir, tmp_path, capfd, mocker):
     completed_process = subprocess.CompletedProcess(args=[], returncode=0)
     mock_run = mocker.patch('subprocess.run', return_value=completed_process)
 
+    # Mock NamedTemporaryFile to avoid leaking unclosed tempfile wrappers
+    mock_temp = mocker.patch('tempfile.NamedTemporaryFile')
+    mock_temp.return_value.name = str(tmp_path / "temp.csv")
+
     # 1. Test path_to_csv=None (temporary file creation) and ret_null=True
     res_null = xlsx_to_csv(
         test_xlsx_path,
