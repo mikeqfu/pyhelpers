@@ -5,8 +5,8 @@ Database tools/utilities.
 import copy
 import gc
 import inspect
+import math
 import re
-import sys
 
 import pandas as pd
 import sqlalchemy.dialects
@@ -381,8 +381,7 @@ def read_data(db_instance, schema_name, table_name, sql_query=None, data_name="d
 def _get_chunk_size(mssql, mssql_table_name, chunk_size=None):
     row_count = mssql.get_row_count(mssql_table_name)
 
-    if row_count >= 1000000:
-
+    if row_count and row_count >= 1000000:
         if chunk_size is None:
             chunk_size = 1000000
 
@@ -400,7 +399,7 @@ def _get_col_type(mssql, mssql_table_name, source_data):
     for dtype, if_exists, col_names in check_dtypes_rslt:
         if if_exists:
             if dtype == 'hierarchyid':
-                source_data_.loc[:, col_names] = source_data_[col_names].applymap(
+                source_data_.loc[:, col_names] = source_data_[col_names].map(
                     lambda x: str(x).replace('\\', '\\\\'))
 
             bytea_list = [sqlalchemy.dialects.postgresql.BYTEA] * len(col_names)
@@ -411,11 +410,14 @@ def _get_col_type(mssql, mssql_table_name, source_data):
 
 def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_name,
                                 mssql_table_name, memory_threshold, chunk_size, dtype):
-    memory_usage = sys.getsizeof(source_data) / 1024 ** 3
+    # memory_usage = sys.getsizeof(source_data) / 1024 ** 3
+    memory_usage = source_data.memory_usage(deep=True).sum() / 1024 ** 3
     if memory_usage > memory_threshold:
         np = _check_dependencies('numpy')
 
-        source_data = np.array_split(source_data, memory_usage // memory_threshold)
+        n_parts = max(2, math.ceil(memory_usage / memory_threshold))
+        bounds = np.linspace(0, len(source_data), n_parts + 1, dtype=int)
+        source_data = [source_data.iloc[a:b] for a, b in zip(bounds[:-1], bounds[1:])]
 
         i = 0
         while i < len(source_data):
@@ -442,7 +444,7 @@ def _mssql_postgres_import_data(mssql, postgres, source_data, postgres_schema_na
     # Specify primary keys in PostgreSQL
     postgres_pkey = postgres.get_primary_keys(
         table_name=mssql_table_name, schema_name=postgres_schema_name)
-    if not postgres_pkey:
+    if primary_keys and not postgres_pkey:
         postgres.add_primary_keys(primary_keys, mssql_table_name, postgres_schema_name)
 
     del source_data
@@ -486,12 +488,15 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
         >>> from pyhelpers.dbms.utils import mssql_to_postgresql
         >>> from pyhelpers.dbms import PostgreSQL, MSSQL
         >>> from pyhelpers._cache import example_dataframe
+
         >>> # Connect/create a PostgreSQL database, which is named [testdb]
         >>> mssql_testdb = MSSQL(database_name='testdb', verbose=True)
         Creating a database: [testdb] ... Done.
         Connecting <server_name>@localhost:1433/testdb ... Successfully.
+
         >>> mssql_testdb.database_name
         'testdb'
+
         >>> example_df = example_dataframe()
         >>> example_df
                     Longitude   Latitude
@@ -500,12 +505,16 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
         Birmingham  -1.902691  52.479699
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
+
         >>> test_table_name = 'example_df'
+
         >>> # Import the example dataframe into a table named [example_df]
         >>> mssql_testdb.import_data(example_df, table_name=test_table_name, index=True, verbose=2)
-        To import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb
-        ? [No]|Yes: yes
-        Importing the data into the table [dbo].[example_df] ... Done.
+        Note: [Adaptive] Mapping index 'City' to NVARCHAR(255) for MSSQL compatibility.
+        Import data into [dbo].[example_df] at <server_name>@localhost:1433/testdb?
+         [No]|Yes: yes
+        Importing the data ... Done.
+
         >>> mssql_testdb.get_column_names(table_name=test_table_name)
         ['City', 'Longitude', 'Latitude']
 
@@ -523,15 +532,17 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
         Password (postgres@localhost:5432): ***
         Creating a database: "testdb" ... Done.
         Connecting postgres:***@localhost:5432/testdb ... Successfully.
+
         >>> # For now, the newly-created database doesn't contain any tables
         >>> postgres_testdb.get_table_names()
         {'public': []}
+
         >>> # Copy the example data from the SQL Server to the PostgreSQL "testdb" (under "public")
         >>> mssql_to_postgresql(mssql=mssql_testdb, postgres=postgres_testdb)
-        To copy tables from [testdb] (MSSQL) to "testdb" (PostgreSQL)
-        ? [No]|Yes: yes
+        Copy tables from [testdb] (MSSQL) to "testdb" (PostgreSQL)?
+         [No]|Yes: yes
         Processing tables ...
-            (1/1) Copying [dbo].[example_df] to "public"."example_df" ... Done.
+          (1/1) "public"."example_df" already exists.
         Completed.
         >>> postgres_testdb.get_table_names()
         {'public': ['example_df']}
@@ -547,12 +558,13 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
         >>> # Drop/delete the created databases
         >>> mssql_testdb.drop_database(verbose=True)
-        To drop the database [testdb] from <server_name>@localhost:1433
-        ? [No]|Yes: yes
+        Drop the database [testdb] from <server_name>@localhost:1433?
+         [No]|Yes: yes
         Dropping [testdb] ... Done.
+
         >>> postgres_testdb.drop_database(verbose=True)
-        To drop the database "testdb" from postgres:***@localhost:5432
-        ? [No]|Yes: yes
+        Drop the database "testdb" from postgres:***@localhost:5432?
+         [No]|Yes: yes
         Dropping "testdb" ... Done.
     """
 
@@ -603,7 +615,7 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
                         mssql_tbl = mssql._table_name(
                             table_name=mssql_table_name, schema_name=mssql_schema_name)
                         msg = f"Copying {mssql_tbl} to {postgresql_tbl}"
-                    print(f'\t{counter_msg} ' + msg, end=" ... ")
+                    print(f'  {counter_msg} ' + msg, end=" ... ")
 
                 chunk_size_ = _get_chunk_size(mssql, mssql_table_name, chunk_size=chunk_size)
 
@@ -622,12 +634,14 @@ def mssql_to_postgresql(mssql, postgres, mssql_schema=None, postgres_schema=None
 
             except Exception as e:
                 print("Failed.")
-                error_log.update({mssql_table_name: f"{e}"})
+                if verbose:
+                    print(f"    {type(e).__name__}: {e}")
+                error_log.update({mssql_table_name: f"{type(e).__name__}: {e}"})
 
         else:
             if verbose:
                 postgresql_tbl = f'"{postgres_schema_name}"."{mssql_table_name}"'
-                print(f"\t{counter_msg} {postgresql_tbl} already exists.")
+                print(f"  {counter_msg} {postgresql_tbl} already exists.")
 
         table_counter += 1
 
