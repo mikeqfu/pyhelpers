@@ -86,7 +86,7 @@ jobs:
           rm wkhtmltox_0.12.6.1-3.jammy_amd64.deb
 
       - name: Install uv and Python
-        uses: astral-sh/setup-uv@v10.2.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           cache-suffix: py${{ matrix.python-version }}
@@ -174,4 +174,4 @@ jobs:
           use_oidc: true
           files: reports/coverage.xml
           flags: py${{ matrix.python-version }}
-          fail_ci_if_error: ${{ matrix.experimental != true }}
+          fail_ci_if_error: ${{ github.actor != 'dependabot[bot]' && matrix.experimental != true }}

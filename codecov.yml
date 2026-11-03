@@ -8,4 +8,4 @@ coverage:
       default:
         informational: true
 comment:
-  layout: "condensed"
+  layout: "diff, flags, files"
