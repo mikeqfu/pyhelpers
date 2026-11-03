@@ -2,10 +2,10 @@ coverage:
   status:
     project:
       default:
-        target: auto        # mirrors [tool.coverage.report] fail_under
+        target: 80%        # mirrors [tool.coverage.report] fail_under
         threshold: 1%      # tolerate tiny fluctuations
     patch:
       default:
         informational: true
 comment:
-  layout: "condensed"
+  layout: "diff, flags, files"

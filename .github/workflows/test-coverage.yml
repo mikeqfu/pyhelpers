@@ -174,4 +174,4 @@ jobs:
           use_oidc: true
           files: reports/coverage.xml
           flags: py${{ matrix.python-version }}
-          fail_ci_if_error: ${{ matrix.experimental != true }}
+          fail_ci_if_error: ${{ github.actor != 'dependabot[bot]' && matrix.experimental != true }}
