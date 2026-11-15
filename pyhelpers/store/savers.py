@@ -790,8 +790,9 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, print_kwargs=No
     :param path_to_file: The destination path for the Parquet file.
     :type path_to_file: str | os.PathLike
     :param engine: Parquet library to use; options are ``None``, ``'auto'``,
-        ``'pyarrow'`` or ``'fastparquet'``; when ``engine=None``, it defaults to ``'auto'``
-        if ``data`` is ``pandas.DataFrame``.
+        ``'pyarrow'`` or ``'fastparquet'``; when ``engine`` is ``None`` or ``'auto'``, the
+        engine is not passed on and Pandas/GeoPandas pick the default (``'pyarrow'`` when
+        installed, otherwise ``'fastparquet'``).
     :type engine: str | None
     :param verbose: Whether to print relevant information to the console; defaults to ``False``.
     :type verbose: bool | int
@@ -853,6 +854,10 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, print_kwargs=No
     file_path, _, _ = _check_saving_path(
         path_to_file, verbose=verbose, return_info=True, **(print_kwargs or {}))
 
+    # pandas deprecates passing `engine='auto'` explicitly and warns that it will be removed;
+    # omitting the argument selects the same default, so only forward an actual engine choice
+    engine_kwargs = {} if engine in (None, 'auto') else {'engine': engine}
+
     try:
         # Only use direct pyarrow writer if data is already an Arrow Table
         if isinstance(data, pa.Table):  # noqa
@@ -861,10 +866,10 @@ def save_parquet(data, path_to_file, engine=None, verbose=False, print_kwargs=No
 
         elif all(hasattr(data, a) for a in {'has_sindex', 'geometry', 'to_parquet'}):  # GeoDataFrame
             # noinspection PyUnresolvedReferences
-            data.to_parquet(file_path, engine=engine, **kwargs)
+            data.to_parquet(file_path, **engine_kwargs, **kwargs)
 
         elif hasattr(data, 'to_parquet'):  # Standard Pandas DataFrame
-            data.to_parquet(file_path, engine='auto' if engine is None else engine, **kwargs)
+            data.to_parquet(file_path, **engine_kwargs, **kwargs)
 
         else:
             raise TypeError(f"Unsupported data type: {type(data)}")

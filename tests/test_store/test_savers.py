@@ -186,6 +186,7 @@ def test_save_feather(index, tmp_path, capfd):
 @pytest.mark.parametrize('engine', [None, 'auto', 'pyarrow'])
 def test_save_parquet(engine, tmp_path, capfd):
     import pyarrow as pa
+    import geopandas as gpd  # gpd = pytest.importorskip("geopandas")
 
     filename = "test_save_parquet.parquet"
     path_to_file = tmp_path / filename
@@ -197,6 +198,20 @@ def test_save_parquet(engine, tmp_path, capfd):
     out, _ = capfd.readouterr()
     assert f'Saving "{filename}"' in out and "Done." in out
     assert path_to_file.is_file()
+
+    # Test with geopandas.GeoDataFrame
+    gdf = gpd.GeoDataFrame(
+        dat_df,
+        geometry=gpd.points_from_xy(dat_df['Longitude'], dat_df['Latitude']),
+        crs="EPSG:4326"
+    )
+
+    path_to_file_gdf = tmp_path / "test_gdf.parquet"
+    save_parquet(gdf, path_to_file=path_to_file_gdf, verbose=True)
+    out, _ = capfd.readouterr()
+    assert 'Saving "test_gdf.parquet"' in out and "Done." in out
+    assert path_to_file_gdf.is_file()
+    assert gpd.read_parquet(path_to_file_gdf).crs == gdf.crs
 
     # noinspection PyArgumentList
     dat_table = pa.Table.from_pandas(dat_df)  # Test with pyarrow.Table (Direct path)
