@@ -2,7 +2,6 @@
 Utilities for geometric data transformations.
 """
 
-import copy
 import functools
 import typing
 
@@ -493,21 +492,26 @@ def project_point_to_line(point, line, drop_dimension=None):
 
     :param point: Point geometry object representing the starting point.
     :type point: shapely.geometry.Point
-    :param line: Line geometry object to which the point is projected.
+    :param line: Line geometry object to which the point is projected; only its first and
+        last vertices are used, i.e. the point is projected onto the straight line through
+        them, and intermediate vertices are ignored.
     :type line: shapely.geometry.LineString
-    :param drop_dimension: Dimension to drop during projection;
-        options include ``'x'``, ``'y'`` and ``'z'``; defaults to ``None``.
+    :param drop_dimension: Dimension to drop from both geometries before projecting;
+        options include ``'x'``, ``'y'`` and ``'z'`` (case-insensitive). Defaults to ``None``.
     :type drop_dimension: str | None
     :return: Tuple containing the original point (with all or partial dimensions,
-        based on ``drop_dimension``) and the projected point on the line.
+        based on ``drop_dimension``) and the projected point.
     :rtype: tuple
+    :raises ValueError: If ``drop_dimension`` is not ``'x'``, ``'y'``, ``'z'`` or ``None``.
 
     **Examples**::
 
         >>> from pyhelpers.geom import project_point_to_line
         >>> from shapely.geometry import Point, LineString, MultiPoint
+
         >>> pt = Point([399297, 655095, 43])
         >>> ls = LineString([[399299, 655091, 42], [399295, 655099, 42]])
+
         >>> _, pt_proj = project_point_to_line(point=pt, line=ls)
         >>> pt_proj.wkt
         'POINT Z (399297 655095 42)'
@@ -516,22 +520,30 @@ def project_point_to_line(point, line, drop_dimension=None):
 
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.settings import mpl_preferences
+
         >>> mpl_preferences(font_size=12)
+
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection='3d')
+
         >>> ls_zs = list(map(lambda c: c[2], ls.coords))
+
         >>> ax.plot(ls.coords.xy[0], ls.coords.xy[1], ls_zs, label='Line')
         >>> ax.scatter(pt.x, pt.y, pt.z, label='Point')
         >>> ax.scatter(pt_proj.x, pt_proj.y, pt_proj.z, label='Projected point')
+
         >>> for i in MultiPoint([*ls.coords, pt, pt_proj]).geoms:
         ...     pos = tuple(map(int, i.coords[0]))
         ...     ax.text3D(pos[0], pos[1], pos[2], str(pos))
         >>> ax.legend(loc=3)
+
         >>> fig.tight_layout()
+
         >>> ax.set_xticklabels([])
         >>> ax.set_yticklabels([])
         >>> ax.set_zticklabels([])
         >>> fig.show()
+
         >>> # from pyhelpers.store import save_figure
         >>> # path_to_fig_ = "docs/source/_images/geom-project_point_to_line-demo"
         >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
@@ -545,23 +557,33 @@ def project_point_to_line(point, line, drop_dimension=None):
         An example of projecting a point onto a line.
     """
 
-    if line.length == 0:
-        point_, line_ = point, shapely.geometry.Point(set(line.coords))
-
+    if drop_dimension is not None:
+        assert drop_dimension in {'x', 'y', 'z'}, \
+            "`drop_dimension` must be one of {'x', 'y', 'z'}."
+        point_, line_ = map(
+            functools.partial(drop_axis, axis=drop_dimension),
+            [point, line]
+        )
     else:
-        if drop_dimension is not None:
-            assert drop_dimension in {'x', 'y', 'z'}, \
-                "`drop_dimension` must be one of {'x', 'y', 'z'}."
-            point_, line_ = map(functools.partial(drop_axis, axis=drop_dimension), [point, line])
-        else:
-            point_, line_ = map(copy.copy, [point, line])
+        point_, line_ = point, line
 
-        x, u, v = map(
-            np.array, [point_.coords[0], line_.coords[0], line_.coords[len(line_.coords) - 1]])
+    # Check for zero length on line_ (after optional axis dropping)
+    if line_.length == 0 or np.array_equal(line_.coords[0], line_.coords[-1]):
+        return point_, shapely.geometry.Point(line_.coords[0])
 
-        n = v - u
-        n /= np.linalg.norm(n, 2)
+    u = np.array(line_.coords[0])
+    v = np.array(line_.coords[-1])
 
-        line_ = shapely.geometry.Point(u + n * np.dot(x - u, n))
+    # Zero-length line, or one whose ends coincide: the projection is that single point.
+    # Exact comparison on purpose: `np.allclose` would treat short lines as degenerate
+    # when coordinates are large (e.g. British National Grid).
+    if np.array_equal(u, v):
+        return point_, shapely.geometry.Point(u)
 
-    return point_, line_
+    x = np.array(point_.coords[0])
+    n = v - u
+    n /= np.linalg.norm(n)
+
+    proj_pt = shapely.geometry.Point(u + n * np.dot(x - u, n))
+
+    return point_, proj_pt
