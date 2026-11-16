@@ -145,11 +145,13 @@ def test_project_point_to_line():
     assert pt_proj.wkt == 'POINT Z (399299 655091 42)'
     assert pt_.wkt == 'POINT Z (399297 655095 43)'
 
-    # 2. Zero-length LineString (length == 0 check before drop_axis)
-    ls_zero = shapely.geometry.LineString([[399299, 655091, 42], [399299, 655091, 42]])
-    assert ls_zero.length == 0
-    _, pt_proj_zero = project_point_to_line(point=pt, line=ls_zero)
-    assert pt_proj_zero.wkt == 'POINT Z (399299 655091 42)'
+    # 2. Segment-level zero length (u == v inside a multi-segment line)
+    # Line length > 0, but segment 1 has identical vertices: (0,0,0) -> (0,0,0)
+    pt_dup = shapely.geometry.Point([1, 1, 0])
+    ls_dup_seg = shapely.geometry.LineString([[0, 0, 0], [0, 0, 0], [10, 0, 0]])
+    assert ls_dup_seg.length > 0  # Bypasses the early line.length == 0 check
+    _, pt_proj_dup = project_point_to_line(point=pt_dup, line=ls_dup_seg)
+    assert pt_proj_dup.wkt == 'POINT Z (1 0 0)'  # Reaches and covers `if np.array_equal(u, v):`
 
     # 3. Standard 3D Projection
     ls_ = shapely.geometry.LineString([
