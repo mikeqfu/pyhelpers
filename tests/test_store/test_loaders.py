@@ -119,6 +119,38 @@ def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd, monkeypatch)
         with pytest.raises(Exception):
             load_parquet(bad_path, raise_error=True)
 
+        # 'fastparquet' index repair: simulated, since real fastparquet rarely yields this
+        real_read_parquet = pd.read_parquet
+        n_rows = len(original_data)
+
+        # (a) All-null index, but the real index is available as a column -> set_index()
+        broken_resolvable = original_data.reset_index()  # 'City' becomes a column
+        broken_resolvable.index = pd.Index([None] * n_rows, name=original_data.index.name)
+
+        # (b) All-null index that cannot be resolved -> retry with pyarrow, with a warning
+        broken_unresolved = original_data.reset_index(drop=True)
+        broken_unresolved.index = pd.Index([None] * n_rows, name='unresolvable')
+
+        def _fake_read_parquet(broken):
+            def _read(path, **kw):
+                if kw.get('engine') == 'fastparquet':
+                    return broken.copy()
+                return real_read_parquet(path, **kw)  # the pyarrow retry reads the real file
+            return _read
+
+        with monkeypatch.context() as m:
+            m.setattr("pandas.read_parquet", _fake_read_parquet(broken_resolvable))
+            retrieved_data = load_parquet(path_to_parquet, engine='fastparquet')
+            # noinspection unresolved-references
+            assert retrieved_data.equals(original_data)
+
+        with monkeypatch.context() as m:
+            m.setattr("pandas.read_parquet", _fake_read_parquet(broken_unresolved))
+            with pytest.warns(UserWarning, match="failed to decode the index"):
+                retrieved_data = load_parquet(path_to_parquet, engine='fastparquet')
+            # noinspection unresolved-references
+            assert retrieved_data.equals(original_data)
+
         # Conversion to pandas fails: the table is returned with a warning (keep this last,
         # since the monkeypatch changes pyarrow.parquet.read_table for the rest of the test)
         class _FakeTable:
