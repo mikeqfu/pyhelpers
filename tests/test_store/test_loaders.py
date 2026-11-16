@@ -38,12 +38,19 @@ def test_load_spreadsheets(dat_dir, capfd):
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
 @pytest.mark.parametrize('file_ext', [".parquet", ".geoparquet"])
 @pytest.mark.parametrize('data_type', ['df', 'gdf'])
-def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd):
+def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd, monkeypatch):
     # Suppress the fastparquet generic timedelta warning
     warnings.filterwarnings(
         action="ignore",
         category=DeprecationWarning,
         message=".*generic.*unit for NumPy timedelta is deprecated"
+    )
+
+    # Suppress pandas' deprecation of the 'fastparquet' engine
+    warnings.filterwarnings(
+        action="ignore",
+        category=DeprecationWarning,
+        message=".*'fastparquet' engine is deprecated.*"
     )
 
     # import tempfile, pathlib; tmp_path = pathlib.Path(tempfile.mkdtemp())
@@ -59,16 +66,101 @@ def test_load_parquet(engine, file_ext, data_type, tmp_path, capfd):
         original_data = gpd.GeoDataFrame(original_data, crs="EPSG:4326")
         original_data.to_parquet(path_to_parquet)
 
-    if engine == 'not-an-engine' and data_type != 'gdf':  # Test invalid engine fallback
+    if engine == 'not-an-engine':  # Test invalid engine fallback for all data types
         # Should trigger ValueError -> pq.read_table -> to_pandas()
         with pytest.warns(UserWarning, match="Falling back to PyArrow"):
             retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
+        out, _ = capfd.readouterr()
+        assert "Loading" in out and "Done." in out
     else:
         retrieved_data = load_parquet(path_to_parquet, engine=engine, verbose=True)
         out, _ = capfd.readouterr()
         assert "Loading" in out and "Done." in out
 
+    if data_type == 'gdf':
+        # If fallback occurred for gdf, retrieved_data is a DataFrame with WKB geometry
+        if (isinstance(retrieved_data, pd.DataFrame) and
+                not isinstance(retrieved_data, gpd.GeoDataFrame)):
+            retrieved_data = gpd.GeoDataFrame(
+                retrieved_data,
+                geometry=gpd.GeoSeries.from_wkb(retrieved_data['geometry']),
+                crs="EPSG:4326"
+            )
+
+    # noinspection unresolved-references
     assert retrieved_data.equals(original_data)
+
+    # Edge cases independent of the parameters; run once rather than for every combination
+    if (engine, file_ext, data_type) == (None, ".parquet", "df"):
+        # 'auto' is accepted and treated like None
+        # noinspection unresolved-references
+        assert load_parquet(path_to_parquet, engine='auto').equals(original_data)
+
+        # kwargs are passed through to pandas
+        retrieved_cols = load_parquet(path_to_parquet, columns=['Longitude'])
+        # noinspection unresolved-references
+        assert list(retrieved_cols.columns) == ['Longitude']
+
+        # The fallback warns even when verbose=False, and prints nothing
+        capfd.readouterr()  # clear captured output
+        with pytest.warns(UserWarning, match="Falling back to PyArrow"):
+            retrieved_data = load_parquet(path_to_parquet, engine='not-an-engine')
+        out, _ = capfd.readouterr()
+        assert "Done." not in out
+        # noinspection unresolved-references
+        assert retrieved_data.equals(original_data)
+
+        # Both loaders fail: None by default, an exception with raise_error=True
+        bad_path = tmp_path / "bad.parquet"
+        bad_path.write_bytes(b"not a parquet file")
+        assert load_parquet(bad_path, verbose=True) is None
+        out, _ = capfd.readouterr()
+        assert "Failed." in out
+        with pytest.raises(Exception):
+            load_parquet(bad_path, raise_error=True)
+
+        # 'fastparquet' index repair: simulated, since real fastparquet rarely yields this
+        real_read_parquet = pd.read_parquet
+        n_rows = len(original_data)
+
+        # (a) All-null index, but the real index is available as a column -> set_index()
+        broken_resolvable = original_data.reset_index()  # 'City' becomes a column
+        broken_resolvable.index = pd.Index([None] * n_rows, name=original_data.index.name)
+
+        # (b) All-null index that cannot be resolved -> retry with pyarrow, with a warning
+        broken_unresolved = original_data.reset_index(drop=True)
+        broken_unresolved.index = pd.Index([None] * n_rows, name='unresolvable')
+
+        def _fake_read_parquet(broken):
+            def _read(path, **kw):
+                if kw.get('engine') == 'fastparquet':
+                    return broken.copy()
+                return real_read_parquet(path, **kw)  # the pyarrow retry reads the real file
+            return _read
+
+        with monkeypatch.context() as m:
+            m.setattr("pandas.read_parquet", _fake_read_parquet(broken_resolvable))
+            retrieved_data = load_parquet(path_to_parquet, engine='fastparquet')
+            # noinspection unresolved-references
+            assert retrieved_data.equals(original_data)
+
+        with monkeypatch.context() as m:
+            m.setattr("pandas.read_parquet", _fake_read_parquet(broken_unresolved))
+            with pytest.warns(UserWarning, match="failed to decode the index"):
+                retrieved_data = load_parquet(path_to_parquet, engine='fastparquet')
+            # noinspection unresolved-references
+            assert retrieved_data.equals(original_data)
+
+        # Conversion to pandas fails: the table is returned with a warning (keep this last,
+        # since the monkeypatch changes pyarrow.parquet.read_table for the rest of the test)
+        class _FakeTable:
+            def to_pandas(self):
+                raise ValueError("cannot convert")
+
+        monkeypatch.setattr("pyarrow.parquet.read_table", lambda *a, **k: _FakeTable())
+        with pytest.warns(UserWarning, match="Returning a `pyarrow.Table`"):
+            retrieved_data = load_parquet(path_to_parquet, engine='not-an-engine')
+        assert isinstance(retrieved_data, _FakeTable)
 
 
 def test_load_geopackage(tmp_path):

@@ -589,16 +589,27 @@ def _load_parquet(path_to_file, is_geospatial, engine, gpd_module, **kwargs):
     Handles specific edge cases for the 'fastparquet' engine.
     """
 
-    actual_engine = engine or 'auto'
+    valid_engines = {None, 'auto', 'pyarrow', 'fastparquet'}
+    if engine not in valid_engines:
+        raise ValueError(
+            f"Invalid engine {engine!r}; expected None, 'pyarrow' or 'fastparquet' "
+            f"('auto' is accepted for backward compatibility, and 'fastparquet' is "
+            f"deprecated in Pandas)."
+        )
+
     warn_message = ""
+
+    # pandas deprecates passing `engine='auto'` explicitly; omit it if None or 'auto'
+    engine_kwargs = {} if engine in {None, 'auto'} else {'engine': engine}
 
     if is_geospatial:
         return gpd_module.read_parquet(path_to_file, **kwargs), warn_message
 
-    data = pd.read_parquet(path_to_file, engine=actual_engine, **kwargs)
+    data = pd.read_parquet(path_to_file, **engine_kwargs, **kwargs)
 
-    # Fix for potential 'fastparquet' issue where index is loaded as a column with nulls
-    if actual_engine == 'fastparquet' and data.index.get_level_values(0).isnull().all():
+    # Fix for potential 'fastparquet' issue where index is loaded as a column with nulls;
+    # the length check avoids misfiring on empty data, where `.all()` is vacuously True
+    if engine == 'fastparquet' and len(data) > 0 and data.index.get_level_values(0).isnull().all():
         index_name = data.index.name
 
         if index_name in data.columns:
@@ -607,7 +618,8 @@ def _load_parquet(path_to_file, is_geospatial, engine, gpd_module, **kwargs):
             # If the index cannot be resolved
             warn_message = (
                 f"`engine='fastparquet'` failed to decode the index '{index_name}'; "
-                f"retried and resolved using `pyarrow`.")
+                f"retried and resolved using `pyarrow`."
+            )
             kwargs_copy = kwargs.copy()
             kwargs_copy['engine'] = 'pyarrow'
             data = pd.read_parquet(path_to_file, **kwargs_copy)
@@ -615,7 +627,8 @@ def _load_parquet(path_to_file, is_geospatial, engine, gpd_module, **kwargs):
     return data, warn_message
 
 
-def _load_parquet_fallback(path_to_file, pq_module, kwargs):
+@_lazy_check_dependencies(gpd='geopandas')
+def _load_parquet_fallback(path_to_file, pq_module, is_geospatial, kwargs):
     """
     Last-resort loader using PyArrow directly.
     Returns a DataFrame if possible, otherwise a PyArrow Table.
@@ -627,7 +640,12 @@ def _load_parquet_fallback(path_to_file, pq_module, kwargs):
 
     table = pq_module.read_table(path_to_file, **fallback_kwargs)
     try:
-        return table.to_pandas()
+        df = table.to_pandas()
+        if (is_geospatial and 'geometry' in df.columns and
+                not isinstance(df, gpd.GeoDataFrame)):  # noqa
+            # noinspection unresolved-references
+            return gpd.GeoDataFrame(df, geometry=gpd.GeoSeries.from_wkb(df['geometry']))  # noqa
+        return df
     except Exception:  # noqa
         return table
 
@@ -635,6 +653,7 @@ def _load_parquet_fallback(path_to_file, pq_module, kwargs):
 @_lazy_check_dependencies(pa='pyarrow', pq='pyarrow.parquet', gpd='geopandas')
 def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, raise_error=False,
                  **kwargs):
+    # noinspection unresolved-references
     """
     Load data from a `Parquet`_ file.
 
@@ -644,21 +663,26 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
 
     :param path_to_file: Path where the Parquet file is saved.
     :type path_to_file: str | os.PathLike
-    :param engine: Parquet library to use; options are ``None`` (default), ``'auto'``,
-        ``'pyarrow'`` or ``'fastparquet'``.
+    :param engine: Parquet library to use; options are ``None`` (default), ``'pyarrow'`` or
+        ``'fastparquet'`` (deprecated in Pandas); ``'auto'`` is also accepted for backward
+        compatibility and is treated the same as ``None``, because Pandas deprecates
+        passing ``engine='auto'`` explicitly. When ``engine`` is ``None`` (or ``'auto'``),
+        the argument is not passed on and Pandas picks its default. For geospatial Parquet
+        files, which are read by GeoPandas, the value is validated but otherwise not used.
+        If the engine is invalid or unavailable, the function falls back to PyArrow (see the
+        note below).
     :type engine: str | None
     :param verbose: Whether to print progress information; defaults to ``False``.
     :type verbose: bool | int
     :param prt_kwargs: [Optional] Additional parameters for
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
-    :param raise_error: Whether to raise exceptions; if ``False`` (default),
-        errors are captured and printed via a failure message if ``verbose=True``.
-    :type raise_error: bool
+    :param raise_error: Whether to raise exceptions; if ``False`` (default), errors are caught,
+        a failure message is printed when ``verbose`` is true, and ``None`` is returned.
     :param kwargs: [Optional] Additional parameters for `pandas.read_parquet()`_,
         `geopandas.read_parquet()`_ or `pyarrow.parquet.read_table()`_.
     :return: Data retrieved from the specified path.
-    :rtype: pandas.DataFrame | geopandas.GeoDataFrame | pyarrow.Table
+    :rtype: pandas.DataFrame | geopandas.GeoDataFrame | pyarrow.Table | None
 
     .. _`Parquet`: https://arrow.apache.org/docs/python/parquet.html
     .. _`pandas.read_parquet()`:
@@ -670,8 +694,9 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
 
     .. note::
         If the primary loaders fail (e.g. due to an invalid ``engine``), the function
-        falls back to PyArrow and attempts to convert the resulting table back to a
-        DataFrame. If conversion fails, a ``pyarrow.Table`` is returned.
+        falls back to PyArrow, issues a ``UserWarning`` (regardless of ``verbose``), and
+        attempts to convert the resulting table back to a DataFrame. If conversion fails,
+        a ``pyarrow.Table`` is returned.
 
     **Examples**::
 
@@ -690,18 +715,13 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
         Manchester  -2.245115  53.479489
         Leeds       -1.543794  53.797418
 
-        >>> # Load with a specific engine
-        >>> parquet_dat2 = load_parquet(parquet_pathname, engine='fastparquet', verbose=True)
+        >>> # Trigger fallback by providing an invalid engine
+        >>> parquet_dat2 = load_parquet(parquet_pathname, engine='invalid', verbose=True)
         Loading "tests/data/dat.parquet" ... Done.
-        /pyhelpers/store/loaders.py:679: UserWarning: `engine='fastparquet'` failed to decode t...
+        UserWarning: Primary loader failed (...)...
 
         >>> parquet_dat2.equals(parquet_dat1)
         True
-
-        >>> # Trigger fallback by providing an invalid engine
-        >>> parquet_dat = load_parquet(parquet_pathname, engine='invalid', verbose=True)
-        Loading "tests/data/dat.parquet" ... Done.
-        UserWarning: Primary loader failed (engine must be one of 'pyarrow', 'fastparquet')...
 
     .. seealso::
 
@@ -729,21 +749,27 @@ def load_parquet(path_to_file, engine=None, verbose=False, prt_kwargs=None, rais
             data = _load_parquet_fallback(
                 path_to_file=path_to_file,
                 pq_module=pq,  # noqa
+                is_geospatial=is_geospatial,
                 kwargs=kwargs
             )  # noqa
 
             if not isinstance(data, (pd.DataFrame, gpd.GeoDataFrame)):  # noqa
                 warn_message += "\nDataFrame conversion also failed. Returning a `pyarrow.Table`."
 
-        if verbose:
-            print("Done.")
-            if warn_message:
-                warnings.warn(warn_message, UserWarning)
-
-        return data
-
     except Exception as e:
         _print_failure_message(e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+        return None
+
+    if verbose:
+        print("Done.")
+
+    # Emitted outside the try block, so a warning promoted to an error (e.g. by ``-W error``)
+    # is no longer swallowed and turned into a silent ``None``; emitted regardless of
+    # ``verbose``, because a fallback can silently change the type of the returned object
+    if warn_message:
+        warnings.warn(warn_message, UserWarning)
+
+    return data
 
 
 @_lazy_check_dependencies('fiona', 'shapely', gpd='geopandas')
