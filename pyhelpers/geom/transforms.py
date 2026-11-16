@@ -445,7 +445,7 @@ def drop_axis(geom, axis='z', as_array=False):
     axis_ = axis.lower()
     kept_columns = {'x': [1, 2], 'y': [0, 2], 'z': [0, 1]}  # columns of (X, Y, Z) to keep
 
-    if axis not in kept_columns:
+    if axis_ not in kept_columns:
         raise ValueError("`axis` must be 'x', 'y' or 'z'")
 
     coords = shapely.get_coordinates(geom, include_z=True)  # shape (N, 3); NaN if no Z
@@ -558,7 +558,7 @@ def project_point_to_line(point, line, drop_dimension=None):
     """
 
     if drop_dimension is not None:
-        assert drop_dimension in {'x', 'y', 'z'}, \
+        assert drop_dimension.lower() in {'x', 'y', 'z'}, \
             "`drop_dimension` must be one of {'x', 'y', 'z'}."
         point_, line_ = map(
             functools.partial(drop_axis, axis=drop_dimension),
