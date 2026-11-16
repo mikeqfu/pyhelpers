@@ -82,56 +82,100 @@ def test_osgb36_to_wgs84():
 
 
 def test_drop_axis():
+    # 1. Point (3D)
     geom_1 = shapely.geometry.Point([1, 2, 3])
     assert geom_1.wkt == 'POINT Z (1 2 3)'
     geom_1_ = drop_axis(geom_1, 'x')
     assert geom_1_.wkt == 'POINT (2 3)'
-    geom_1_ = drop_axis(geom_1, 'x', as_array=True)
-    assert np.array_equal(geom_1_, np.array([2., 3.]))
+    geom_1_arr = drop_axis(geom_1, 'x', as_array=True)
+    assert np.array_equal(geom_1_arr, np.array([2., 3.]))
 
+    # 2. LineString (3D)
     geom_2 = shapely.geometry.LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-    assert geom_2.wkt
-    'LINESTRING Z (1 2 3, 2 3 4, 3 4 5)'
+    assert geom_2.wkt == 'LINESTRING Z (1 2 3, 2 3 4, 3 4 5)'
     geom_2_ = drop_axis(geom_2, 'y')
-    assert geom_2_.wkt
-    'LINESTRING (1 3, 2 4, 3 5)'
-    geom_2_ = drop_axis(geom_2, 'y', as_array=True)
-    assert np.array_equal(geom_2_, np.array([[1., 3.], [2., 4.], [3., 5.]]))
+    assert geom_2_.wkt == 'LINESTRING (1 3, 2 4, 3 5)'
+    geom_2_arr = drop_axis(geom_2, 'y', as_array=True)
+    assert np.array_equal(geom_2_arr, np.array([[1., 3.], [2., 4.], [3., 5.]]))
 
+    # 3. Polygon (3D)
     geom_3 = shapely.geometry.Polygon([[6, 3, 5], [6, 3, 0], [6, 1, 0], [6, 1, 5], [6, 3, 5]])
-    assert geom_3.wkt
-    'POLYGON Z ((6 3 5, 6 3 0, 6 1 0, 6 1 5, 6 3 5))'
+    assert geom_3.wkt == 'POLYGON Z ((6 3 5, 6 3 0, 6 1 0, 6 1 5, 6 3 5))'
     geom_3_ = drop_axis(geom_3, 'z')
-    assert geom_3_.wkt
-    'POLYGON ((6 3, 6 3, 6 1, 6 1, 6 3))'
-    geom_3_ = drop_axis(geom_3, 'z', as_array=True)
-    assert np.array_equal(geom_3_, np.array([[6., 3.], [6., 3.], [6., 1.], [6., 1.], [6., 3.]]))
+    assert geom_3_.wkt == 'POLYGON ((6 3, 6 3, 6 1, 6 1, 6 3))'
+    geom_3_arr = drop_axis(geom_3, 'z', as_array=True)
+    assert np.array_equal(geom_3_arr, np.array([[6., 3.], [6., 3.], [6., 1.], [6., 1.], [6., 3.]]))
 
+    # 4. MultiLineString (Uniform lengths -> single numpy array)
     ls1 = shapely.geometry.LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     ls2 = shapely.geometry.LineString([[2, 3, 4], [1, 2, 3], [3, 4, 5]])
     geom_4 = shapely.geometry.MultiLineString([ls1, ls2])
     assert geom_4.wkt == 'MULTILINESTRING Z ((1 2 3, 2 3 4, 3 4 5), (2 3 4, 1 2 3, 3 4 5))'
     geom_4_ = drop_axis(geom_4, 'z')
     assert geom_4_.wkt == 'MULTILINESTRING ((1 2, 2 3, 3 4), (2 3, 1 2, 3 4))'
-    geom_4_ = drop_axis(geom_4, 'z', as_array=True)
+    geom_4_arr = drop_axis(geom_4, 'z', as_array=True)
     assert np.array_equal(
-        geom_4_, np.array([[[1., 2.], [2., 3.], [3., 4.]], [[2., 3.], [1., 2.], [3., 4.]]]))
+        geom_4_arr,
+        np.array([[[1., 2.], [2., 3.], [3., 4.]], [[2., 3.], [1., 2.], [3., 4.]]])
+    )
+
+    # 5. Multi-geometry with variable lengths (Triggers `except ValueError` in as_array)
+    ls_short = shapely.geometry.LineString([[1, 2, 3], [2, 3, 4]])
+    ls_long = shapely.geometry.LineString([[2, 3, 4], [1, 2, 3], [3, 4, 5]])
+    geom_var = shapely.geometry.MultiLineString([ls_short, ls_long])
+    geom_var_arr = drop_axis(geom_var, 'z', as_array=True)
+    assert isinstance(geom_var_arr, list)
+    assert len(geom_var_arr) == 2
+
+    # 6. Case-insensitivity ('Z' vs 'z')
+    assert drop_axis(geom_1, 'Z').wkt == 'POINT (1 2)'
+    assert drop_axis(geom_1, 'X').wkt == 'POINT (2 3)'
+
+    # 7. Invalid axis exception
+    with pytest.raises(ValueError, match="`axis` must be 'x', 'y' or 'z'"):
+        drop_axis(geom_1, 'invalid_axis')
 
 
 def test_project_point_to_line():
     pt = shapely.geometry.Point([399297, 655095, 43])
-    ls = shapely.geometry.LineString([[399299, 655091, 42], [399299, 655091, 42]])
-    _, pt_proj = project_point_to_line(point=pt, line=ls)
-    assert pt_proj.wkt == 'POINT Z (399299 655091 42)'
 
-    pt = shapely.geometry.Point([399297, 655095, 43])
-    ls_ = shapely.geometry.LineString(
-        [[399299, 655091, 42], [399295, 655099, 42], [399295, 655107, 42]])
+    # 1. Coincident endpoints (u == v)
+    ls_degen = shapely.geometry.LineString([[399299, 655091, 42], [399299, 655091, 42]])
+    pt_, pt_proj = project_point_to_line(point=pt, line=ls_degen)
+    assert pt_proj.wkt == 'POINT Z (399299 655091 42)'
+    assert pt_.wkt == 'POINT Z (399297 655095 43)'
+
+    # 2. Segment-level zero length (u == v inside a multi-segment line)
+    # Line length > 0, but segment 1 has identical vertices: (0,0,0) -> (0,0,0)
+    pt_dup = shapely.geometry.Point([1, 1, 0])
+    ls_dup_seg = shapely.geometry.LineString([[0, 0, 0], [0, 0, 0], [10, 0, 0]])
+    assert ls_dup_seg.length > 0  # Bypasses the early line.length == 0 check
+    _, pt_proj_dup = project_point_to_line(point=pt_dup, line=ls_dup_seg)
+    assert pt_proj_dup.wkt == 'POINT Z (1 0 0)'  # Reaches and covers `if np.array_equal(u, v):`
+
+    # 3. Standard 3D Projection
+    ls_ = shapely.geometry.LineString([
+        [399299, 655091, 42], [399295, 655099, 42], [399295, 655107, 42]
+    ])
     _, pt_proj = project_point_to_line(point=pt, line=ls_)
     assert pt_proj.wkt == 'POINT Z (399297.9411764706 655095.2352941176 42)'
 
-    _, pt_proj = project_point_to_line(point=pt, line=ls_, drop_dimension='z')
-    assert pt_proj.wkt == 'POINT (399297.9411764706 655095.2352941176)'
+    # 4. Dimension dropping with lowercase and uppercase ('z' / 'Z')
+    pt_dropped, pt_proj_2d = project_point_to_line(point=pt, line=ls_, drop_dimension='z')
+    assert pt_dropped.wkt == 'POINT (399297 655095)'
+    assert pt_proj_2d.wkt == 'POINT (399297.9411764706 655095.2352941176)'
+
+    _, pt_proj_uppercase = project_point_to_line(point=pt, line=ls_, drop_dimension='Z')
+    assert pt_proj_uppercase.wkt == 'POINT (399297.9411764706 655095.2352941176)'
+
+    # 5. Line becoming degenerate strictly after axis dropping
+    ls_vert = shapely.geometry.LineString([[10, 10, 0], [10, 10, 5]])
+    _, pt_proj_vert = project_point_to_line(point=pt, line=ls_vert, drop_dimension='z')
+    assert pt_proj_vert.wkt == 'POINT (10 10)'
+
+    # 6. Invalid drop_dimension assertion check
+    with pytest.raises(AssertionError):
+        project_point_to_line(point=pt, line=ls_, drop_dimension='invalid')
 
 
 if __name__ == '__main__':

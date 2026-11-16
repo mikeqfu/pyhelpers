@@ -2,14 +2,12 @@
 Utilities for geometric data transformations.
 """
 
-import copy
 import functools
 import typing
 
 import numpy as np
 import pyproj
-import shapely.geometry
-import shapely.ops
+import shapely
 
 from .._cache import _transform_point_type
 
@@ -354,61 +352,68 @@ def osgb36_to_wgs84(eastings, northings, as_array=False, **kwargs):
 
 # Dimension / Projection
 
-def _drop_z(x, y, _):
-    return x, y
-
-
-def _drop_y(x, _, z):
-    return x, z
-
-
-def _drop_x(_, y, z):
-    return y, z
-
-
 def drop_axis(geom, axis='z', as_array=False):
     """
     Drops an axis from a given 3D geometry object.
 
     :param geom: Geometry object that has *X*, *Y* and *Z* coordinates.
     :type geom: shapely.geometry.base.BaseGeometry
-    :param axis: Axis to drop; options include ``'x'``, ``'y'`` and ``'z'``; defaults to ``'z'``.
+    :param axis: Axis to drop; options include ``'x'``, ``'y'`` and ``'z'`` (case-insensitive).
+        Defaults to ``'z'``.
     :type axis: str
-    :param as_array: Whether to return an array representation; defaults to ``False``.
+    :param as_array: Whether to return an array representation. Defaults to ``False``.
     :type as_array: bool
-    :return: Geometry object without the specified axis, or an array representation.
+    :return: A two-dimensional geometry object of the same type without the specified axis,
+        or an array representation of it.
     :rtype: shapely.geometry.base.BaseGeometry | numpy.ndarray
+    :raises ValueError: If ``axis`` is not ``'x'``, ``'y'`` or ``'z'``.
+
+    .. note::
+
+        - The input geometry is not modified; a new geometry is returned.
+        - If ``geom`` has no *Z* coordinates, the missing values are treated as ``NaN``.
+        - For a polygon, ``as_array=True`` returns only the exterior ring; interior rings
+          are ignored
 
     **Examples**::
 
         >>> from pyhelpers.geom import drop_axis
         >>> from shapely.geometry import Point, LineString, Polygon, MultiLineString
+
         >>> geom_1 = Point([1, 2, 3])
         >>> geom_1.wkt
         'POINT Z (1 2 3)'
+
         >>> geom_1_ = drop_axis(geom_1, 'x')
         >>> geom_1_.wkt
         'POINT (2 3)'
+
         >>> geom_1_ = drop_axis(geom_1, 'x', as_array=True)
         >>> geom_1_
         array([2., 3.])
+
         >>> geom_2 = LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
         >>> geom_2.wkt
         'LINESTRING Z (1 2 3, 2 3 4, 3 4 5)'
+
         >>> geom_2_ = drop_axis(geom_2, 'y')
         >>> geom_2_.wkt
         'LINESTRING (1 3, 2 4, 3 5)'
+
         >>> geom_2_ = drop_axis(geom_2, 'y', as_array=True)
         >>> geom_2_
         array([[1., 3.],
                [2., 4.],
                [3., 5.]])
+
         >>> geom_3 = Polygon([[6, 3, 5], [6, 3, 0], [6, 1, 0], [6, 1, 5], [6, 3, 5]])
         >>> geom_3.wkt
         'POLYGON Z ((6 3 5, 6 3 0, 6 1 0, 6 1 5, 6 3 5))'
+
         >>> geom_3_ = drop_axis(geom_3, 'z')
         >>> geom_3_.wkt
         'POLYGON ((6 3, 6 3, 6 1, 6 1, 6 3))'
+
         >>> geom_3_ = drop_axis(geom_3, 'z', as_array=True)
         >>> geom_3_
         array([[6., 3.],
@@ -416,14 +421,17 @@ def drop_axis(geom, axis='z', as_array=False):
                [6., 1.],
                [6., 1.],
                [6., 3.]])
+
         >>> ls1 = LineString([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
         >>> ls2 = LineString([[2, 3, 4], [1, 2, 3], [3, 4, 5]])
         >>> geom_4 = MultiLineString([ls1, ls2])
         >>> geom_4.wkt
         'MULTILINESTRING Z ((1 2 3, 2 3 4, 3 4 5), (2 3 4, 1 2 3, 3 4 5))'
+
         >>> geom_4_ = drop_axis(geom_4, 'z')
         >>> geom_4_.wkt
         'MULTILINESTRING ((1 2, 2 3, 3 4), (2 3, 1 2, 3 4))'
+
         >>> geom_4_ = drop_axis(geom_4, 'z', as_array=True)
         >>> geom_4_
         array([[[1., 2.],
@@ -434,17 +442,16 @@ def drop_axis(geom, axis='z', as_array=False):
                 [3., 4.]]])
     """
 
-    # Map axis names to your existing helper functions
-    helpers = {
-        'x': _drop_x,
-        'y': _drop_y,
-        'z': _drop_z
-    }
+    axis_ = axis.lower()
+    kept_columns = {'x': [1, 2], 'y': [0, 2], 'z': [0, 1]}  # columns of (X, Y, Z) to keep
 
-    if axis.lower() not in helpers:
-        raise ValueError("axis must be 'x', 'y' or 'z'")
+    if axis_ not in kept_columns:
+        raise ValueError("`axis` must be 'x', 'y' or 'z'")
 
-    geom_obj = shapely.ops.transform(helpers[axis.lower()], geom)
+    coords = shapely.get_coordinates(geom, include_z=True)  # shape (N, 3); NaN if no Z
+
+    # Writing back an (N, 2) array makes shapely return a 2D geometry of the same type
+    geom_obj = shapely.set_coordinates(geom, coords[:, kept_columns[axis_]])
 
     if as_array:
         # Points are a special case in Shapely (coords[0] is the point)
@@ -485,21 +492,26 @@ def project_point_to_line(point, line, drop_dimension=None):
 
     :param point: Point geometry object representing the starting point.
     :type point: shapely.geometry.Point
-    :param line: Line geometry object to which the point is projected.
+    :param line: Line geometry object to which the point is projected; only its first and
+        last vertices are used, i.e. the point is projected onto the straight line through
+        them, and intermediate vertices are ignored.
     :type line: shapely.geometry.LineString
-    :param drop_dimension: Dimension to drop during projection;
-        options include ``'x'``, ``'y'`` and ``'z'``; defaults to ``None``.
+    :param drop_dimension: Dimension to drop from both geometries before projecting;
+        options include ``'x'``, ``'y'`` and ``'z'`` (case-insensitive). Defaults to ``None``.
     :type drop_dimension: str | None
     :return: Tuple containing the original point (with all or partial dimensions,
-        based on ``drop_dimension``) and the projected point on the line.
+        based on ``drop_dimension``) and the projected point.
     :rtype: tuple
+    :raises ValueError: If ``drop_dimension`` is not ``'x'``, ``'y'``, ``'z'`` or ``None``.
 
     **Examples**::
 
         >>> from pyhelpers.geom import project_point_to_line
         >>> from shapely.geometry import Point, LineString, MultiPoint
+
         >>> pt = Point([399297, 655095, 43])
         >>> ls = LineString([[399299, 655091, 42], [399295, 655099, 42]])
+
         >>> _, pt_proj = project_point_to_line(point=pt, line=ls)
         >>> pt_proj.wkt
         'POINT Z (399297 655095 42)'
@@ -508,22 +520,30 @@ def project_point_to_line(point, line, drop_dimension=None):
 
         >>> import matplotlib.pyplot as plt
         >>> from pyhelpers.settings import mpl_preferences
+
         >>> mpl_preferences(font_size=12)
+
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(projection='3d')
+
         >>> ls_zs = list(map(lambda c: c[2], ls.coords))
+
         >>> ax.plot(ls.coords.xy[0], ls.coords.xy[1], ls_zs, label='Line')
         >>> ax.scatter(pt.x, pt.y, pt.z, label='Point')
         >>> ax.scatter(pt_proj.x, pt_proj.y, pt_proj.z, label='Projected point')
+
         >>> for i in MultiPoint([*ls.coords, pt, pt_proj]).geoms:
         ...     pos = tuple(map(int, i.coords[0]))
         ...     ax.text3D(pos[0], pos[1], pos[2], str(pos))
         >>> ax.legend(loc=3)
+
         >>> fig.tight_layout()
+
         >>> ax.set_xticklabels([])
         >>> ax.set_yticklabels([])
         >>> ax.set_zticklabels([])
         >>> fig.show()
+
         >>> # from pyhelpers.store import save_figure
         >>> # path_to_fig_ = "docs/source/_images/geom-project_point_to_line-demo"
         >>> # save_figure(fig, f"{path_to_fig_}.svg", verbose=True)
@@ -537,23 +557,33 @@ def project_point_to_line(point, line, drop_dimension=None):
         An example of projecting a point onto a line.
     """
 
-    if line.length == 0:
-        point_, line_ = point, shapely.geometry.Point(set(line.coords))
-
+    if drop_dimension is not None:
+        assert drop_dimension.lower() in {'x', 'y', 'z'}, \
+            "`drop_dimension` must be one of {'x', 'y', 'z'}."
+        point_, line_ = map(
+            functools.partial(drop_axis, axis=drop_dimension),
+            [point, line]
+        )
     else:
-        if drop_dimension is not None:
-            assert drop_dimension in {'x', 'y', 'z'}, \
-                "`drop_dimension` must be one of {'x', 'y', 'z'}."
-            point_, line_ = map(functools.partial(drop_axis, axis=drop_dimension), [point, line])
-        else:
-            point_, line_ = map(copy.copy, [point, line])
+        point_, line_ = point, line
 
-        x, u, v = map(
-            np.array, [point_.coords[0], line_.coords[0], line_.coords[len(line_.coords) - 1]])
+    # Check for zero length on line_ (after optional axis dropping)
+    if line_.length == 0 or np.array_equal(line_.coords[0], line_.coords[-1]):
+        return point_, shapely.geometry.Point(line_.coords[0])
 
-        n = v - u
-        n /= np.linalg.norm(n, 2)
+    u = np.array(line_.coords[0])
+    v = np.array(line_.coords[-1])
 
-        line_ = shapely.geometry.Point(u + n * np.dot(x - u, n))
+    # Zero-length line, or one whose ends coincide: the projection is that single point.
+    # Exact comparison on purpose: `np.allclose` would treat short lines as degenerate
+    # when coordinates are large (e.g. British National Grid).
+    if np.array_equal(u, v):
+        return point_, shapely.geometry.Point(u)
 
-    return point_, line_
+    x = np.array(point_.coords[0])
+    n = v - u
+    n /= np.linalg.norm(n)
+
+    proj_pt = shapely.geometry.Point(u + n * np.dot(x - u, n))
+
+    return point_, proj_pt
