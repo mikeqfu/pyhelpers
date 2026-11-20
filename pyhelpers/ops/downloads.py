@@ -8,6 +8,7 @@ import pathlib
 import re
 import secrets
 import shutil
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -657,55 +658,69 @@ class GitHubFileDownloader:
 
             >>> from pyhelpers.ops import GitHubFileDownloader
             >>> from pyhelpers.dirs import delete_dir
+
             >>> output_dir = "tests/temp"
+
             >>> # Download a single file
             >>> repo_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv'
             >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
+
             >>> downloader.download()
-            Downloaded to: "./tests/temp/dat.csv"
+            Downloaded to: "tests/temp/tests/data/dat.csv"
             1
+
             >>> # Download a directory
             >>> repo_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data'
             >>> downloader = GitHubFileDownloader(repo_url, output_dir=output_dir)
+
             >>> downloader.download()
-            Downloaded to: "./tests/temp/tests/data/csr_mat.npz"
-            Downloaded to: "./tests/temp/tests/data/dat.csv"
-            Downloaded to: "./tests/temp/tests/data/dat.feather"
-            Downloaded to: "./tests/temp/tests/data/dat.joblib"
-            Downloaded to: "./tests/temp/tests/data/dat.json"
-            Downloaded to: "./tests/temp/tests/data/dat.ods"
-            Downloaded to: "./tests/temp/tests/data/dat.pickle"
-            Downloaded to: "./tests/temp/tests/data/dat.pickle.bz2"
-            Downloaded to: "./tests/temp/tests/data/dat.pickle.gz"
-            Downloaded to: "./tests/temp/tests/data/dat.pickle.xz"
-            Downloaded to: "./tests/temp/tests/data/dat.txt"
-            Downloaded to: "./tests/temp/tests/data/dat.xlsx"
-            Downloaded to: "./tests/temp/tests/data/zipped.7z"
-            Downloaded to: "./tests/temp/tests/data/zipped.txt"
-            Downloaded to: "./tests/temp/tests/data/zipped.zip"
-            16
+            Downloaded to: "tests/temp/tests/data/dat.7z"
+            Downloaded to: "tests/temp/tests/data/dat.csv"
+            Downloaded to: "tests/temp/tests/data/dat.feather"
+            Downloaded to: "tests/temp/tests/data/dat.gold.parquet"
+            Downloaded to: "tests/temp/tests/data/dat.gpkg"
+            Downloaded to: "tests/temp/tests/data/dat.joblib"
+            Downloaded to: "tests/temp/tests/data/dat.json"
+            Downloaded to: "tests/temp/tests/data/dat.npz"
+            Downloaded to: "tests/temp/tests/data/dat.ods"
+            Downloaded to: "tests/temp/tests/data/dat.parquet"
+            Downloaded to: "tests/temp/tests/data/dat.pickle"
+            Downloaded to: "tests/temp/tests/data/dat.pickle.bz2"
+            Downloaded to: "tests/temp/tests/data/dat.pickle.gz"
+            Downloaded to: "tests/temp/tests/data/dat.pickle.xz"
+            Downloaded to: "tests/temp/tests/data/dat.processed.pkl.xz"
+            Downloaded to: "tests/temp/tests/data/dat.txt"
+            Downloaded to: "tests/temp/tests/data/dat.xlsx"
+            Downloaded to: "tests/temp/tests/data/dat.zip"
+            18
+
             >>> downloader = GitHubFileDownloader(
             ...     repo_url, flatten_files=True, output_dir=output_dir)
             >>> downloader.download()
-            Downloaded to: "./tests/temp/csr_mat.npz"
-            Downloaded to: "./tests/temp/dat.csv"
-            Downloaded to: "./tests/temp/dat.feather"
-            Downloaded to: "./tests/temp/dat.joblib"
-            Downloaded to: "./tests/temp/dat.json"
-            Downloaded to: "./tests/temp/dat.ods"
-            Downloaded to: "./tests/temp/dat.pickle"
-            Downloaded to: "./tests/temp/dat.pickle.bz2"
-            Downloaded to: "./tests/temp/dat.pickle.gz"
-            Downloaded to: "./tests/temp/dat.pickle.xz"
-            Downloaded to: "./tests/temp/dat.txt"
-            Downloaded to: "./tests/temp/dat.xlsx"
-            Downloaded to: "./tests/temp/zipped.7z"
-            Downloaded to: "./tests/temp/zipped.txt"
-            Downloaded to: "./tests/temp/zipped.zip"
-            16
-            >>> delete_dir(output_dir)
-            To delete the directory "./tests/temp/" (Not empty)
-            ? [No]|Yes: yes
+            Downloaded to: "tests/temp/dat.7z"
+            Downloaded to: "tests/temp/dat.csv"
+            Downloaded to: "tests/temp/dat.feather"
+            Downloaded to: "tests/temp/dat.gold.parquet"
+            Downloaded to: "tests/temp/dat.gpkg"
+            Downloaded to: "tests/temp/dat.joblib"
+            Downloaded to: "tests/temp/dat.json"
+            Downloaded to: "tests/temp/dat.npz"
+            Downloaded to: "tests/temp/dat.ods"
+            Downloaded to: "tests/temp/dat.parquet"
+            Downloaded to: "tests/temp/dat.pickle"
+            Downloaded to: "tests/temp/dat.pickle.bz2"
+            Downloaded to: "tests/temp/dat.pickle.gz"
+            Downloaded to: "tests/temp/dat.pickle.xz"
+            Downloaded to: "tests/temp/dat.processed.pkl.xz"
+            Downloaded to: "tests/temp/dat.txt"
+            Downloaded to: "tests/temp/dat.xlsx"
+            Downloaded to: "tests/temp/dat.zip"
+            18
+
+            >>> delete_dir(output_dir, verbose=True)
+            Confirm deletion of the directory "tests/temp/" (Not empty)?
+             [No]|Yes: yes
+            Deleting "tests/temp/" ... Done.
         """
 
         self.dir_out = ''
@@ -721,10 +736,22 @@ class GitHubFileDownloader:
         # Initialize the total number of files under the given directory
         self.total_files = 0
 
+        # Create a private opener to avoid global side effects; its SSL context trusts the
+        # system's certificate store plus the `certifi` bundle (if installed), which avoids
+        # "unable to get issuer certificate" errors when a root CA is missing locally
+        try:
+            import certifi
+        except ImportError:  # `certifi` is optional here
+            certifi = None
+
+        ssl_context = ssl.create_default_context()
+        if certifi is not None:
+            ssl_context.load_verify_locations(cafile=certifi.where())
+
         # Create a private opener to avoid global side effects
         user_agent_strings = _load_package_data("user-agent-strings.json")
-        self.opener = urllib.request.build_opener()
         random_ua = secrets.choice(list(user_agent_strings.values()))[0]  # Example selection
+        self.opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_context))
         self.opener.addheaders = [('User-Agent', random_ua)]
 
     @classmethod
@@ -827,7 +854,8 @@ class GitHubFileDownloader:
         self.check_url(file_url)
 
         # Download the file
-        _, _ = urllib.request.urlretrieve(file_url, dir_out)  # nosec
+        with self.opener.open(file_url, timeout=30) as response, open(dir_out, 'wb') as f:  # nosec
+            shutil.copyfileobj(response, f)
 
         if self.flatten:
             dir_out_ = os.path.basename(dir_out)
@@ -842,10 +870,8 @@ class GitHubFileDownloader:
             print(f"Downloaded to: {_format_display_path(dir_out)}")
 
     def _get_response(self, api_url_local):
-        response, _ = urllib.request.urlretrieve(api_url_local)  # nosec
-
-        with open(response, "r") as f:  # Download files according to the response
-            data = json.load(f)
+        with self.opener.open(api_url_local, timeout=30) as response:  # nosec
+            data = json.load(response)  # Download files according to the response
 
         # If the data is a file, download it as one.
         if isinstance(data, dict) and data["type"] == "file":
