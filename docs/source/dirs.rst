@@ -12,7 +12,7 @@ Path formatting
 ---------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     normalize_path
@@ -24,7 +24,7 @@ Path validation
 ---------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     is_dir_path
@@ -35,7 +35,7 @@ Directory navigation
 --------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     cd
@@ -48,7 +48,7 @@ Directory management
 --------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     delete_dir

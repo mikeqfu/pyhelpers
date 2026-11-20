@@ -12,7 +12,7 @@ Distance-related calculations
 -----------------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     calc_spherical_distance
@@ -26,7 +26,7 @@ Geometric properties and shape sketching
 
 .. rubric:: Properties
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     get_midpoint
@@ -38,7 +38,7 @@ Geometric properties and shape sketching
 
 .. rubric:: Sketching
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     sketch_square
@@ -48,7 +48,7 @@ Geometric data transformation
 
 .. rubric:: Data type
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     transform_point_type
@@ -57,7 +57,7 @@ Geometric data transformation
 
 .. rubric:: Coordinate system
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     wgs84_to_osgb36
@@ -65,9 +65,8 @@ Geometric data transformation
 
 .. rubric:: Dimension / Projection
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     drop_axis
     project_point_to_line
-

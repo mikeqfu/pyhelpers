@@ -12,7 +12,7 @@ Textual data (pre)processing
 ----------------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     clean_html_text
@@ -28,7 +28,7 @@ Textual data similarity
 -----------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     euclidean_distance_between_texts

@@ -13,7 +13,7 @@ Configurations
 
 .. rubric:: GDAL/OGR
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     gdal_configurations
@@ -23,7 +23,7 @@ Preferences
 
 .. rubric:: Matplotlib
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     mpl_preferences

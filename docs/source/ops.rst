@@ -12,7 +12,7 @@ Basic computation / conversion
 ------------------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     get_utc_tai_offset
@@ -28,7 +28,7 @@ Basic data manipulation
 
 .. rubric:: Iterable
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     shift_decimal_to_int
@@ -45,7 +45,7 @@ Basic data manipulation
 
 .. rubric:: Tabular data
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     detect_nan_for_str_column
@@ -62,7 +62,7 @@ Web data manipulation
 
 .. rubric:: Internet-related utilities
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     is_network_connected
@@ -76,21 +76,21 @@ Web data manipulation
 
 .. rubric:: File downloads utilities
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     is_downloadable
     download_file_from_url
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: class.rst
 
     GitHubFileDownloader
 
 .. rubric:: API-related utilities
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: class.rst
 
     CrossRefOrcid
@@ -99,7 +99,7 @@ Misc general utilities
 ----------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     confirmed
