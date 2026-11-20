@@ -50,7 +50,7 @@ def load_pickle(path_to_file, verbose=False, prt_kwargs=None, raise_error=False,
 
         - Ensure that ``path_to_file`` comes from a trusted source to avoid deserialization
           vulnerabilities.
-        - Example data can be referred to the function :func:`~pyhelpers.store.svr.save_pickle`.
+        - Example data can be referred to the function :func:`~pyhelpers.store.save_pickle`.
 
     **Examples**::
 
