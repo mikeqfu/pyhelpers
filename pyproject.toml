@@ -1,14 +1,18 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.26"]
 build-backend = "hatchling.build"
 
+
+# ----------------
+# Project metadata
+# ----------------
 [project]
 name = "pyhelpers"
 version = "2.5.3"
 description = "An open-source toolkit for facilitating Python users' data manipulation tasks."
 readme = "README.md"
-requires-python = ">=3.12"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Qian Fu" }
 ]
@@ -21,6 +25,7 @@ keywords = [
     "Python utils",
     "Python utility"
 ]
+requires-python = ">=3.12"
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
@@ -30,6 +35,7 @@ classifiers = [
     "Topic :: Software Development",
     "Topic :: Utilities",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -94,12 +100,6 @@ Changelog = "https://github.com/mikeqfu/pyhelpers/blob/master/CHANGELOG.md"
 # Local developer tooling
 # -----------------------
 [dependency-groups]
-dev = [
-    "notebook",
-    "jsonschema[format]",
-    "rfc3987-syntax",
-    "python-dotenv"
-]
 docs = [
     "furo",
     "sphinx",
@@ -107,21 +107,32 @@ docs = [
     "sphinx-new-tab-link",
     "sphinx-toggleprompt"
 ]
+notebook = [
+    "notebook",
+]
 test = [
     "coverage",
+    "jsonschema[format]",
     "pytest",
     "pytest-cov",
     "pytest-mock",
+    "python-dotenv",
+    "rfc3987-syntax",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "notebook" },
+    { include-group = "docs" },
 ]
 
 
-# -----------------
+# ----------------
 # UV configuration
-# -----------------
+# ----------------
 [tool.uv]
 required-environments = [
-    "sys_platform == 'linux'",
-    "sys_platform == 'win32'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
 ]
 
 [[tool.uv.index]]
@@ -135,9 +146,14 @@ gdal = [
 ]
 
 
-# --------------------
+# -------------------
 # Build configuration
-# --------------------
+# -------------------
+[tool.hatch.build]
+artifacts = [
+    "pyhelpers/data/**/*"
+]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "pyhelpers",
@@ -160,14 +176,16 @@ packages = ["pyhelpers"]
 [tool.hatch.build.targets.wheel.force-include]
 "pyproject.toml" = "pyhelpers/pyproject.toml"
 
-
 # Custom metadata section
-[tool.custom.metadata]
+[tool.pyhelpers.metadata]
 funder = ""
-project_start = "September 2019"
-corresponding_author = [
-    { name = "Qian Fu", affiliation = "Birmingham Energy Institute, University of Birmingham", email = "q.fu@bham.ac.uk" },
-]
+project-name = "PyHelpers"
+project-start = "2019-09"
+
+[[tool.pyhelpers.metadata.corresponding-author]]
+name = "Qian Fu"
+affiliation = "Birmingham Energy Institute, University of Birmingham"
+email = "q.fu@bham.ac.uk"
 
 
 # --------------------
