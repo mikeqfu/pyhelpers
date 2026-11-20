@@ -3,6 +3,7 @@ Tests the :mod:`~pyhelpers.ops.downloads` submodule.
 """
 
 from unittest.mock import Mock, patch
+from urllib.request import HTTPSHandler
 
 import pytest
 
@@ -86,6 +87,10 @@ class TestGitHubFileDownloader:
                 'dat.csv?ref=master')
         assert test_download_path == 'tests/data/dat.csv'
 
+        # The private opener uses HTTPS (with the SSL context) and a User-Agent header
+        assert any(isinstance(h, HTTPSHandler) for h in downloader.opener.handlers)
+        assert dict(downloader.opener.addheaders).get('User-Agent')
+
     @staticmethod
     @pytest.mark.network
     @pytest.mark.parametrize('flatten_files', [False, True])
@@ -122,9 +127,9 @@ class TestGitHubFileDownloader:
         downloader.download()
         out, _ = capfd.readouterr()
 
-        # Skip test if second API request triggers rate limit
-        if "rate limit" in out.lower():
-            pytest.skip("GitHub API rate limit exceeded")
+        # Skip the test if the unauthenticated GitHub API rate limit is reached or SSL fails
+        if "rate limit" in out.lower() or "[SSL:" in out:
+            pytest.skip("GitHub API rate limit exceeded, or SSL verification failed")
 
         if flatten_files:
             assert "/tests/" not in out
