@@ -75,22 +75,25 @@ def _load_metadata():
         cfg = tomllib.load(f)
 
     project_info = cfg.get('project', {})
-    custom_info = cfg.get('tool', {}).get('custom', {}).get('metadata', {})
+    custom_info = cfg.get('tool', {}).get('pyhelpers', {}).get('metadata', {})
 
     name = project_info.get('name', package_name)
     version = version or project_info.get('version')
     description = description or project_info.get('description')
 
-    authors_str = ', '.join(a.get('name', '') for a in project_info['authors'])
+    authors_str = ', '.join(a.get('name', '') for a in project_info.get('authors', []))
 
     # Format copyright string
     start_year = 2019
     current_year = datetime.date.today().year
     years = f'{start_year}-{current_year}' if current_year > start_year else f'{start_year}'
-    copyright_str = f'Copyright (c) {years} {authors_str}'.strip()
+    copyright_str = (
+        f'Copyright (c) {years} {authors_str}'.strip() if authors_str
+        else f'Copyright (c) {years}'
+    )
 
     # Parse corresponding author details
-    corr_auth_list = custom_info.get('corresponding_author', [])
+    corr_auth_list = custom_info.get('corresponding-author', [])
     corr_author_str = ''
     affiliation_str = ''
 
@@ -111,8 +114,9 @@ def _load_metadata():
         'copyright': copyright_str,
 
         # Custom medata
-        'project_start': custom_info.get('project_start', ''),
-        'corresponding_author': corr_author_str,
+        'project-name': custom_info.get('project-name', ''),
+        'project-start': custom_info.get('project-start', ''),
+        'corresponding-author': corr_author_str,
         'affiliation': affiliation_str,
         'funder': custom_info.get('funder', ''),
     }
@@ -120,19 +124,22 @@ def _load_metadata():
 
 METADATA = _load_metadata()
 
-__project__ = 'PyHelpers'
+__project__ = METADATA.get('project-name')
 __pkgname__ = METADATA.get('name')
 __description__ = METADATA.get('description')
+
 __title__ = f"{__project__}: {__description__.strip('.')}" if __description__ else __project__
+
 __version__ = METADATA.get('version')
 __license__ = METADATA.get('license')
 __copyright__ = METADATA.get('copyright')
-__first_release__ = METADATA.get('project_start')
+
+__first_release__ = METADATA.get('project-start')
 
 __funder__ = METADATA.get("funder")
 
 __author__ = METADATA.get('authors')
-__corresponding_author__ = METADATA.get('corresponding_author')
+__corresponding_author__ = METADATA.get('corresponding-author')
 __affiliation__ = METADATA.get('affiliation')
 
 __all__ = [
