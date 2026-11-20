@@ -13,7 +13,7 @@ General utilities
 -----------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     cmap_discretization
@@ -23,7 +23,7 @@ Utilities for maps
 ------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: class.rst
 
     get_base_map_center

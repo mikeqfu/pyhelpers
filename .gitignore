@@ -6,25 +6,29 @@
 **/__pycache__/
 venv/
 
+# Python runtime and bytecode
+__pycache__/
+*.py[cod]
+
 # Sphinx documentation
-*/build/
-**/_generated/
+docs/build/
+docs/source/api/
 
-# Jupyter Notebook
-**/.ipynb_checkpoints/
+# Jupyter Notebooks
+.ipynb_checkpoints/
 
-# Tests and code coverage
+# Testing and code coverage
 .coverage
 .coverage.*
 reports/
 .pytest_cache/
 
-# Distribution / packaging
+# Distribution and packaging
 dist/
 *.egg-info/
 
 # Project-specific directories / files
-*[!_]_.py
 tutorials/*
+!tutorials/.gitkeep
 .pypirc
 cmd.md

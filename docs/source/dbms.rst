@@ -12,7 +12,7 @@ Databases
 ---------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: class.rst
 
     PostgreSQL
@@ -29,7 +29,7 @@ Database tools/utilities
     :no-inherited-members:
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     make_database_address

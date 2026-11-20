@@ -1,6 +1,27 @@
 # Changelog / Release notes
 
 
+## [2.5.4](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.4)
+
+(*20 November 2026*)
+
+### Notable [changes](https://github.com/mikeqfu/pyhelpers/compare/2.5.3...2.5.4) since [2.5.3](https://pypi.org/project/pyhelpers/2.5.3/):
+
+- **Subpackage refinements & bug fixes:**
+  * Configured `GitHubFileDownloader` with a `certifi`-backed SSL context and private opener to fix certificate verification failures (#165, #170).
+  * Modernised Shapely geometry transform logic and fixed variable scoping in `geom` subpackage (#168).
+  * Replaced deprecated `ExcelFile.parse` with `pandas.read_excel` (#163, #169).
+  * Fixed `load_parquet` returning `None` and stopped forwarding `engine='auto'` to Pandas when saving Parquet files (#166, #167).
+- **Documentation & project metadata:**
+  * Renamed Sphinx autosummary output directory from `_generated` to `api`, removed redundant `requirements.txt` from documentation source and added clean build targets (#171).
+  * Standardised metadata keys, updated build configuration in `pyproject.toml` (#171).
+- **CI/CD & maintenance:**
+  * Configured CI test coverage workflow, refined unit test suite and upgraded `astral-sh/setup-uv` Action dependencies (#155, #159, #161).
+  * Refined `.gitignore` patterns, added `.gitkeep` placeholder for tutorials directory and locked latest package dependencies in `uv.lock` (#160, #171).
+
+**For more information and detailed specifications, check out the [PyHelpers 2.5.4 documentation](https://pyhelpers.readthedocs.io/en/2.5.4/).**
+
+
 ## [2.5.3](https://github.com/mikeqfu/pyhelpers/releases/tag/2.5.3)
 
 (*20 September 2026*)
@@ -28,7 +49,7 @@
 
 - **Packaging & metadata resolution:**
   * Standardised `license`, `authors` and `[project.urls]` tables in `pyproject.toml` to fix PyPI metadata rendering.
-  * Standardised `__title__` string formatting in package initialisation module (`__init__.py`).
+  * Standardised `__title__` string formatting in package initialization module (`__init__.py`).
 - **Documentation & maintenance:**
   * Standardised copyright format in Sphinx configuration (`docs/conf.py`).
   * Updated `uv.lock` dependency lockfile.

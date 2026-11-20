@@ -10,7 +10,7 @@ store
 
 .. rubric:: Utilities
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     _check_saving_path
@@ -22,7 +22,7 @@ Saving data
 -----------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     save_pickle
@@ -41,7 +41,7 @@ Loading data
 ------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     load_pickle
@@ -57,7 +57,7 @@ Transforming data files
 -----------------------
 
 .. autosummary::
-    :toctree: _generated/
+    :toctree: api/
     :template: function.rst
 
     unzip
