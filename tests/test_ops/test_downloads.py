@@ -2,7 +2,9 @@
 Tests the :mod:`~pyhelpers.ops.downloads` submodule.
 """
 
+import sys
 from unittest.mock import Mock, patch
+from urllib.request import HTTPSHandler
 
 import pytest
 
@@ -77,7 +79,7 @@ def test_download_file_from_url(verbose, stream_download, tmp_path, capfd):
 class TestGitHubFileDownloader:
 
     @staticmethod
-    def test_create_url(tmp_path):
+    def test_create_url(tmp_path, monkeypatch):
         test_url = 'https://github.com/mikeqfu/pyhelpers/blob/master/tests/data/dat.csv'
         downloader = GitHubFileDownloader(test_url, output_dir=tmp_path)
         test_api_url, test_download_path = downloader.create_url(test_url)
@@ -85,6 +87,19 @@ class TestGitHubFileDownloader:
                 'https://api.github.com/repos/mikeqfu/pyhelpers/contents/tests/data/'
                 'dat.csv?ref=master')
         assert test_download_path == 'tests/data/dat.csv'
+
+        # The private opener uses HTTPS with an explicit SSL context, and a User-Agent header
+        https_handlers = [h for h in downloader.opener.handlers if isinstance(h, HTTPSHandler)]
+        assert len(https_handlers) == 1
+        assert getattr(https_handlers[0], '_context', None) is not None
+        assert dict(downloader.opener.addheaders).get('User-Agent')
+
+        # Without `certifi`, the opener must still be created (system certificates only)
+        monkeypatch.setitem(sys.modules, 'certifi', None)  # makes `import certifi` fail
+        downloader = GitHubFileDownloader(test_url, output_dir=tmp_path)
+        https_handlers = [h for h in downloader.opener.handlers if isinstance(h, HTTPSHandler)]
+        assert len(https_handlers) == 1
+        assert getattr(https_handlers[0], '_context', None) is not None
 
     @staticmethod
     @pytest.mark.network
@@ -122,9 +137,9 @@ class TestGitHubFileDownloader:
         downloader.download()
         out, _ = capfd.readouterr()
 
-        # Skip test if second API request triggers rate limit
-        if "rate limit" in out.lower():
-            pytest.skip("GitHub API rate limit exceeded")
+        # Skip the test if the unauthenticated GitHub API rate limit is reached or SSL fails
+        if "rate limit" in out.lower() or "[SSL:" in out:
+            pytest.skip("GitHub API rate limit exceeded, or SSL verification failed")
 
         if flatten_files:
             assert "/tests/" not in out
