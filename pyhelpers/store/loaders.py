@@ -252,7 +252,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
     :param prt_kwargs: [Optional] Additional parameters for the function
         :func:`pyhelpers.store._check_loading_path`; defaults to ``None``.
     :type prt_kwargs: dict | None
-    :param kwargs: [Optional] Additional parameters for the method `pandas.ExcelFile.parse()`_.
+    :param kwargs: [Optional] Additional parameters for `pandas.read_excel()`_
+        (except ``io``, ``sheet_name``, ``engine``, ``storage_options`` and ``engine_kwargs``).
     :return: Data of all worksheets in the file from the specified pathname ``path_to_file``.
     :rtype: list | dict | None
 
@@ -260,8 +261,8 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         https://en.wikipedia.org/wiki/Microsoft_Excel
     .. _`OpenDocument`:
         https://en.wikipedia.org/wiki/OpenDocument
-    .. _`pandas.ExcelFile.parse()`:
-        https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelFile.parse.html
+    .. _`pandas.read_excel()`:
+        https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
 
     .. note::
 
@@ -328,8 +329,13 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         Leeds       -1.543794  53.797418
     """
 
-    invalid_kwargs = [
-        k for k in kwargs if k not in inspect.signature(pd.ExcelFile.parse).parameters]
+    # Parameters of `pandas.read_excel()` that this function sets itself, or that only apply
+    # when opening a file (the file is opened once below with `pandas.ExcelFile`)
+    valid_params = set(inspect.signature(pd.read_excel).parameters) - {
+        'io', 'sheet_name', 'engine', 'storage_options', 'engine_kwargs'
+    }
+
+    invalid_kwargs = [k for k in kwargs if k not in valid_params]
     if len(invalid_kwargs) > 0:
         if len(invalid_kwargs) == 1:
             be, arg_, invalid_kwargs = "is an", "argument", f"'{invalid_kwargs[0]}'"
@@ -341,8 +347,7 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
         if verbose:
             print(msg)
 
-    _check_loading_path(
-        path=path_to_file, verbose=verbose, end=" ... \n", **(prt_kwargs or {}))
+    _check_loading_path(path=path_to_file, verbose=verbose, end=" ... \n", **(prt_kwargs or {}))
 
     with pd.ExcelFile(path_to_file) as excel_file_reader:
         sheet_names = excel_file_reader.sheet_names
@@ -353,13 +358,12 @@ def load_spreadsheets(path_to_file, as_dict=True, verbose=False, prt_kwargs=None
                 print(f"  '{sheet_name}'.", end=" ... ")
 
             try:
-                sheet_dat = excel_file_reader.parse(sheet_name, **kwargs)
+                sheet_dat = pd.read_excel(excel_file_reader, sheet_name=sheet_name, **kwargs)
                 if verbose:
                     print("Done.")
             except Exception as e:
                 sheet_dat = None
-                _print_failure_message(
-                    e=e, prefix="Failed.", verbose=verbose, raise_error=raise_error)
+                _print_failure_message(e, "Failed.", verbose=verbose, raise_error=raise_error)
 
             data.append(sheet_dat)
 

@@ -34,6 +34,24 @@ def test_load_spreadsheets(dat_dir, capfd):
     assert isinstance(wb_data, list)
     assert all(isinstance(x, pd.DataFrame) for x in wb_data)
 
+    # A single invalid keyword argument, then several
+    _ = load_spreadsheets(path_to_xlsx, verbose=True, test_arg=True)
+    out, _ = capfd.readouterr()
+    assert "'test_arg' is an invalid keyword argument" in out
+
+    _ = load_spreadsheets(path_to_xlsx, verbose=True, test_arg1=True, test_arg2=True)
+    out, _ = capfd.readouterr()
+    assert "are invalid keyword arguments" in out
+
+    with pytest.raises(ValueError, match="invalid keyword argument"):
+        load_spreadsheets(path_to_xlsx, test_arg=True, raise_error=True)
+
+    # A per-sheet failure is reported and the sheet's data is None
+    wb_data: dict = load_spreadsheets(path_to_xlsx, verbose=True, usecols=['NoSuchColumn'])
+    out, _ = capfd.readouterr()
+    assert "Failed." in out
+    assert all(v is None for v in wb_data.values())
+
 
 @pytest.mark.parametrize('engine', ['not-an-engine', None, 'pyarrow', 'fastparquet'])
 @pytest.mark.parametrize('file_ext', [".parquet", ".geoparquet"])
@@ -236,8 +254,8 @@ def test_load_csr_matrix(dat_dir, capfd):
 
     rslt = csr_mat != csr_mat_
     assert isinstance(rslt, scipy.sparse.csr_matrix)
-    assert rslt.count_nonzero() == 0
-    assert rslt.nnz == 0
+    assert rslt.count_nonzero() == 0  # type: ignore[unresolved-references]
+    assert rslt.nnz == 0  # type: ignore[unresolved-references]
 
     _ = load_csr_matrix("", verbose=True)
     out, _ = capfd.readouterr()
