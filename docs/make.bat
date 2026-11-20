@@ -12,6 +12,20 @@ set BUILDDIR=build
 
 if "%1" == "" goto help
 
+REM Custom clean target to remove build artifacts and generated API source files
+if "%1" == "clean" (
+    if exist "%BUILDDIR%" (
+        for /d %%i in (%BUILDDIR%\*) do rmdir /s /q "%%i"
+        del /q /f %BUILDDIR%\*
+    )
+    if exist "%SOURCEDIR%\api" (
+        for /d %%i in (%SOURCEDIR%\api\*) do rmdir /s /q "%%i"
+        del /q /f %SOURCEDIR%\api\*
+    )
+    echo.Cleaned build directory and generated API source files.
+    goto end
+)
+
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
 	echo.
